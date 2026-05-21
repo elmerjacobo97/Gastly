@@ -10,7 +10,6 @@ import {
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -135,12 +134,14 @@ export function CategoriesPanel() {
         </CardHeader>
         <CardContent>
           {categoriesQuery.isLoading ? (
-            <div className="flex flex-col divide-y">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 py-3">
-                  <Skeleton className="size-3 rounded-full" />
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="ml-auto h-5 w-14 rounded-full" />
+                <div key={i} className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
+                  <Skeleton className="size-9 rounded-lg" />
+                  <div className="flex flex-col gap-1.5">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -166,28 +167,30 @@ export function CategoriesPanel() {
               </EmptyContent>
             </Empty>
           ) : (
-            <div className="flex flex-col divide-y">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((category) => (
                 <div
                   key={category.id}
-                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                  className="group flex items-center gap-3 rounded-xl border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
                 >
                   <div
-                    className="size-3 shrink-0 rounded-full"
+                    className="grid size-9 shrink-0 place-items-center rounded-lg text-sm font-semibold text-white shadow-sm"
                     style={{ background: getColorHex(category.color) }}
-                  />
-                  <span className="flex-1 text-sm font-medium">{category.name}</span>
-                  {typeFilter === "all" && (
-                    <Badge variant="secondary" className="text-xs">
+                  >
+                    {category.name[0].toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{category.name}</p>
+                    <p className="text-xs text-muted-foreground">
                       {category.type === "expense" ? "Gasto" : "Ingreso"}
-                    </Badge>
-                  )}
+                    </p>
+                  </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        className="text-muted-foreground data-[state=open]:bg-muted"
+                        className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
                       >
                         <MoreHorizontalIcon />
                         <span className="sr-only">Acciones</span>
