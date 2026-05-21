@@ -48,7 +48,7 @@ const navigationItems = [
     exact: true,
   },
   {
-    title: "Movimientos",
+    title: "Transacciones",
     href: "/dashboard/transactions",
     icon: ArrowLeftRightIcon,
     exact: false,

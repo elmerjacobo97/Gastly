@@ -296,7 +296,7 @@ export function MonthlyPlanDialog({
                 <span className="flex flex-col gap-1">
                   <span className="font-medium">Registrar también como ingreso</span>
                   <span className="text-muted-foreground">
-                    Crea un movimiento de ingreso vinculado a este plan para no hacerlo manualmente.
+                    Crea una transacción de ingreso vinculada a este plan para no hacerlo manualmente.
                   </span>
                 </span>
               </label>

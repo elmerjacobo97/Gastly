@@ -190,7 +190,7 @@ function PaymentDialog({
         <DialogHeader>
           <DialogTitle>Registrar pago</DialogTitle>
           <DialogDescription>
-            Ingresa el monto real pagado. El pago quedará como movimiento en soles.
+            Ingresa el monto real pagado. El pago quedará como transacción en soles.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -386,7 +386,7 @@ export function FixedExpensesPanel() {
     onSuccess: async () => {
       setPayExpense(null)
       await invalidate()
-      toast.success("Pago registrado como movimiento")
+      toast.success("Pago registrado como transacción")
     },
     onError: (error) => {
       toast.error("No se pudo registrar el pago", { description: error.message })
@@ -687,7 +687,7 @@ export function FixedExpensesPanel() {
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
         title="Eliminar gasto fijo"
-        description="Esta acción no elimina movimientos ya registrados, solo el gasto fijo recurrente."
+        description="Esta acción no elimina transacciones ya registradas, solo el gasto fijo recurrente."
         confirmLabel="Eliminar"
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />

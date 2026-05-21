@@ -95,7 +95,7 @@ export function MovementsPanel() {
         queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
         queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
       ])
-      toast.success("Movimiento eliminado")
+      toast.success("Transacción eliminada")
     },
     onError: (error) => {
       toast.error("No se pudo eliminar", { description: error.message })
@@ -211,11 +211,11 @@ export function MovementsPanel() {
       ? "Nuevo ingreso"
       : typeFilter === "expense"
         ? "Nuevo gasto"
-        : "Nuevo movimiento"
+        : "Nueva transacción"
 
   const cardTitle =
     typeFilter === "all"
-      ? "Todos los movimientos"
+      ? "Todas las transacciones"
       : typeFilter === "expense"
         ? "Gastos"
         : "Ingresos"
@@ -225,7 +225,7 @@ export function MovementsPanel() {
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-            Movimientos
+            Transacciones
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Gestiona todos tus ingresos y gastos en un solo lugar.
@@ -282,7 +282,7 @@ export function MovementsPanel() {
                       ? "Sin ingresos este mes"
                       : typeFilter === "expense"
                         ? "Sin gastos este mes"
-                        : "Sin movimientos este mes"}
+                        : "Sin transacciones este mes"}
                   </EmptyTitle>
                   <EmptyDescription>
                     {typeFilter === "income"
@@ -313,7 +313,7 @@ export function MovementsPanel() {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}
-        description="Se eliminará este movimiento permanentemente."
+        description="Se eliminará esta transacción permanentemente."
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />
     </main>

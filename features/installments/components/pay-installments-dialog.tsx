@@ -101,7 +101,7 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
         <DialogHeader>
           <DialogTitle className="capitalize">Pago de tarjeta · {monthLabel}</DialogTitle>
           <DialogDescription>
-            Se registrarán {pending.length} cuota{pending.length !== 1 ? "s" : ""} como gasto en movimientos.
+            Se registrarán {pending.length} cuota{pending.length !== 1 ? "s" : ""} como gasto en transacciones.
           </DialogDescription>
         </DialogHeader>
 

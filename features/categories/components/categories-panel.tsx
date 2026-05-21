@@ -147,7 +147,7 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
                       : "Sin categorías de ingresos"}
                 </EmptyTitle>
                 <EmptyDescription>
-                  Crea categorías para clasificar tus movimientos de forma consistente.
+                  Crea categorías para clasificar tus transacciones de forma consistente.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>

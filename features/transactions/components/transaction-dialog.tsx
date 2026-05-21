@@ -100,7 +100,7 @@ function buildDefaultValues(
 export function TransactionDialog({
   defaultType = "expense",
   lockType = false,
-  triggerLabel = "Nuevo movimiento",
+  triggerLabel = "Nueva transacción",
   trigger,
   transaction,
   open: controlledOpen,
@@ -150,10 +150,10 @@ export function TransactionDialog({
       await invalidate()
       form.reset(buildDefaultValues(undefined, defaultType))
       setOpen(false)
-      toast.success("Movimiento registrado")
+      toast.success("Transacción registrada")
     },
     onError: (error) => {
-      toast.error("No se pudo registrar el movimiento", {
+      toast.error("No se pudo registrar la transacción", {
         description: error.message,
       })
     },
@@ -165,10 +165,10 @@ export function TransactionDialog({
     onSuccess: async () => {
       await invalidate()
       setOpen(false)
-      toast.success("Movimiento actualizado")
+      toast.success("Transacción actualizada")
     },
     onError: (error) => {
-      toast.error("No se pudo actualizar el movimiento", {
+      toast.error("No se pudo actualizar la transacción", {
         description: error.message,
       })
     },
@@ -203,11 +203,11 @@ export function TransactionDialog({
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Editar movimiento" : "Nuevo movimiento"}
+            {isEditing ? "Editar transacción" : "Nueva transacción"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Modifica los datos del movimiento."
+              ? "Modifica los datos de la transacción."
               : "Registra un ingreso o gasto para mantener tu balance al día."}
           </DialogDescription>
         </DialogHeader>

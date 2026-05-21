@@ -115,7 +115,7 @@ export function MonthlyPlanSummaryCard({
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
             <CircleAlertIcon className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
             <p>
-              Sin plan mensual, el dashboard usa solo tus movimientos registrados y puede mostrar un disponible menos preciso.
+              Sin plan mensual, el dashboard usa solo tus transacciones registradas y puede mostrar un disponible menos preciso.
             </p>
           </div>
         )}

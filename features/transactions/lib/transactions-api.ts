@@ -103,7 +103,7 @@ export async function updateTransaction(id: string, values: TransactionValues) {
   } = await supabase.auth.getUser()
 
   if (userError || !user) {
-    throw new Error("Debes iniciar sesión para editar movimientos.")
+    throw new Error("Debes iniciar sesión para editar transacciones.")
   }
 
   const { data: category, error: categoryError } = await supabase
@@ -140,7 +140,7 @@ export async function createTransaction(values: TransactionValues) {
   } = await supabase.auth.getUser()
 
   if (userError || !user) {
-    throw new Error("Debes iniciar sesión para registrar movimientos.")
+    throw new Error("Debes iniciar sesión para registrar transacciones.")
   }
 
   const { data: category, error: categoryError } = await supabase
