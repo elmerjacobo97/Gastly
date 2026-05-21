@@ -84,9 +84,13 @@ export function InstallmentsPanel() {
     ({ payment }) => payment.transactionId || payment.paidExternally
   )
   const totalThisMonth = monthPayments.reduce((s, { payment }) => s + payment.amount, 0)
+  const totalPendingThisMonth = pendingThisMonth.reduce((s, { payment }) => s + payment.amount, 0)
+  const totalPaidThisMonth = paidThisMonth.reduce((s, { payment }) => s + payment.amount, 0)
 
   const activePurchases = purchases.filter((p) => p.pendingCount > 0)
   const completedPurchases = purchases.filter((p) => p.pendingCount === 0)
+  const totalFinanced = purchases.reduce((s, p) => s + p.totalPaid + p.totalPending, 0)
+  const totalPending = activePurchases.reduce((s, p) => s + p.totalPending, 0)
 
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
 
@@ -104,6 +108,47 @@ export function InstallmentsPanel() {
           <InstallmentDialog />
         </div>
       </section>
+
+      {!purchasesQuery.isLoading && purchases.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Card className="p-4">
+            <p className="text-xs text-muted-foreground">A pagar este mes</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums">
+              {formatCurrency(totalThisMonth)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {monthPayments.length} cuota{monthPayments.length !== 1 ? "s" : ""} programada{monthPayments.length !== 1 ? "s" : ""}
+            </p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs text-muted-foreground">Pagado este mes</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(totalPaidThisMonth)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? "s" : ""} pagada{paidThisMonth.length !== 1 ? "s" : ""}
+            </p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs text-muted-foreground">Falta pagar este mes</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+              {formatCurrency(totalPendingThisMonth)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {pendingThisMonth.length} pendiente{pendingThisMonth.length !== 1 ? "s" : ""}
+            </p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs text-muted-foreground">Pendiente total</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
+              {formatCurrency(totalPending)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(totalFinanced)} financiado en total
+            </p>
+          </Card>
+        </div>
+      )}
 
       {/* This month's payments */}
       {!purchasesQuery.isLoading && monthPayments.length > 0 && (
