@@ -43,7 +43,7 @@ import {
   getCategories,
 } from "@/features/categories/lib/categories-api"
 import { type Category } from "@/features/categories/types/category-types"
-import { cn } from "@/lib/utils"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 
 type TypeFilter = "all" | "expense" | "income"
 
@@ -61,7 +61,7 @@ export function CategoriesPanel() {
 
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
-    queryFn: getCategories,
+    queryFn: () => getCategories(),
   })
 
   const deleteMutation = useMutation({
@@ -116,22 +116,7 @@ export function CategoriesPanel() {
               {filtered.length} categoría{filtered.length !== 1 ? "s" : ""}
             </CardDescription>
           </div>
-          <div className="flex rounded-md border p-0.5 gap-0.5">
-            {TYPE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setTypeFilter(opt.value)}
-                className={cn(
-                  "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                  opt.value === typeFilter
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS} />
         </CardHeader>
         <CardContent>
           {categoriesQuery.isLoading ? (

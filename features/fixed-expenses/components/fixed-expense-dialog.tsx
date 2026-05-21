@@ -45,8 +45,8 @@ import {
   type FixedExpenseValues,
 } from "@/features/fixed-expenses/schemas/fixed-expense-schemas"
 import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
-import { formatDate } from "@/features/transactions/lib/format-transaction"
-import { getCategories } from "@/features/transactions/lib/transactions-api"
+import { getCategories } from "@/features/categories/lib/categories-api"
+import { formatDate } from "@/lib/format"
 
 type FixedExpenseDialogProps = {
   expense?: FixedExpense

@@ -51,7 +51,7 @@ import {
   calculateSavings,
   getMonthlyPlan,
 } from "@/features/monthly-plan/lib/monthly-plan-api"
-import { formatCurrency } from "@/features/transactions/lib/format-transaction"
+import { formatCurrency } from "@/lib/format"
 import { deleteBudget, getBudgets } from "@/features/budget/lib/budget-api"
 import { BudgetDialog } from "@/features/budget/components/budget-dialog"
 import { type Budget } from "@/features/budget/types/budget-types"

@@ -45,9 +45,9 @@ import {
 } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
+import { getCategories } from "@/features/categories/lib/categories-api"
 import {
   createTransaction,
-  getCategories,
   updateTransaction,
 } from "@/features/transactions/lib/transactions-api"
 import {

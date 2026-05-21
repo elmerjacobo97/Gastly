@@ -46,19 +46,6 @@ function mapTransaction(row: TransactionRow): Transaction {
   }
 }
 
-export async function getCategories(type?: TransactionType) {
-  const supabase = createClient()
-  let query = supabase
-    .from("categories")
-    .select("id, name, type, color, icon")
-    .order("name", { ascending: true })
-
-  if (type) query = query.eq("type", type)
-
-  const { data, error } = await query.returns<CategoryRow[]>()
-  if (error) throw new Error(error.message)
-  return data.map(mapCategory)
-}
 
 export async function getTransactions(opts?: {
   type?: TransactionType

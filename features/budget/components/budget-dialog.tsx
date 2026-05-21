@@ -29,7 +29,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import { getCategories } from "@/features/transactions/lib/transactions-api"
+import { getCategories } from "@/features/categories/lib/categories-api"
 import {
   type BudgetValues,
   budgetSchema,

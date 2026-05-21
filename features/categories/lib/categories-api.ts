@@ -40,14 +40,17 @@ function mapCategory(row: CategoryRow): Category {
   }
 }
 
-export async function getCategories() {
+export async function getCategories(type?: TransactionType) {
   const supabase = createClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from("categories")
     .select("id, name, type, color, icon, created_at")
     .order("type", { ascending: true })
     .order("name", { ascending: true })
-    .returns<CategoryRow[]>()
+
+  if (type) query = query.eq("type", type)
+
+  const { data, error } = await query.returns<CategoryRow[]>()
 
   if (error) {
     throw new Error(error.message)

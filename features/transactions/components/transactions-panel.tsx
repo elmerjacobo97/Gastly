@@ -64,23 +64,11 @@ import {
 import {
   formatCurrency,
   formatDate,
-} from "@/features/transactions/lib/format-transaction"
+} from "@/lib/format"
+import { CHART_COLORS, formatCompact } from "@/lib/chart-utils"
 
 type TransactionsPanelProps = {
   userEmail?: string
-}
-
-const CHART_COLORS = [
-  "var(--color-chart-1)",
-  "var(--color-chart-2)",
-  "var(--color-chart-3)",
-  "var(--color-chart-4)",
-  "var(--color-chart-5)",
-]
-
-function formatCompact(value: number) {
-  if (value >= 1000) return `S/ ${(value / 1000).toFixed(1)}k`
-  return `S/ ${value.toFixed(0)}`
 }
 
 function isRelevantRecurringPayment(expense: FixedExpense, monthKey: string) {

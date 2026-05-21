@@ -23,7 +23,7 @@ import {
   registerSalaryIncome,
 } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { MonthNav } from "@/components/month-nav"
-import { formatCurrency } from "@/features/transactions/lib/format-transaction"
+import { formatCurrency } from "@/lib/format"
 
 export function MonthlyPlanPanel() {
   const [month, setMonth] = useState(() => new Date())

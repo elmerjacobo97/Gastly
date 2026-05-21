@@ -95,7 +95,7 @@ import { MonthNav } from "@/components/month-nav"
 import {
   formatCurrency,
   formatDate,
-} from "@/features/transactions/lib/format-transaction"
+} from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 function isRelevantForMonth(expense: FixedExpense, monthKey: string) {

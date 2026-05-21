@@ -45,9 +45,10 @@ import {
   getMonthlyPlan,
 } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { getAllTransactions } from "@/features/transactions/lib/charts-api"
-import { formatCurrency } from "@/features/transactions/lib/format-transaction"
+import { formatCurrency } from "@/lib/format"
+import { CHART_COLORS, formatCompact } from "@/lib/chart-utils"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
-import { cn } from "@/lib/utils"
 
 type Period = "1m" | "3m" | "6m" | "year" | "last-year"
 
@@ -95,19 +96,6 @@ function getPeriodDates(period: Period): { from: string; to: string; label: stri
       }
     }
   }
-}
-
-const CHART_COLORS = [
-  "var(--color-chart-1)",
-  "var(--color-chart-2)",
-  "var(--color-chart-3)",
-  "var(--color-chart-4)",
-  "var(--color-chart-5)",
-]
-
-function formatCompact(value: number) {
-  if (value >= 1000) return `S/ ${(value / 1000).toFixed(1)}k`
-  return `S/ ${value.toFixed(0)}`
 }
 
 function computeMonthlyData(transactions: Transaction[]) {
@@ -308,22 +296,12 @@ export function ReportsPanel() {
             </Button>
           </div>
         </div>
-        <div className="flex rounded-md border p-0.5 gap-0.5 w-fit print:hidden">
-          {PERIOD_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setPeriod(opt.value)}
-              className={cn(
-                "rounded px-3 py-1.5 text-xs font-medium transition-colors",
-                opt.value === period
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          value={period}
+          onChange={setPeriod}
+          options={PERIOD_OPTIONS}
+          className="w-fit print:hidden"
+        />
       </section>
 
       {/* Summary cards */}
@@ -449,22 +427,12 @@ export function ReportsPanel() {
                   Top categorías del período · {all.filter((t) => t.type === "expense").length} gastos
                 </CardDescription>
               </div>
-              <div className="flex rounded-md border p-0.5 gap-0.5 print:hidden">
-                {TYPE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setTypeFilter(opt.value)}
-                    className={cn(
-                      "rounded px-2 py-1 text-xs font-medium transition-colors",
-                      opt.value === typeFilter
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                value={typeFilter}
+                onChange={setTypeFilter}
+                options={TYPE_OPTIONS}
+                className="print:hidden"
+              />
             </div>
           </CardHeader>
           <CardContent>

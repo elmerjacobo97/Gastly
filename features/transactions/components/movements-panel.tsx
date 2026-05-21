@@ -37,6 +37,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { MonthNav } from "@/components/month-nav"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { TransactionDialog } from "@/features/transactions/components/transaction-dialog"
 import {
@@ -46,11 +47,9 @@ import {
 import {
   formatCurrency,
   formatDate,
-} from "@/features/transactions/lib/format-transaction"
+} from "@/lib/format"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
 import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
-import { cn } from "@/lib/utils"
-
 type TypeFilter = "all" | TransactionType
 
 const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
@@ -58,33 +57,6 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "expense", label: "Gastos" },
   { value: "income", label: "Ingresos" },
 ]
-
-function TypeFilterBar({
-  value,
-  onChange,
-}: {
-  value: TypeFilter
-  onChange: (v: TypeFilter) => void
-}) {
-  return (
-    <div className="flex rounded-md border p-0.5 gap-0.5">
-      {TYPE_OPTIONS.map((opt) => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          className={cn(
-            "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-            opt.value === value
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 export function MovementsPanel() {
   const [month, setMonth] = useState(() => new Date())
@@ -297,7 +269,7 @@ export function MovementsPanel() {
             isLoading={query.isLoading}
             searchPlaceholder="Buscar por descripción o categoría..."
             toolbar={
-              <TypeFilterBar value={typeFilter} onChange={setTypeFilter} />
+              <SegmentedControl value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS} />
             }
             emptyState={
               <Empty className="bg-muted/20">
