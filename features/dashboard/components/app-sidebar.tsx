@@ -37,8 +37,9 @@ const navigationItems = [
   },
   {
     title: "Gastos",
+    href: "/dashboard/expenses",
     icon: CreditCardIcon,
-    badge: "Pronto",
+    isAvailable: true,
   },
   {
     title: "Ingresos",

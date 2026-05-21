@@ -47,11 +47,11 @@ type TransactionsPanelProps = {
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const transactionsQuery = useQuery({
     queryKey: ["transactions"],
-    queryFn: getTransactions,
+    queryFn: () => getTransactions(),
   })
   const summaryQuery = useQuery({
     queryKey: ["transaction-summary"],
-    queryFn: getTransactionSummary,
+    queryFn: () => getTransactionSummary(),
   })
   const summary = summaryQuery.data ?? {
     balance: 0,

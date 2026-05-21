@@ -67,9 +67,9 @@ export async function getCategories(type?: TransactionType) {
   return data.map(mapCategory)
 }
 
-export async function getTransactions() {
+export async function getTransactions(type?: TransactionType) {
   const supabase = createClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from("transactions")
     .select(
       "id, type, amount, description, occurred_on, notes, categories(id, name, type, color)"
@@ -77,6 +77,12 @@ export async function getTransactions() {
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(20)
+
+  if (type) {
+    query = query.eq("type", type)
+  }
+
+  const { data, error } = await query
     .returns<TransactionRow[]>()
 
   if (error) {
@@ -86,8 +92,10 @@ export async function getTransactions() {
   return data.map(mapTransaction)
 }
 
-export async function getTransactionSummary(): Promise<TransactionSummary> {
-  const transactions = await getTransactions()
+export async function getTransactionSummary(
+  type?: TransactionType
+): Promise<TransactionSummary> {
+  const transactions = await getTransactions(type)
   const income = transactions
     .filter((transaction) => transaction.type === "income")
     .reduce((total, transaction) => total + transaction.amount, 0)

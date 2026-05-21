@@ -32,21 +32,32 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { createTransaction } from "@/features/transactions/lib/transactions-api"
 import {
+  type TransactionType,
   type TransactionValues,
   transactionSchema,
 } from "@/features/transactions/schemas/transaction-schemas"
+
+type TransactionDialogProps = {
+  defaultType?: TransactionType
+  lockType?: boolean
+  triggerLabel?: string
+}
 
 function getToday() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function TransactionDialog() {
+export function TransactionDialog({
+  defaultType = "expense",
+  lockType = false,
+  triggerLabel = "Nuevo movimiento",
+}: TransactionDialogProps) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
   const form = useForm<TransactionValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      type: "expense",
+      type: defaultType,
       amount: 0,
       description: "",
       categoryName: "",
@@ -59,11 +70,13 @@ export function TransactionDialog() {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["transactions", defaultType] }),
         queryClient.invalidateQueries({ queryKey: ["transaction-summary"] }),
+        queryClient.invalidateQueries({ queryKey: ["transaction-summary", defaultType] }),
         queryClient.invalidateQueries({ queryKey: ["categories"] }),
       ])
       form.reset({
-        type: "expense",
+        type: defaultType,
         amount: 0,
         description: "",
         categoryName: "",
@@ -89,14 +102,14 @@ export function TransactionDialog() {
       <DialogTrigger asChild>
         <Button>
           <PlusIcon data-icon="inline-start" />
-          Nuevo movimiento
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Nuevo movimiento</DialogTitle>
           <DialogDescription>
-            Registra un gasto o ingreso para mantener tu balance actualizado.
+            Registra {lockType && defaultType === "expense" ? "un gasto" : "un gasto o ingreso"} para mantener tu balance actualizado.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -116,6 +129,7 @@ export function TransactionDialog() {
                     {...field}
                     aria-invalid={fieldState.invalid}
                     className="w-full"
+                    disabled={lockType}
                     id="transaction-type"
                   >
                     <NativeSelectOption value="expense">Gasto</NativeSelectOption>
