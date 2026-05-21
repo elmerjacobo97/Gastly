@@ -109,7 +109,7 @@ export async function registerSalaryIncome(plan: MonthlyPlan) {
   }
 }
 
-export async function upsertMonthlyPlan(values: MonthlyPlanValues) {
+export async function upsertMonthlyPlan(values: MonthlyPlanValues): Promise<MonthlyPlan> {
   const supabase = createClient()
   const {
     data: { user },
@@ -120,19 +120,25 @@ export async function upsertMonthlyPlan(values: MonthlyPlanValues) {
     throw new Error("Debes iniciar sesion para guardar el plan mensual.")
   }
 
-  const { error } = await supabase.from("monthly_plans").upsert(
-    {
-      user_id: user.id,
-      month: getMonthDate(values.month),
-      expected_income: values.expectedIncome,
-      savings_mode: values.savingsMode,
-      savings_value: values.savingsValue,
-      notes: values.notes || null,
-    },
-    { onConflict: "user_id,month" }
-  )
+  const { data, error } = await supabase
+    .from("monthly_plans")
+    .upsert(
+      {
+        user_id: user.id,
+        month: getMonthDate(values.month),
+        expected_income: values.expectedIncome,
+        savings_mode: values.savingsMode,
+        savings_value: values.savingsValue,
+        notes: values.notes || null,
+      },
+      { onConflict: "user_id,month" }
+    )
+    .select("id, month, expected_income, savings_mode, savings_value, notes, transactions(id)")
+    .single()
 
   if (error) {
     throw new Error(error.message)
   }
+
+  return mapMonthlyPlan(data as MonthlyPlanRow)
 }

@@ -2,51 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query"
 import {
-  ArrowDownIcon,
-  ArrowRightIcon,
-  ArrowUpIcon,
-  BellRingIcon,
   CalendarClockIcon,
-  CalendarDaysIcon,
   CircleAlertIcon,
-  TrendingUpIcon,
   WalletCardsIcon,
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
 
-import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Progress } from "@/components/ui/progress"
 import { getBudgets } from "@/features/budget/lib/budget-api"
-import { MonthlyPlanDialog } from "@/features/monthly-plan/components/monthly-plan-dialog"
 import {
   calculateSavings,
   getMonthlyPlan,
@@ -57,15 +21,17 @@ import {
   getCategoryTotals,
   getMonthlyTotals,
 } from "@/features/transactions/lib/charts-api"
+import { DashboardAlerts, type DashboardAlert } from "@/features/transactions/components/dashboard/dashboard-alerts"
+import { DashboardCharts } from "@/features/transactions/components/dashboard/dashboard-charts"
+import { DashboardSummaryCards } from "@/features/transactions/components/dashboard/dashboard-summary-cards"
+import { FinancialHealthCard } from "@/features/transactions/components/dashboard/financial-health-card"
+import { MonthlyPlanSummaryCard } from "@/features/transactions/components/dashboard/monthly-plan-summary-card"
+import { UpcomingPaymentsCard } from "@/features/transactions/components/dashboard/upcoming-payments-card"
 import {
   computeSummary,
   getTransactions,
 } from "@/features/transactions/lib/transactions-api"
-import {
-  formatCurrency,
-  formatDate,
-} from "@/lib/format"
-import { CHART_COLORS, formatCompact } from "@/lib/chart-utils"
+import { formatCurrency } from "@/lib/format"
 
 type TransactionsPanelProps = {
   userEmail?: string
@@ -75,39 +41,6 @@ function isRelevantRecurringPayment(expense: FixedExpense, monthKey: string) {
   if (!expense.isActive) return false
   if (expense.frequency === "monthly") return true
   return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
-}
-
-function getHealthState(usage: number, remaining: number) {
-  if (remaining < 0 || usage >= 100) {
-    return {
-      label: "Rojo",
-      description: "Ya te pasaste del dinero disponible.",
-      className: "text-destructive",
-      progressClassName: "[&>div]:bg-destructive",
-    }
-  }
-  if (usage >= 85) {
-    return {
-      label: "Naranja",
-      description: "Estás muy cerca del límite.",
-      className: "text-orange-600 dark:text-orange-400",
-      progressClassName: "[&>div]:bg-orange-500",
-    }
-  }
-  if (usage >= 70) {
-    return {
-      label: "Amarillo",
-      description: "Vas bien, pero conviene cuidar gastos.",
-      className: "text-amber-600 dark:text-amber-400",
-      progressClassName: "[&>div]:bg-amber-500",
-    }
-  }
-  return {
-    label: "Verde",
-    description: "Tienes margen saludable para el mes.",
-    className: "text-emerald-600 dark:text-emerald-400",
-    progressClassName: "[&>div]:bg-emerald-500",
-  }
 }
 
 function getDaysRemainingInMonth(date: Date) {
@@ -177,7 +110,6 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
     : variableSpent > 0
       ? 100
       : 0
-  const health = getHealthState(usage, remaining)
   const budgetAlerts = (budgetsQuery.data ?? [])
     .map((budget) => ({
       budget,
@@ -200,7 +132,7 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const summaryIsLoading =
     transactionsQuery.isLoading || planQuery.isLoading || fixedExpensesQuery.isLoading
 
-  const intelligentAlerts = [
+  const intelligentAlerts: DashboardAlert[] = [
     ...dueAlerts.map(({ expense, days }) => ({
       key: `due-${expense.id}`,
       icon: CalendarClockIcon,
@@ -231,44 +163,6 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
       : []),
   ].slice(0, 6)
 
-  const summaryCards = [
-    {
-      title: "Disponible libre",
-      value: formatCurrency(availableForVariable),
-      description: plan ? "Después de ahorro y pagos recurrentes" : "Configura tu plan para mayor precisión",
-      icon: WalletCardsIcon,
-      positive: remaining >= 0,
-    },
-    {
-      title: "Ahorro obligatorio",
-      value: formatCurrency(savings),
-      description: plan ? "Dinero que no debes tocar" : "Sin plan mensual",
-      icon: ArrowUpIcon,
-      positive: true,
-    },
-    {
-      title: "Pagos recurrentes",
-      value: formatCurrency(recurringEstimated),
-      description: `${recurringPayments.length} pago${recurringPayments.length !== 1 ? "s" : ""} estimado${recurringPayments.length !== 1 ? "s" : ""} este mes`,
-      icon: ArrowDownIcon,
-      positive: recurringEstimated <= availableAfterSavings,
-    },
-    {
-      title: "Gastos variables",
-      value: formatCurrency(variableSpent),
-      description: `${usage}% de tu disponible libre`,
-      icon: TrendingUpIcon,
-      positive: usage < 85,
-    },
-    {
-      title: "Gasto diario disponible",
-      value: formatCurrency(dailyAvailable),
-      description: `S/ ${remaining.toFixed(0)} libres · ${daysRemaining} día${daysRemaining !== 1 ? "s" : ""} restantes`,
-      icon: CalendarDaysIcon,
-      positive: remaining >= 0,
-    },
-  ]
-
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -285,355 +179,44 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
         </div>
       </section>
 
-      {!planQuery.isLoading && !plan && (
-        <Card className="border-amber-500/30 bg-amber-500/10">
-          <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-3">
-              <CircleAlertIcon className="mt-0.5 size-5 text-amber-600 dark:text-amber-400" />
-              <div>
-                <p className="font-medium">Falta tu plan mensual</p>
-                <p className="text-sm text-muted-foreground">
-                  Configura tu ingreso estimado y ahorro obligatorio para que el semáforo sea preciso.
-                </p>
-              </div>
-            </div>
-            <MonthlyPlanDialog month={today} plan={plan} />
-          </CardContent>
-        </Card>
-      )}
+      <MonthlyPlanSummaryCard
+        date={today}
+        plan={plan}
+        isLoading={planQuery.isLoading}
+        savings={savings}
+        availableAfterSavings={availableAfterSavings}
+      />
 
-      {plan && (
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div>
-                <CardDescription>Estado del mes</CardDescription>
-                <CardTitle className={`mt-1 text-3xl ${health.className}`}>
-                  {health.label}
-                </CardTitle>
-              </div>
-              <div className="text-left md:text-right">
-                <p className="text-sm text-muted-foreground">Restante libre</p>
-                <p className={`text-2xl font-semibold tabular-nums ${remaining < 0 ? "text-destructive" : "text-foreground"}`}>
-                  {formatCurrency(remaining)}
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <Progress value={Math.min(usage, 100)} className={health.progressClassName} />
-            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-              <span>{health.description}</span>
-              <span className="tabular-nums">{usage}% usado</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {plan && <FinancialHealthCard usage={usage} remaining={remaining} />}
 
-      {/* Summary cards */}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {summaryIsLoading
-          ? Array.from({ length: 5 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                  <div className="min-w-0 flex-1">
-                    <Skeleton className="h-3 w-24" />
-                    <Skeleton className="mt-2 h-8 w-28" />
-                  </div>
-                  <Skeleton className="size-10 rounded-xl" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-3 w-full max-w-40" />
-                </CardContent>
-              </Card>
-            ))
-          : summaryCards.map((card) => (
-              <Card key={card.title}>
-                <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                  <div>
-                    <CardDescription className="text-xs">
-                      {card.title}
-                    </CardDescription>
-                    <CardTitle
-                      className={`mt-1.5 text-2xl ${
-                        card.positive ? "text-foreground" : "text-destructive"
-                      }`}
-                    >
-                      {card.value}
-                    </CardTitle>
-                  </div>
-                  <div
-                    className={`grid size-10 place-items-center rounded-xl ${
-                      card.positive
-                        ? "bg-primary/10 text-primary"
-                        : "bg-destructive/10 text-destructive"
-                    }`}
-                  >
-                    <card.icon className="size-5" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">
-                    {card.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-      </section>
+      <DashboardSummaryCards
+        isLoading={summaryIsLoading}
+        hasPlan={!!plan}
+        availableForVariable={availableForVariable}
+        savings={savings}
+        recurringEstimated={recurringEstimated}
+        recurringPaymentCount={recurringPayments.length}
+        availableAfterSavings={availableAfterSavings}
+        variableSpent={variableSpent}
+        usage={usage}
+        dailyAvailable={dailyAvailable}
+        remaining={remaining}
+        daysRemaining={daysRemaining}
+      />
 
-      {intelligentAlerts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <BellRingIcon className="size-5 text-muted-foreground" />
-              <CardTitle className="text-base">Alertas inteligentes</CardTitle>
-            </div>
-            <CardDescription>
-              Avisos persistentes para pagos, presupuestos y dinero disponible.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2">
-            {intelligentAlerts.map((alert) => (
-              <Alert
-                key={alert.key}
-                variant={alert.variant}
-              >
-                <alert.icon />
-                <AlertTitle>{alert.title}</AlertTitle>
-                <AlertDescription>{alert.description}</AlertDescription>
-              </Alert>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <DashboardAlerts alerts={intelligentAlerts} />
 
-      {/* Upcoming payments */}
-      {!fixedExpensesQuery.isLoading && upcomingPayments.length > 0 && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <div>
-              <CardTitle className="text-base">Próximos pagos</CardTitle>
-              <CardDescription>Pagos recurrentes del mes ordenados por fecha</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild className="text-xs text-muted-foreground">
-              <Link href="/dashboard/fixed-expenses">
-                Ver todos
-                <ArrowRightIcon />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col divide-y">
-              {upcomingPayments.map(({ expense, days }) => {
-                const isPaid = !!expense.paidOn
-                const isOverdue = !isPaid && days < 0
-                const isSoon = !isPaid && days >= 0 && days <= 3
+      <UpcomingPaymentsCard
+        isLoading={fixedExpensesQuery.isLoading}
+        payments={upcomingPayments}
+      />
 
-                return (
-                  <div
-                    key={expense.id}
-                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                  >
-                    {expense.category && (
-                      <CategoryIconBadge
-                        icon={expense.category.icon}
-                        color={expense.category.color}
-                        className="size-8 shrink-0 rounded-lg"
-                      />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{expense.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {isPaid
-                          ? `Pagado el ${formatDate(expense.paidOn!)}`
-                          : formatDate(expense.nextDueOn)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-sm font-medium tabular-nums">
-                        {formatCurrency(expense.paidAmount ?? expense.amount)}
-                      </span>
-                      <Badge
-                        variant={isOverdue ? "destructive" : "secondary"}
-                        className={
-                          isPaid
-                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                            : isSoon
-                              ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                              : undefined
-                        }
-                      >
-                        {isPaid
-                          ? "Pagado"
-                          : isOverdue
-                            ? "Vencido"
-                            : days === 0
-                              ? "Hoy"
-                              : days === 1
-                                ? "Mañana"
-                                : isSoon
-                                  ? `${days} días`
-                                  : "Pendiente"}
-                      </Badge>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Charts */}
-      <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Últimos 6 meses</CardTitle>
-            <CardDescription>Ingresos vs gastos por mes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {monthlyQuery.isLoading ? (
-              <Skeleton className="h-52 w-full rounded-lg" />
-            ) : (
-              <ResponsiveContainer width="100%" height={210}>
-                <BarChart
-                  data={monthlyQuery.data}
-                  margin={{ top: 0, right: 0, left: -10, bottom: 0 }}
-                  barCategoryGap="30%"
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="var(--border)"
-                  />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={formatCompact}
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    formatter={(val, name) => [
-                      formatCurrency(Number(val)),
-                      name === "income" ? "Ingresos" : "Gastos",
-                    ]}
-                    contentStyle={{
-                      background: "var(--popover)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--popover-foreground)",
-                      fontSize: 13,
-                    }}
-                    cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-                  />
-                  <Bar
-                    dataKey="income"
-                    fill="var(--color-chart-1)"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="expenses"
-                    fill="var(--color-chart-2)"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <div
-                  className="size-2.5 rounded-sm"
-                  style={{ background: "var(--color-chart-1)" }}
-                />
-                Ingresos
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div
-                  className="size-2.5 rounded-sm"
-                  style={{ background: "var(--color-chart-2)" }}
-                />
-                Gastos
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Gastos por categoría</CardTitle>
-            <CardDescription>Top categorías del mes seleccionado</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {categoryQuery.isLoading ? (
-              <Skeleton className="h-52 w-full rounded-lg" />
-            ) : categoryQuery.data && categoryQuery.data.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                <ResponsiveContainer width="100%" height={160}>
-                  <PieChart>
-                    <Pie
-                      data={categoryQuery.data}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={75}
-                      paddingAngle={3}
-                    >
-                      {categoryQuery.data.map((entry, i) => (
-                        <Cell
-                          key={entry.name}
-                          fill={CHART_COLORS[i % CHART_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(val) => [formatCurrency(Number(val))]}
-                      contentStyle={{
-                        background: "var(--popover)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--radius-md)",
-                        color: "var(--popover-foreground)",
-                        fontSize: 13,
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-col gap-2">
-                  {categoryQuery.data.map((cat) => (
-                    <div
-                      key={cat.name}
-                      className="flex items-center justify-between text-xs"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <CategoryIconBadge
-                          icon={cat.icon}
-                          color={cat.categoryColor}
-                          className="size-6 rounded-md"
-                        />
-                        <span className="text-muted-foreground">{cat.name}</span>
-                      </div>
-                      <span className="font-medium">
-                        {formatCurrency(cat.value)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex h-52 items-center justify-center text-sm text-muted-foreground">
-                Sin gastos este mes
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+      <DashboardCharts
+        monthlyData={monthlyQuery.data}
+        monthlyIsLoading={monthlyQuery.isLoading}
+        categoryData={categoryQuery.data}
+        categoryIsLoading={categoryQuery.isLoading}
+      />
     </main>
   )
 }

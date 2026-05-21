@@ -9,6 +9,7 @@ import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,10 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
-import { upsertMonthlyPlan } from "@/features/monthly-plan/lib/monthly-plan-api"
+import {
+  registerSalaryIncome,
+  upsertMonthlyPlan,
+} from "@/features/monthly-plan/lib/monthly-plan-api"
 import {
   monthlyPlanSchema,
   type MonthlyPlanValues,
@@ -61,6 +65,11 @@ function buildDefaultValues(month: Date, plan?: MonthlyPlan | null): MonthlyPlan
   }
 }
 
+function isCurrentMonth(month: Date) {
+  const now = new Date()
+  return month.getFullYear() === now.getFullYear() && month.getMonth() === now.getMonth()
+}
+
 type MonthlyPlanDialogProps = {
   month: Date
   plan?: MonthlyPlan | null
@@ -80,6 +89,7 @@ export function MonthlyPlanDialog({
 }: MonthlyPlanDialogProps) {
   const isControlled = controlledOpen !== undefined
   const [internalOpen, setInternalOpen] = useState(false)
+  const [registerIncome, setRegisterIncome] = useState(!plan && isCurrentMonth(month))
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
   const queryClient = useQueryClient()
@@ -95,12 +105,28 @@ export function MonthlyPlanDialog({
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
+      setRegisterIncome(!plan && isCurrentMonth(month))
+    }
+    setOpen(nextOpen)
+  }
+
   const mutation = useMutation({
-    mutationFn: upsertMonthlyPlan,
+    mutationFn: async (values: MonthlyPlanValues) => {
+      const savedPlan = await upsertMonthlyPlan(values)
+      if (registerIncome && !savedPlan.salaryTransactionId) {
+        await registerSalaryIncome(savedPlan)
+      }
+    },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["monthly-plan"] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["monthly-plan"] }),
+        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
+      ])
       setOpen(false)
-      toast.success("Plan mensual guardado")
+      toast.success(registerIncome ? "Plan mensual y sueldo guardados" : "Plan mensual guardado")
     },
     onError: (error) => {
       toast.error("No se pudo guardar el plan mensual", { description: error.message })
@@ -111,8 +137,10 @@ export function MonthlyPlanDialog({
     mutation.mutate(values)
   }
 
+  const canRegisterIncome = !plan?.salaryTransactionId
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {!isControlled && (
         <DialogTrigger asChild>
           {trigger ?? (
@@ -258,6 +286,21 @@ export function MonthlyPlanDialog({
                 </Field>
               )}
             />
+            {canRegisterIncome && (
+              <label className="flex items-start gap-3 rounded-lg border p-3 text-sm">
+                <Checkbox
+                  checked={registerIncome}
+                  onCheckedChange={(checked) => setRegisterIncome(checked === true)}
+                  className="mt-0.5"
+                />
+                <span className="flex flex-col gap-1">
+                  <span className="font-medium">Registrar también como ingreso</span>
+                  <span className="text-muted-foreground">
+                    Crea un movimiento de ingreso vinculado a este plan para no hacerlo manualmente.
+                  </span>
+                </span>
+              </label>
+            )}
           </FieldGroup>
         </form>
         <DialogFooter>
