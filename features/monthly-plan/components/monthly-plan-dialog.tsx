@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { startOfMonth } from "date-fns"
-import { Loader2Icon, PlusIcon } from "lucide-react"
+import { Loader2Icon, PencilIcon, PlusIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -117,7 +117,11 @@ export function MonthlyPlanDialog({
         <DialogTrigger asChild>
           {trigger ?? (
             <Button>
-              <PlusIcon data-icon="inline-start" />
+              {plan ? (
+                <PencilIcon data-icon="inline-start" />
+              ) : (
+                <PlusIcon data-icon="inline-start" />
+              )}
               {triggerLabel}
             </Button>
           )}
