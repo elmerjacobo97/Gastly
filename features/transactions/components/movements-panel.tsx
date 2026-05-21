@@ -2,7 +2,12 @@
 
 import { type ColumnDef } from "@tanstack/react-table"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { PencilIcon, Trash2Icon, WalletCardsIcon } from "lucide-react"
+import {
+  MoreHorizontalIcon,
+  PencilIcon,
+  Trash2Icon,
+  WalletCardsIcon,
+} from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
@@ -17,6 +22,13 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { DataTable } from "@/components/ui/data-table"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Empty,
   EmptyContent,
   EmptyDescription,
@@ -24,7 +36,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MonthNav } from "@/features/transactions/components/month-nav"
 import { TransactionDialog } from "@/features/transactions/components/transaction-dialog"
 import {
@@ -37,53 +48,62 @@ import {
 } from "@/features/transactions/lib/format-transaction"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
 import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+import { cn } from "@/lib/utils"
 
-type Tab = "all" | "expense" | "income"
+type TypeFilter = "all" | TransactionType
 
-const TAB_CONFIG: Record<
-  Tab,
-  { label: string; type?: TransactionType; emptyTitle: string; emptyDesc: string }
-> = {
-  all: {
-    label: "Todos",
-    emptyTitle: "Sin movimientos este mes",
-    emptyDesc: "Registra tu primer ingreso o gasto para ver el resumen.",
-  },
-  expense: {
-    label: "Gastos",
-    type: "expense",
-    emptyTitle: "Sin gastos este mes",
-    emptyDesc: "Registra tu primer gasto para empezar a controlar tus egresos.",
-  },
-  income: {
-    label: "Ingresos",
-    type: "income",
-    emptyTitle: "Sin ingresos este mes",
-    emptyDesc: "Registra tu primer ingreso para controlar tus entradas.",
-  },
-}
+const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "expense", label: "Gastos" },
+  { value: "income", label: "Ingresos" },
+]
 
-function useMovements(type: TransactionType | undefined, month: Date) {
-  return useQuery({
-    queryKey: ["transactions", type ?? "all", month.toISOString().slice(0, 7)],
-    queryFn: () => getTransactions({ type, month }),
-  })
-}
-
-function MovementsTable({
-  tab,
-  month,
+function TypeFilterBar({
+  value,
+  onChange,
 }: {
-  tab: Tab
-  month: Date
+  value: TypeFilter
+  onChange: (v: TypeFilter) => void
 }) {
-  const queryClient = useQueryClient()
-  const config = TAB_CONFIG[tab]
+  return (
+    <div className="flex rounded-md border p-0.5 gap-0.5">
+      {TYPE_OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+            opt.value === value
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
-  const query = useMovements(config.type, month)
+export function MovementsPanel() {
+  const [month, setMonth] = useState(() => new Date())
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
+  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+
+  const query = useQuery({
+    queryKey: ["transactions", typeFilter, month.toISOString().slice(0, 7)],
+    queryFn: () =>
+      getTransactions({
+        type: typeFilter === "all" ? undefined : typeFilter,
+        month,
+      }),
+  })
+
   const rows = query.data ?? []
 
-  const total = rows.reduce(
+  const totals = rows.reduce(
     (acc, t) => {
       if (t.type === "income") acc.income += t.amount
       else acc.expense += t.amount
@@ -95,6 +115,7 @@ function MovementsTable({
   const deleteMutation = useMutation({
     mutationFn: deleteTransaction,
     onSuccess: async () => {
+      setDeleteId(null)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
@@ -136,12 +157,13 @@ function MovementsTable({
       },
       {
         accessorKey: "amount",
+        enableSorting: false,
         header: () => <div className="text-right">Monto</div>,
         cell: ({ row }) => {
           const t = row.original
           return (
             <div
-              className={`text-right font-medium ${
+              className={`text-right font-medium tabular-nums ${
                 t.type === "income"
                   ? "text-emerald-600 dark:text-emerald-400"
                   : "text-destructive"
@@ -155,102 +177,58 @@ function MovementsTable({
       },
       {
         id: "actions",
-        size: 80,
+        size: 48,
         cell: ({ row }) => {
           const t = row.original
           return (
-            <div className="flex items-center justify-end gap-1">
-              <TransactionDialog
-                transaction={t}
-                trigger={
+            <div className="flex justify-end">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
-                    size="icon-sm"
                     variant="ghost"
-                    className="text-muted-foreground hover:text-foreground"
+                    size="icon-sm"
+                    className="text-muted-foreground data-[state=open]:bg-muted"
                   >
-                    <PencilIcon />
-                    <span className="sr-only">Editar</span>
+                    <MoreHorizontalIcon />
+                    <span className="sr-only">Acciones</span>
                   </Button>
-                }
-              />
-              <ConfirmDialog
-                trigger={
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    className="text-muted-foreground hover:text-destructive"
-                    disabled={deleteMutation.isPending}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setEditTransaction(t)}>
+                    <PencilIcon />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => setDeleteId(t.id)}
+                    className="text-destructive focus:text-destructive"
                   >
                     <Trash2Icon />
-                    <span className="sr-only">Eliminar</span>
-                  </Button>
-                }
-                description="Se eliminará este movimiento permanentemente."
-                onConfirm={() => deleteMutation.mutate(t.id)}
-              />
+                    Eliminar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )
         },
       },
     ],
-    [deleteMutation] // eslint-disable-line react-hooks/exhaustive-deps
+    [] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
-          {tab === "all" ? "Todos los movimientos" : tab === "expense" ? "Gastos" : "Ingresos"}
-        </CardTitle>
-        <CardDescription className="flex flex-wrap gap-3">
-          <span>{rows.length} registro{rows.length !== 1 ? "s" : ""}</span>
-          {(tab === "all" || tab === "income") && total.income > 0 && (
-            <span className="font-medium text-emerald-600 dark:text-emerald-400">
-              +{formatCurrency(total.income)}
-            </span>
-          )}
-          {(tab === "all" || tab === "expense") && total.expense > 0 && (
-            <span className="font-medium text-destructive">
-              -{formatCurrency(total.expense)}
-            </span>
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          columns={columns}
-          data={rows}
-          isLoading={query.isLoading}
-          searchPlaceholder="Buscar por descripción o categoría..."
-          emptyState={
-            <Empty className="bg-muted/20">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <WalletCardsIcon />
-                </EmptyMedia>
-                <EmptyTitle>{config.emptyTitle}</EmptyTitle>
-                <EmptyDescription>{config.emptyDesc}</EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <TransactionDialog
-                  defaultType={config.type ?? "expense"}
-                  lockType={!!config.type}
-                  triggerLabel={
-                    config.type === "income" ? "Agregar ingreso" : "Agregar gasto"
-                  }
-                />
-              </EmptyContent>
-            </Empty>
-          }
-        />
-      </CardContent>
-    </Card>
-  )
-}
+  const addLabel =
+    typeFilter === "income"
+      ? "Nuevo ingreso"
+      : typeFilter === "expense"
+        ? "Nuevo gasto"
+        : "Nuevo movimiento"
 
-export function MovementsPanel() {
-  const [month, setMonth] = useState(() => new Date())
-  const [tab, setTab] = useState<Tab>("all")
+  const cardTitle =
+    typeFilter === "all"
+      ? "Todos los movimientos"
+      : typeFilter === "expense"
+        ? "Gastos"
+        : "Ingresos"
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -266,36 +244,88 @@ export function MovementsPanel() {
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} />
           <TransactionDialog
-            defaultType={tab === "income" ? "income" : "expense"}
-            lockType={tab !== "all"}
-            triggerLabel={
-              tab === "income"
-                ? "Nuevo ingreso"
-                : tab === "expense"
-                  ? "Nuevo gasto"
-                  : "Nuevo movimiento"
-            }
+            defaultType={typeFilter === "income" ? "income" : "expense"}
+            lockType={typeFilter !== "all"}
+            triggerLabel={addLabel}
           />
         </div>
       </section>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList>
-          {(Object.entries(TAB_CONFIG) as [Tab, (typeof TAB_CONFIG)[Tab]][]).map(
-            ([key, cfg]) => (
-              <TabsTrigger key={key} value={key}>
-                {cfg.label}
-              </TabsTrigger>
-            )
-          )}
-        </TabsList>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{cardTitle}</CardTitle>
+          <CardDescription className="flex flex-wrap gap-3">
+            <span>
+              {rows.length} registro{rows.length !== 1 ? "s" : ""}
+            </span>
+            {(typeFilter === "all" || typeFilter === "income") &&
+              totals.income > 0 && (
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  +{formatCurrency(totals.income)}
+                </span>
+              )}
+            {(typeFilter === "all" || typeFilter === "expense") &&
+              totals.expense > 0 && (
+                <span className="font-medium text-destructive">
+                  -{formatCurrency(totals.expense)}
+                </span>
+              )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={rows}
+            isLoading={query.isLoading}
+            searchPlaceholder="Buscar por descripción o categoría..."
+            toolbar={
+              <TypeFilterBar value={typeFilter} onChange={setTypeFilter} />
+            }
+            emptyState={
+              <Empty className="bg-muted/20">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <WalletCardsIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>
+                    {typeFilter === "income"
+                      ? "Sin ingresos este mes"
+                      : typeFilter === "expense"
+                        ? "Sin gastos este mes"
+                        : "Sin movimientos este mes"}
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    {typeFilter === "income"
+                      ? "Registra tu primer ingreso para controlar tus entradas."
+                      : typeFilter === "expense"
+                        ? "Registra tu primer gasto para controlar tus egresos."
+                        : "Registra tu primer ingreso o gasto para ver el resumen."}
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <TransactionDialog
+                    defaultType={typeFilter === "income" ? "income" : "expense"}
+                    lockType={typeFilter !== "all"}
+                    triggerLabel={addLabel}
+                  />
+                </EmptyContent>
+              </Empty>
+            }
+          />
+        </CardContent>
+      </Card>
 
-        {(Object.keys(TAB_CONFIG) as Tab[]).map((key) => (
-          <TabsContent key={key} value={key} className="mt-4">
-            <MovementsTable tab={key} month={month} />
-          </TabsContent>
-        ))}
-      </Tabs>
+      <TransactionDialog
+        transaction={editTransaction ?? undefined}
+        open={!!editTransaction}
+        onOpenChange={(o) => !o && setEditTransaction(null)}
+      />
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(o) => !o && setDeleteId(null)}
+        description="Se eliminará este movimiento permanentemente."
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+      />
     </main>
   )
 }

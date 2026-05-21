@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/alert-dialog"
 
 type ConfirmDialogProps = {
-  trigger: React.ReactNode
+  trigger?: React.ReactNode
   title?: string
   description?: string
   confirmLabel?: string
   onConfirm: () => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function ConfirmDialog({
@@ -26,10 +28,18 @@ export function ConfirmDialog({
   description = "Esta acción no se puede deshacer.",
   confirmLabel = "Eliminar",
   onConfirm,
+  open,
+  onOpenChange,
 }: ConfirmDialogProps) {
+  const isControlled = open !== undefined
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialog
+      open={isControlled ? open : undefined}
+      onOpenChange={isControlled ? onOpenChange : undefined}
+    >
+      {!isControlled && trigger && (
+        <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

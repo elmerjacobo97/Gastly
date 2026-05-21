@@ -63,6 +63,8 @@ type TransactionDialogProps = {
   triggerLabel?: string
   trigger?: React.ReactNode
   transaction?: Transaction
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 function getToday() {
@@ -99,9 +101,14 @@ export function TransactionDialog({
   triggerLabel = "Nuevo movimiento",
   trigger,
   transaction,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: TransactionDialogProps) {
   const isEditing = !!transaction
-  const [open, setOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false)
   const queryClient = useQueryClient()
 
@@ -188,7 +195,9 @@ export function TransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
