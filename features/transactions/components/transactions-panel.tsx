@@ -173,7 +173,7 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
                     variant="ghost"
                     className="text-muted-foreground hover:text-foreground"
                   >
-                    <PencilIcon className="size-3.5" />
+                    <PencilIcon />
                     <span className="sr-only">Editar</span>
                   </Button>
                 }
@@ -186,7 +186,7 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
                     className="text-muted-foreground hover:text-destructive"
                     disabled={deleteMutation.isPending}
                   >
-                    <Trash2Icon className="size-3.5" />
+                    <Trash2Icon />
                     <span className="sr-only">Eliminar</span>
                   </Button>
                 }

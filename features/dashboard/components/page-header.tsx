@@ -16,8 +16,7 @@ import { ThemeToggle } from "@/features/dashboard/components/theme-toggle"
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Resumen",
-  "/dashboard/expenses": "Gastos",
-  "/dashboard/income": "Ingresos",
+  "/dashboard/transactions": "Movimientos",
   "/dashboard/categories": "Categorías",
   "/dashboard/budget": "Presupuesto",
   "/dashboard/reports": "Reportes",

@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -51,9 +52,9 @@ interface DataTableProps<TData, TValue> {
 }
 
 function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
-  if (sorted === "asc") return <ArrowUpIcon className="ml-1.5 inline size-3.5" />
-  if (sorted === "desc") return <ArrowDownIcon className="ml-1.5 inline size-3.5" />
-  return <ArrowUpDownIcon className="ml-1.5 inline size-3.5 opacity-40" />
+  if (sorted === "asc") return <ArrowUpIcon className="ml-1.5 inline size-3" />
+  if (sorted === "desc") return <ArrowDownIcon className="ml-1.5 inline size-3" />
+  return <ArrowUpDownIcon className="ml-1.5 inline size-3 opacity-40" />
 }
 
 export function DataTable<TData, TValue>({
@@ -198,11 +199,13 @@ export function DataTable<TData, TValue>({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[10, 20, 50].map((size) => (
-                  <SelectItem key={size} value={String(size)} className="text-xs">
-                    {size}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  {[10, 20, 50].map((size) => (
+                    <SelectItem key={size} value={String(size)} className="text-xs">
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -214,7 +217,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronLeftIcon className="size-3.5" />
+              <ChevronLeftIcon />
               <span className="sr-only">Anterior</span>
             </Button>
             <span className="min-w-16 text-center text-xs text-muted-foreground">
@@ -227,7 +230,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              <ChevronRightIcon className="size-3.5" />
+              <ChevronRightIcon />
               <span className="sr-only">Siguiente</span>
             </Button>
           </div>

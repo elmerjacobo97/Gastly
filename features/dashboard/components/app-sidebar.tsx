@@ -1,9 +1,8 @@
 "use client"
 
 import {
+  ArrowLeftRightIcon,
   BarChart3Icon,
-  CreditCardIcon,
-  CircleDollarSignIcon,
   ChevronsUpDownIcon,
   LayoutDashboardIcon,
   LogOutIcon,
@@ -46,15 +45,9 @@ const navigationItems = [
     exact: true,
   },
   {
-    title: "Gastos",
-    href: "/dashboard/expenses",
-    icon: CreditCardIcon,
-    exact: false,
-  },
-  {
-    title: "Ingresos",
-    href: "/dashboard/income",
-    icon: CircleDollarSignIcon,
+    title: "Movimientos",
+    href: "/dashboard/transactions",
+    icon: ArrowLeftRightIcon,
     exact: false,
   },
   {
