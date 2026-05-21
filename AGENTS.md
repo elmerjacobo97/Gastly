@@ -21,3 +21,7 @@
 ## Tooling Notes
 - ESLint uses `eslint-config-next/core-web-vitals` plus `eslint-config-next/typescript` from `eslint.config.mjs`; generated Next output and `next-env.d.ts` are ignored.
 - `next.config.ts` is intentionally empty right now; avoid inventing config unless a change needs it.
+
+## Supabase
+- Supabase project: `gastly` (`yadpullgqqehyusoonxs`) in `sa-east-1`; chosen because the user is in Peru.
+- Local env uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`; keep real values out of git because `.env*` is ignored.
