@@ -39,7 +39,6 @@ import {
   getTransactions,
 } from "@/features/transactions/lib/transactions-api"
 import { formatCurrency } from "@/features/transactions/lib/format-transaction"
-import { TransactionDialog } from "@/features/transactions/components/transaction-dialog"
 import { MonthNav } from "@/features/transactions/components/month-nav"
 
 type TransactionsPanelProps = {
@@ -125,7 +124,6 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
         </div>
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} />
-          <TransactionDialog />
         </div>
       </section>
 
