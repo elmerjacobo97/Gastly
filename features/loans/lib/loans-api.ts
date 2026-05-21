@@ -98,6 +98,21 @@ export async function createLoan(values: LoanValues): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
+export async function updateLoan(id: string, values: LoanValues): Promise<void> {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from("loans")
+    .update({
+      person_name: values.personName,
+      amount: values.amount,
+      expected_on: values.expectedOn || null,
+      loaned_on: values.loanedOn,
+      notes: values.notes || null,
+    })
+    .eq("id", id)
+  if (error) throw new Error(error.message)
+}
+
 export async function deleteLoan(id: string): Promise<void> {
   const supabase = createClient()
   const { error } = await supabase.from("loans").delete().eq("id", id)

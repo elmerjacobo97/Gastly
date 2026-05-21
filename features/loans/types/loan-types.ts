@@ -1,3 +1,5 @@
+export type LoanDirection = "lent" | "borrowed"
+
 export type LoanPayment = {
   id: string
   loanId: string
