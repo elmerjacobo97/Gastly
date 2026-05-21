@@ -84,7 +84,7 @@ export function FinancialHealthCard({ usage, remaining }: FinancialHealthCardPro
         <Progress value={Math.min(usage, 100)} className={health.progressClassName} />
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <span>{health.description}</span>
-          <span className="tabular-nums">Disponible diario según el saldo libre</span>
+          <span>Basado en tu disponible libre</span>
         </div>
       </CardContent>
     </Card>
