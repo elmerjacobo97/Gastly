@@ -16,6 +16,7 @@ export type Transaction = {
   occurredOn: string
   notes: string | null
   category: Category | null
+  recurringExpenseId: string | null
 }
 
 export type TransactionSummary = {

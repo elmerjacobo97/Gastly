@@ -41,6 +41,7 @@ function mapTransaction(row: TransactionRow): Transaction {
     description: row.description,
     occurredOn: row.occurred_on,
     notes: row.notes,
+    recurringExpenseId: null,
     category: row.categories ? mapCategory(row.categories) : null,
   }
 }

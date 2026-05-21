@@ -5,9 +5,12 @@ import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  CalendarClockIcon,
   DownloadIcon,
+  PiggyBankIcon,
   PrinterIcon,
   ScaleIcon,
+  ShuffleIcon,
 } from "lucide-react"
 import {
   endOfYear,
@@ -37,6 +40,10 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
+import {
+  calculateSavings,
+  getMonthlyPlan,
+} from "@/features/monthly-plan/lib/monthly-plan-api"
 import { getAllTransactions } from "@/features/transactions/lib/charts-api"
 import { formatCurrency } from "@/features/transactions/lib/format-transaction"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
@@ -145,6 +152,23 @@ function computeCategoryBreakdown(transactions: Transaction[]) {
     .slice(0, 8)
 }
 
+function computeRecurringVsVariable(transactions: Transaction[]) {
+  const expenses = transactions.filter((t) => t.type === "expense")
+  const map: Record<string, { recurring: number; variable: number }> = {}
+  for (const t of expenses) {
+    const key = t.occurredOn.slice(0, 7)
+    if (!map[key]) map[key] = { recurring: 0, variable: 0 }
+    if (t.recurringExpenseId) map[key].recurring += t.amount
+    else map[key].variable += t.amount
+  }
+  return Object.entries(map)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, data]) => ({
+      month: format(new Date(key + "-15"), "MMM", { locale: es }),
+      ...data,
+    }))
+}
+
 function exportToCSV(transactions: Transaction[], filename: string) {
   const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Notas"]
   const rows = transactions.map((t) => [
@@ -171,8 +195,17 @@ function exportToCSV(transactions: Transaction[], filename: string) {
   URL.revokeObjectURL(url)
 }
 
+type TypeFilter = "all" | "expense" | "income"
+
+const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "expense", label: "Gastos" },
+  { value: "income", label: "Ingresos" },
+]
+
 export function ReportsPanel() {
   const [period, setPeriod] = useState<Period>("3m")
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("expense")
   const { from: fromDate, to: toDate, label: periodLabel } = getPeriodDates(period)
   const today = new Date()
   const filename = `gastly-reporte-${fromDate}-${toDate}.csv`
@@ -181,8 +214,13 @@ export function ReportsPanel() {
     queryKey: ["report-transactions", fromDate, toDate],
     queryFn: () => getAllTransactions({ from: fromDate, to: toDate }),
   })
+  const planQuery = useQuery({
+    queryKey: ["monthly-plan", today.toISOString().slice(0, 7)],
+    queryFn: () => getMonthlyPlan(today),
+  })
 
   const all = transactionsQuery.data ?? []
+  const plan = planQuery.data ?? null
   const totalIncome = all
     .filter((t) => t.type === "income")
     .reduce((s, t) => s + t.amount, 0)
@@ -193,8 +231,18 @@ export function ReportsPanel() {
   const savingsRate =
     totalIncome > 0 ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100) : 0
 
+  const recurringExpenses = all.filter((t) => t.type === "expense" && t.recurringExpenseId)
+  const variableExpenses = all.filter((t) => t.type === "expense" && !t.recurringExpenseId)
+  const totalRecurring = recurringExpenses.reduce((s, t) => s + t.amount, 0)
+  const totalVariable = variableExpenses.reduce((s, t) => s + t.amount, 0)
+
+  const monthlySavings = calculateSavings(plan)
+  const projectedAnnualSavings = monthlySavings * 12
+
   const monthlyData = computeMonthlyData(all)
-  const categoryBreakdown = computeCategoryBreakdown(all)
+  const recurringVsVariableData = computeRecurringVsVariable(all)
+  const filteredForBreakdown = typeFilter === "all" ? all : all.filter((t) => t.type === typeFilter)
+  const categoryBreakdown = computeCategoryBreakdown(filteredForBreakdown)
   const maxCategory = categoryBreakdown[0]?.amount ?? 1
 
   const summaryCards = [
@@ -217,6 +265,17 @@ export function ReportsPanel() {
       icon: ScaleIcon,
       positive: balance >= 0,
     },
+    ...(plan
+      ? [
+          {
+            title: "Ahorro proyectado anual",
+            value: formatCurrency(projectedAnnualSavings),
+            description: `${formatCurrency(monthlySavings)}/mes × 12`,
+            icon: PiggyBankIcon,
+            positive: true,
+          },
+        ]
+      : []),
   ]
 
   const isLoading = transactionsQuery.isLoading
@@ -268,7 +327,7 @@ export function ReportsPanel() {
       </section>
 
       {/* Summary cards */}
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading
           ? Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
@@ -383,10 +442,30 @@ export function ReportsPanel() {
         {/* Category breakdown */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Gastos por categoría</CardTitle>
-            <CardDescription>
-              Top categorías del período · {all.filter((t) => t.type === "expense").length} gastos
-            </CardDescription>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <CardTitle className="text-base">Gastos por categoría</CardTitle>
+                <CardDescription>
+                  Top categorías del período · {all.filter((t) => t.type === "expense").length} gastos
+                </CardDescription>
+              </div>
+              <div className="flex rounded-md border p-0.5 gap-0.5 print:hidden">
+                {TYPE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setTypeFilter(opt.value)}
+                    className={cn(
+                      "rounded px-2 py-1 text-xs font-medium transition-colors",
+                      opt.value === typeFilter
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -434,6 +513,144 @@ export function ReportsPanel() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Recurring vs Variable */}
+      <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Recurrentes vs variables</CardTitle>
+            <CardDescription>Composición mensual de los gastos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-52 w-full rounded-lg" />
+            ) : recurringVsVariableData.length === 0 ? (
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                Sin gastos en el período
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={210}>
+                <BarChart
+                  data={recurringVsVariableData}
+                  margin={{ top: 0, right: 0, left: -10, bottom: 0 }}
+                  barCategoryGap="30%"
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={formatCompact}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(val, name) => [
+                      formatCurrency(Number(val)),
+                      name === "recurring" ? "Recurrentes" : "Variables",
+                    ]}
+                    contentStyle={{
+                      background: "var(--popover)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-md)",
+                      color: "var(--popover-foreground)",
+                      fontSize: 13,
+                    }}
+                    cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+                  />
+                  <Bar dataKey="recurring" stackId="a" fill="var(--color-chart-3)" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="variable" stackId="a" fill="var(--color-chart-4)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="size-2.5 rounded-sm" style={{ background: "var(--color-chart-3)" }} />
+                Recurrentes
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="size-2.5 rounded-sm" style={{ background: "var(--color-chart-4)" }} />
+                Variables
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Composición de gastos</CardTitle>
+            <CardDescription>Recurrentes vs variables en el período</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex flex-col gap-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ) : totalExpenses === 0 ? (
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                Sin gastos en el período
+              </div>
+            ) : (
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <CalendarClockIcon className="size-4 text-muted-foreground" />
+                      <span>Recurrentes</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="tabular-nums font-medium text-foreground">{formatCurrency(totalRecurring)}</span>
+                      <span className="w-8 text-right tabular-nums">
+                        {totalExpenses > 0 ? Math.round((totalRecurring / totalExpenses) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${totalExpenses > 0 ? (totalRecurring / totalExpenses) * 100 : 0}%`,
+                        background: "var(--color-chart-3)",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <ShuffleIcon className="size-4 text-muted-foreground" />
+                      <span>Variables</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="tabular-nums font-medium text-foreground">{formatCurrency(totalVariable)}</span>
+                      <span className="w-8 text-right tabular-nums">
+                        {totalExpenses > 0 ? Math.round((totalVariable / totalExpenses) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${totalExpenses > 0 ? (totalVariable / totalExpenses) * 100 : 0}%`,
+                        background: "var(--color-chart-4)",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+                  {recurringExpenses.length} pago{recurringExpenses.length !== 1 ? "s" : ""} recurrente{recurringExpenses.length !== 1 ? "s" : ""} · {variableExpenses.length} gasto{variableExpenses.length !== 1 ? "s" : ""} variable{variableExpenses.length !== 1 ? "s" : ""}
+                </div>
               </div>
             )}
           </CardContent>

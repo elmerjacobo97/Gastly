@@ -121,7 +121,7 @@ export async function getAllTransactions(opts?: {
   let query = supabase
     .from("transactions")
     .select(
-      "id, type, amount, description, occurred_on, notes, categories(id, name, type, color, icon)"
+      "id, type, amount, description, occurred_on, notes, recurring_expense_id, categories(id, name, type, color, icon)"
     )
     .order("occurred_on", { ascending: false })
     .limit(1000)
@@ -146,6 +146,7 @@ export async function getAllTransactions(opts?: {
       description: row.description as string,
       occurredOn: row.occurred_on as string,
       notes: row.notes as string | null,
+      recurringExpenseId: (row.recurring_expense_id as string | null) ?? null,
       category: cat
         ? { ...cat, type: cat.type as "expense" | "income" }
         : null,
