@@ -7,6 +7,7 @@ import {
   CheckCircle2Icon,
   CreditCardIcon,
   MoreHorizontalIcon,
+  PencilIcon,
   Trash2Icon,
 } from "lucide-react"
 import { useState } from "react"
@@ -45,6 +46,8 @@ import {
   getInstallmentPurchases,
   getMonthInstallments,
 } from "@/features/installments/lib/installments-api"
+import { type InstallmentPurchase } from "@/features/installments/types/installment-types"
+import { EditInstallmentDialog } from "@/features/installments/components/edit-installment-dialog"
 import { InstallmentDialog } from "@/features/installments/components/installment-dialog"
 import { PayInstallmentsDialog } from "@/features/installments/components/pay-installments-dialog"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -52,6 +55,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 export function InstallmentsPanel() {
   const [month, setMonth] = useState(() => new Date())
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [editPurchase, setEditPurchase] = useState<InstallmentPurchase | null>(null)
   const queryClient = useQueryClient()
 
   const purchasesQuery = useQuery({
@@ -235,6 +239,10 @@ export function InstallmentsPanel() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => setEditPurchase(purchase)}>
+                          <PencilIcon />
+                          Editar
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onSelect={() => setDeleteId(purchase.id)}
                           className="text-destructive focus:text-destructive"
@@ -352,6 +360,14 @@ export function InstallmentsPanel() {
             </Empty>
           </CardContent>
         </Card>
+      )}
+
+      {editPurchase && (
+        <EditInstallmentDialog
+          purchase={editPurchase}
+          open={!!editPurchase}
+          onOpenChange={(o) => !o && setEditPurchase(null)}
+        />
       )}
 
       <ConfirmDialog

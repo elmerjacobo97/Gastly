@@ -139,6 +139,62 @@ export async function createInstallmentPurchase(
   if (paymentsError) throw new Error(paymentsError.message)
 }
 
+export async function updateInstallmentPurchase(
+  id: string,
+  values: InstallmentPurchaseValues,
+  paidCount: number
+): Promise<void> {
+  const supabase = createClient()
+
+  type UpdateData = {
+    description: string
+    category_id: string
+    notes: string | null
+    installment_amount?: number
+    total_installments?: number
+    first_payment_on?: string
+  }
+
+  const updateData: UpdateData = {
+    description: values.description,
+    category_id: values.categoryId,
+    notes: values.notes || null,
+  }
+
+  if (paidCount === 0) {
+    const installmentAmount =
+      Math.round((values.totalAmount / values.totalInstallments) * 100) / 100
+
+    updateData.installment_amount = installmentAmount
+    updateData.total_installments = values.totalInstallments
+    updateData.first_payment_on = values.firstPaymentOn
+
+    const { error: delError } = await supabase
+      .from("installment_payments")
+      .delete()
+      .eq("purchase_id", id)
+    if (delError) throw new Error(delError.message)
+
+    const firstDate = new Date(`${values.firstPaymentOn}T12:00:00`)
+    const payments = Array.from({ length: values.totalInstallments }, (_, i) => ({
+      purchase_id: id,
+      payment_number: i + 1,
+      due_on: format(addMonths(firstDate, i), "yyyy-MM-dd"),
+      amount: installmentAmount,
+      paid_externally: i < (values.alreadyPaid ?? 0),
+    }))
+
+    const { error: insError } = await supabase.from("installment_payments").insert(payments)
+    if (insError) throw new Error(insError.message)
+  }
+
+  const { error } = await supabase
+    .from("installment_purchases")
+    .update(updateData)
+    .eq("id", id)
+  if (error) throw new Error(error.message)
+}
+
 export async function deleteInstallmentPurchase(id: string): Promise<void> {
   const supabase = createClient()
   const { error } = await supabase.from("installment_purchases").delete().eq("id", id)
