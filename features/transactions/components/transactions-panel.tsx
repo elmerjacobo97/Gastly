@@ -197,6 +197,9 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
     .sort((a, b) => a.days - b.days)
     .slice(0, 8)
 
+  const summaryIsLoading =
+    transactionsQuery.isLoading || planQuery.isLoading || fixedExpensesQuery.isLoading
+
   const intelligentAlerts = [
     ...dueAlerts.map(({ expense, days }) => ({
       key: `due-${expense.id}`,
@@ -329,18 +332,18 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
 
       {/* Summary cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {transactionsQuery.isLoading
-          ? Array.from({ length: 4 }).map((_, i) => (
+        {summaryIsLoading
+          ? Array.from({ length: 5 }).map((_, i) => (
               <Card key={i}>
                 <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                  <div className="flex flex-col gap-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-7 w-28" />
+                  <div className="min-w-0 flex-1">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="mt-2 h-8 w-28" />
                   </div>
                   <Skeleton className="size-10 rounded-xl" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-full max-w-40" />
                 </CardContent>
               </Card>
             ))
@@ -603,7 +606,7 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex flex-col gap-2">
-                  {categoryQuery.data.map((cat, i) => (
+                  {categoryQuery.data.map((cat) => (
                     <div
                       key={cat.name}
                       className="flex items-center justify-between text-xs"
