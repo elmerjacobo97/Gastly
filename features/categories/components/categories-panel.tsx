@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { CategoryDialog } from "@/features/categories/components/category-dialog"
 import {
+  createSuggestedCategories,
   deleteCategory,
   getCategories,
 } from "@/features/categories/lib/categories-api"
@@ -75,6 +76,17 @@ export function CategoriesPanel() {
     },
     onError: (error) => {
       toast.error("No se pudo eliminar la categoría", { description: error.message })
+    },
+  })
+
+  const suggestedMutation = useMutation({
+    mutationFn: createSuggestedCategories,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["categories"] })
+      toast.success("Categorías sugeridas creadas")
+    },
+    onError: (error) => {
+      toast.error("No se pudieron crear las categorías", { description: error.message })
     },
   })
 
@@ -152,7 +164,15 @@ export function CategoriesPanel() {
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <CategoryDialog />
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    disabled={suggestedMutation.isPending}
+                    onClick={() => suggestedMutation.mutate()}
+                  >
+                    Crear categorías sugeridas
+                  </Button>
+                  <CategoryDialog />
+                </div>
               </EmptyContent>
             </Empty>
           ) : (
