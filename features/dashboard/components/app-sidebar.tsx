@@ -1,3 +1,5 @@
+"use client"
+
 import {
   ChartNoAxesColumnIncreasingIcon,
   CircleDollarSignIcon,
@@ -9,6 +11,7 @@ import {
   TagsIcon,
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
@@ -32,7 +35,6 @@ const navigationItems = [
     title: "Resumen",
     href: "/dashboard",
     icon: LayoutDashboardIcon,
-    isActive: true,
     isAvailable: true,
   },
   {
@@ -44,6 +46,7 @@ const navigationItems = [
   {
     title: "Ingresos",
     icon: CircleDollarSignIcon,
+    isAvailable: false,
     badge: "Pronto",
   },
   {
@@ -55,16 +58,20 @@ const navigationItems = [
   {
     title: "Presupuesto",
     icon: PiggyBankIcon,
+    isAvailable: false,
     badge: "Pronto",
   },
   {
     title: "Reportes",
     icon: ChartNoAxesColumnIncreasingIcon,
+    isAvailable: false,
     badge: "Pronto",
   },
 ]
 
 export function AppSidebar() {
+  const pathname = usePathname()
+
   return (
     <Sidebar collapsible="offcanvas" variant="inset">
       <SidebarHeader>
@@ -83,8 +90,11 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   {item.isAvailable ? (
-                    <SidebarMenuButton asChild isActive={item.isActive}>
-                      <Link href={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.href}
+                    >
+                      <Link href={item.href!}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>

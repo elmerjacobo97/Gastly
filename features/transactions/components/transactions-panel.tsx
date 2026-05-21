@@ -25,6 +25,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -107,22 +108,37 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map((card) => (
-          <Card key={card.title}>
-            <CardHeader className="flex flex-row items-center justify-between gap-2">
-              <div>
-                <CardDescription>{card.title}</CardDescription>
-                <CardTitle className="mt-2 text-2xl">{card.value}</CardTitle>
-              </div>
-              <div className="grid size-10 place-items-center rounded-xl bg-muted text-muted-foreground">
-                <card.icon />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{card.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {summaryQuery.isLoading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between gap-2">
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-7 w-28" />
+                  </div>
+                  <Skeleton className="size-10 rounded-xl" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-4 w-32" />
+                </CardContent>
+              </Card>
+            ))
+          : summaryCards.map((card) => (
+              <Card key={card.title}>
+                <CardHeader className="flex flex-row items-center justify-between gap-2">
+                  <div>
+                    <CardDescription>{card.title}</CardDescription>
+                    <CardTitle className="mt-2 text-2xl">{card.value}</CardTitle>
+                  </div>
+                  <div className="grid size-10 place-items-center rounded-xl bg-muted text-muted-foreground">
+                    <card.icon />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{card.description}</p>
+                </CardContent>
+              </Card>
+            ))}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
@@ -134,7 +150,36 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {transactions.length > 0 ? (
+            {transactionsQuery.isLoading ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descripcion</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead className="text-right">Monto</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="ml-auto h-4 w-16" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : transactions.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>

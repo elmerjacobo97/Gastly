@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { PlusIcon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -245,6 +245,9 @@ export function TransactionDialog({
             form="transaction-form"
             type="submit"
           >
+            {mutation.isPending && (
+              <Loader2Icon className="mr-2 size-4 animate-spin" />
+            )}
             Guardar movimiento
           </Button>
         </DialogFooter>
