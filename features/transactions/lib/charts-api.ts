@@ -17,6 +17,8 @@ export type CategoryTotal = {
   value: number
   color: string
   fill: string
+  icon: string
+  categoryColor: string
 }
 
 export async function getMonthlyTotals(months = 6): Promise<MonthlyTotal[]> {
@@ -67,7 +69,7 @@ export async function getCategoryTotals(month?: Date): Promise<CategoryTotal[]> 
 
   const { data, error } = await supabase
     .from("transactions")
-    .select("amount, categories(name, color)")
+    .select("amount, categories(name, color, icon)")
     .eq("type", "expense")
     .gte("occurred_on", start)
     .lte("occurred_on", end)
@@ -75,16 +77,16 @@ export async function getCategoryTotals(month?: Date): Promise<CategoryTotal[]> 
 
   if (error) throw new Error(error.message)
 
-  const totals = new Map<string, { value: number; color: string }>()
+  const totals = new Map<string, { value: number; color: string; icon: string }>()
 
   for (const tx of data ?? []) {
     const rawCat = tx.categories
     const cat = Array.isArray(rawCat)
-      ? (rawCat[0] as { name: string; color: string } | undefined)
-      : (rawCat as { name: string; color: string } | null)
+      ? (rawCat[0] as { name: string; color: string; icon: string } | undefined)
+      : (rawCat as { name: string; color: string; icon: string } | null)
     const name = cat?.name ?? "Sin categoría"
     const color = cat?.color ?? "gray"
-    const entry = totals.get(name) ?? { value: 0, color }
+    const entry = totals.get(name) ?? { value: 0, color, icon: cat?.icon ?? "tag" }
     entry.value += Number(tx.amount)
     totals.set(name, entry)
   }
@@ -100,11 +102,13 @@ export async function getCategoryTotals(month?: Date): Promise<CategoryTotal[]> 
   return Array.from(totals.entries())
     .sort((a, b) => b[1].value - a[1].value)
     .slice(0, 5)
-    .map(([name, { value }], i) => ({
+    .map(([name, { value, color, icon }], i) => ({
       name,
       value,
       color: CHART_COLORS[i % CHART_COLORS.length],
       fill: CHART_COLORS[i % CHART_COLORS.length],
+      icon,
+      categoryColor: color,
     }))
 }
 
@@ -117,7 +121,7 @@ export async function getAllTransactions(opts?: {
   let query = supabase
     .from("transactions")
     .select(
-      "id, type, amount, description, occurred_on, notes, categories(id, name, type, color)"
+      "id, type, amount, description, occurred_on, notes, categories(id, name, type, color, icon)"
     )
     .order("occurred_on", { ascending: false })
     .limit(1000)
@@ -133,8 +137,8 @@ export async function getAllTransactions(opts?: {
   return (data ?? []).map((row) => {
     const rawCat = row.categories
     const cat = Array.isArray(rawCat)
-      ? (rawCat[0] as { id: string; name: string; type: string; color: string } | undefined) ?? null
-      : (rawCat as { id: string; name: string; type: string; color: string } | null)
+      ? (rawCat[0] as { id: string; name: string; type: string; color: string; icon: string } | undefined) ?? null
+      : (rawCat as { id: string; name: string; type: string; color: string; icon: string } | null)
     return {
       id: row.id as string,
       type: row.type as "expense" | "income",

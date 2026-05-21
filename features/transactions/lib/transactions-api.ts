@@ -26,10 +26,11 @@ type CategoryRow = {
   name: string
   type: TransactionType
   color: string
+  icon: string
 }
 
 function mapCategory(row: CategoryRow): Category {
-  return { id: row.id, name: row.name, type: row.type, color: row.color }
+  return { id: row.id, name: row.name, type: row.type, color: row.color, icon: row.icon }
 }
 
 function mapTransaction(row: TransactionRow): Transaction {
@@ -48,7 +49,7 @@ export async function getCategories(type?: TransactionType) {
   const supabase = createClient()
   let query = supabase
     .from("categories")
-    .select("id, name, type, color")
+    .select("id, name, type, color, icon")
     .order("name", { ascending: true })
 
   if (type) query = query.eq("type", type)
@@ -66,7 +67,7 @@ export async function getTransactions(opts?: {
   let query = supabase
     .from("transactions")
     .select(
-      "id, type, amount, description, occurred_on, notes, categories(id, name, type, color)"
+      "id, type, amount, description, occurred_on, notes, categories(id, name, type, color, icon)"
     )
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })

@@ -35,6 +35,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { CategoryDialog } from "@/features/categories/components/category-dialog"
 import {
   deleteCategory,
@@ -50,18 +51,6 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "expense", label: "Gastos" },
   { value: "income", label: "Ingresos" },
 ]
-
-const COLOR_MAP: Record<string, string> = {
-  red: "#ef4444", orange: "#f97316", amber: "#f59e0b", yellow: "#eab308",
-  lime: "#84cc16", green: "#22c55e", emerald: "#10b981", teal: "#14b8a6",
-  cyan: "#06b6d4", sky: "#0ea5e9", blue: "#3b82f6", indigo: "#6366f1",
-  violet: "#8b5cf6", purple: "#a855f7", pink: "#ec4899", rose: "#f43f5e",
-  fuchsia: "#d946ef", slate: "#64748b", zinc: "#71717a", gray: "#6b7280",
-}
-
-function getColorHex(color: string) {
-  return COLOR_MAP[color.toLowerCase()] ?? color
-}
 
 export function CategoriesPanel() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
@@ -173,12 +162,7 @@ export function CategoriesPanel() {
                   key={category.id}
                   className="group flex items-center gap-3 rounded-xl border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
                 >
-                  <div
-                    className="grid size-9 shrink-0 place-items-center rounded-lg text-sm font-semibold text-white shadow-sm"
-                    style={{ background: getColorHex(category.color) }}
-                  >
-                    {category.name[0].toUpperCase()}
-                  </div>
+                  <CategoryIconBadge icon={category.icon} color={category.color} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{category.name}</p>
                     <p className="text-xs text-muted-foreground">

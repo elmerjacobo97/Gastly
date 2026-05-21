@@ -44,6 +44,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
+import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import {
   createTransaction,
   getCategories,
@@ -336,11 +337,16 @@ export function TransactionDialog({
                                 >
                                   <CheckIcon
                                     className={cn(
-                                      "mr-2 size-4",
+                                      "size-4",
                                       field.value === cat.name
                                         ? "opacity-100"
                                         : "opacity-0"
                                     )}
+                                  />
+                                  <CategoryIconBadge
+                                    icon={cat.icon}
+                                    color={cat.color}
+                                    className="size-7 rounded-md"
                                   />
                                   {cat.name}
                                 </CommandItem>

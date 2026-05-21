@@ -24,6 +24,7 @@ import {
 } from "recharts"
 
 import { Badge } from "@/components/ui/badge"
+import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import {
   Card,
   CardContent,
@@ -429,11 +430,10 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
                       className="flex items-center justify-between text-xs"
                     >
                       <div className="flex items-center gap-1.5">
-                        <div
-                          className="size-2.5 shrink-0 rounded-sm"
-                          style={{
-                            background: CHART_COLORS[i % CHART_COLORS.length],
-                          }}
+                        <CategoryIconBadge
+                          icon={cat.icon}
+                          color={cat.categoryColor}
+                          className="size-6 rounded-md"
                         />
                         <span className="text-muted-foreground">{cat.name}</span>
                       </div>

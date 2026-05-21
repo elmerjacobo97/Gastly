@@ -36,6 +36,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { getAllTransactions } from "@/features/transactions/lib/charts-api"
 import { formatCurrency } from "@/features/transactions/lib/format-transaction"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
@@ -121,16 +122,24 @@ function computeMonthlyData(transactions: Transaction[]) {
 function computeCategoryBreakdown(transactions: Transaction[]) {
   const expenses = transactions.filter((t) => t.type === "expense")
   const total = expenses.reduce((s, t) => s + t.amount, 0)
-  const map: Record<string, number> = {}
+  const map: Record<string, { amount: number; color: string; icon: string }> = {}
   for (const t of expenses) {
     const name = t.category?.name ?? "Sin categoría"
-    map[name] = (map[name] ?? 0) + t.amount
+    const entry = map[name] ?? {
+      amount: 0,
+      color: t.category?.color ?? "gray",
+      icon: t.category?.icon ?? "tag",
+    }
+    entry.amount += t.amount
+    map[name] = entry
   }
   return Object.entries(map)
-    .map(([name, amount]) => ({
+    .map(([name, entry]) => ({
       name,
-      amount,
-      pct: total > 0 ? Math.round((amount / total) * 100) : 0,
+      amount: entry.amount,
+      color: entry.color,
+      icon: entry.icon,
+      pct: total > 0 ? Math.round((entry.amount / total) * 100) : 0,
     }))
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 8)
@@ -402,11 +411,10 @@ export function ReportsPanel() {
                   <div key={cat.name} className="flex flex-col gap-1">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5">
-                        <div
-                          className="size-2 shrink-0 rounded-full"
-                          style={{
-                            background: CHART_COLORS[i % CHART_COLORS.length],
-                          }}
+                        <CategoryIconBadge
+                          icon={cat.icon}
+                          color={cat.color}
+                          className="size-6 rounded-md"
                         />
                         <span className="font-medium">{cat.name}</span>
                       </div>

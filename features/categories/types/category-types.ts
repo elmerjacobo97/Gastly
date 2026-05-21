@@ -5,5 +5,6 @@ export type Category = {
   name: string
   type: TransactionType
   color: string
+  icon: string
   createdAt: string
 }

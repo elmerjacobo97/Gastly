@@ -6,6 +6,7 @@ export type Budget = {
     id: string;
     name: string;
     color: string;
+    icon: string;
   };
   spent: number;
 };

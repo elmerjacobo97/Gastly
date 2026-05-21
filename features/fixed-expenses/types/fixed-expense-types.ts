@@ -2,6 +2,7 @@ export type FixedExpenseCategory = {
   id: string
   name: string
   color: string
+  icon: string
 }
 
 export type FixedExpense = {

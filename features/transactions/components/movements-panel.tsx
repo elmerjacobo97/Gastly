@@ -37,6 +37,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { MonthNav } from "@/components/month-nav"
+import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { TransactionDialog } from "@/features/transactions/components/transaction-dialog"
 import {
   deleteTransaction,
@@ -150,8 +151,17 @@ export function MovementsPanel() {
         accessorFn: (row) => row.category?.name ?? "Sin categoría",
         id: "category",
         header: "Categoría",
-        cell: ({ getValue }) => (
-          <span className="text-muted-foreground">{getValue() as string}</span>
+        cell: ({ row, getValue }) => (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            {row.original.category && (
+              <CategoryIconBadge
+                icon={row.original.category.icon}
+                color={row.original.category.color}
+                className="size-6 rounded-md"
+              />
+            )}
+            <span>{getValue() as string}</span>
+          </div>
         ),
       },
       {

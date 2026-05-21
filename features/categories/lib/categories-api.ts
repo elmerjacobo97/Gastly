@@ -8,6 +8,7 @@ type CategoryRow = {
   name: string
   type: TransactionType
   color: string
+  icon: string
   created_at: string
 }
 
@@ -17,6 +18,7 @@ function mapCategory(row: CategoryRow): Category {
     name: row.name,
     type: row.type,
     color: row.color,
+    icon: row.icon,
     createdAt: row.created_at,
   }
 }
@@ -25,7 +27,7 @@ export async function getCategories() {
   const supabase = createClient()
   const { data, error } = await supabase
     .from("categories")
-    .select("id, name, type, color, created_at")
+    .select("id, name, type, color, icon, created_at")
     .order("type", { ascending: true })
     .order("name", { ascending: true })
     .returns<CategoryRow[]>()
@@ -53,6 +55,7 @@ export async function createCategory(values: CategoryValues) {
     name: values.name,
     type: values.type,
     color: values.color,
+    icon: values.icon,
   })
 
   if (error) {
@@ -66,12 +69,12 @@ export async function createCategory(values: CategoryValues) {
 
 export async function updateCategory(
   id: string,
-  values: Pick<CategoryValues, "name" | "color">
+  values: Pick<CategoryValues, "name" | "color" | "icon">
 ) {
   const supabase = createClient()
   const { error } = await supabase
     .from("categories")
-    .update({ name: values.name, color: values.color })
+    .update({ name: values.name, color: values.color, icon: values.icon })
     .eq("id", id)
 
   if (error) {

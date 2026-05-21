@@ -29,6 +29,16 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  CategoryIcon,
+  categoryIconOptions,
+} from "@/features/categories/components/category-icon"
+import {
   createCategory,
   updateCategory,
 } from "@/features/categories/lib/categories-api"
@@ -85,6 +95,7 @@ export function CategoryDialog({
       name: category?.name ?? "",
       type: category?.type ?? "expense",
       color: category?.color ?? "blue",
+      icon: category?.icon ?? "tag",
     },
   })
 
@@ -94,6 +105,7 @@ export function CategoryDialog({
         name: category?.name ?? "",
         type: category?.type ?? "expense",
         color: category?.color ?? "blue",
+        icon: category?.icon ?? "tag",
       })
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -102,13 +114,16 @@ export function CategoryDialog({
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ["categories"] }),
       queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+      queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] }),
+      queryClient.invalidateQueries({ queryKey: ["budgets"] }),
+      queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
     ])
 
   const createMutation = useMutation({
     mutationFn: createCategory,
     onSuccess: async () => {
       await invalidate()
-      form.reset({ name: "", type: "expense", color: "blue" })
+      form.reset({ name: "", type: "expense", color: "blue", icon: "tag" })
       setOpen(false)
       toast.success("Categoría creada")
     },
@@ -132,6 +147,7 @@ export function CategoryDialog({
 
   const mutation = isEditing ? updateMutation : createMutation
   const selectedColor = form.watch("color")
+  const selectedIcon = form.watch("icon")
 
   function onSubmit(values: CategoryValues) {
     mutation.mutate(values)
@@ -231,6 +247,41 @@ export function CategoryDialog({
                       </button>
                     ))}
                   </div>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="icon"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Icono</FieldLabel>
+                  <TooltipProvider>
+                    <div className="grid grid-cols-5 gap-2 rounded-lg border p-3 sm:grid-cols-6">
+                      {categoryIconOptions.map((option) => (
+                        <Tooltip key={option.value}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => field.onChange(option.value)}
+                              className={cn(
+                                "grid size-9 place-items-center rounded-lg border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                selectedIcon === option.value &&
+                                  "border-foreground bg-muted text-foreground"
+                              )}
+                            >
+                              <CategoryIcon name={option.value} className="size-4" />
+                              <span className="sr-only">{option.label}</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>{option.label}</TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  </TooltipProvider>
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}

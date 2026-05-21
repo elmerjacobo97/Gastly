@@ -11,6 +11,7 @@ type BudgetRow = {
     id: string;
     name: string;
     color: string;
+    icon: string;
   };
 };
 
@@ -23,6 +24,7 @@ function mapBudget(row: BudgetRow & { spent?: number | string }): Budget {
       id: row.categories.id,
       name: row.categories.name,
       color: row.categories.color,
+      icon: row.categories.icon,
     },
     spent: Number(row.spent ?? 0),
   };
@@ -41,7 +43,7 @@ export async function getBudgets(month?: Date) {
       id,
       amount,
       month,
-      categories!inner(id, name, color)
+      categories!inner(id, name, color, icon)
     `
     )
     .eq("month", monthStr)

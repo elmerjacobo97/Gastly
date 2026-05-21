@@ -22,6 +22,7 @@ type FixedExpenseRow = {
     id: string
     name: string
     color: string
+    icon: string
   } | null
 }
 
@@ -96,7 +97,7 @@ export async function getFixedExpenses(month?: Date) {
       billing_day,
       notes,
       is_active,
-      categories(id, name, color)
+      categories(id, name, color, icon)
     `
     )
     .order("is_active", { ascending: false })

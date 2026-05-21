@@ -67,6 +67,7 @@ import {
 } from "@/components/ui/popover"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
+import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { FixedExpenseDialog } from "@/features/fixed-expenses/components/fixed-expense-dialog"
 import {
   deleteFixedExpense,
@@ -85,20 +86,6 @@ import {
   formatDate,
 } from "@/features/transactions/lib/format-transaction"
 import { cn } from "@/lib/utils"
-
-const COLOR_MAP: Record<string, string> = {
-  red: "#ef4444", orange: "#f97316", amber: "#f59e0b", yellow: "#eab308",
-  lime: "#84cc16", green: "#22c55e", emerald: "#10b981", teal: "#14b8a6",
-  cyan: "#06b6d4", sky: "#0ea5e9", blue: "#3b82f6", indigo: "#6366f1",
-  violet: "#8b5cf6", purple: "#a855f7", pink: "#ec4899", rose: "#f43f5e",
-  fuchsia: "#d946ef", slate: "#64748b", zinc: "#71717a", gray: "#6b7280",
-  default: "#64748b",
-}
-
-function getColorHex(color?: string) {
-  if (!color) return COLOR_MAP.default
-  return COLOR_MAP[color.toLowerCase()] ?? color
-}
 
 function isRelevantForMonth(expense: FixedExpense, monthKey: string) {
   if (expense.frequency === "monthly") return true
@@ -358,7 +345,6 @@ export function FixedExpensesPanel() {
             ))
           : expenses.map((expense) => {
               const isPaid = !!expense.paidOn
-              const color = getColorHex(expense.category?.color)
 
               return (
                 <Card
@@ -368,10 +354,13 @@ export function FixedExpensesPanel() {
                   <CardHeader className="flex flex-row items-start justify-between pb-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <div
-                          className="size-3 rounded-full"
-                          style={{ background: color }}
-                        />
+                        {expense.category && (
+                          <CategoryIconBadge
+                            icon={expense.category.icon}
+                            color={expense.category.color}
+                            className="size-7 rounded-md"
+                          />
+                        )}
                         <CardTitle className="truncate text-base">
                           {expense.description}
                         </CardTitle>

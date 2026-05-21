@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/empty"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { formatCurrency } from "@/features/transactions/lib/format-transaction"
 import { deleteBudget, getBudgets } from "@/features/budget/lib/budget-api"
 import { BudgetDialog } from "@/features/budget/components/budget-dialog"
@@ -168,6 +169,11 @@ export function BudgetPanel() {
                   <CardHeader className="flex flex-row items-start justify-between pb-3">
                     <div>
                       <div className="flex items-center gap-2">
+                        <CategoryIconBadge
+                          icon={budget.category.icon}
+                          color={budget.category.color}
+                          className="size-7 rounded-md"
+                        />
                         <CardTitle className="text-base">
                           {budget.category.name}
                         </CardTitle>
