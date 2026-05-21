@@ -74,6 +74,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
@@ -323,7 +324,8 @@ function PaymentHistoryDialog({
             </p>
           ) : (
             <>
-              <div className="flex flex-col divide-y max-h-72 overflow-y-auto">
+              <ScrollArea className="max-h-72">
+                <div className="flex flex-col divide-y">
                 {entries.map((entry) => (
                   <div key={entry.id} className="flex items-start justify-between gap-3 py-3 first:pt-0">
                     <div className="min-w-0">
@@ -340,7 +342,8 @@ function PaymentHistoryDialog({
                     </span>
                   </div>
                 ))}
-              </div>
+                </div>
+              </ScrollArea>
               <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm">
                 <span className="text-muted-foreground">Promedio mensual</span>
                 <span className="font-semibold tabular-nums">{formatCurrency(avg)}</span>

@@ -4,9 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Loader2Icon, PencilIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Loader2Icon } from 'lucide-react';
+import { useEffect } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { getCategories } from '@/features/categories/lib/categories-api';
 import {
   installmentPurchaseSchema,
@@ -95,10 +96,10 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
     },
   });
 
-  const totalAmount = form.watch('totalAmount');
-  const totalInstallments = form.watch('totalInstallments');
-  const firstPaymentOn = form.watch('firstPaymentOn');
-  const alreadyPaid = form.watch('alreadyPaid');
+  const totalAmount = useWatch({ control: form.control, name: 'totalAmount' });
+  const totalInstallments = useWatch({ control: form.control, name: 'totalInstallments' });
+  const firstPaymentOn = useWatch({ control: form.control, name: 'firstPaymentOn' });
+  const alreadyPaid = useWatch({ control: form.control, name: 'alreadyPaid' });
 
   const installmentAmount =
     totalAmount > 0 && totalInstallments > 0 ? Math.round((totalAmount / totalInstallments) * 100) / 100 : 0;
@@ -107,7 +108,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Editar compra en cuotas</DialogTitle>
           <DialogDescription>
@@ -116,13 +117,15 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
               : 'Ya hay pagos registrados — solo puedes editar descripción, categoría y notas.'}
           </DialogDescription>
         </DialogHeader>
-        <form
-          id="edit-installment-form"
-          className="flex flex-col gap-5"
-          noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v as InstallmentPurchaseValues))}
-        >
-          <FieldGroup>
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="px-4 pb-1">
+            <form
+              id="edit-installment-form"
+              className="flex flex-col gap-5"
+              noValidate
+              onSubmit={form.handleSubmit((v) => mutation.mutate(v as InstallmentPurchaseValues))}
+            >
+              <FieldGroup>
             <Controller
               control={form.control}
               name="description"
@@ -280,8 +283,10 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                 </Field>
               )}
             />
-          </FieldGroup>
-        </form>
+              </FieldGroup>
+            </form>
+          </div>
+        </ScrollArea>
         <DialogFooter>
           <Button disabled={mutation.isPending} form="edit-installment-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}

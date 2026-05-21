@@ -6,7 +6,7 @@ import { addMonths, format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { getCategories } from "@/features/categories/lib/categories-api"
 import {
   installmentPurchaseSchema,
@@ -107,10 +108,10 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
     },
   })
 
-  const totalAmount = form.watch("totalAmount")
-  const totalInstallments = form.watch("totalInstallments")
-  const firstPaymentOn = form.watch("firstPaymentOn")
-  const alreadyPaid = form.watch("alreadyPaid")
+  const totalAmount = useWatch({ control: form.control, name: "totalAmount" })
+  const totalInstallments = useWatch({ control: form.control, name: "totalInstallments" })
+  const firstPaymentOn = useWatch({ control: form.control, name: "firstPaymentOn" })
+  const alreadyPaid = useWatch({ control: form.control, name: "alreadyPaid" })
 
   const installmentAmount =
     totalAmount > 0 && totalInstallments > 0
@@ -128,20 +129,22 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
           <span className="hidden sm:inline">{triggerLabel}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Nueva compra en cuotas</DialogTitle>
           <DialogDescription>
             Registra una compra financiada. El sistema generará las cuotas automáticamente.
           </DialogDescription>
         </DialogHeader>
-        <form
-          id="installment-form"
-          className="flex flex-col gap-5"
-          noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v as InstallmentPurchaseValues))}
-        >
-          <FieldGroup>
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="px-4 pb-1">
+            <form
+              id="installment-form"
+              className="flex flex-col gap-5"
+              noValidate
+              onSubmit={form.handleSubmit((v) => mutation.mutate(v as InstallmentPurchaseValues))}
+            >
+              <FieldGroup>
             <Controller
               control={form.control}
               name="description"
@@ -297,8 +300,10 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
                 </Field>
               )}
             />
-          </FieldGroup>
-        </form>
+              </FieldGroup>
+            </form>
+          </div>
+        </ScrollArea>
         <DialogFooter>
           <Button disabled={mutation.isPending} form="installment-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}

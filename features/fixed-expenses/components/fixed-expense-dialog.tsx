@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { CalendarIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -35,6 +35,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import {
   createFixedExpense,
@@ -122,7 +123,7 @@ export function FixedExpenseDialog({
   })
 
   const mutation = isEditing ? updateMutation : createMutation
-  const frequency = form.watch("frequency")
+  const frequency = useWatch({ control: form.control, name: "frequency" })
 
   function onSubmit(values: FixedExpenseValues) {
     mutation.mutate(values)
@@ -138,7 +139,7 @@ export function FixedExpenseDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Editar pago recurrente" : "Nuevo pago recurrente"}
@@ -147,13 +148,15 @@ export function FixedExpenseDialog({
             Registra pagos recurrentes con monto estimado. El monto real se define al pagar.
           </DialogDescription>
         </DialogHeader>
-        <form
-          className="flex flex-col gap-5"
-          id="fixed-expense-form"
-          noValidate
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FieldGroup>
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="px-4 pb-1">
+            <form
+              className="flex flex-col gap-5"
+              id="fixed-expense-form"
+              noValidate
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <FieldGroup>
             <Controller
               control={form.control}
               name="description"
@@ -333,8 +336,10 @@ export function FixedExpenseDialog({
                 </Field>
               )}
             />
-          </FieldGroup>
-        </form>
+              </FieldGroup>
+            </form>
+          </div>
+        </ScrollArea>
         <DialogFooter>
           <Button disabled={mutation.isPending} form="fixed-expense-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}

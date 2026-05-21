@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, ChevronsUpDownIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -43,6 +43,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { getCategories } from "@/features/categories/lib/categories-api"
@@ -124,8 +125,8 @@ export function TransactionDialog({
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const currentType = form.watch("type") as TransactionType
-  const currentCategoryName = form.watch("categoryName")
+  const currentType = useWatch({ control: form.control, name: "type" }) as TransactionType
+  const currentCategoryName = useWatch({ control: form.control, name: "categoryName" })
 
   const categoriesQuery = useQuery({
     queryKey: ["categories", currentType],
@@ -199,7 +200,7 @@ export function TransactionDialog({
       {!isControlled && (
         <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Editar movimiento" : "Nuevo movimiento"}
@@ -210,13 +211,15 @@ export function TransactionDialog({
               : "Registra un ingreso o gasto para mantener tu balance al día."}
           </DialogDescription>
         </DialogHeader>
-        <form
-          className="flex flex-col gap-5"
-          id="transaction-form"
-          noValidate
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FieldGroup>
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="px-4 pb-1">
+            <form
+              className="flex flex-col gap-5"
+              id="transaction-form"
+              noValidate
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <FieldGroup>
             <Controller
               control={form.control}
               name="type"
@@ -422,8 +425,10 @@ export function TransactionDialog({
                 </Field>
               )}
             />
-          </FieldGroup>
-        </form>
+              </FieldGroup>
+            </form>
+          </div>
+        </ScrollArea>
         <DialogFooter>
           <Button
             disabled={isPending}
