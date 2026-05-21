@@ -1,6 +1,7 @@
 "use server"
 
 import { redirect } from "next/navigation"
+import { headers } from "next/headers"
 
 import {
   type LoginValues,
@@ -57,11 +58,14 @@ export async function signUp(
     return { error: parsedValues.error.issues[0]?.message ?? "Datos invalidos." }
   }
 
+  const headersList = await headers()
+  const origin = headersList.get("origin")
   const supabase = await createClient()
   const { error } = await supabase.auth.signUp({
     email: parsedValues.data.email,
     password: parsedValues.data.password,
     options: {
+      emailRedirectTo: origin ? `${origin}/auth/confirm` : undefined,
       data: {
         full_name: parsedValues.data.fullName,
       },
@@ -72,7 +76,7 @@ export async function signUp(
     return { error: error.message }
   }
 
-  redirect("/dashboard")
+  redirect(`/check-email?email=${encodeURIComponent(parsedValues.data.email)}`)
 }
 
 export async function signOut() {

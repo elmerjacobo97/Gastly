@@ -51,9 +51,11 @@ export function SignUpForm({ error }: SignUpFormProps) {
 
   return (
     <Card className="w-full max-w-md border-foreground/10 shadow-xl shadow-foreground/5">
-      <CardHeader>
+      <CardHeader className="text-center">
         <CardTitle>Crea tu cuenta</CardTitle>
-        <CardDescription>Empieza con una cuenta privada para guardar la informacion de tus gatos.</CardDescription>
+        <CardDescription>
+          Configura tu espacio privado para organizar tus gastos personales.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="flex flex-col gap-5" id="sign-up-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>

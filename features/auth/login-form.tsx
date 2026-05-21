@@ -50,9 +50,11 @@ export function LoginForm({ error, next }: LoginFormProps) {
 
   return (
     <Card className="w-full max-w-md border-foreground/10 shadow-xl shadow-foreground/5">
-      <CardHeader>
+      <CardHeader className="text-center">
         <CardTitle>Entra a tu cuenta</CardTitle>
-        <CardDescription>Administra tus gatos, visitas veterinarias y recordatorios.</CardDescription>
+        <CardDescription>
+          Continua revisando tus movimientos y presupuesto personal.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="flex flex-col gap-5" id="login-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>

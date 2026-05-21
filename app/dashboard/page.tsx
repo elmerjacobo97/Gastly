@@ -1,4 +1,4 @@
-import { CatIcon } from "lucide-react"
+import { WalletCardsIcon } from "lucide-react"
 import { redirect } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -30,7 +30,7 @@ export default async function DashboardPage() {
         <div>
           <p className="text-sm font-medium text-muted-foreground">Gastly</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-            Panel de gatos
+            Panel de gastos
           </h1>
         </div>
         <form action={signOut}>
@@ -44,15 +44,15 @@ export default async function DashboardPage() {
         <Empty className="border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <CatIcon />
+              <WalletCardsIcon />
             </EmptyMedia>
             <EmptyTitle>Auth listo para {user.email}</EmptyTitle>
             <EmptyDescription>
-              El siguiente paso es crear las tablas y el modulo para registrar tus gatos.
+              El siguiente paso es crear las tablas y el modulo para registrar gastos, ingresos y categorias.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button disabled>Agregar gato</Button>
+            <Button disabled>Agregar gasto</Button>
           </EmptyContent>
         </Empty>
       </section>
