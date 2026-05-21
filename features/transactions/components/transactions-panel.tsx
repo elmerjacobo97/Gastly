@@ -35,6 +35,7 @@ import { formatCurrency } from "@/lib/format"
 
 type TransactionsPanelProps = {
   userEmail?: string
+  userName?: string
 }
 
 function isRelevantRecurringPayment(expense: FixedExpense, monthKey: string) {
@@ -54,10 +55,11 @@ function getDaysUntil(date: string) {
   return Math.round(diffMs / (1000 * 60 * 60 * 24))
 }
 
-export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
+export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProps) {
   const today = new Date()
   const monthKey = today.toISOString().slice(0, 7)
   const monthLabel = format(today, "MMMM yyyy", { locale: es })
+  const displayName = userName || userEmail?.split("@")[0] || "Usuario"
 
   const transactionsQuery = useQuery({
     queryKey: ["transactions", monthKey],
@@ -171,7 +173,7 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
             {monthLabel}
           </Badge>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-            Hola, {userEmail?.split("@")[0] ?? "Usuario"}
+            Hola, {displayName}
           </h1>
           <p className="text-sm text-muted-foreground">
             Resumen de tus finanzas de este mes.

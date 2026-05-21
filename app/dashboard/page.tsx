@@ -7,5 +7,10 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  return <TransactionsPanel userEmail={user?.email} />
+  return (
+    <TransactionsPanel
+      userEmail={user?.email}
+      userName={user?.user_metadata?.full_name as string | undefined}
+    />
+  )
 }
