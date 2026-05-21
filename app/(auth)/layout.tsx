@@ -14,11 +14,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           <Logo className="justify-center" />
           <div className="flex flex-col gap-2">
             <h1 className="text-balance text-3xl font-semibold tracking-tight">
-              Controla tus gastos sin complicarte
+              Tus finanzas, ordenadas
             </h1>
             <p className="max-w-sm text-pretty text-sm leading-6 text-muted-foreground">
-              Registra ingresos, gastos y categorias en un espacio personal
-              privado, ordenado y protegido con Supabase.
+              Registra ingresos y gastos, define presupuestos por categoría y
+              mantén el control de tu dinero mes a mes.
             </p>
           </div>
         </header>

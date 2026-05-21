@@ -1,146 +1,188 @@
-'use client';
+"use client"
 
 import {
-  ChartNoAxesColumnIncreasingIcon,
-  CircleDollarSignIcon,
+  BarChart3Icon,
   CreditCardIcon,
+  CircleDollarSignIcon,
   LayoutDashboardIcon,
+  LogOutIcon,
   PiggyBankIcon,
-  PlusIcon,
-  SettingsIcon,
   TagsIcon,
-} from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+  UserIcon,
+} from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
-import { Logo } from '@/components/logo';
-import { Button } from '@/components/ui/button';
+import { Logo } from "@/components/logo"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { signOut } from '@/features/auth/server/actions';
+  SidebarSeparator,
+} from "@/components/ui/sidebar"
+import { signOut } from "@/features/auth/server/actions"
 
 const navigationItems = [
   {
-    title: 'Resumen',
-    href: '/dashboard',
+    title: "Resumen",
+    href: "/dashboard",
     icon: LayoutDashboardIcon,
-    isAvailable: true,
+    exact: true,
   },
   {
-    title: 'Gastos',
-    href: '/dashboard/expenses',
+    title: "Gastos",
+    href: "/dashboard/expenses",
     icon: CreditCardIcon,
-    isAvailable: true,
+    exact: false,
   },
   {
     title: "Ingresos",
     href: "/dashboard/income",
     icon: CircleDollarSignIcon,
-    isAvailable: true,
+    exact: false,
   },
   {
-    title: 'Categorias',
-    href: '/dashboard/categories',
+    title: "Categorías",
+    href: "/dashboard/categories",
     icon: TagsIcon,
-    isAvailable: true,
+    exact: false,
   },
   {
-    title: 'Presupuesto',
+    title: "Presupuesto",
+    href: "/dashboard/budget",
     icon: PiggyBankIcon,
-    isAvailable: false,
-    badge: 'Pronto',
+    exact: false,
   },
   {
-    title: 'Reportes',
-    icon: ChartNoAxesColumnIncreasingIcon,
-    isAvailable: false,
-    badge: 'Pronto',
+    title: "Reportes",
+    href: "/dashboard/reports",
+    icon: BarChart3Icon,
+    exact: false,
   },
-];
+]
 
-export function AppSidebar() {
-  const pathname = usePathname();
+type AppSidebarProps = {
+  userEmail?: string
+  userName?: string
+}
+
+export function AppSidebar({ userEmail, userName }: AppSidebarProps) {
+  const pathname = usePathname()
+
+  function isActive(href: string, exact: boolean) {
+    if (exact) return pathname === href
+    return pathname.startsWith(href)
+  }
+
+  const displayName = userName || userEmail?.split("@")[0] || "Usuario"
+  const initials = displayName.slice(0, 2).toUpperCase()
 
   return (
     <Sidebar collapsible="offcanvas" variant="inset">
-      <SidebarHeader>
+      <SidebarHeader className="pb-0">
         <Link
-          className="flex rounded-lg p-2 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className="flex rounded-lg p-2 transition-colors hover:bg-sidebar-accent"
           href="/dashboard"
         >
           <Logo markClassName="size-9 rounded-xl shadow-none" />
         </Link>
       </SidebarHeader>
+
+      <SidebarSeparator className="my-2" />
+
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Finanzas</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  {item.isAvailable ? (
-                    <SidebarMenuButton asChild isActive={pathname === item.href!}>
-                      <Link href={item.href!}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  ) : (
-                    <SidebarMenuButton disabled>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href, item.exact)}
+                  >
+                    <Link href={item.href}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  )}
-                  {item.badge ? <SidebarMenuBadge>{item.badge}</SidebarMenuBadge> : null}
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Acciones</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton disabled>
-                  <PlusIcon />
-                  <span>Nuevo gasto</span>
-                </SidebarMenuButton>
-                <SidebarMenuBadge>Pronto</SidebarMenuBadge>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton disabled>
-                  <SettingsIcon />
-                  <span>Configuracion</span>
-                </SidebarMenuButton>
-                <SidebarMenuBadge>Pronto</SidebarMenuBadge>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <form action={signOut}>
-              <Button className="w-full" type="submit" variant="outline">
-                Salir
-              </Button>
-            </form>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent"
+                >
+                  <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+                    {initials}
+                  </div>
+                  <div className="flex min-w-0 flex-col text-left leading-tight">
+                    <span className="truncate text-sm font-medium">
+                      {displayName}
+                    </span>
+                    {userEmail && (
+                      <span className="truncate text-xs text-muted-foreground">
+                        {userEmail}
+                      </span>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-56"
+                side="top"
+                align="start"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="flex flex-col gap-0.5">
+                  <span className="font-medium">{displayName}</span>
+                  {userEmail && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {userEmail}
+                    </span>
+                  )}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <form action={signOut} className="w-full">
+                    <Button
+                      className="h-auto w-full justify-start gap-2 p-0 font-normal"
+                      type="submit"
+                      variant="ghost"
+                    >
+                      <LogOutIcon className="size-4" />
+                      Cerrar sesión
+                    </Button>
+                  </form>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
-  );
+  )
 }

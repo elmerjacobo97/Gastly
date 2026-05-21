@@ -1,32 +1,33 @@
+import { redirect } from "next/navigation"
+
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar"
-import { ThemeToggle } from "@/features/dashboard/components/theme-toggle"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { PageHeader } from "@/features/dashboard/components/page-header"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { createClient } from "@/lib/supabase/server"
 
 type DashboardLayoutProps = {
   children: React.ReactNode
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default async function DashboardLayout({
+  children,
+}: DashboardLayoutProps) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/login")
+  }
+
+  const userName = user.user_metadata?.full_name as string | undefined
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar userEmail={user.email} userName={userName} />
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-          <SidebarTrigger className="md:hidden" />
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">Resumen financiero</span>
-            <span className="text-xs text-muted-foreground">
-              Control de gastos personales
-            </span>
-          </div>
-          <div className="ml-auto">
-            <ThemeToggle />
-          </div>
-        </header>
+        <PageHeader />
         {children}
       </SidebarInset>
     </SidebarProvider>

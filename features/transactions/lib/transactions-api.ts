@@ -1,3 +1,5 @@
+import { format, startOfMonth, endOfMonth } from "date-fns"
+
 import { createClient } from "@/lib/supabase/browser"
 import {
   type TransactionType,
@@ -27,12 +29,7 @@ type CategoryRow = {
 }
 
 function mapCategory(row: CategoryRow): Category {
-  return {
-    id: row.id,
-    name: row.name,
-    type: row.type,
-    color: row.color,
-  }
+  return { id: row.id, name: row.name, type: row.type, color: row.color }
 }
 
 function mapTransaction(row: TransactionRow): Transaction {
@@ -54,20 +51,17 @@ export async function getCategories(type?: TransactionType) {
     .select("id, name, type, color")
     .order("name", { ascending: true })
 
-  if (type) {
-    query = query.eq("type", type)
-  }
+  if (type) query = query.eq("type", type)
 
   const { data, error } = await query.returns<CategoryRow[]>()
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
+  if (error) throw new Error(error.message)
   return data.map(mapCategory)
 }
 
-export async function getTransactions(type?: TransactionType) {
+export async function getTransactions(opts?: {
+  type?: TransactionType
+  month?: Date
+}) {
   const supabase = createClient()
   let query = supabase
     .from("transactions")
@@ -76,39 +70,40 @@ export async function getTransactions(type?: TransactionType) {
     )
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(20)
+    .limit(100)
 
-  if (type) {
-    query = query.eq("type", type)
+  if (opts?.type) query = query.eq("type", opts.type)
+
+  if (opts?.month) {
+    query = query
+      .gte("occurred_on", format(startOfMonth(opts.month), "yyyy-MM-dd"))
+      .lte("occurred_on", format(endOfMonth(opts.month), "yyyy-MM-dd"))
   }
 
-  const { data, error } = await query
-    .returns<TransactionRow[]>()
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
+  const { data, error } = await query.returns<TransactionRow[]>()
+  if (error) throw new Error(error.message)
   return data.map(mapTransaction)
 }
 
-export async function getTransactionSummary(
-  type?: TransactionType
-): Promise<TransactionSummary> {
-  const transactions = await getTransactions(type)
+export function computeSummary(transactions: Transaction[]): TransactionSummary {
   const income = transactions
-    .filter((transaction) => transaction.type === "income")
-    .reduce((total, transaction) => total + transaction.amount, 0)
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + t.amount, 0)
   const expenses = transactions
-    .filter((transaction) => transaction.type === "expense")
-    .reduce((total, transaction) => total + transaction.amount, 0)
-
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + t.amount, 0)
   return {
     balance: income - expenses,
     income,
     expenses,
     budgetUsage: income > 0 ? Math.round((expenses / income) * 100) : 0,
   }
+}
+
+export async function deleteTransaction(id: string) {
+  const supabase = createClient()
+  const { error } = await supabase.from("transactions").delete().eq("id", id)
+  if (error) throw new Error(error.message)
 }
 
 export async function createTransaction(values: TransactionValues) {
@@ -119,25 +114,19 @@ export async function createTransaction(values: TransactionValues) {
   } = await supabase.auth.getUser()
 
   if (userError || !user) {
-    throw new Error("Debes iniciar sesion para crear movimientos.")
+    throw new Error("Debes iniciar sesión para registrar movimientos.")
   }
 
   const { data: category, error: categoryError } = await supabase
     .from("categories")
     .upsert(
-      {
-        user_id: user.id,
-        name: values.categoryName,
-        type: values.type,
-      },
+      { user_id: user.id, name: values.categoryName, type: values.type },
       { onConflict: "user_id,type,name" }
     )
     .select("id")
     .single()
 
-  if (categoryError) {
-    throw new Error(categoryError.message)
-  }
+  if (categoryError) throw new Error(categoryError.message)
 
   const { error } = await supabase.from("transactions").insert({
     user_id: user.id,
@@ -149,7 +138,5 @@ export async function createTransaction(values: TransactionValues) {
     notes: values.notes || null,
   })
 
-  if (error) {
-    throw new Error(error.message)
-  }
+  if (error) throw new Error(error.message)
 }

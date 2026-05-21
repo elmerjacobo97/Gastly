@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { PlusIcon } from "lucide-react"
+import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -17,7 +17,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
   NativeSelect,
@@ -28,13 +33,27 @@ import {
   type CategoryValues,
   categorySchema,
 } from "@/features/categories/schemas/category-schemas"
+import { cn } from "@/lib/utils"
 
 const colorOptions = [
-  { value: "blue", label: "Azul" },
-  { value: "violet", label: "Violeta" },
-  { value: "green", label: "Verde" },
-  { value: "amber", label: "Ambar" },
-  { value: "rose", label: "Rosa" },
+  { value: "red", hex: "#ef4444" },
+  { value: "orange", hex: "#f97316" },
+  { value: "amber", hex: "#f59e0b" },
+  { value: "yellow", hex: "#eab308" },
+  { value: "lime", hex: "#84cc16" },
+  { value: "green", hex: "#22c55e" },
+  { value: "emerald", hex: "#10b981" },
+  { value: "teal", hex: "#14b8a6" },
+  { value: "cyan", hex: "#06b6d4" },
+  { value: "sky", hex: "#0ea5e9" },
+  { value: "blue", hex: "#3b82f6" },
+  { value: "indigo", hex: "#6366f1" },
+  { value: "violet", hex: "#8b5cf6" },
+  { value: "purple", hex: "#a855f7" },
+  { value: "pink", hex: "#ec4899" },
+  { value: "rose", hex: "#f43f5e" },
+  { value: "slate", hex: "#64748b" },
+  { value: "zinc", hex: "#71717a" },
 ]
 
 export function CategoryDialog() {
@@ -57,10 +76,10 @@ export function CategoryDialog() {
       ])
       form.reset({ name: "", type: "expense", color: "blue" })
       setOpen(false)
-      toast.success("Categoria creada")
+      toast.success("Categoría creada")
     },
     onError: (error) => {
-      toast.error("No se pudo crear la categoria", {
+      toast.error("No se pudo crear la categoría", {
         description: error.message,
       })
     },
@@ -70,19 +89,21 @@ export function CategoryDialog() {
     mutation.mutate(values)
   }
 
+  const selectedColor = form.watch("color")
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <PlusIcon data-icon="inline-start" />
-          Nueva categoria
+          Nueva categoría
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nueva categoria</DialogTitle>
+          <DialogTitle>Nueva categoría</DialogTitle>
           <DialogDescription>
-            Crea una categoria para clasificar tus gastos o ingresos.
+            Crea una categoría para clasificar tus gastos o ingresos.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -104,9 +125,9 @@ export function CategoryDialog() {
                     id="category-name"
                     placeholder="Ej. Comida, sueldo, transporte"
                   />
-                  {fieldState.invalid ? (
+                  {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
-                  ) : null}
+                  )}
                 </Field>
               )}
             />
@@ -125,9 +146,9 @@ export function CategoryDialog() {
                     <NativeSelectOption value="expense">Gasto</NativeSelectOption>
                     <NativeSelectOption value="income">Ingreso</NativeSelectOption>
                   </NativeSelect>
-                  {fieldState.invalid ? (
+                  {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
-                  ) : null}
+                  )}
                 </Field>
               )}
             />
@@ -136,30 +157,45 @@ export function CategoryDialog() {
               name="color"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="category-color">Color</FieldLabel>
-                  <NativeSelect
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    className="w-full"
-                    id="category-color"
-                  >
+                  <FieldLabel>Color</FieldLabel>
+                  <div className="flex flex-wrap gap-2 rounded-lg border p-3">
                     {colorOptions.map((option) => (
-                      <NativeSelectOption key={option.value} value={option.value}>
-                        {option.label}
-                      </NativeSelectOption>
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => field.onChange(option.value)}
+                        className={cn(
+                          "grid size-7 place-items-center rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          selectedColor === option.value &&
+                            "ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                        )}
+                        style={{ background: option.hex }}
+                        title={option.value}
+                      >
+                        {selectedColor === option.value && (
+                          <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
+                        )}
+                      </button>
                     ))}
-                  </NativeSelect>
-                  {fieldState.invalid ? (
+                  </div>
+                  {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
-                  ) : null}
+                  )}
                 </Field>
               )}
             />
           </FieldGroup>
         </form>
         <DialogFooter>
-          <Button disabled={mutation.isPending} form="category-form" type="submit">
-            Guardar categoria
+          <Button
+            disabled={mutation.isPending}
+            form="category-form"
+            type="submit"
+          >
+            {mutation.isPending && (
+              <Loader2Icon className="size-4 animate-spin" />
+            )}
+            Guardar categoría
           </Button>
         </DialogFooter>
       </DialogContent>

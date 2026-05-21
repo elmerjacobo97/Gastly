@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation"
-
-import { TransactionsPanel } from "@/features/transactions/components/transactions-panel"
 import { createClient } from "@/lib/supabase/server"
+import { TransactionsPanel } from "@/features/transactions/components/transactions-panel"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -9,9 +7,5 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect("/login")
-  }
-
-  return <TransactionsPanel userEmail={user.email} />
+  return <TransactionsPanel userEmail={user?.email} />
 }

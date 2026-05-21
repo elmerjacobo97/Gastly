@@ -49,29 +49,29 @@
 }
 
 :root {
-  --background: oklch(0.987 0.012 265.65);
-  --foreground: oklch(0.177 0.035 265.65);
+  --background: oklch(0.984 0.008 265.65);
+  --foreground: oklch(0.15 0.03 265.65);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.177 0.035 265.65);
+  --card-foreground: oklch(0.15 0.03 265.65);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.177 0.035 265.65);
-  --primary: oklch(0.4332 0.2237 265.65);
+  --popover-foreground: oklch(0.15 0.03 265.65);
+  --primary: oklch(0.46 0.22 265.65);
   --primary-foreground: oklch(0.985 0.006 265.65);
-  --secondary: oklch(0.947 0.025 265.65);
+  --secondary: oklch(0.942 0.022 265.65);
   --secondary-foreground: oklch(0.245 0.075 265.65);
-  --muted: oklch(0.953 0.018 265.65);
-  --muted-foreground: oklch(0.486 0.05 265.65);
-  --accent: oklch(0.925 0.045 292);
+  --muted: oklch(0.948 0.015 265.65);
+  --muted-foreground: oklch(0.5 0.045 265.65);
+  --accent: oklch(0.925 0.042 292);
   --accent-foreground: oklch(0.29 0.115 292);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.891 0.028 265.65);
-  --input: oklch(0.891 0.028 265.65);
-  --ring: oklch(0.4332 0.2237 265.65);
-  --chart-1: oklch(0.4332 0.2237 265.65);
-  --chart-2: oklch(0.62 0.18 292);
-  --chart-3: oklch(0.66 0.15 210);
-  --chart-4: oklch(0.72 0.16 155);
-  --chart-5: oklch(0.74 0.17 75);
+  --destructive: oklch(0.55 0.235 27.325);
+  --border: oklch(0.885 0.022 265.65);
+  --input: oklch(0.885 0.022 265.65);
+  --ring: oklch(0.46 0.22 265.65);
+  --chart-1: oklch(0.55 0.22 265.65);
+  --chart-2: oklch(0.62 0.19 25);
+  --chart-3: oklch(0.66 0.15 160);
+  --chart-4: oklch(0.72 0.16 75);
+  --chart-5: oklch(0.68 0.17 292);
   --radius: 0.625rem;
   --sidebar: oklch(0.972 0.018 265.65);
   --sidebar-foreground: oklch(0.177 0.035 265.65);
@@ -126,5 +126,18 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+  [data-sidebar="sidebar"],
+  header {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
   }
 }
