@@ -134,9 +134,17 @@ export function MovementsPanel() {
       {
         accessorKey: "description",
         header: "Descripción",
-        cell: ({ row }) => (
-          <span className="font-medium">{row.getValue("description")}</span>
-        ),
+        cell: ({ row }) => {
+          const t = row.original
+          return (
+            <div className="flex flex-col">
+              <span className="font-medium">{t.description}</span>
+              {t.notes && (
+                <span className="text-xs text-muted-foreground">{t.notes}</span>
+              )}
+            </div>
+          )
+        },
       },
       {
         accessorFn: (row) => row.category?.name ?? "Sin categoría",

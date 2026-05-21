@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
@@ -8,7 +9,13 @@ import {
   PrinterIcon,
   ScaleIcon,
 } from "lucide-react"
-import { format } from "date-fns"
+import {
+  endOfYear,
+  format,
+  startOfMonth,
+  startOfYear,
+  subMonths,
+} from "date-fns"
 import { es } from "date-fns/locale"
 import {
   Bar,
@@ -30,11 +37,57 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getAllTransactions } from "@/features/transactions/lib/charts-api"
-import {
-  formatCurrency,
-  formatDate,
-} from "@/features/transactions/lib/format-transaction"
+import { formatCurrency } from "@/features/transactions/lib/format-transaction"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
+import { cn } from "@/lib/utils"
+
+type Period = "1m" | "3m" | "6m" | "year" | "last-year"
+
+const PERIOD_OPTIONS: { value: Period; label: string }[] = [
+  { value: "1m", label: "Este mes" },
+  { value: "3m", label: "3 meses" },
+  { value: "6m", label: "6 meses" },
+  { value: "year", label: "Este año" },
+  { value: "last-year", label: "Año pasado" },
+]
+
+function getPeriodDates(period: Period): { from: string; to: string; label: string } {
+  const today = new Date()
+  switch (period) {
+    case "1m":
+      return {
+        from: format(startOfMonth(today), "yyyy-MM-dd"),
+        to: format(today, "yyyy-MM-dd"),
+        label: format(today, "MMMM yyyy", { locale: es }),
+      }
+    case "3m":
+      return {
+        from: format(startOfMonth(subMonths(today, 2)), "yyyy-MM-dd"),
+        to: format(today, "yyyy-MM-dd"),
+        label: "Últimos 3 meses",
+      }
+    case "6m":
+      return {
+        from: format(startOfMonth(subMonths(today, 5)), "yyyy-MM-dd"),
+        to: format(today, "yyyy-MM-dd"),
+        label: "Últimos 6 meses",
+      }
+    case "year":
+      return {
+        from: format(startOfYear(today), "yyyy-MM-dd"),
+        to: format(today, "yyyy-MM-dd"),
+        label: `Año ${today.getFullYear()}`,
+      }
+    case "last-year": {
+      const lastYear = new Date(today.getFullYear() - 1, 0, 1)
+      return {
+        from: format(startOfYear(lastYear), "yyyy-MM-dd"),
+        to: format(endOfYear(lastYear), "yyyy-MM-dd"),
+        label: `Año ${today.getFullYear() - 1}`,
+      }
+    }
+  }
+}
 
 const CHART_COLORS = [
   "var(--color-chart-1)",
@@ -110,15 +163,10 @@ function exportToCSV(transactions: Transaction[], filename: string) {
 }
 
 export function ReportsPanel() {
+  const [period, setPeriod] = useState<Period>("3m")
+  const { from: fromDate, to: toDate, label: periodLabel } = getPeriodDates(period)
   const today = new Date()
-  const fromDate = format(
-    new Date(today.getFullYear(), today.getMonth() - 2, 1),
-    "yyyy-MM-dd"
-  )
-  const toDate = format(
-    new Date(today.getFullYear(), today.getMonth() + 1, 0),
-    "yyyy-MM-dd"
-  )
+  const filename = `gastly-reporte-${fromDate}-${toDate}.csv`
 
   const transactionsQuery = useQuery({
     queryKey: ["report-transactions", fromDate, toDate],
@@ -139,9 +187,6 @@ export function ReportsPanel() {
   const monthlyData = computeMonthlyData(all)
   const categoryBreakdown = computeCategoryBreakdown(all)
   const maxCategory = categoryBreakdown[0]?.amount ?? 1
-
-  const monthLabel = format(today, "MMMM yyyy", { locale: es })
-  const filename = `gastly-reporte-${format(today, "yyyy-MM")}.csv`
 
   const summaryCards = [
     {
@@ -170,28 +215,46 @@ export function ReportsPanel() {
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6 print:p-0">
       {/* Header */}
-      <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-            Reportes
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground capitalize">
-            {monthLabel} · Últimos 3 meses
-          </p>
+      <section className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Reportes
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground capitalize">
+              {periodLabel}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 print:hidden">
+            <Button
+              variant="outline"
+              disabled={all.length === 0}
+              onClick={() => exportToCSV(all, filename)}
+            >
+              <DownloadIcon />
+              Exportar CSV
+            </Button>
+            <Button variant="outline" onClick={() => window.print()}>
+              <PrinterIcon />
+              Imprimir
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 print:hidden">
-          <Button
-            variant="outline"
-            disabled={all.length === 0}
-            onClick={() => exportToCSV(all, filename)}
-          >
-            <DownloadIcon />
-            Exportar CSV
-          </Button>
-          <Button variant="outline" onClick={() => window.print()}>
-            <PrinterIcon />
-            Imprimir
-          </Button>
+        <div className="flex rounded-md border p-0.5 gap-0.5 w-fit print:hidden">
+          {PERIOD_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setPeriod(opt.value)}
+              className={cn(
+                "rounded px-3 py-1.5 text-xs font-medium transition-colors",
+                opt.value === period
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </section>
 

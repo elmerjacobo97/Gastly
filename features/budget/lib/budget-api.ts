@@ -104,6 +104,12 @@ export async function createBudget(values: BudgetValues) {
   }
 }
 
+export async function updateBudget(id: string, amount: number) {
+  const supabase = createClient();
+  const { error } = await supabase.from("budgets").update({ amount }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function deleteBudget(id: string) {
   const supabase = createClient();
   const { error } = await supabase.from("budgets").delete().eq("id", id);

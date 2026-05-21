@@ -22,7 +22,10 @@ import {
   YAxis,
 } from "recharts"
 
+import Link from "next/link"
+
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -30,6 +33,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   getCategoryTotals,
@@ -109,6 +120,48 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
       positive: summary.budgetUsage < 80,
     },
   ]
+
+  const isEmpty = !transactionsQuery.isLoading && transactions.length === 0
+
+  if (isEmpty) {
+    return (
+      <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+        <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1.5">
+            <Badge className="w-fit capitalize" variant="secondary">
+              {monthLabel}
+            </Badge>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Hola, {userEmail?.split("@")[0] ?? "Usuario"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Resumen de tus finanzas de este mes.
+            </p>
+          </div>
+        </section>
+        <Card>
+          <CardContent className="pt-6">
+            <Empty className="border bg-muted/20">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <WalletCardsIcon />
+                </EmptyMedia>
+                <EmptyTitle>Sin movimientos este mes</EmptyTitle>
+                <EmptyDescription>
+                  Registra tu primer ingreso o gasto para ver el resumen de tus finanzas.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button asChild>
+                  <Link href="/dashboard/transactions">Ir a Movimientos</Link>
+                </Button>
+              </EmptyContent>
+            </Empty>
+          </CardContent>
+        </Card>
+      </main>
+    )
+  }
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
