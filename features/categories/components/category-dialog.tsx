@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Tooltip,
   TooltipContent,
@@ -146,8 +147,8 @@ export function CategoryDialog({
   })
 
   const mutation = isEditing ? updateMutation : createMutation
-  const selectedColor = form.watch("color")
-  const selectedIcon = form.watch("icon")
+  const selectedColor = useWatch({ control: form.control, name: "color" })
+  const selectedIcon = useWatch({ control: form.control, name: "icon" })
 
   function onSubmit(values: CategoryValues) {
     mutation.mutate(values)
@@ -163,7 +164,7 @@ export function CategoryDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto]">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Editar categoría" : "Nueva categoría"}
@@ -174,13 +175,15 @@ export function CategoryDialog({
               : "Crea una categoría para clasificar tus gastos o ingresos."}
           </DialogDescription>
         </DialogHeader>
-        <form
-          className="flex flex-col gap-5"
-          id="category-form"
-          noValidate
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FieldGroup>
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="px-4 pb-1">
+            <form
+              className="flex flex-col gap-5"
+              id="category-form"
+              noValidate
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <FieldGroup>
             <Controller
               control={form.control}
               name="name"
@@ -288,8 +291,10 @@ export function CategoryDialog({
                 </Field>
               )}
             />
-          </FieldGroup>
-        </form>
+              </FieldGroup>
+            </form>
+          </div>
+        </ScrollArea>
         <DialogFooter>
           <Button disabled={mutation.isPending} form="category-form" type="submit">
             {mutation.isPending && (

@@ -26,6 +26,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import {
   payInstallmentsSchema,
@@ -96,7 +97,7 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
           Registrar pago del 20 de {format(month, "MMMM", { locale: es })}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="capitalize">Pago de tarjeta · {monthLabel}</DialogTitle>
           <DialogDescription>
@@ -104,57 +105,62 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col divide-y rounded-lg border">
-          {pending.map(({ payment, purchase }) => (
-            <div key={payment.id} className="flex items-center gap-3 px-3 py-2.5">
-              {purchase.category && (
-                <CategoryIconBadge
-                  icon={purchase.category.icon}
-                  color={purchase.category.color}
-                  className="size-8 shrink-0 rounded-lg"
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{purchase.description}</p>
-                <p className="text-xs text-muted-foreground">
-                  Cuota {payment.paymentNumber}/{purchase.totalInstallments}
-                </p>
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="px-4 pb-1">
+            <div className="flex flex-col divide-y rounded-lg border">
+              {pending.map(({ payment, purchase }) => (
+                <div key={payment.id} className="flex items-center gap-3 px-3 py-2.5">
+                  {purchase.category && (
+                    <CategoryIconBadge
+                      icon={purchase.category.icon}
+                      color={purchase.category.color}
+                      className="size-8 shrink-0 rounded-lg"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{purchase.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cuota {payment.paymentNumber}/{purchase.totalInstallments}
+                    </p>
+                  </div>
+                  <span className="text-sm font-medium tabular-nums shrink-0">
+                    {formatCurrency(payment.amount)}
+                  </span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between px-3 py-2.5 font-semibold">
+                <span className="text-sm">Total</span>
+                <span className="tabular-nums">{formatCurrency(total)}</span>
               </div>
-              <span className="text-sm font-medium tabular-nums shrink-0">
-                {formatCurrency(payment.amount)}
-              </span>
             </div>
-          ))}
-          <div className="flex items-center justify-between px-3 py-2.5 font-semibold">
-            <span className="text-sm">Total</span>
-            <span className="tabular-nums">{formatCurrency(total)}</span>
-          </div>
-        </div>
 
-        <form
-          id="pay-installments-form"
-          noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
-        >
-          <FieldGroup>
-            <Controller
-              control={form.control}
-              name="occurredOn"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="pay-date">Fecha de pago</FieldLabel>
-                  <Input
-                    {...field}
-                    id="pay-date"
-                    aria-invalid={fieldState.invalid}
-                    type="date"
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-          </FieldGroup>
-        </form>
+            <form
+              id="pay-installments-form"
+              className="mt-5"
+              noValidate
+              onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+            >
+              <FieldGroup>
+                <Controller
+                  control={form.control}
+                  name="occurredOn"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="pay-date">Fecha de pago</FieldLabel>
+                      <Input
+                        {...field}
+                        id="pay-date"
+                        aria-invalid={fieldState.invalid}
+                        type="date"
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </FieldGroup>
+            </form>
+          </div>
+        </ScrollArea>
 
         <DialogFooter>
           <Button disabled={mutation.isPending} form="pay-installments-form" type="submit">
