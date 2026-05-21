@@ -35,8 +35,26 @@ import { EditLoanDialog } from "@/features/loans/components/edit-loan-dialog"
 import { LoanDialog } from "@/features/loans/components/loan-dialog"
 import { RecordPaymentDialog } from "@/features/loans/components/record-payment-dialog"
 import { deleteLoan, getLoans } from "@/features/loans/lib/loans-api"
-import { type Loan } from "@/features/loans/types/loan-types"
+import { type Loan, type LoanCurrency } from "@/features/loans/types/loan-types"
 import { formatCurrency } from "@/lib/format"
+
+const currencyOrder: LoanCurrency[] = ["PEN", "USD", "MXN"]
+
+function formatCurrencyTotals(loans: Loan[]) {
+  const totals = loans.reduce(
+    (acc, loan) => {
+      acc[loan.currency] += loan.pendingAmount
+      return acc
+    },
+    { PEN: 0, USD: 0, MXN: 0 } satisfies Record<LoanCurrency, number>
+  )
+
+  const values = currencyOrder
+    .filter((currency) => totals[currency] > 0)
+    .map((currency) => formatCurrency(totals[currency], currency))
+
+  return values.length > 0 ? values.join(" · ") : formatCurrency(0)
+}
 
 export function LoansPanel() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -66,8 +84,8 @@ export function LoansPanel() {
   const activeBorrowed = active.filter((l) => l.direction === "borrowed")
   const settledLent = settled.filter((l) => l.direction === "lent")
   const settledBorrowed = settled.filter((l) => l.direction === "borrowed")
-  const totalToReceive = activeLent.reduce((s, l) => s + l.pendingAmount, 0)
-  const totalToPay = activeBorrowed.reduce((s, l) => s + l.pendingAmount, 0)
+  const totalToReceive = formatCurrencyTotals(activeLent)
+  const totalToPay = formatCurrencyTotals(activeBorrowed)
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -87,7 +105,7 @@ export function LoansPanel() {
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">Por cobrar</p>
             <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(totalToReceive)}
+              {totalToReceive}
             </p>
             <p className="text-xs text-muted-foreground">
               {activeLent.length} préstamo{activeLent.length !== 1 ? "s" : ""} activo{activeLent.length !== 1 ? "s" : ""}
@@ -96,7 +114,7 @@ export function LoansPanel() {
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">Por pagar</p>
             <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
-              {formatCurrency(totalToPay)}
+              {totalToPay}
             </p>
             <p className="text-xs text-muted-foreground">
               {activeBorrowed.length} deuda{activeBorrowed.length !== 1 ? "s" : ""} activa{activeBorrowed.length !== 1 ? "s" : ""}
@@ -200,9 +218,9 @@ export function LoansPanel() {
                       <CardContent className="flex flex-col gap-3">
                         <Progress value={pctPaid} className="[&>div]:bg-primary" />
                         <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-                          <span>Abonado: {formatCurrency(loan.paidAmount)}</span>
+                          <span>Abonado: {formatCurrency(loan.paidAmount, loan.currency)}</span>
                           <span className="text-destructive font-medium">
-                            Pendiente: {formatCurrency(loan.pendingAmount)}
+                            Pendiente: {formatCurrency(loan.pendingAmount, loan.currency)}
                           </span>
                         </div>
 
@@ -224,7 +242,7 @@ export function LoansPanel() {
                                   {p.notes && ` · ${p.notes}`}
                                 </span>
                                 <span className="tabular-nums text-emerald-600 dark:text-emerald-400">
-                                  +{formatCurrency(p.amount)}
+                                  +{formatCurrency(p.amount, loan.currency)}
                                 </span>
                               </li>
                             ))}
@@ -294,9 +312,9 @@ export function LoansPanel() {
                       <CardContent className="flex flex-col gap-3">
                         <Progress value={pctPaid} className="[&>div]:bg-primary" />
                         <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-                          <span>Pagado: {formatCurrency(loan.paidAmount)}</span>
+                          <span>Pagado: {formatCurrency(loan.paidAmount, loan.currency)}</span>
                           <span className="text-destructive font-medium">
-                            Pendiente: {formatCurrency(loan.pendingAmount)}
+                            Pendiente: {formatCurrency(loan.pendingAmount, loan.currency)}
                           </span>
                         </div>
                         {loan.notes && (
@@ -311,7 +329,7 @@ export function LoansPanel() {
                                   {p.notes && ` · ${p.notes}`}
                                 </span>
                                 <span className="tabular-nums text-foreground">
-                                  -{formatCurrency(p.amount)}
+                                  -{formatCurrency(p.amount, loan.currency)}
                                 </span>
                               </li>
                             ))}
@@ -365,7 +383,7 @@ export function LoansPanel() {
                     <CardContent>
                       <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2Icon className="size-3.5" />
-                        Saldado · {formatCurrency(loan.amount)}
+                        Saldado · {formatCurrency(loan.amount, loan.currency)}
                       </div>
                     </CardContent>
                   </Card>

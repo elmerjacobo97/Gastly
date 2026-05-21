@@ -85,7 +85,7 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
         <DialogHeader>
           <DialogTitle>Abono de {loan.personName}</DialogTitle>
           <DialogDescription>
-            Pendiente: {formatCurrency(loan.pendingAmount)}
+            Pendiente: {formatCurrency(loan.pendingAmount, loan.currency)}
           </DialogDescription>
         </DialogHeader>
         <form

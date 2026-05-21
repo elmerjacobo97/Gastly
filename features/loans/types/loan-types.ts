@@ -1,4 +1,5 @@
 export type LoanDirection = "lent" | "borrowed"
+export type LoanCurrency = "PEN" | "USD" | "MXN"
 
 export type LoanPayment = {
   id: string
@@ -12,6 +13,7 @@ export type Loan = {
   id: string
   personName: string
   direction: LoanDirection
+  currency: LoanCurrency
   amount: number
   expectedOn: string | null
   loanedOn: string

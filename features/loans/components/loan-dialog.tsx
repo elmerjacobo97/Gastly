@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -47,12 +47,12 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
 
   const form = useForm<LoanValues>({
     resolver: zodResolver(loanSchema),
-    defaultValues: { direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
+    defaultValues: { direction: "lent", currency: "PEN", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
   })
 
   useEffect(() => {
     if (open) {
-      form.reset({ direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
+      form.reset({ direction: "lent", currency: "PEN", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -68,7 +68,7 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
     },
   })
 
-  const direction = form.watch("direction")
+  const direction = useWatch({ control: form.control, name: "direction" })
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -91,19 +91,36 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
           noValidate
           onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
         >
-          <Controller
-            control={form.control}
-            name="direction"
-            render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="loan-direction">Tipo</FieldLabel>
-                <NativeSelect {...field} id="loan-direction">
-                  <NativeSelectOption value="lent">Yo presté</NativeSelectOption>
-                  <NativeSelectOption value="borrowed">Me prestaron</NativeSelectOption>
-                </NativeSelect>
-              </Field>
-            )}
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <Controller
+              control={form.control}
+              name="direction"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="loan-direction">Tipo</FieldLabel>
+                  <NativeSelect {...field} id="loan-direction">
+                    <NativeSelectOption value="lent">Yo presté</NativeSelectOption>
+                    <NativeSelectOption value="borrowed">Me prestaron</NativeSelectOption>
+                  </NativeSelect>
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="loan-currency">Moneda</FieldLabel>
+                  <NativeSelect {...field} id="loan-currency">
+                    <NativeSelectOption value="PEN">PEN</NativeSelectOption>
+                    <NativeSelectOption value="USD">USD</NativeSelectOption>
+                    <NativeSelectOption value="MXN">MXN</NativeSelectOption>
+                  </NativeSelect>
+                </Field>
+              )}
+            />
+          </div>
           <FieldGroup>
             <Controller
               control={form.control}

@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/browser"
-import { type Loan, type LoanDirection, type LoanPayment } from "@/features/loans/types/loan-types"
+import { type Loan, type LoanCurrency, type LoanDirection, type LoanPayment } from "@/features/loans/types/loan-types"
 import { type LoanValues, type LoanPaymentValues } from "@/features/loans/schemas/loan-schemas"
 
 type LoanRow = {
   id: string
   person_name: string
   direction: LoanDirection
+  currency: LoanCurrency
   amount: number | string
   expected_on: string | null
   loaned_on: string
@@ -38,6 +39,7 @@ function mapLoan(row: LoanRow, payments: LoanPayment[]): Loan {
     id: row.id,
     personName: row.person_name,
     direction: row.direction,
+    currency: row.currency,
     amount,
     expectedOn: row.expected_on,
     loanedOn: row.loaned_on,
@@ -54,7 +56,7 @@ export async function getLoans(): Promise<Loan[]> {
 
   const { data: loans, error } = await supabase
     .from("loans")
-    .select("id, person_name, direction, amount, expected_on, loaned_on, notes")
+    .select("id, person_name, direction, currency, amount, expected_on, loaned_on, notes")
     .order("created_at", { ascending: false })
     .returns<LoanRow[]>()
 
@@ -91,6 +93,7 @@ export async function createLoan(values: LoanValues): Promise<void> {
   const { error } = await supabase.from("loans").insert({
     user_id: user.id,
     direction: values.direction,
+    currency: values.currency,
     person_name: values.personName,
     amount: values.amount,
     expected_on: values.expectedOn || null,
@@ -113,6 +116,7 @@ export async function updateLoan(id: string, values: LoanValues): Promise<void> 
     .from("loans")
     .update({
       direction: values.direction,
+      currency: values.currency,
       person_name: values.personName,
       amount: values.amount,
       expected_on: values.expectedOn || null,
