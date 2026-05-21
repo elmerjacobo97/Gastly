@@ -1,11 +1,13 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CircleDollarSignIcon, Trash2Icon } from "lucide-react"
-import { useState } from "react"
+import { CircleDollarSignIcon, PencilIcon, SearchIcon, Trash2Icon } from "lucide-react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { Input } from "@/components/ui/input"
 import {
   Card,
   CardContent,
@@ -43,6 +45,7 @@ import {
 
 export function IncomePanel() {
   const [month, setMonth] = useState(() => new Date())
+  const [search, setSearch] = useState("")
   const queryClient = useQueryClient()
 
   const incomeQuery = useQuery({
@@ -68,6 +71,16 @@ export function IncomePanel() {
   const income = incomeQuery.data ?? []
   const total = income.reduce((sum, i) => sum + i.amount, 0)
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return income
+    return income.filter(
+      (i) =>
+        i.description.toLowerCase().includes(q) ||
+        (i.category?.name ?? "").toLowerCase().includes(q)
+    )
+  }, [income, search])
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -90,15 +103,24 @@ export function IncomePanel() {
       </section>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-base">Ingresos del mes</CardTitle>
             <CardDescription>
-              {income.length} registro{income.length !== 1 ? "s" : ""} ·{" "}
+              {filtered.length} de {income.length} registro{income.length !== 1 ? "s" : ""} ·{" "}
               <span className="font-medium text-emerald-600 dark:text-emerald-400">
                 +{formatCurrency(total)}
               </span>
             </CardDescription>
+          </div>
+          <div className="relative w-full sm:w-56">
+            <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="pl-8 h-8 text-sm"
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -141,11 +163,11 @@ export function IncomePanel() {
                   <TableHead>Categoría</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="w-10" />
+                  <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {income.map((item) => (
+                {filtered.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
                       {item.description}
@@ -160,16 +182,36 @@ export function IncomePanel() {
                       +{formatCurrency(item.amount)}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive"
-                        disabled={deleteMutation.isPending}
-                        onClick={() => deleteMutation.mutate(item.id)}
-                      >
-                        <Trash2Icon className="size-3.5" />
-                        <span className="sr-only">Eliminar</span>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <TransactionDialog
+                          transaction={item}
+                          trigger={
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <PencilIcon className="size-3.5" />
+                              <span className="sr-only">Editar</span>
+                            </Button>
+                          }
+                        />
+                        <ConfirmDialog
+                          trigger={
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              className="text-muted-foreground hover:text-destructive"
+                              disabled={deleteMutation.isPending}
+                            >
+                              <Trash2Icon className="size-3.5" />
+                              <span className="sr-only">Eliminar</span>
+                            </Button>
+                          }
+                          description="Se eliminará este ingreso permanentemente."
+                          onConfirm={() => deleteMutation.mutate(item.id)}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

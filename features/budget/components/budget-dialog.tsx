@@ -10,6 +10,7 @@ import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   Dialog,
   DialogContent,
@@ -257,18 +258,23 @@ export function BudgetDeleteButton({ budgetId }: BudgetDeleteButtonProps) {
   })
 
   return (
-    <Button
-      disabled={mutation.isPending}
-      onClick={() => mutation.mutate(budgetId)}
-      size="icon"
-      variant="ghost"
-      className="text-muted-foreground hover:text-destructive"
-    >
-      {mutation.isPending ? (
-        <Loader2Icon className="size-4 animate-spin" />
-      ) : (
-        <Trash2Icon className="size-4" />
-      )}
-    </Button>
+    <ConfirmDialog
+      trigger={
+        <Button
+          disabled={mutation.isPending}
+          size="icon"
+          variant="ghost"
+          className="text-muted-foreground hover:text-destructive"
+        >
+          {mutation.isPending ? (
+            <Loader2Icon className="size-4 animate-spin" />
+          ) : (
+            <Trash2Icon className="size-4" />
+          )}
+        </Button>
+      }
+      description="Se eliminará este presupuesto permanentemente."
+      onConfirm={() => mutation.mutate(budgetId)}
+    />
   )
 }

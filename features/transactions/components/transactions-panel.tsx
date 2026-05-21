@@ -4,11 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  PencilIcon,
+  SearchIcon,
   Trash2Icon,
   TrendingUpIcon,
   WalletCardsIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   Bar,
   BarChart,
@@ -25,6 +27,8 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { Input } from "@/components/ui/input"
 import {
   Card,
   CardContent,
@@ -84,6 +88,7 @@ function formatCompact(value: number) {
 
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const [month, setMonth] = useState(() => new Date())
+  const [search, setSearch] = useState("")
   const queryClient = useQueryClient()
 
   const transactionsQuery = useQuery({
@@ -116,6 +121,16 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
 
   const transactions = transactionsQuery.data ?? []
   const summary = computeSummary(transactions)
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return transactions
+    return transactions.filter(
+      (t) =>
+        t.description.toLowerCase().includes(q) ||
+        (t.category?.name ?? "").toLowerCase().includes(q)
+    )
+  }, [transactions, search])
 
   const summaryCards = [
     {
@@ -373,13 +388,22 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
 
       {/* Transactions table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-base">Movimientos</CardTitle>
             <CardDescription>
-              {transactions.length} registro
+              {filtered.length} de {transactions.length} registro
               {transactions.length !== 1 ? "s" : ""} este mes
             </CardDescription>
+          </div>
+          <div className="relative w-full sm:w-56">
+            <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="pl-8 h-8 text-sm"
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -422,11 +446,11 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
                   <TableHead>Categoría</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="w-10" />
+                  <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.map((transaction) => (
+                {filtered.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell className="font-medium">
                       {transaction.description}
@@ -450,16 +474,36 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive"
-                        disabled={deleteMutation.isPending}
-                        onClick={() => deleteMutation.mutate(transaction.id)}
-                      >
-                        <Trash2Icon className="size-3.5" />
-                        <span className="sr-only">Eliminar</span>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <TransactionDialog
+                          transaction={transaction}
+                          trigger={
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <PencilIcon className="size-3.5" />
+                              <span className="sr-only">Editar</span>
+                            </Button>
+                          }
+                        />
+                        <ConfirmDialog
+                          trigger={
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              className="text-muted-foreground hover:text-destructive"
+                              disabled={deleteMutation.isPending}
+                            >
+                              <Trash2Icon className="size-3.5" />
+                              <span className="sr-only">Eliminar</span>
+                            </Button>
+                          }
+                          description="Se eliminará este movimiento permanentemente."
+                          onConfirm={() => deleteMutation.mutate(transaction.id)}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

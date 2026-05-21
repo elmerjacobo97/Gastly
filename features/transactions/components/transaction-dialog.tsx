@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, ChevronsUpDownIcon, Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -47,51 +47,74 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   createTransaction,
   getCategories,
+  updateTransaction,
 } from "@/features/transactions/lib/transactions-api"
 import {
   type TransactionType,
   type TransactionValues,
   transactionSchema,
 } from "@/features/transactions/schemas/transaction-schemas"
+import { type Transaction } from "@/features/transactions/types/transaction-types"
 import { cn } from "@/lib/utils"
 
 type TransactionDialogProps = {
   defaultType?: TransactionType
   lockType?: boolean
   triggerLabel?: string
+  trigger?: React.ReactNode
+  transaction?: Transaction
 }
 
 function getToday() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function getDialogDescription(lockType: boolean, defaultType: TransactionType) {
-  if (!lockType) return "Registra un ingreso o gasto para mantener tu balance al día."
-  return defaultType === "income"
-    ? "Registra un ingreso para mantener tu balance al día."
-    : "Registra un gasto para mantener tu balance al día."
+function buildDefaultValues(
+  transaction: Transaction | undefined,
+  defaultType: TransactionType
+): TransactionValues {
+  if (transaction) {
+    return {
+      type: transaction.type,
+      amount: transaction.amount,
+      description: transaction.description,
+      categoryName: transaction.category?.name ?? "",
+      occurredOn: transaction.occurredOn,
+      notes: transaction.notes ?? "",
+    }
+  }
+  return {
+    type: defaultType,
+    amount: 0,
+    description: "",
+    categoryName: "",
+    occurredOn: getToday(),
+    notes: "",
+  }
 }
 
 export function TransactionDialog({
   defaultType = "expense",
   lockType = false,
   triggerLabel = "Nuevo movimiento",
+  trigger,
+  transaction,
 }: TransactionDialogProps) {
+  const isEditing = !!transaction
   const [open, setOpen] = useState(false)
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const form = useForm<TransactionValues>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
-      type: defaultType,
-      amount: 0,
-      description: "",
-      categoryName: "",
-      occurredOn: getToday(),
-      notes: "",
-    },
+    defaultValues: buildDefaultValues(transaction, defaultType),
   })
+
+  useEffect(() => {
+    if (open) {
+      form.reset(buildDefaultValues(transaction, defaultType))
+    }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentType = form.watch("type") as TransactionType
   const currentCategoryName = form.watch("categoryName")
@@ -102,31 +125,21 @@ export function TransactionDialog({
     enabled: open,
   })
 
-  const mutation = useMutation({
+  const invalidate = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+      queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
+      queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
+      queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
+      queryClient.invalidateQueries({ queryKey: ["categories"] }),
+    ])
+  }
+
+  const createMutation = useMutation({
     mutationFn: createTransaction,
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({
-          queryKey: ["transactions", defaultType],
-        }),
-        queryClient.invalidateQueries({ queryKey: ["transaction-summary"] }),
-        queryClient.invalidateQueries({
-          queryKey: ["transaction-summary", defaultType],
-        }),
-        queryClient.invalidateQueries({ queryKey: ["categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
-      ])
-      form.reset({
-        type: defaultType,
-        amount: 0,
-        description: "",
-        categoryName: "",
-        occurredOn: getToday(),
-        notes: "",
-      })
+      await invalidate()
+      form.reset(buildDefaultValues(undefined, defaultType))
       setOpen(false)
       toast.success("Movimiento registrado")
     },
@@ -136,6 +149,24 @@ export function TransactionDialog({
       })
     },
   })
+
+  const updateMutation = useMutation({
+    mutationFn: (values: TransactionValues) =>
+      updateTransaction(transaction!.id, values),
+    onSuccess: async () => {
+      await invalidate()
+      setOpen(false)
+      toast.success("Movimiento actualizado")
+    },
+    onError: (error) => {
+      toast.error("No se pudo actualizar el movimiento", {
+        description: error.message,
+      })
+    },
+  })
+
+  const mutation = isEditing ? updateMutation : createMutation
+  const isPending = mutation.isPending
 
   function onSubmit(values: TransactionValues) {
     mutation.mutate(values)
@@ -148,19 +179,25 @@ export function TransactionDialog({
       (c) => c.name.toLowerCase() === currentCategoryName.trim().toLowerCase()
     )
 
+  const defaultTrigger = (
+    <Button>
+      <PlusIcon data-icon="inline-start" />
+      {triggerLabel}
+    </Button>
+  )
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon data-icon="inline-start" />
-          {triggerLabel}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nuevo movimiento</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Editar movimiento" : "Nuevo movimiento"}
+          </DialogTitle>
           <DialogDescription>
-            {getDialogDescription(lockType, defaultType)}
+            {isEditing
+              ? "Modifica los datos del movimiento."
+              : "Registra un ingreso o gasto para mantener tu balance al día."}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -180,7 +217,7 @@ export function TransactionDialog({
                     {...field}
                     aria-invalid={fieldState.invalid}
                     className="w-full"
-                    disabled={lockType}
+                    disabled={lockType || isEditing}
                     id="transaction-type"
                   >
                     <NativeSelectOption value="expense">Gasto</NativeSelectOption>
@@ -254,7 +291,9 @@ export function TransactionDialog({
                       >
                         <span
                           className={
-                            field.value ? "text-foreground" : "text-muted-foreground"
+                            field.value
+                              ? "text-foreground"
+                              : "text-muted-foreground"
                           }
                         >
                           {field.value || "Selecciona o escribe una categoría"}
@@ -372,14 +411,14 @@ export function TransactionDialog({
         </form>
         <DialogFooter>
           <Button
-            disabled={mutation.isPending}
+            disabled={isPending}
             form="transaction-form"
             type="submit"
           >
-            {mutation.isPending && (
+            {isPending && (
               <Loader2Icon className="mr-2 size-4 animate-spin" />
             )}
-            Guardar
+            {isEditing ? "Guardar cambios" : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -6,6 +6,7 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   Card,
   CardContent,
@@ -142,16 +143,21 @@ export function CategoriesPanel() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          disabled={deleteMutation.isPending}
-                          onClick={() => deleteMutation.mutate(category.id)}
-                          size="icon-sm"
-                          variant="ghost"
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2Icon />
-                          <span className="sr-only">Eliminar</span>
-                        </Button>
+                        <ConfirmDialog
+                          trigger={
+                            <Button
+                              disabled={deleteMutation.isPending}
+                              size="icon-sm"
+                              variant="ghost"
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2Icon />
+                              <span className="sr-only">Eliminar</span>
+                            </Button>
+                          }
+                          description="Se eliminará esta categoría. Las transacciones asociadas quedarán sin categoría."
+                          onConfirm={() => deleteMutation.mutate(category.id)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -203,16 +209,21 @@ export function CategoriesPanel() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          disabled={deleteMutation.isPending}
-                          onClick={() => deleteMutation.mutate(category.id)}
-                          size="icon-sm"
-                          variant="ghost"
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2Icon />
-                          <span className="sr-only">Eliminar</span>
-                        </Button>
+                        <ConfirmDialog
+                          trigger={
+                            <Button
+                              disabled={deleteMutation.isPending}
+                              size="icon-sm"
+                              variant="ghost"
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2Icon />
+                              <span className="sr-only">Eliminar</span>
+                            </Button>
+                          }
+                          description="Se eliminará esta categoría. Las transacciones asociadas quedarán sin categoría."
+                          onConfirm={() => deleteMutation.mutate(category.id)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

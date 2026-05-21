@@ -106,6 +106,43 @@ export async function deleteTransaction(id: string) {
   if (error) throw new Error(error.message)
 }
 
+export async function updateTransaction(id: string, values: TransactionValues) {
+  const supabase = createClient()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    throw new Error("Debes iniciar sesión para editar movimientos.")
+  }
+
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .upsert(
+      { user_id: user.id, name: values.categoryName, type: values.type },
+      { onConflict: "user_id,type,name" }
+    )
+    .select("id")
+    .single()
+
+  if (categoryError) throw new Error(categoryError.message)
+
+  const { error } = await supabase
+    .from("transactions")
+    .update({
+      category_id: category.id,
+      type: values.type,
+      amount: values.amount,
+      description: values.description,
+      occurred_on: values.occurredOn,
+      notes: values.notes || null,
+    })
+    .eq("id", id)
+
+  if (error) throw new Error(error.message)
+}
+
 export async function createTransaction(values: TransactionValues) {
   const supabase = createClient()
   const {
