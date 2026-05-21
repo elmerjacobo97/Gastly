@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   ChartNoAxesColumnIncreasingIcon,
@@ -9,12 +9,12 @@ import {
   PlusIcon,
   SettingsIcon,
   TagsIcon,
-} from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+} from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-import { Logo } from "@/components/logo"
-import { Button } from "@/components/ui/button"
+import { Logo } from '@/components/logo';
+import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -27,50 +27,50 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { signOut } from "@/features/auth/server/actions"
+} from '@/components/ui/sidebar';
+import { signOut } from '@/features/auth/server/actions';
 
 const navigationItems = [
   {
-    title: "Resumen",
-    href: "/dashboard",
+    title: 'Resumen',
+    href: '/dashboard',
     icon: LayoutDashboardIcon,
     isAvailable: true,
   },
   {
-    title: "Gastos",
-    href: "/dashboard/expenses",
+    title: 'Gastos',
+    href: '/dashboard/expenses',
     icon: CreditCardIcon,
     isAvailable: true,
   },
   {
-    title: "Ingresos",
+    title: 'Ingresos',
     icon: CircleDollarSignIcon,
     isAvailable: false,
-    badge: "Pronto",
+    badge: 'Pronto',
   },
   {
-    title: "Categorias",
-    href: "/dashboard/categories",
+    title: 'Categorias',
+    href: '/dashboard/categories',
     icon: TagsIcon,
     isAvailable: true,
   },
   {
-    title: "Presupuesto",
+    title: 'Presupuesto',
     icon: PiggyBankIcon,
     isAvailable: false,
-    badge: "Pronto",
+    badge: 'Pronto',
   },
   {
-    title: "Reportes",
+    title: 'Reportes',
     icon: ChartNoAxesColumnIncreasingIcon,
     isAvailable: false,
-    badge: "Pronto",
+    badge: 'Pronto',
   },
-]
+];
 
 export function AppSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <Sidebar collapsible="offcanvas" variant="inset">
@@ -90,10 +90,7 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   {item.isAvailable ? (
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === item.href}
-                    >
+                    <SidebarMenuButton asChild isActive={pathname === item.href!}>
                       <Link href={item.href!}>
                         <item.icon />
                         <span>{item.title}</span>
@@ -105,9 +102,7 @@ export function AppSidebar() {
                       <span>{item.title}</span>
                     </SidebarMenuButton>
                   )}
-                  {item.badge ? (
-                    <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                  ) : null}
+                  {item.badge ? <SidebarMenuBadge>{item.badge}</SidebarMenuBadge> : null}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -147,5 +142,5 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
