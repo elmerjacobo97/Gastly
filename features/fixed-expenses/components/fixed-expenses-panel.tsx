@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import {
+  AlertTriangleIcon,
   CalendarClockIcon,
   CalendarIcon,
   CheckCircle2Icon,
@@ -13,12 +14,18 @@ import {
   PencilIcon,
   PlayCircleIcon,
   ReceiptTextIcon,
+  XCircleIcon,
   Trash2Icon,
 } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -341,6 +348,29 @@ export function FixedExpensesPanel() {
     .reduce((sum, expense) => sum + (expense.paidAmount ?? expense.amount), 0)
   const totalPending = Math.max(totalCommitted - totalPaid, 0)
 
+  const today = new Date()
+  const unpaidActive = activeExpenses.filter((e) => !e.paidOn)
+  const overdueExpenses = unpaidActive.filter(
+    (e) => new Date(`${e.nextDueOn}T12:00:00`) < today
+  )
+  const soonExpenses = unpaidActive.filter((e) => {
+    const days = Math.ceil(
+      (new Date(`${e.nextDueOn}T12:00:00`).getTime() - today.getTime()) /
+        (1000 * 60 * 60 * 24)
+    )
+    return days >= 0 && days <= 7
+  })
+
+  function daysLabel(nextDueOn: string) {
+    const days = Math.ceil(
+      (new Date(`${nextDueOn}T12:00:00`).getTime() - today.getTime()) /
+        (1000 * 60 * 60 * 24)
+    )
+    if (days === 0) return "vence hoy"
+    if (days === 1) return "vence mañana"
+    return `vence en ${days} días`
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -384,6 +414,43 @@ export function FixedExpensesPanel() {
               {formatCurrency(totalPending)}
             </p>
           </Card>
+        </div>
+      )}
+
+      {!query.isLoading && (overdueExpenses.length > 0 || soonExpenses.length > 0) && (
+        <div className="flex flex-col gap-2">
+          {overdueExpenses.length > 0 && (
+            <Alert variant="destructive">
+              <XCircleIcon />
+              <AlertTitle>
+                {overdueExpenses.length === 1
+                  ? `"${overdueExpenses[0].description}" está vencido`
+                  : `${overdueExpenses.length} pagos vencidos`}
+              </AlertTitle>
+              <AlertDescription>
+                {overdueExpenses.length === 1
+                  ? `Vencía el ${formatDate(overdueExpenses[0].nextDueOn)}. Registra el pago para mantener el control.`
+                  : overdueExpenses.map((e) => e.description).join(", ")}
+              </AlertDescription>
+            </Alert>
+          )}
+          {soonExpenses.length > 0 && (
+            <Alert variant="warning">
+              <AlertTriangleIcon />
+              <AlertTitle>
+                {soonExpenses.length === 1
+                  ? `"${soonExpenses[0].description}" ${daysLabel(soonExpenses[0].nextDueOn)}`
+                  : `${soonExpenses.length} pagos próximos a vencer`}
+              </AlertTitle>
+              <AlertDescription>
+                {soonExpenses.length === 1
+                  ? formatCurrency(soonExpenses[0].amount)
+                  : soonExpenses
+                      .map((e) => `${e.description} (${daysLabel(e.nextDueOn)})`)
+                      .join(", ")}
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       )}
 

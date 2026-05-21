@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  BellRingIcon,
+  CalendarClockIcon,
   CircleAlertIcon,
   TrendingUpIcon,
   WalletCardsIcon,
@@ -24,6 +26,11 @@ import {
 } from "recharts"
 
 import { Badge } from "@/components/ui/badge"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import {
   Card,
@@ -34,6 +41,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Progress } from "@/components/ui/progress"
+import { getBudgets } from "@/features/budget/lib/budget-api"
 import { MonthlyPlanDialog } from "@/features/monthly-plan/components/monthly-plan-dialog"
 import {
   calculateSavings,
@@ -112,6 +120,12 @@ function getDaysRemainingInMonth(date: Date) {
   return Math.max(lastDay - date.getDate() + 1, 1)
 }
 
+function getDaysUntil(date: string) {
+  const today = new Date()
+  const target = new Date(`${date}T12:00:00`)
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const today = new Date()
   const monthKey = today.toISOString().slice(0, 7)
@@ -128,6 +142,10 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const fixedExpensesQuery = useQuery({
     queryKey: ["fixed-expenses", monthKey],
     queryFn: () => getFixedExpenses(today),
+  })
+  const budgetsQuery = useQuery({
+    queryKey: ["budgets", monthKey],
+    queryFn: () => getBudgets(today),
   })
   const monthlyQuery = useQuery({
     queryKey: ["monthly-totals"],
@@ -165,6 +183,60 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
       ? 100
       : 0
   const health = getHealthState(usage, remaining)
+  const budgetAlerts = (budgetsQuery.data ?? [])
+    .map((budget) => ({
+      budget,
+      usage: budget.amount > 0 ? Math.round((budget.spent / budget.amount) * 100) : 0,
+    }))
+    .filter(({ usage }) => usage >= 80)
+    .sort((a, b) => b.usage - a.usage)
+
+  const dueAlerts = recurringPayments
+    .filter((expense) => !expense.paidOn && expense.isActive)
+    .map((expense) => ({ expense, days: getDaysUntil(expense.nextDueOn) }))
+    .filter(({ days }) => days <= 7)
+    .sort((a, b) => a.days - b.days)
+
+  const intelligentAlerts = [
+    ...dueAlerts.map(({ expense, days }) => ({
+      key: `due-${expense.id}`,
+      icon: CalendarClockIcon,
+      title: days < 0 ? `${expense.description} está vencido` : `${expense.description} vence pronto`,
+      description:
+        days < 0
+          ? `Debió pagarse hace ${Math.abs(days)} día${Math.abs(days) !== 1 ? "s" : ""}.`
+          : `Vence en ${days} día${days !== 1 ? "s" : ""}.`,
+      variant: (days < 0 ? "destructive" : "warning") as "destructive" | "warning" | "default",
+    })),
+    ...budgetAlerts.map(({ budget, usage }) => ({
+      key: `budget-${budget.id}`,
+      icon: CircleAlertIcon,
+      title: `Ya usaste ${usage}% de ${budget.category.name}`,
+      description: `Gastaste ${formatCurrency(budget.spent)} de ${formatCurrency(budget.amount)} presupuestados.`,
+      variant: (usage >= 100 ? "destructive" : "warning") as "destructive" | "warning" | "default",
+    })),
+    ...(plan
+      ? [
+          {
+            key: "remaining",
+            icon: WalletCardsIcon,
+            title: remaining >= 0 ? "Dinero libre restante" : "Estás en rojo",
+            description:
+              remaining >= 0
+                ? `Tienes ${formatCurrency(remaining)} libres para el resto del mes.`
+                : `Te pasaste por ${formatCurrency(Math.abs(remaining))}.`,
+            variant: (remaining < 0 ? "destructive" : "default") as "destructive" | "warning" | "default",
+          },
+          {
+            key: "daily",
+            icon: TrendingUpIcon,
+            title: "Gasto diario disponible",
+            description: `Puedes gastar ${formatCurrency(dailyAvailable)} por día durante ${daysRemaining} día${daysRemaining !== 1 ? "s" : ""}.`,
+            variant: (remaining < 0 ? "destructive" : "default") as "destructive" | "warning" | "default",
+          },
+        ]
+      : []),
+  ].slice(0, 6)
 
   const summaryCards = [
     {
@@ -315,6 +387,32 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
               </Card>
             ))}
       </section>
+
+      {intelligentAlerts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <BellRingIcon className="size-5 text-muted-foreground" />
+              <CardTitle className="text-base">Alertas inteligentes</CardTitle>
+            </div>
+            <CardDescription>
+              Avisos persistentes para pagos, presupuestos y dinero disponible.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            {intelligentAlerts.map((alert) => (
+              <Alert
+                key={alert.key}
+                variant={alert.variant}
+              >
+                <alert.icon />
+                <AlertTitle>{alert.title}</AlertTitle>
+                <AlertDescription>{alert.description}</AlertDescription>
+              </Alert>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts */}
       <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">

@@ -2,14 +2,21 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  AlertTriangleIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PiggyBankIcon,
   Trash2Icon,
+  XCircleIcon,
 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,6 +45,12 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
+import { getFixedExpenses } from "@/features/fixed-expenses/lib/fixed-expenses-api"
+import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
+import {
+  calculateSavings,
+  getMonthlyPlan,
+} from "@/features/monthly-plan/lib/monthly-plan-api"
 import { formatCurrency } from "@/features/transactions/lib/format-transaction"
 import { deleteBudget, getBudgets } from "@/features/budget/lib/budget-api"
 import { BudgetDialog } from "@/features/budget/components/budget-dialog"
@@ -56,15 +69,31 @@ function progressColor(usage: number) {
   return "[&>div]:bg-emerald-500"
 }
 
+function isRelevantRecurringPayment(expense: FixedExpense, monthKey: string) {
+  if (!expense.isActive) return false
+  if (expense.frequency === "monthly") return true
+  return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
+}
+
 export function BudgetPanel() {
   const [month, setMonth] = useState(() => new Date())
   const [editBudget, setEditBudget] = useState<Budget | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
+  const monthKey = month.toISOString().slice(0, 7)
+
   const budgetsQuery = useQuery({
-    queryKey: ["budgets", month.toISOString().slice(0, 7)],
+    queryKey: ["budgets", monthKey],
     queryFn: () => getBudgets(month),
+  })
+  const planQuery = useQuery({
+    queryKey: ["monthly-plan", monthKey],
+    queryFn: () => getMonthlyPlan(month),
+  })
+  const fixedExpensesQuery = useQuery({
+    queryKey: ["fixed-expenses", monthKey],
+    queryFn: () => getFixedExpenses(month),
   })
 
   const deleteMutation = useMutation({
@@ -83,6 +112,16 @@ export function BudgetPanel() {
   const totalBudget = budgets.reduce((sum, b) => sum + b.amount, 0)
   const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0)
   const overBudget = budgets.filter((b) => b.spent > b.amount).length
+  const plan = planQuery.data ?? null
+  const savings = calculateSavings(plan)
+  const recurringEstimated = (fixedExpensesQuery.data ?? [])
+    .filter((expense) => isRelevantRecurringPayment(expense, monthKey))
+    .reduce((sum, expense) => sum + (expense.paidAmount ?? expense.amount), 0)
+  const availableForBudget = plan
+    ? Math.max(plan.expectedIncome - savings - recurringEstimated, 0)
+    : 0
+  const unassigned = availableForBudget - totalBudget
+  const hasPlanningData = !!plan && !planQuery.isLoading && !fixedExpensesQuery.isLoading
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -100,6 +139,56 @@ export function BudgetPanel() {
           <BudgetDialog />
         </div>
       </section>
+
+      {hasPlanningData && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card className="p-4">
+              <p className="text-xs text-muted-foreground">Disponible libre</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">
+                {formatCurrency(availableForBudget)}
+              </p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs text-muted-foreground">Presupuestado</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">
+                {formatCurrency(totalBudget)}
+              </p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs text-muted-foreground">
+                {unassigned >= 0 ? "Sin asignar" : "Sobreasignado"}
+              </p>
+              <p
+                className={`mt-1 text-xl font-semibold tabular-nums ${
+                  unassigned >= 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-destructive"
+                }`}
+              >
+                {formatCurrency(Math.abs(unassigned))}
+              </p>
+            </Card>
+          </div>
+          <div
+            className={`rounded-lg border px-4 py-3 text-sm ${
+              unassigned >= 0
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                : "border-destructive/30 bg-destructive/10 text-destructive"
+            }`}
+          >
+            {unassigned >= 0
+              ? `Todavía puedes asignar ${formatCurrency(unassigned)} a presupuestos variables.`
+              : `Tus presupuestos superan tu disponible libre por ${formatCurrency(Math.abs(unassigned))}.`}
+          </div>
+        </>
+      )}
+
+      {!hasPlanningData && !planQuery.isLoading && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          Crea tu plan mensual para saber cuánto puedes asignar a presupuestos.
+        </div>
+      )}
 
       {!budgetsQuery.isLoading && budgets.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-3">
@@ -130,13 +219,53 @@ export function BudgetPanel() {
         </div>
       )}
 
-      {overBudget > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <span className="font-medium">
-            {overBudget} categoría{overBudget !== 1 ? "s" : ""} sobrepasó el presupuesto este mes.
-          </span>
-        </div>
-      )}
+      {!budgetsQuery.isLoading && (() => {
+        const overList = budgets.filter((b) => b.spent > b.amount)
+        const nearList = budgets.filter((b) => {
+          const u = b.amount > 0 ? (b.spent / b.amount) * 100 : 0
+          return u >= 80 && u < 100
+        })
+        if (overList.length === 0 && nearList.length === 0) return null
+        return (
+          <div className="flex flex-col gap-2">
+            {overList.length > 0 && (
+              <Alert variant="destructive">
+                <XCircleIcon />
+                <AlertTitle>
+                  {overList.length === 1
+                    ? `Presupuesto excedido en "${overList[0].category.name}"`
+                    : `${overList.length} presupuestos excedidos`}
+                </AlertTitle>
+                <AlertDescription>
+                  {overList.length === 1
+                    ? `Gastaste ${formatCurrency(overList[0].spent)} de un límite de ${formatCurrency(overList[0].amount)}.`
+                    : overList.map((b) => b.category.name).join(", ")}
+                </AlertDescription>
+              </Alert>
+            )}
+            {nearList.length > 0 && (
+              <Alert variant="warning">
+                <AlertTriangleIcon />
+                <AlertTitle>
+                  {nearList.length === 1
+                    ? `Ya usaste ${Math.round((nearList[0].spent / nearList[0].amount) * 100)}% de "${nearList[0].category.name}"`
+                    : `${nearList.length} categorías cerca del límite`}
+                </AlertTitle>
+                <AlertDescription>
+                  {nearList.length === 1
+                    ? `Quedan ${formatCurrency(nearList[0].amount - nearList[0].spent)} disponibles.`
+                    : nearList
+                        .map(
+                          (b) =>
+                            `${b.category.name} (${Math.round((b.spent / b.amount) * 100)}%)`
+                        )
+                        .join(", ")}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )
+      })()}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {budgetsQuery.isLoading
