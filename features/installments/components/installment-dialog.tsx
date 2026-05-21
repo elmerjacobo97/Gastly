@@ -125,7 +125,7 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
       <DialogTrigger asChild>
         <Button>
           <PlusIcon data-icon="inline-start" />
-          {triggerLabel}
+          <span className="hidden sm:inline">{triggerLabel}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">

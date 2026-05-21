@@ -134,7 +134,7 @@ export function FixedExpenseDialog({
         <DialogTrigger asChild>
           <Button>
             <PlusIcon data-icon="inline-start" />
-            Nuevo pago recurrente
+            <span className="hidden sm:inline">Nuevo pago recurrente</span>
           </Button>
         </DialogTrigger>
       )}

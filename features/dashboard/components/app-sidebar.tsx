@@ -180,6 +180,7 @@ function UserFooter({ userEmail, userName }: AppSidebarProps) {
 
 export function AppSidebar({ userEmail, userName }: AppSidebarProps) {
   const pathname = usePathname()
+  const { setOpenMobile } = useSidebar()
 
   function isActive(href: string, exact: boolean) {
     if (exact) return pathname === href
@@ -192,7 +193,7 @@ export function AppSidebar({ userEmail, userName }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="Gastly">
-              <Link href="/dashboard">
+              <Link href="/dashboard" onClick={() => setOpenMobile(false)}>
                 <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
                   <WalletCardsIcon className="size-4" />
                 </div>
@@ -219,7 +220,7 @@ export function AppSidebar({ userEmail, userName }: AppSidebarProps) {
                     isActive={isActive(item.href, item.exact)}
                     tooltip={item.title}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} onClick={() => setOpenMobile(false)}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>

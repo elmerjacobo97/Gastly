@@ -190,7 +190,7 @@ export function TransactionDialog({
   const defaultTrigger = (
     <Button>
       <PlusIcon data-icon="inline-start" />
-      {triggerLabel}
+      <span className="hidden sm:inline">{triggerLabel}</span>
     </Button>
   )
 

@@ -159,7 +159,7 @@ export function CategoryDialog({
         <DialogTrigger asChild>
           <Button>
             <PlusIcon data-icon="inline-start" />
-            Nueva categoría
+            <span className="hidden sm:inline">Nueva categoría</span>
           </Button>
         </DialogTrigger>
       )}
