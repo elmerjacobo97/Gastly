@@ -1,13 +1,14 @@
 "use client"
 
+import { type ColumnDef } from "@tanstack/react-table"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CreditCardIcon, PencilIcon, SearchIcon, Trash2Icon } from "lucide-react"
+import { CreditCardIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { Input } from "@/components/ui/input"
+import { DataTable } from "@/components/ui/data-table"
 import {
   Card,
   CardContent,
@@ -23,15 +24,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { TransactionDialog } from "@/features/transactions/components/transaction-dialog"
 import { MonthNav } from "@/features/transactions/components/month-nav"
 import {
@@ -42,10 +34,10 @@ import {
   formatCurrency,
   formatDate,
 } from "@/features/transactions/lib/format-transaction"
+import { type Transaction } from "@/features/transactions/types/transaction-types"
 
 export function ExpensesPanel() {
   const [month, setMonth] = useState(() => new Date())
-  const [search, setSearch] = useState("")
   const queryClient = useQueryClient()
 
   const expensesQuery = useQuery({
@@ -71,15 +63,83 @@ export function ExpensesPanel() {
   const expenses = expensesQuery.data ?? []
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return expenses
-    return expenses.filter(
-      (e) =>
-        e.description.toLowerCase().includes(q) ||
-        (e.category?.name ?? "").toLowerCase().includes(q)
-    )
-  }, [expenses, search])
+  const columns = useMemo<ColumnDef<Transaction>[]>(
+    () => [
+      {
+        accessorKey: "description",
+        header: "Descripción",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.getValue("description")}</span>
+        ),
+      },
+      {
+        accessorFn: (row) => row.category?.name ?? "Sin categoría",
+        id: "category",
+        header: "Categoría",
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground">{getValue() as string}</span>
+        ),
+      },
+      {
+        accessorKey: "occurredOn",
+        header: "Fecha",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {formatDate(row.getValue("occurredOn"))}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "amount",
+        header: () => <div className="text-right">Monto</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-medium text-destructive">
+            -{formatCurrency(row.getValue("amount"))}
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        size: 80,
+        cell: ({ row }) => {
+          const expense = row.original
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <TransactionDialog
+                transaction={expense}
+                trigger={
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <PencilIcon className="size-3.5" />
+                    <span className="sr-only">Editar</span>
+                  </Button>
+                }
+              />
+              <ConfirmDialog
+                trigger={
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-destructive"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2Icon className="size-3.5" />
+                    <span className="sr-only">Eliminar</span>
+                  </Button>
+                }
+                description="Se eliminará este gasto permanentemente."
+                onConfirm={() => deleteMutation.mutate(expense.id)}
+              />
+            </div>
+          )
+        },
+      },
+    ],
+    [deleteMutation] // eslint-disable-line react-hooks/exhaustive-deps
+  )
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -103,140 +163,42 @@ export function ExpensesPanel() {
       </section>
 
       <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle className="text-base">Gastos del mes</CardTitle>
-            <CardDescription>
-              {filtered.length} de {expenses.length} registro{expenses.length !== 1 ? "s" : ""} ·{" "}
-              <span className="font-medium text-destructive">
-                -{formatCurrency(total)}
-              </span>
-            </CardDescription>
-          </div>
-          <div className="relative w-full sm:w-56">
-            <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-8 h-8 text-sm"
-              placeholder="Buscar..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        <CardHeader>
+          <CardTitle className="text-base">Gastos del mes</CardTitle>
+          <CardDescription>
+            {expenses.length} registro{expenses.length !== 1 ? "s" : ""} ·{" "}
+            <span className="font-medium text-destructive">
+              -{formatCurrency(total)}
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {expensesQuery.isLoading ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-32" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Skeleton className="ml-auto h-4 w-16" />
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : expenses.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="w-20" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell className="font-medium">
-                      {expense.description}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {expense.category?.name ?? "Sin categoría"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(expense.occurredOn)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-destructive">
-                      -{formatCurrency(expense.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <TransactionDialog
-                          transaction={expense}
-                          trigger={
-                            <Button
-                              size="icon-sm"
-                              variant="ghost"
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              <PencilIcon className="size-3.5" />
-                              <span className="sr-only">Editar</span>
-                            </Button>
-                          }
-                        />
-                        <ConfirmDialog
-                          trigger={
-                            <Button
-                              size="icon-sm"
-                              variant="ghost"
-                              className="text-muted-foreground hover:text-destructive"
-                              disabled={deleteMutation.isPending}
-                            >
-                              <Trash2Icon className="size-3.5" />
-                              <span className="sr-only">Eliminar</span>
-                            </Button>
-                          }
-                          description="Se eliminará este gasto permanentemente."
-                          onConfirm={() => deleteMutation.mutate(expense.id)}
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <Empty className="border bg-muted/20">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CreditCardIcon />
-                </EmptyMedia>
-                <EmptyTitle>Sin gastos este mes</EmptyTitle>
-                <EmptyDescription>
-                  Registra tu primer gasto para empezar a controlar tus egresos.
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <TransactionDialog
-                  defaultType="expense"
-                  lockType
-                  triggerLabel="Agregar gasto"
-                />
-              </EmptyContent>
-            </Empty>
-          )}
+          <DataTable
+            columns={columns}
+            data={expenses}
+            isLoading={expensesQuery.isLoading}
+            searchPlaceholder="Buscar por descripción o categoría..."
+            emptyState={
+              <Empty className="bg-muted/20">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <CreditCardIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>Sin gastos este mes</EmptyTitle>
+                  <EmptyDescription>
+                    Registra tu primer gasto para empezar a controlar tus egresos.
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <TransactionDialog
+                    defaultType="expense"
+                    lockType
+                    triggerLabel="Agregar gasto"
+                  />
+                </EmptyContent>
+              </Empty>
+            }
+          />
         </CardContent>
       </Card>
     </main>

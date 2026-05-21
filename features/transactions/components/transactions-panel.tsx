@@ -1,11 +1,11 @@
 "use client"
 
+import { type ColumnDef } from "@tanstack/react-table"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
   PencilIcon,
-  SearchIcon,
   Trash2Icon,
   TrendingUpIcon,
   WalletCardsIcon,
@@ -28,7 +28,7 @@ import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { Input } from "@/components/ui/input"
+import { DataTable } from "@/components/ui/data-table"
 import {
   Card,
   CardContent,
@@ -45,14 +45,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import {
   getCategoryTotals,
   getMonthlyTotals,
@@ -88,7 +80,6 @@ function formatCompact(value: number) {
 
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const [month, setMonth] = useState(() => new Date())
-  const [search, setSearch] = useState("")
   const queryClient = useQueryClient()
 
   const transactionsQuery = useQuery({
@@ -122,15 +113,93 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const transactions = transactionsQuery.data ?? []
   const summary = computeSummary(transactions)
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return transactions
-    return transactions.filter(
-      (t) =>
-        t.description.toLowerCase().includes(q) ||
-        (t.category?.name ?? "").toLowerCase().includes(q)
-    )
-  }, [transactions, search])
+  const columns = useMemo<ColumnDef<(typeof transactions)[0]>[]>(
+    () => [
+      {
+        accessorKey: "description",
+        header: "Descripción",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.getValue("description")}</span>
+        ),
+      },
+      {
+        accessorFn: (row) => row.category?.name ?? "Sin categoría",
+        id: "category",
+        header: "Categoría",
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground">{getValue() as string}</span>
+        ),
+      },
+      {
+        accessorKey: "occurredOn",
+        header: "Fecha",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {formatDate(row.getValue("occurredOn"))}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "amount",
+        header: () => <div className="text-right">Monto</div>,
+        cell: ({ row }) => {
+          const t = row.original
+          return (
+            <div
+              className={`text-right font-medium ${
+                t.type === "income"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-destructive"
+              }`}
+            >
+              {t.type === "income" ? "+" : "-"}
+              {formatCurrency(t.amount)}
+            </div>
+          )
+        },
+      },
+      {
+        id: "actions",
+        size: 80,
+        cell: ({ row }) => {
+          const t = row.original
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <TransactionDialog
+                transaction={t}
+                trigger={
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <PencilIcon className="size-3.5" />
+                    <span className="sr-only">Editar</span>
+                  </Button>
+                }
+              />
+              <ConfirmDialog
+                trigger={
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-destructive"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2Icon className="size-3.5" />
+                    <span className="sr-only">Eliminar</span>
+                  </Button>
+                }
+                description="Se eliminará este movimiento permanentemente."
+                onConfirm={() => deleteMutation.mutate(t.id)}
+              />
+            </div>
+          )
+        },
+      },
+    ],
+    [deleteMutation] // eslint-disable-line react-hooks/exhaustive-deps
+  )
 
   const summaryCards = [
     {
@@ -388,143 +457,35 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
 
       {/* Transactions table */}
       <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle className="text-base">Movimientos</CardTitle>
-            <CardDescription>
-              {filtered.length} de {transactions.length} registro
-              {transactions.length !== 1 ? "s" : ""} este mes
-            </CardDescription>
-          </div>
-          <div className="relative w-full sm:w-56">
-            <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-8 h-8 text-sm"
-              placeholder="Buscar..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        <CardHeader>
+          <CardTitle className="text-base">Movimientos</CardTitle>
+          <CardDescription>
+            {transactions.length} registro{transactions.length !== 1 ? "s" : ""} este mes
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {transactionsQuery.isLoading ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-32" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Skeleton className="ml-auto h-4 w-16" />
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : transactions.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="w-20" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="font-medium">
-                      {transaction.description}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {transaction.category?.name ?? "Sin categoría"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(transaction.occurredOn)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span
-                        className={
-                          transaction.type === "income"
-                            ? "font-medium text-emerald-600 dark:text-emerald-400"
-                            : "font-medium text-destructive"
-                        }
-                      >
-                        {transaction.type === "income" ? "+" : "-"}
-                        {formatCurrency(transaction.amount)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <TransactionDialog
-                          transaction={transaction}
-                          trigger={
-                            <Button
-                              size="icon-sm"
-                              variant="ghost"
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              <PencilIcon className="size-3.5" />
-                              <span className="sr-only">Editar</span>
-                            </Button>
-                          }
-                        />
-                        <ConfirmDialog
-                          trigger={
-                            <Button
-                              size="icon-sm"
-                              variant="ghost"
-                              className="text-muted-foreground hover:text-destructive"
-                              disabled={deleteMutation.isPending}
-                            >
-                              <Trash2Icon className="size-3.5" />
-                              <span className="sr-only">Eliminar</span>
-                            </Button>
-                          }
-                          description="Se eliminará este movimiento permanentemente."
-                          onConfirm={() => deleteMutation.mutate(transaction.id)}
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <Empty className="border bg-muted/20">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <WalletCardsIcon />
-                </EmptyMedia>
-                <EmptyTitle>Sin movimientos este mes</EmptyTitle>
-                <EmptyDescription>
-                  Registra tu primer gasto o ingreso para ver el resumen.
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <TransactionDialog />
-              </EmptyContent>
-            </Empty>
-          )}
+          <DataTable
+            columns={columns}
+            data={transactions}
+            isLoading={transactionsQuery.isLoading}
+            searchPlaceholder="Buscar por descripción o categoría..."
+            emptyState={
+              <Empty className="bg-muted/20">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <WalletCardsIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>Sin movimientos este mes</EmptyTitle>
+                  <EmptyDescription>
+                    Registra tu primer gasto o ingreso para ver el resumen.
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <TransactionDialog />
+                </EmptyContent>
+              </Empty>
+            }
+          />
         </CardContent>
       </Card>
     </main>
