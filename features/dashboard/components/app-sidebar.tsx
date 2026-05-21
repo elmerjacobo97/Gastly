@@ -8,6 +8,7 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   PiggyBankIcon,
+  ScrollTextIcon,
   TagsIcon,
   WalletCardsIcon,
 } from "lucide-react"
@@ -49,6 +50,12 @@ const navigationItems = [
     title: "Movimientos",
     href: "/dashboard/transactions",
     icon: ArrowLeftRightIcon,
+    exact: false,
+  },
+  {
+    title: "Plan mensual",
+    href: "/dashboard/monthly-plan",
+    icon: ScrollTextIcon,
     exact: false,
   },
   {

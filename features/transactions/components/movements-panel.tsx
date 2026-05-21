@@ -36,7 +36,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { MonthNav } from "@/features/transactions/components/month-nav"
+import { MonthNav } from "@/components/month-nav"
 import { TransactionDialog } from "@/features/transactions/components/transaction-dialog"
 import {
   deleteTransaction,

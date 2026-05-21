@@ -79,7 +79,7 @@ import {
   type FixedExpensePaymentValues,
 } from "@/features/fixed-expenses/schemas/fixed-expense-schemas"
 import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
-import { MonthNav } from "@/features/transactions/components/month-nav"
+import { MonthNav } from "@/components/month-nav"
 import {
   formatCurrency,
   formatDate,
@@ -308,7 +308,7 @@ export function FixedExpensesPanel() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <MonthNav value={month} onChange={setMonth} />
+          <MonthNav value={month} onChange={setMonth} allowFuture />
           <FixedExpenseDialog />
         </div>
       </section>

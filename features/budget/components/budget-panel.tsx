@@ -41,7 +41,7 @@ import { formatCurrency } from "@/features/transactions/lib/format-transaction"
 import { deleteBudget, getBudgets } from "@/features/budget/lib/budget-api"
 import { BudgetDialog } from "@/features/budget/components/budget-dialog"
 import { type Budget } from "@/features/budget/types/budget-types"
-import { MonthNav } from "@/features/transactions/components/month-nav"
+import { MonthNav } from "@/components/month-nav"
 
 function usageColor(usage: number) {
   if (usage >= 100) return "text-destructive"
@@ -95,7 +95,7 @@ export function BudgetPanel() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <MonthNav value={month} onChange={setMonth} />
+          <MonthNav value={month} onChange={setMonth} allowFuture />
           <BudgetDialog />
         </div>
       </section>

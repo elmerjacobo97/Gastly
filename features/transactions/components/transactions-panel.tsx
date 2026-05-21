@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  CircleAlertIcon,
   TrendingUpIcon,
   WalletCardsIcon,
 } from "lucide-react"
@@ -22,10 +23,7 @@ import {
   YAxis,
 } from "recharts"
 
-import Link from "next/link"
-
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -33,15 +31,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Progress } from "@/components/ui/progress"
+import { MonthlyPlanDialog } from "@/features/monthly-plan/components/monthly-plan-dialog"
+import {
+  calculateSavings,
+  getMonthlyPlan,
+} from "@/features/monthly-plan/lib/monthly-plan-api"
+import { getFixedExpenses } from "@/features/fixed-expenses/lib/fixed-expenses-api"
+import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
 import {
   getCategoryTotals,
   getMonthlyTotals,
@@ -69,6 +67,45 @@ function formatCompact(value: number) {
   return `S/ ${value.toFixed(0)}`
 }
 
+function isRelevantRecurringPayment(expense: FixedExpense, monthKey: string) {
+  if (!expense.isActive) return false
+  if (expense.frequency === "monthly") return true
+  return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
+}
+
+function getHealthState(usage: number, remaining: number) {
+  if (remaining < 0 || usage >= 100) {
+    return {
+      label: "Rojo",
+      description: "Ya te pasaste del dinero disponible.",
+      className: "text-destructive",
+      progressClassName: "[&>div]:bg-destructive",
+    }
+  }
+  if (usage >= 85) {
+    return {
+      label: "Naranja",
+      description: "Estás muy cerca del límite.",
+      className: "text-orange-600 dark:text-orange-400",
+      progressClassName: "[&>div]:bg-orange-500",
+    }
+  }
+  if (usage >= 70) {
+    return {
+      label: "Amarillo",
+      description: "Vas bien, pero conviene cuidar gastos.",
+      className: "text-amber-600 dark:text-amber-400",
+      progressClassName: "[&>div]:bg-amber-500",
+    }
+  }
+  return {
+    label: "Verde",
+    description: "Tienes margen saludable para el mes.",
+    className: "text-emerald-600 dark:text-emerald-400",
+    progressClassName: "[&>div]:bg-emerald-500",
+  }
+}
+
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const today = new Date()
   const monthKey = today.toISOString().slice(0, 7)
@@ -77,6 +114,14 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const transactionsQuery = useQuery({
     queryKey: ["transactions", monthKey],
     queryFn: () => getTransactions({ month: today }),
+  })
+  const planQuery = useQuery({
+    queryKey: ["monthly-plan", monthKey],
+    queryFn: () => getMonthlyPlan(today),
+  })
+  const fixedExpensesQuery = useQuery({
+    queryKey: ["fixed-expenses", monthKey],
+    queryFn: () => getFixedExpenses(today),
   })
   const monthlyQuery = useQuery({
     queryKey: ["monthly-totals"],
@@ -89,79 +134,60 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
 
   const transactions = transactionsQuery.data ?? []
   const summary = computeSummary(transactions)
+  const plan = planQuery.data ?? null
+  const recurringPayments = (fixedExpensesQuery.data ?? []).filter((expense) =>
+    isRelevantRecurringPayment(expense, monthKey)
+  )
+  const savings = calculateSavings(plan)
+  const recurringEstimated = recurringPayments.reduce((sum, expense) => {
+    return sum + (expense.paidAmount ?? expense.amount)
+  }, 0)
+  const recurringPaid = recurringPayments.reduce((sum, expense) => {
+    return sum + (expense.paidAmount ?? 0)
+  }, 0)
+  const availableAfterSavings = plan
+    ? Math.max(plan.expectedIncome - savings, 0)
+    : summary.income
+  const availableForVariable = Math.max(availableAfterSavings - recurringEstimated, 0)
+  const variableSpent = Math.max(summary.expenses - recurringPaid, 0)
+  const remaining = availableForVariable - variableSpent
+  const usage = availableForVariable > 0
+    ? Math.round((variableSpent / availableForVariable) * 100)
+    : variableSpent > 0
+      ? 100
+      : 0
+  const health = getHealthState(usage, remaining)
 
   const summaryCards = [
     {
-      title: "Balance del mes",
-      value: formatCurrency(summary.balance),
-      description: summary.balance >= 0 ? "Saldo positivo" : "Gastos superan ingresos",
+      title: "Disponible libre",
+      value: formatCurrency(availableForVariable),
+      description: plan ? "Después de ahorro y pagos recurrentes" : "Configura tu plan para mayor precisión",
       icon: WalletCardsIcon,
-      positive: summary.balance >= 0,
+      positive: remaining >= 0,
     },
     {
-      title: "Ingresos",
-      value: formatCurrency(summary.income),
-      description: "Total del mes",
+      title: "Ahorro obligatorio",
+      value: formatCurrency(savings),
+      description: plan ? "Dinero que no debes tocar" : "Sin plan mensual",
       icon: ArrowUpIcon,
       positive: true,
     },
     {
-      title: "Gastos",
-      value: formatCurrency(summary.expenses),
-      description: "Total del mes",
+      title: "Pagos recurrentes",
+      value: formatCurrency(recurringEstimated),
+      description: `${recurringPayments.length} pago${recurringPayments.length !== 1 ? "s" : ""} estimado${recurringPayments.length !== 1 ? "s" : ""}`,
       icon: ArrowDownIcon,
-      positive: false,
+      positive: recurringEstimated <= availableAfterSavings,
     },
     {
-      title: "Uso del ingreso",
-      value: `${summary.budgetUsage}%`,
-      description: "Gastos sobre ingresos",
+      title: "Gastos variables",
+      value: formatCurrency(variableSpent),
+      description: `${usage}% de tu disponible libre`,
       icon: TrendingUpIcon,
-      positive: summary.budgetUsage < 80,
+      positive: usage < 85,
     },
   ]
-
-  const isEmpty = !transactionsQuery.isLoading && transactions.length === 0
-
-  if (isEmpty) {
-    return (
-      <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-        <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-1.5">
-            <Badge className="w-fit capitalize" variant="secondary">
-              {monthLabel}
-            </Badge>
-            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              Hola, {userEmail?.split("@")[0] ?? "Usuario"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Resumen de tus finanzas de este mes.
-            </p>
-          </div>
-        </section>
-        <Card>
-          <CardContent className="pt-6">
-            <Empty className="border bg-muted/20">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <WalletCardsIcon />
-                </EmptyMedia>
-                <EmptyTitle>Sin movimientos este mes</EmptyTitle>
-                <EmptyDescription>
-                  Registra tu primer ingreso o gasto para ver el resumen de tus finanzas.
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button asChild>
-                  <Link href="/dashboard/transactions">Ir a Movimientos</Link>
-                </Button>
-              </EmptyContent>
-            </Empty>
-          </CardContent>
-        </Card>
-      </main>
-    )
-  }
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -178,6 +204,51 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
           </p>
         </div>
       </section>
+
+      {!planQuery.isLoading && !plan && (
+        <Card className="border-amber-500/30 bg-amber-500/10">
+          <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <CircleAlertIcon className="mt-0.5 size-5 text-amber-600 dark:text-amber-400" />
+              <div>
+                <p className="font-medium">Falta tu plan mensual</p>
+                <p className="text-sm text-muted-foreground">
+                  Configura tu ingreso estimado y ahorro obligatorio para que el semáforo sea preciso.
+                </p>
+              </div>
+            </div>
+            <MonthlyPlanDialog month={today} plan={plan} />
+          </CardContent>
+        </Card>
+      )}
+
+      {plan && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <CardDescription>Estado del mes</CardDescription>
+                <CardTitle className={`mt-1 text-3xl ${health.className}`}>
+                  {health.label}
+                </CardTitle>
+              </div>
+              <div className="text-left md:text-right">
+                <p className="text-sm text-muted-foreground">Restante libre</p>
+                <p className={`text-2xl font-semibold tabular-nums ${remaining < 0 ? "text-destructive" : "text-foreground"}`}>
+                  {formatCurrency(remaining)}
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Progress value={Math.min(usage, 100)} className={health.progressClassName} />
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+              <span>{health.description}</span>
+              <span className="tabular-nums">{usage}% usado</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
