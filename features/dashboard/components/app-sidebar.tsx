@@ -47,8 +47,9 @@ const navigationItems = [
   },
   {
     title: "Categorias",
+    href: "/dashboard/categories",
     icon: TagsIcon,
-    badge: "Pronto",
+    isAvailable: true,
   },
   {
     title: "Presupuesto",
