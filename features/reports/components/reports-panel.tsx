@@ -3,12 +3,12 @@
 import { type ColumnDef } from "@tanstack/react-table"
 import { useQuery } from "@tanstack/react-query"
 import {
+  ArrowDownIcon,
+  ArrowUpIcon,
   DownloadIcon,
   FilterIcon,
   PrinterIcon,
   ScaleIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -85,13 +85,11 @@ function exportToCSV(transactions: Transaction[], filename: string) {
     t.amount.toString(),
     t.notes ?? "",
   ])
-
   const csvContent = [headers, ...rows]
     .map((row) =>
       row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
     )
     .join("\n")
-
   const blob = new Blob(["﻿" + csvContent], { type: "text/csv;charset=utf-8;" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
@@ -134,7 +132,10 @@ const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       const type = row.getValue("type") as string
       return (
-        <Badge variant={type === "income" ? "default" : "secondary"} className="text-xs">
+        <Badge
+          variant={type === "income" ? "default" : "secondary"}
+          className="text-xs"
+        >
           {type === "income" ? "Ingreso" : "Gasto"}
         </Badge>
       )
@@ -162,66 +163,9 @@ const columns: ColumnDef<Transaction>[] = [
   },
 ]
 
-function ReportsTable({
-  all,
-  isLoading,
-  filename,
-}: {
-  all: Transaction[]
-  isLoading: boolean
-  filename: string
-}) {
-  const [filterType, setFilterType] = useState<FilterType>("all")
-  const filtered = filterType === "all" ? all : all.filter((t) => t.type === filterType)
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
-        <div>
-          <CardTitle className="text-base">Movimientos</CardTitle>
-          <CardDescription>
-            {filtered.length} registro{filtered.length !== 1 ? "s" : ""}
-          </CardDescription>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="print:hidden"
-          onClick={() => exportToCSV(filtered, filename)}
-          disabled={filtered.length === 0}
-        >
-          <DownloadIcon />
-          Exportar CSV
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          columns={columns}
-          data={filtered}
-          isLoading={isLoading}
-          defaultPageSize={20}
-          searchPlaceholder="Buscar por descripción o categoría..."
-          toolbar={<TypeFilterBar value={filterType} onChange={setFilterType} />}
-          emptyState={
-            <Empty className="border bg-muted/20">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <FilterIcon />
-                </EmptyMedia>
-                <EmptyTitle>Sin movimientos</EmptyTitle>
-                <EmptyDescription>
-                  No hay registros para el período seleccionado.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          }
-        />
-      </CardContent>
-    </Card>
-  )
-}
-
 export function ReportsPanel() {
+  const [filterType, setFilterType] = useState<FilterType>("all")
+
   const today = new Date()
   const fromDate = format(
     new Date(today.getFullYear(), today.getMonth() - 2, 1),
@@ -238,6 +182,9 @@ export function ReportsPanel() {
   })
 
   const all = transactionsQuery.data ?? []
+  const filtered =
+    filterType === "all" ? all : all.filter((t) => t.type === filterType)
+
   const totalIncome = all
     .filter((t) => t.type === "income")
     .reduce((s, t) => s + t.amount, 0)
@@ -249,73 +196,130 @@ export function ReportsPanel() {
   const monthLabel = format(today, "MMMM yyyy", { locale: es })
   const filename = `gastly-reporte-${format(today, "yyyy-MM")}.csv`
 
+  const summaryCards = [
+    {
+      title: "Total ingresos",
+      value: formatCurrency(totalIncome),
+      icon: ArrowUpIcon,
+      positive: true,
+    },
+    {
+      title: "Total gastos",
+      value: formatCurrency(totalExpenses),
+      icon: ArrowDownIcon,
+      positive: false,
+    },
+    {
+      title: "Balance neto",
+      value: formatCurrency(balance),
+      icon: ScaleIcon,
+      positive: balance >= 0,
+    },
+  ]
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6 print:p-0">
+      {/* Header */}
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between print:rounded-none print:border-0 print:shadow-none">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-            Reporte
+            Reportes
           </h1>
           <p className="mt-1 text-sm text-muted-foreground capitalize">
             {monthLabel} · Últimos 3 meses
           </p>
         </div>
-        <div className="flex gap-2 print:hidden">
+        <div className="flex items-center gap-2 print:hidden">
+          <Button
+            variant="outline"
+            disabled={filtered.length === 0}
+            onClick={() => exportToCSV(filtered, filename)}
+          >
+            <DownloadIcon />
+            Exportar CSV
+          </Button>
           <Button variant="outline" onClick={() => window.print()}>
             <PrinterIcon />
-            Imprimir / PDF
+            Imprimir
           </Button>
         </div>
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {transactionsQuery.isLoading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="p-4">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="mt-2 h-7 w-28" />
-            </Card>
-          ))
-        ) : (
-          <>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <TrendingUpIcon className="size-3.5 text-emerald-500" />
-                Total ingresos
-              </div>
-              <p className="mt-1 text-xl font-semibold text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(totalIncome)}
-              </p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <TrendingDownIcon className="size-3.5 text-destructive" />
-                Total gastos
-              </div>
-              <p className="mt-1 text-xl font-semibold text-destructive">
-                {formatCurrency(totalExpenses)}
-              </p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <ScaleIcon className="size-3.5" />
-                Balance neto
-              </div>
-              <p
-                className={`mt-1 text-xl font-semibold ${
-                  balance >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-destructive"
-                }`}
-              >
-                {formatCurrency(balance)}
-              </p>
-            </Card>
-          </>
-        )}
-      </div>
+      {/* Summary cards */}
+      <section className="grid gap-4 sm:grid-cols-3">
+        {transactionsQuery.isLoading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-7 w-28" />
+                  </div>
+                  <Skeleton className="size-10 rounded-xl" />
+                </CardHeader>
+              </Card>
+            ))
+          : summaryCards.map((card) => (
+              <Card key={card.title}>
+                <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+                  <div>
+                    <CardDescription className="text-xs">{card.title}</CardDescription>
+                    <CardTitle
+                      className={`mt-1.5 text-2xl tabular-nums ${
+                        card.positive ? "text-foreground" : "text-destructive"
+                      }`}
+                    >
+                      {card.value}
+                    </CardTitle>
+                  </div>
+                  <div
+                    className={`grid size-10 place-items-center rounded-xl ${
+                      card.positive
+                        ? "bg-primary/10 text-primary"
+                        : "bg-destructive/10 text-destructive"
+                    }`}
+                  >
+                    <card.icon className="size-5" />
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+      </section>
 
-      <ReportsTable all={all} isLoading={transactionsQuery.isLoading} filename={filename} />
+      {/* Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Movimientos</CardTitle>
+          <CardDescription>
+            {filtered.length} registro{filtered.length !== 1 ? "s" : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={filtered}
+            isLoading={transactionsQuery.isLoading}
+            defaultPageSize={20}
+            searchPlaceholder="Buscar por descripción o categoría..."
+            toolbar={
+              <TypeFilterBar value={filterType} onChange={setFilterType} />
+            }
+            emptyState={
+              <Empty className="border bg-muted/20">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <FilterIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>Sin movimientos</EmptyTitle>
+                  <EmptyDescription>
+                    No hay registros para el período seleccionado.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            }
+          />
+        </CardContent>
+      </Card>
     </main>
   )
 }
