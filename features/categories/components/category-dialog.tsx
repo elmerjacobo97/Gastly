@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -28,11 +28,15 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import { createCategory } from "@/features/categories/lib/categories-api"
+import {
+  createCategory,
+  updateCategory,
+} from "@/features/categories/lib/categories-api"
 import {
   type CategoryValues,
   categorySchema,
 } from "@/features/categories/schemas/category-schemas"
+import { type Category } from "@/features/categories/types/category-types"
 import { cn } from "@/lib/utils"
 
 const colorOptions = [
@@ -56,54 +60,102 @@ const colorOptions = [
   { value: "zinc", hex: "#71717a" },
 ]
 
-export function CategoryDialog() {
-  const [open, setOpen] = useState(false)
+type CategoryDialogProps = {
+  category?: Category
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function CategoryDialog({
+  category,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: CategoryDialogProps) {
+  const isEditing = !!category
+  const isControlled = controlledOpen !== undefined
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
+
   const queryClient = useQueryClient()
+
   const form = useForm<CategoryValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
-      name: "",
-      type: "expense",
-      color: "blue",
+      name: category?.name ?? "",
+      type: category?.type ?? "expense",
+      color: category?.color ?? "blue",
     },
   })
-  const mutation = useMutation({
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: category?.name ?? "",
+        type: category?.type ?? "expense",
+        color: category?.color ?? "blue",
+      })
+    }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const invalidate = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["categories"] }),
+      queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+    ])
+
+  const createMutation = useMutation({
     mutationFn: createCategory,
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-      ])
+      await invalidate()
       form.reset({ name: "", type: "expense", color: "blue" })
       setOpen(false)
       toast.success("Categoría creada")
     },
     onError: (error) => {
-      toast.error("No se pudo crear la categoría", {
-        description: error.message,
-      })
+      toast.error("No se pudo crear la categoría", { description: error.message })
     },
   })
+
+  const updateMutation = useMutation({
+    mutationFn: (values: CategoryValues) =>
+      updateCategory(category!.id, values),
+    onSuccess: async () => {
+      await invalidate()
+      setOpen(false)
+      toast.success("Categoría actualizada")
+    },
+    onError: (error) => {
+      toast.error("No se pudo actualizar la categoría", { description: error.message })
+    },
+  })
+
+  const mutation = isEditing ? updateMutation : createMutation
+  const selectedColor = form.watch("color")
 
   function onSubmit(values: CategoryValues) {
     mutation.mutate(values)
   }
 
-  const selectedColor = form.watch("color")
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon data-icon="inline-start" />
-          Nueva categoría
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button>
+            <PlusIcon data-icon="inline-start" />
+            Nueva categoría
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nueva categoría</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Editar categoría" : "Nueva categoría"}
+          </DialogTitle>
           <DialogDescription>
-            Crea una categoría para clasificar tus gastos o ingresos.
+            {isEditing
+              ? "Cambia el nombre o el color de la categoría."
+              : "Crea una categoría para clasificar tus gastos o ingresos."}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -141,6 +193,7 @@ export function CategoryDialog() {
                     {...field}
                     aria-invalid={fieldState.invalid}
                     className="w-full"
+                    disabled={isEditing}
                     id="category-type"
                   >
                     <NativeSelectOption value="expense">Gasto</NativeSelectOption>
@@ -187,15 +240,11 @@ export function CategoryDialog() {
           </FieldGroup>
         </form>
         <DialogFooter>
-          <Button
-            disabled={mutation.isPending}
-            form="category-form"
-            type="submit"
-          >
+          <Button disabled={mutation.isPending} form="category-form" type="submit">
             {mutation.isPending && (
               <Loader2Icon className="size-4 animate-spin" />
             )}
-            Guardar categoría
+            {isEditing ? "Guardar cambios" : "Guardar categoría"}
           </Button>
         </DialogFooter>
       </DialogContent>

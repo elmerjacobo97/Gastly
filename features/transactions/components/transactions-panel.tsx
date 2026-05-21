@@ -7,7 +7,8 @@ import {
   TrendingUpIcon,
   WalletCardsIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import {
   Bar,
   BarChart,
@@ -39,7 +40,6 @@ import {
   getTransactions,
 } from "@/features/transactions/lib/transactions-api"
 import { formatCurrency } from "@/features/transactions/lib/format-transaction"
-import { MonthNav } from "@/features/transactions/components/month-nav"
 
 type TransactionsPanelProps = {
   userEmail?: string
@@ -59,19 +59,21 @@ function formatCompact(value: number) {
 }
 
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
-  const [month, setMonth] = useState(() => new Date())
+  const today = new Date()
+  const monthKey = today.toISOString().slice(0, 7)
+  const monthLabel = format(today, "MMMM yyyy", { locale: es })
 
   const transactionsQuery = useQuery({
-    queryKey: ["transactions", month.toISOString().slice(0, 7)],
-    queryFn: () => getTransactions({ month }),
+    queryKey: ["transactions", monthKey],
+    queryFn: () => getTransactions({ month: today }),
   })
   const monthlyQuery = useQuery({
     queryKey: ["monthly-totals"],
     queryFn: () => getMonthlyTotals(6),
   })
   const categoryQuery = useQuery({
-    queryKey: ["category-totals", month.toISOString().slice(0, 7)],
-    queryFn: () => getCategoryTotals(month),
+    queryKey: ["category-totals", monthKey],
+    queryFn: () => getCategoryTotals(today),
   })
 
   const transactions = transactionsQuery.data ?? []
@@ -112,18 +114,15 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-1.5">
-          <Badge className="w-fit" variant="secondary">
-            Cuenta activa
+          <Badge className="w-fit capitalize" variant="secondary">
+            {monthLabel}
           </Badge>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
             Hola, {userEmail?.split("@")[0] ?? "Usuario"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Resumen de tus finanzas personales.
+            Resumen de tus finanzas de este mes.
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <MonthNav value={month} onChange={setMonth} />
         </div>
       </section>
 

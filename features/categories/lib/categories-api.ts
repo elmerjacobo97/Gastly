@@ -64,6 +64,24 @@ export async function createCategory(values: CategoryValues) {
   }
 }
 
+export async function updateCategory(
+  id: string,
+  values: Pick<CategoryValues, "name" | "color">
+) {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from("categories")
+    .update({ name: values.name, color: values.color })
+    .eq("id", id)
+
+  if (error) {
+    if (error.code === "23505") {
+      throw new Error("Ya existe una categoría con ese nombre.")
+    }
+    throw new Error(error.message)
+  }
+}
+
 export async function deleteCategory(categoryId: string) {
   const supabase = createClient()
   const { error } = await supabase.from("categories").delete().eq("id", categoryId)
