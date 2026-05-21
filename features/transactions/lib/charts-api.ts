@@ -142,7 +142,9 @@ export async function getAllTransactions(opts?: {
       description: row.description as string,
       occurredOn: row.occurred_on as string,
       notes: row.notes as string | null,
-      category: cat,
+      category: cat
+        ? { ...cat, type: cat.type as "expense" | "income" }
+        : null,
     }
   })
 }
