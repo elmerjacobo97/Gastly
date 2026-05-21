@@ -11,6 +11,7 @@ export type LoanPayment = {
 export type Loan = {
   id: string
   personName: string
+  direction: LoanDirection
   amount: number
   expectedOn: string | null
   loanedOn: string

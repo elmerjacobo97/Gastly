@@ -25,6 +25,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select"
 import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
 import { updateLoan } from "@/features/loans/lib/loans-api"
 import { type Loan } from "@/features/loans/types/loan-types"
@@ -41,6 +45,7 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
   const form = useForm<LoanValues>({
     resolver: zodResolver(loanSchema),
     defaultValues: {
+      direction: loan.direction,
       personName: loan.personName,
       amount: loan.amount,
       expectedOn: loan.expectedOn ?? "",
@@ -52,6 +57,7 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
   useEffect(() => {
     if (open) {
       form.reset({
+        direction: loan.direction,
         personName: loan.personName,
         amount: loan.amount,
         expectedOn: loan.expectedOn ?? "",
@@ -88,13 +94,28 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
           noValidate
           onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
         >
+          <Controller
+            control={form.control}
+            name="direction"
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="el-direction">Tipo</FieldLabel>
+                <NativeSelect {...field} id="el-direction">
+                  <NativeSelectOption value="lent">Yo presté</NativeSelectOption>
+                  <NativeSelectOption value="borrowed">Me prestaron</NativeSelectOption>
+                </NativeSelect>
+              </Field>
+            )}
+          />
           <FieldGroup>
             <Controller
               control={form.control}
               name="personName"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="el-person">A quién le presté</FieldLabel>
+                  <FieldLabel htmlFor="el-person">
+                    {form.watch("direction") === "lent" ? "A quién le presté" : "Quién me prestó"}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id="el-person"

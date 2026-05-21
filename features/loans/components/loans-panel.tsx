@@ -62,9 +62,12 @@ export function LoansPanel() {
 
   const active = loans.filter((l) => !l.isSettled)
   const settled = loans.filter((l) => l.isSettled)
-  const totalLoaned = active.reduce((s, l) => s + l.amount, 0)
-  const totalPending = active.reduce((s, l) => s + l.pendingAmount, 0)
-  const totalReceived = active.reduce((s, l) => s + l.paidAmount, 0)
+  const activeLent = active.filter((l) => l.direction === "lent")
+  const activeBorrowed = active.filter((l) => l.direction === "borrowed")
+  const settledLent = settled.filter((l) => l.direction === "lent")
+  const settledBorrowed = settled.filter((l) => l.direction === "borrowed")
+  const totalToReceive = activeLent.reduce((s, l) => s + l.pendingAmount, 0)
+  const totalToPay = activeBorrowed.reduce((s, l) => s + l.pendingAmount, 0)
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -80,29 +83,24 @@ export function LoansPanel() {
 
       {/* Summary cards */}
       {!isLoading && loans.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Préstamos activos</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums">{active.length}</p>
-            <p className="text-xs text-muted-foreground tabular-nums">
-              {formatCurrency(totalLoaned)} prestado
-            </p>
-          </Card>
-          <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Pendiente de cobro</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
-              {formatCurrency(totalPending)}
+            <p className="text-xs text-muted-foreground">Por cobrar</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(totalToReceive)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {settled.length} saldado{settled.length !== 1 ? "s" : ""}
+              {activeLent.length} préstamo{activeLent.length !== 1 ? "s" : ""} activo{activeLent.length !== 1 ? "s" : ""}
             </p>
           </Card>
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Ya recibido</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(totalReceived)}
+            <p className="text-xs text-muted-foreground">Por pagar</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
+              {formatCurrency(totalToPay)}
             </p>
-            <p className="text-xs text-muted-foreground">de préstamos activos</p>
+            <p className="text-xs text-muted-foreground">
+              {activeBorrowed.length} deuda{activeBorrowed.length !== 1 ? "s" : ""} activa{activeBorrowed.length !== 1 ? "s" : ""}
+            </p>
           </Card>
         </div>
       )}
@@ -139,14 +137,14 @@ export function LoansPanel() {
         </div>
       ) : (
         <>
-          {/* Active loans grid */}
-          {active.length > 0 && (
+          {/* Lent — active */}
+          {activeLent.length > 0 && (
             <>
               <h2 className="text-sm font-medium text-muted-foreground">
-                Préstamos activos ({active.length})
+                Yo presté ({activeLent.length})
               </h2>
               <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {active.map((loan) => {
+                {activeLent.map((loan) => {
                   const pctPaid =
                     loan.amount > 0
                       ? Math.min(100, Math.round((loan.paidAmount / loan.amount) * 100))
@@ -242,40 +240,122 @@ export function LoansPanel() {
             </>
           )}
 
-          {/* Settled loans */}
-          {settled.length > 0 && (
+          {/* Borrowed — active */}
+          {activeBorrowed.length > 0 && (
             <>
               <h2 className="text-sm font-medium text-muted-foreground">
-                Saldados ({settled.length})
+                Me prestaron ({activeBorrowed.length})
               </h2>
               <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {settled.map((loan) => (
+                {activeBorrowed.map((loan) => {
+                  const pctPaid =
+                    loan.amount > 0
+                      ? Math.min(100, Math.round((loan.paidAmount / loan.amount) * 100))
+                      : 0
+                  return (
+                    <Card key={loan.id}>
+                      <CardHeader className="flex flex-row items-start justify-between pb-3">
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="truncate text-base">{loan.personName}</CardTitle>
+                          <CardDescription>
+                            Recibido el{" "}
+                            {format(new Date(`${loan.loanedOn}T12:00:00`), "d MMM yyyy", {
+                              locale: es,
+                            })}
+                          </CardDescription>
+                          {loan.expectedOn && (
+                            <Badge variant="secondary" className="mt-1.5 text-xs font-normal">
+                              Pagar antes del{" "}
+                              {format(new Date(`${loan.expectedOn}T12:00:00`), "d MMM yyyy", {
+                                locale: es,
+                              })}
+                            </Badge>
+                          )}
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
+                              <MoreHorizontalIcon />
+                              <span className="sr-only">Acciones</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => setEditLoan(loan)}>
+                              <PencilIcon />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setDeleteId(loan.id)} className="text-destructive focus:text-destructive">
+                              <Trash2Icon />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </CardHeader>
+                      <CardContent className="flex flex-col gap-3">
+                        <Progress value={pctPaid} className="[&>div]:bg-primary" />
+                        <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+                          <span>Pagado: {formatCurrency(loan.paidAmount)}</span>
+                          <span className="text-destructive font-medium">
+                            Pendiente: {formatCurrency(loan.pendingAmount)}
+                          </span>
+                        </div>
+                        {loan.notes && (
+                          <p className="text-xs text-muted-foreground">{loan.notes}</p>
+                        )}
+                        {loan.payments.length > 0 && (
+                          <ul className="flex flex-col gap-0.5 border-t pt-2">
+                            {loan.payments.map((p) => (
+                              <li key={p.id} className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>
+                                  {format(new Date(`${p.occurredOn}T12:00:00`), "d MMM yyyy", { locale: es })}
+                                  {p.notes && ` · ${p.notes}`}
+                                </span>
+                                <span className="tabular-nums text-foreground">
+                                  -{formatCurrency(p.amount)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <RecordPaymentDialog loan={loan} />
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </section>
+            </>
+          )}
+
+          {/* Settled */}
+          {(settledLent.length > 0 || settledBorrowed.length > 0) && (
+            <>
+              <h2 className="text-sm font-medium text-muted-foreground">
+                Saldados ({settledLent.length + settledBorrowed.length})
+              </h2>
+              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {[...settledLent, ...settledBorrowed].map((loan) => (
                   <Card key={loan.id} className="opacity-60">
                     <CardHeader className="flex flex-row items-start justify-between pb-3">
                       <div className="min-w-0 flex-1">
                         <CardTitle className="truncate text-base">{loan.personName}</CardTitle>
                         <CardDescription>
-                          {format(new Date(`${loan.loanedOn}T12:00:00`), "d MMM yyyy", {
-                            locale: es,
-                          })}
+                          {loan.direction === "lent" ? "Presté · " : "Me prestaron · "}
+                          {format(new Date(`${loan.loanedOn}T12:00:00`), "d MMM yyyy", { locale: es })}
                         </CardDescription>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 shrink-0 text-muted-foreground"
-                          >
+                          <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
                             <MoreHorizontalIcon />
                             <span className="sr-only">Acciones</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onSelect={() => setDeleteId(loan.id)}
-                            className="text-destructive focus:text-destructive"
-                          >
+                          <DropdownMenuItem onSelect={() => setEditLoan(loan)}>
+                            <PencilIcon />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDeleteId(loan.id)} className="text-destructive focus:text-destructive">
                             <Trash2Icon />
                             Eliminar
                           </DropdownMenuItem>
@@ -285,7 +365,7 @@ export function LoansPanel() {
                     <CardContent>
                       <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2Icon className="size-3.5" />
-                        Saldado · {formatCurrency(loan.amount)} devuelto
+                        Saldado · {formatCurrency(loan.amount)}
                       </div>
                     </CardContent>
                   </Card>

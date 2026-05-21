@@ -26,6 +26,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select"
 import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
 import { createLoan } from "@/features/loans/lib/loans-api"
 
@@ -43,12 +47,12 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
 
   const form = useForm<LoanValues>({
     resolver: zodResolver(loanSchema),
-    defaultValues: { personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
+    defaultValues: { direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
   })
 
   useEffect(() => {
     if (open) {
-      form.reset({ personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
+      form.reset({ direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -63,6 +67,8 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
       toast.error("No se pudo registrar", { description: error.message })
     },
   })
+
+  const direction = form.watch("direction")
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -85,13 +91,28 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
           noValidate
           onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
         >
+          <Controller
+            control={form.control}
+            name="direction"
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="loan-direction">Tipo</FieldLabel>
+                <NativeSelect {...field} id="loan-direction">
+                  <NativeSelectOption value="lent">Yo presté</NativeSelectOption>
+                  <NativeSelectOption value="borrowed">Me prestaron</NativeSelectOption>
+                </NativeSelect>
+              </Field>
+            )}
+          />
           <FieldGroup>
             <Controller
               control={form.control}
               name="personName"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="loan-person">A quién le presté</FieldLabel>
+                  <FieldLabel htmlFor="loan-person">
+                    {direction === "lent" ? "A quién le presté" : "Quién me prestó"}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id="loan-person"
