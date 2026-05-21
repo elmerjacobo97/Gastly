@@ -5,6 +5,7 @@ import {
   BarChart3Icon,
   CalendarClockIcon,
   ChevronsUpDownIcon,
+  CreditCardIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   PiggyBankIcon,
@@ -74,6 +75,12 @@ const navigationItems = [
     title: "Pagos recurrentes",
     href: "/dashboard/fixed-expenses",
     icon: CalendarClockIcon,
+    exact: false,
+  },
+  {
+    title: "Cuotas",
+    href: "/dashboard/installments",
+    icon: CreditCardIcon,
     exact: false,
   },
   {
