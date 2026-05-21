@@ -53,7 +53,7 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "income", label: "Ingresos" },
 ]
 
-export function CategoriesPanel() {
+export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
   const [editCategory, setEditCategory] = useState<Category | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -94,8 +94,10 @@ export function CategoriesPanel() {
   const filtered =
     typeFilter === "all" ? categories : categories.filter((c) => c.type === typeFilter)
 
+  const Wrapper = embedded ? "div" : "main"
+
   return (
-    <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+    <Wrapper className={embedded ? "flex flex-col gap-6" : "flex flex-1 flex-col gap-6 p-4 md:p-6"}>
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
@@ -218,6 +220,6 @@ export function CategoriesPanel() {
         description="Se eliminará esta categoría. Las transacciones asociadas quedarán sin categoría."
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />
-    </main>
+    </Wrapper>
   )
 }

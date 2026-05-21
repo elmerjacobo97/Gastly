@@ -11,7 +11,7 @@ import {
   LogOutIcon,
   PiggyBankIcon,
   ScrollTextIcon,
-  TagsIcon,
+  Settings2Icon,
   WalletCardsIcon,
 } from "lucide-react"
 import Link from "next/link"
@@ -61,12 +61,6 @@ const navigationItems = [
     exact: false,
   },
   {
-    title: "Categorías",
-    href: "/dashboard/categories",
-    icon: TagsIcon,
-    exact: false,
-  },
-  {
     title: "Presupuesto",
     href: "/dashboard/budget",
     icon: PiggyBankIcon,
@@ -94,6 +88,12 @@ const navigationItems = [
     title: "Reportes",
     href: "/dashboard/reports",
     icon: BarChart3Icon,
+    exact: false,
+  },
+  {
+    title: "Configuración",
+    href: "/dashboard/settings",
+    icon: Settings2Icon,
     exact: false,
   },
 ]
