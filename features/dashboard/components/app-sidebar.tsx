@@ -6,6 +6,7 @@ import {
   CalendarClockIcon,
   ChevronsUpDownIcon,
   CreditCardIcon,
+  HandCoinsIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   PiggyBankIcon,
@@ -81,6 +82,12 @@ const navigationItems = [
     title: "Cuotas",
     href: "/dashboard/installments",
     icon: CreditCardIcon,
+    exact: false,
+  },
+  {
+    title: "Préstamos",
+    href: "/dashboard/loans",
+    icon: HandCoinsIcon,
     exact: false,
   },
   {
