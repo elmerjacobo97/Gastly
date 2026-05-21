@@ -7,4 +7,5 @@ export type MonthlyPlan = {
   savingsMode: SavingsMode
   savingsValue: number
   notes: string | null
+  salaryTransactionId: string | null
 }

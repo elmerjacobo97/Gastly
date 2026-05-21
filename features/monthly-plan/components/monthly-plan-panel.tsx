@@ -1,11 +1,13 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { PiggyBankIcon, WalletCardsIcon } from "lucide-react"
+import { CheckCircle2Icon, PiggyBankIcon, WalletCardsIcon } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -18,12 +20,14 @@ import { MonthlyPlanDialog } from "@/features/monthly-plan/components/monthly-pl
 import {
   calculateSavings,
   getMonthlyPlan,
+  registerSalaryIncome,
 } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { MonthNav } from "@/components/month-nav"
 import { formatCurrency } from "@/features/transactions/lib/format-transaction"
 
 export function MonthlyPlanPanel() {
   const [month, setMonth] = useState(() => new Date())
+  const queryClient = useQueryClient()
   const monthKey = month.toISOString().slice(0, 7)
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
 
@@ -35,6 +39,21 @@ export function MonthlyPlanPanel() {
   const plan = query.data ?? null
   const savings = calculateSavings(plan)
   const availableAfterSavings = plan ? Math.max(plan.expectedIncome - savings, 0) : 0
+
+  const salaryMutation = useMutation({
+    mutationFn: () => registerSalaryIncome(plan!),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["monthly-plan"] }),
+        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
+      ])
+      toast.success("Sueldo registrado como ingreso")
+    },
+    onError: (error) => {
+      toast.error("No se pudo registrar el sueldo", { description: error.message })
+    },
+  })
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -84,14 +103,24 @@ export function MonthlyPlanPanel() {
               </p>
             </Card>
           </div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base capitalize">{monthLabel}</CardTitle>
-              <CardDescription>
-                {plan.savingsMode === "percent"
-                  ? `Separas ${plan.savingsValue}% de tus ingresos.`
-                  : `Separas ${formatCurrency(plan.savingsValue)} como monto fijo.`}
-              </CardDescription>
+            <Card>
+            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle className="text-base capitalize">{monthLabel}</CardTitle>
+                <CardDescription>
+                  {plan.savingsMode === "percent"
+                    ? `Separas ${plan.savingsValue}% de tus ingresos.`
+                    : `Separas ${formatCurrency(plan.savingsValue)} como monto fijo.`}
+                </CardDescription>
+              </div>
+              <Button
+                disabled={!!plan.salaryTransactionId || salaryMutation.isPending}
+                onClick={() => salaryMutation.mutate()}
+                variant={plan.salaryTransactionId ? "secondary" : "default"}
+              >
+                {plan.salaryTransactionId ? <CheckCircle2Icon /> : null}
+                {plan.salaryTransactionId ? "Sueldo registrado" : "Registrar sueldo como ingreso"}
+              </Button>
             </CardHeader>
             {plan.notes && (
               <CardContent>
