@@ -3,11 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import {
   AlertTriangleIcon,
   CalendarClockIcon,
   CalendarIcon,
   CheckCircle2Icon,
+  HistoryIcon,
   Loader2Icon,
   MoreHorizontalIcon,
   PauseCircleIcon,
@@ -78,9 +80,11 @@ import { CategoryIconBadge } from "@/features/categories/components/category-ico
 import { FixedExpenseDialog } from "@/features/fixed-expenses/components/fixed-expense-dialog"
 import {
   deleteFixedExpense,
+  getFixedExpenseHistory,
   getFixedExpenses,
   registerFixedExpensePayment,
   setFixedExpenseActive,
+  type PaymentHistoryEntry,
 } from "@/features/fixed-expenses/lib/fixed-expenses-api"
 import {
   fixedExpensePaymentSchema,
@@ -275,10 +279,85 @@ function PaymentDialog({
   )
 }
 
+function PaymentHistoryDialog({
+  expense,
+  open,
+  onOpenChange,
+}: {
+  expense: FixedExpense | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const historyQuery = useQuery({
+    queryKey: ["fixed-expense-history", expense?.id],
+    queryFn: () => getFixedExpenseHistory(expense!.id),
+    enabled: open && !!expense,
+  })
+
+  const entries: PaymentHistoryEntry[] = historyQuery.data ?? []
+  const total = entries.reduce((sum, e) => sum + e.amount, 0)
+  const avg = entries.length > 0 ? total / entries.length : 0
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Historial de pagos</DialogTitle>
+          <DialogDescription>
+            {expense?.description} · {entries.length} pago{entries.length !== 1 ? "s" : ""} registrado{entries.length !== 1 ? "s" : ""}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4">
+          {historyQuery.isLoading ? (
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between py-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          ) : entries.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Sin pagos registrados aún.
+            </p>
+          ) : (
+            <>
+              <div className="flex flex-col divide-y max-h-72 overflow-y-auto">
+                {entries.map((entry) => (
+                  <div key={entry.id} className="flex items-start justify-between gap-3 py-3 first:pt-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium capitalize">
+                        {format(new Date(`${entry.occurredOn}T12:00:00`), "MMMM yyyy", { locale: es })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{formatDate(entry.occurredOn)}</p>
+                      {entry.notes && (
+                        <p className="mt-0.5 text-xs text-muted-foreground italic">{entry.notes}</p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-destructive">
+                      -{formatCurrency(entry.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm">
+                <span className="text-muted-foreground">Promedio mensual</span>
+                <span className="font-semibold tabular-nums">{formatCurrency(avg)}</span>
+              </div>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function FixedExpensesPanel() {
   const [month, setMonth] = useState(() => new Date())
   const [editExpense, setEditExpense] = useState<FixedExpense | null>(null)
   const [payExpense, setPayExpense] = useState<FixedExpense | null>(null)
+  const [historyExpense, setHistoryExpense] = useState<FixedExpense | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
@@ -513,6 +592,10 @@ export function FixedExpensesPanel() {
                           <PencilIcon />
                           Editar
                         </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setHistoryExpense(expense)}>
+                          <HistoryIcon />
+                          Historial de pagos
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onSelect={() =>
                             activeMutation.mutate({
@@ -604,6 +687,11 @@ export function FixedExpensesPanel() {
         description="Esta acción no elimina movimientos ya registrados, solo el gasto fijo recurrente."
         confirmLabel="Eliminar"
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+      />
+      <PaymentHistoryDialog
+        expense={historyExpense}
+        open={!!historyExpense}
+        onOpenChange={(open) => !open && setHistoryExpense(null)}
       />
     </main>
   )

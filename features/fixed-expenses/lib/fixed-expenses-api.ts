@@ -202,6 +202,31 @@ export async function deleteFixedExpense(id: string) {
   }
 }
 
+export type PaymentHistoryEntry = {
+  id: string
+  occurredOn: string
+  amount: number
+  notes: string | null
+}
+
+export async function getFixedExpenseHistory(expenseId: string): Promise<PaymentHistoryEntry[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("id, occurred_on, amount, notes")
+    .eq("recurring_expense_id", expenseId)
+    .order("occurred_on", { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    occurredOn: row.occurred_on,
+    amount: Number(row.amount),
+    notes: row.notes,
+  }))
+}
+
 export async function registerFixedExpensePayment(
   expense: FixedExpense,
   values: FixedExpensePaymentValues
