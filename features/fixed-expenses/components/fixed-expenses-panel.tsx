@@ -99,10 +99,26 @@ function formatFrequency(expense: FixedExpense) {
 }
 
 function getPaymentBadge(expense: FixedExpense, monthKey: string) {
-  if (!expense.isActive) return { label: "Pausado", variant: "secondary" as const }
-  if (expense.paidOn) return { label: "Pagado", variant: "default" as const }
+  if (!expense.isActive) {
+    return {
+      label: "Pausado",
+      variant: "secondary" as const,
+      className: "bg-muted text-muted-foreground",
+    }
+  }
+  if (expense.paidOn) {
+    return {
+      label: "Pagado",
+      variant: "secondary" as const,
+      className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+    }
+  }
   if (!isRelevantForMonth(expense, monthKey)) {
-    return { label: "Próximo", variant: "secondary" as const }
+    return {
+      label: "Próximo",
+      variant: "outline" as const,
+      className: "text-muted-foreground",
+    }
   }
 
   const today = new Date()
@@ -111,9 +127,25 @@ function getPaymentBadge(expense: FixedExpense, monthKey: string) {
     (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
   )
 
-  if (daysUntilDue < 0) return { label: "Vencido", variant: "destructive" as const }
-  if (daysUntilDue <= 7) return { label: "Vence pronto", variant: "secondary" as const }
-  return { label: "Falta pagar", variant: "secondary" as const }
+  if (daysUntilDue < 0) {
+    return {
+      label: "Vencido",
+      variant: "destructive" as const,
+      className: undefined,
+    }
+  }
+  if (daysUntilDue <= 7) {
+    return {
+      label: "Vence pronto",
+      variant: "secondary" as const,
+      className: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    }
+  }
+  return {
+    label: "Pendiente",
+    variant: "secondary" as const,
+    className: undefined,
+  }
 }
 
 type PaymentDialogProps = {
@@ -441,7 +473,7 @@ export function FixedExpensesPanel() {
                       <p className="text-2xl font-semibold tabular-nums">
                         {formatCurrency(expense.paidAmount ?? expense.amount)}
                       </p>
-                      <Badge variant={badge.variant}>
+                      <Badge variant={badge.variant} className={badge.className}>
                         {badge.label}
                       </Badge>
                     </div>
