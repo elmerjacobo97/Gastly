@@ -14,6 +14,8 @@ function getHealthState(usage: number, remaining: number) {
       label: "Rojo",
       description: "Ya te pasaste del dinero disponible.",
       className: "text-destructive",
+      cardClassName: "border-destructive/30 bg-destructive/5",
+      badgeClassName: "bg-destructive/10 text-destructive",
       progressClassName: "[&>div]:bg-destructive",
     }
   }
@@ -22,6 +24,8 @@ function getHealthState(usage: number, remaining: number) {
       label: "Naranja",
       description: "Estás muy cerca del límite.",
       className: "text-orange-600 dark:text-orange-400",
+      cardClassName: "border-orange-500/30 bg-orange-500/5",
+      badgeClassName: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
       progressClassName: "[&>div]:bg-orange-500",
     }
   }
@@ -30,6 +34,8 @@ function getHealthState(usage: number, remaining: number) {
       label: "Amarillo",
       description: "Vas bien, pero conviene cuidar gastos.",
       className: "text-amber-600 dark:text-amber-400",
+      cardClassName: "border-amber-500/30 bg-amber-500/5",
+      badgeClassName: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
       progressClassName: "[&>div]:bg-amber-500",
     }
   }
@@ -37,6 +43,8 @@ function getHealthState(usage: number, remaining: number) {
     label: "Verde",
     description: "Tienes margen saludable para el mes.",
     className: "text-emerald-600 dark:text-emerald-400",
+    cardClassName: "border-emerald-500/30 bg-emerald-500/5",
+    badgeClassName: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
     progressClassName: "[&>div]:bg-emerald-500",
   }
 }
@@ -50,14 +58,19 @@ export function FinancialHealthCard({ usage, remaining }: FinancialHealthCardPro
   const health = getHealthState(usage, remaining)
 
   return (
-    <Card>
+    <Card className={health.cardClassName}>
       <CardHeader>
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <CardDescription>Estado del mes</CardDescription>
-            <CardTitle className={`mt-1 text-3xl ${health.className}`}>
-              {health.label}
-            </CardTitle>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <CardTitle className={`text-3xl ${health.className}`}>
+                {health.label}
+              </CardTitle>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${health.badgeClassName}`}>
+                {usage}% usado
+              </span>
+            </div>
           </div>
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground">Restante libre</p>
@@ -71,7 +84,7 @@ export function FinancialHealthCard({ usage, remaining }: FinancialHealthCardPro
         <Progress value={Math.min(usage, 100)} className={health.progressClassName} />
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <span>{health.description}</span>
-          <span className="tabular-nums">{usage}% usado</span>
+          <span className="tabular-nums">Disponible diario según el saldo libre</span>
         </div>
       </CardContent>
     </Card>
