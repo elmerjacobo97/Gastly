@@ -11,7 +11,8 @@ type FixedExpenseRow = {
   id: string
   amount: number | string
   description: string
-  frequency: "monthly" | "yearly"
+  frequency: "monthly" | "custom_months" | "yearly"
+  interval_months: number
   payment_kind: "fixed" | "variable"
   next_due_on: string
   billing_day: number
@@ -40,6 +41,7 @@ function mapFixedExpense(
     amount: Number(row.amount),
     description: row.description,
     frequency: row.frequency,
+    intervalMonths: row.interval_months,
     paymentKind: row.payment_kind,
     nextDueOn: row.next_due_on,
     notes: row.notes,
@@ -50,9 +52,14 @@ function mapFixedExpense(
   }
 }
 
-function getNextDueDate(currentDate: string, frequency: FixedExpense["frequency"]) {
+function getNextDueDate(
+  currentDate: string,
+  frequency: FixedExpense["frequency"],
+  intervalMonths: number
+) {
   const date = new Date(`${currentDate}T12:00:00`)
-  return format(frequency === "monthly" ? addMonths(date, 1) : addYears(date, 1), "yyyy-MM-dd")
+  if (frequency === "yearly") return format(addYears(date, 1), "yyyy-MM-dd")
+  return format(addMonths(date, frequency === "monthly" ? 1 : intervalMonths), "yyyy-MM-dd")
 }
 
 async function getCurrentUserId(errorMessage: string) {
@@ -83,6 +90,7 @@ export async function getFixedExpenses(month?: Date) {
       amount,
       description,
       frequency,
+      interval_months,
       payment_kind,
       next_due_on,
       billing_day,
@@ -137,6 +145,7 @@ export async function createFixedExpense(values: FixedExpenseValues) {
     amount: values.amount,
     description: values.description,
     frequency: values.frequency,
+    interval_months: values.frequency === "custom_months" ? values.intervalMonths : values.frequency === "yearly" ? 12 : 1,
     payment_kind: values.paymentKind,
     next_due_on: values.nextDueOn,
     billing_day: new Date(`${values.nextDueOn}T12:00:00`).getDate(),
@@ -158,6 +167,7 @@ export async function updateFixedExpense(id: string, values: FixedExpenseValues)
       amount: values.amount,
       description: values.description,
       frequency: values.frequency,
+      interval_months: values.frequency === "custom_months" ? values.intervalMonths : values.frequency === "yearly" ? 12 : 1,
       payment_kind: values.paymentKind,
       next_due_on: values.nextDueOn,
       billing_day: new Date(`${values.nextDueOn}T12:00:00`).getDate(),
@@ -217,7 +227,11 @@ export async function registerFixedExpensePayment(
     throw new Error(error.message)
   }
 
-  const nextDueOn = getNextDueDate(expense.nextDueOn, expense.frequency)
+  const nextDueOn = getNextDueDate(
+    expense.nextDueOn,
+    expense.frequency,
+    expense.intervalMonths
+  )
 
   const { error: updateError } = await supabase
     .from("recurring_expenses")

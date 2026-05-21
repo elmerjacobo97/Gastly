@@ -105,6 +105,12 @@ function isRelevantForMonth(expense: FixedExpense, monthKey: string) {
   return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
 }
 
+function formatFrequency(expense: FixedExpense) {
+  if (expense.frequency === "monthly") return "Mensual"
+  if (expense.frequency === "yearly") return "Anual"
+  return `Cada ${expense.intervalMonths} meses`
+}
+
 type PaymentDialogProps = {
   expense: FixedExpense | null
   open: boolean
@@ -430,7 +436,7 @@ export function FixedExpensesPanel() {
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span>{expense.frequency === "monthly" ? "Mensual" : "Anual"}</span>
+                      <span>{formatFrequency(expense)}</span>
                       <span>·</span>
                       <span>{expense.paymentKind === "fixed" ? "Monto fijo" : "Monto variable"}</span>
                     </div>

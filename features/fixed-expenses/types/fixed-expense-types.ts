@@ -8,7 +8,8 @@ export type FixedExpense = {
   id: string
   amount: number
   description: string
-  frequency: "monthly" | "yearly"
+  frequency: "monthly" | "custom_months" | "yearly"
+  intervalMonths: number
   paymentKind: "fixed" | "variable"
   nextDueOn: string
   notes: string | null

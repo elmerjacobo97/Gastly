@@ -60,6 +60,7 @@ function buildDefaultValues(expense?: FixedExpense): FixedExpenseValues {
     amount: expense?.amount ?? 0,
     categoryId: expense?.category?.id ?? "",
     frequency: expense?.frequency ?? "monthly",
+    intervalMonths: expense?.intervalMonths ?? 2,
     paymentKind: expense?.paymentKind ?? "fixed",
     nextDueOn: expense?.nextDueOn ?? new Date().toISOString().slice(0, 10),
     notes: expense?.notes ?? "",
@@ -121,6 +122,7 @@ export function FixedExpenseDialog({
   })
 
   const mutation = isEditing ? updateMutation : createMutation
+  const frequency = form.watch("frequency")
 
   function onSubmit(values: FixedExpenseValues) {
     mutation.mutate(values)
@@ -210,24 +212,61 @@ export function FixedExpenseDialog({
                 </Field>
               )}
             />
-            <Controller
-              control={form.control}
-              name="frequency"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="fixed-expense-frequency">Frecuencia</FieldLabel>
-                  <NativeSelect
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    id="fixed-expense-frequency"
-                  >
-                    <NativeSelectOption value="monthly">Mensual</NativeSelectOption>
-                    <NativeSelectOption value="yearly">Anual</NativeSelectOption>
-                  </NativeSelect>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Controller
+                control={form.control}
+                name="frequency"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="fixed-expense-frequency">Frecuencia</FieldLabel>
+                    <NativeSelect
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      id="fixed-expense-frequency"
+                    >
+                      <NativeSelectOption value="monthly">Mensual</NativeSelectOption>
+                      <NativeSelectOption value="custom_months">Cada X meses</NativeSelectOption>
+                      <NativeSelectOption value="yearly">Anual</NativeSelectOption>
+                    </NativeSelect>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              {frequency === "custom_months" ? (
+                <Controller
+                  control={form.control}
+                  name="intervalMonths"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="fixed-expense-interval">Intervalo</FieldLabel>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          aria-invalid={fieldState.invalid}
+                          id="fixed-expense-interval"
+                          inputMode="numeric"
+                          min="1"
+                          max="120"
+                          type="number"
+                          className="w-full pr-16"
+                        />
+                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+                          meses
+                        </span>
+                      </div>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              ) : (
+                <Field>
+                  <FieldLabel>Intervalo</FieldLabel>
+                  <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm text-muted-foreground">
+                    {frequency === "yearly" ? "Cada 12 meses" : "Cada 1 mes"}
+                  </div>
                 </Field>
               )}
-            />
+            </div>
             <Controller
               control={form.control}
               name="paymentKind"
