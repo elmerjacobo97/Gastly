@@ -11,6 +11,8 @@
 - This is a single Next.js App Router project rooted at the repo root, not a multi-package monorepo. `pnpm-workspace.yaml` only contains pnpm dependency build settings.
 - Main entrypoints are `app/layout.tsx`, `app/page.tsx`, and `app/globals.css`.
 - The TypeScript alias `@/*` maps to the repository root.
+- This project uses Next 16; use root `proxy.ts` with exported `proxy()` for request interception, not deprecated `middleware.ts`.
+- Structure domain code by feature under `features/*`; do not add barrel files.
 
 ## UI And Styling
 - Tailwind is v4 via `@tailwindcss/postcss`; there is no `tailwind.config.*`. Theme tokens and Tailwind imports live in `app/globals.css`.
@@ -19,9 +21,10 @@
 - Components are Server Components by default. Add `"use client"` only where hooks, event handlers, or browser APIs require it.
 
 ## Tooling Notes
-- ESLint uses `eslint-config-next/core-web-vitals` plus `eslint-config-next/typescript` from `eslint.config.mjs`; generated Next output and `next-env.d.ts` are ignored.
+- ESLint uses `eslint-config-next/core-web-vitals` plus `eslint-config-next/typescript` from `eslint.config.mjs`; generated Next output, repo-local skills in `.agents/**`, and `next-env.d.ts` are ignored.
 - `next.config.ts` is intentionally empty right now; avoid inventing config unless a change needs it.
 
 ## Supabase
 - Supabase project: `gastly` (`yadpullgqqehyusoonxs`) in `sa-east-1`; chosen because the user is in Peru.
 - Local env uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`; keep real values out of git because `.env*` is ignored.
+- Supabase SSR clients live in `lib/supabase/*`; auth session refresh is wired through Next 16 `proxy.ts`.
