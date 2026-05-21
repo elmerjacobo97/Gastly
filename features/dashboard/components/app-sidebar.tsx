@@ -25,7 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { signOut } from "@/features/auth/actions"
+import { signOut } from "@/features/auth/server/actions"
 
 const navigationItems = [
   {

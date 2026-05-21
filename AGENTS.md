@@ -12,7 +12,7 @@
 - Main entrypoints are `app/layout.tsx`, `app/page.tsx`, and `app/globals.css`.
 - The TypeScript alias `@/*` maps to the repository root.
 - This project uses Next 16; use root `proxy.ts` with exported `proxy()` for request interception, not deprecated `middleware.ts`.
-- Structure domain code by feature under `features/*`; do not add barrel files.
+- Structure domain code by feature under `features/*`; split internals into `components/`, `server/`, `lib/`, `schemas/`, and `types/` as needed. Do not add barrel files.
 
 ## UI And Styling
 - Tailwind is v4 via `@tailwindcss/postcss`; there is no `tailwind.config.*`. Theme tokens and Tailwind imports live in `app/globals.css`.

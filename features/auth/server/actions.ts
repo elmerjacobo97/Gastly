@@ -8,7 +8,7 @@ import {
   type SignUpValues,
   loginSchema,
   signUpSchema,
-} from "@/features/auth/schemas"
+} from "@/features/auth/schemas/auth-schemas"
 import { createClient } from "@/lib/supabase/server"
 
 type AuthActionResult = {
