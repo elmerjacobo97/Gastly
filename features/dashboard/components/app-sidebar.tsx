@@ -44,10 +44,10 @@ const navigationItems = [
     isAvailable: true,
   },
   {
-    title: 'Ingresos',
+    title: "Ingresos",
+    href: "/dashboard/income",
     icon: CircleDollarSignIcon,
-    isAvailable: false,
-    badge: 'Pronto',
+    isAvailable: true,
   },
   {
     title: 'Categorias',
