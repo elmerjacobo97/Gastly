@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar"
+import { ThemeToggle } from "@/features/dashboard/components/theme-toggle"
 import {
   SidebarInset,
   SidebarProvider,
@@ -21,6 +22,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <span className="text-xs text-muted-foreground">
               Control de gastos personales
             </span>
+          </div>
+          <div className="ml-auto">
+            <ThemeToggle />
           </div>
         </header>
         {children}
