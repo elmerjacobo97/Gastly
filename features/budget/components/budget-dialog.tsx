@@ -136,15 +136,13 @@ export function BudgetDialog({
     mutation.mutate(values)
   }
 
-  const currentMonth = form.watch("month")
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {!isControlled && (
         <DialogTrigger asChild>
-          <Button>
+          <Button className="w-8 px-0 has-data-[icon=inline-start]:pl-0 sm:w-auto sm:px-2.5 sm:has-data-[icon=inline-start]:pl-2">
             <PlusIcon data-icon="inline-start" />
-            {triggerLabel}
+            <span className="sr-only sm:not-sr-only">{triggerLabel}</span>
           </Button>
         </DialogTrigger>
       )}

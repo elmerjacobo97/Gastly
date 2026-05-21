@@ -154,10 +154,10 @@ export function MonthlyPlanPanel() {
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-3">
-          <div className="grid size-10 place-items-center rounded-xl bg-muted text-muted-foreground">
+          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
             <WalletCardsIcon className="size-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <CardTitle className="text-base">Cómo se usa este plan</CardTitle>
             <CardDescription>
               El resumen resta tu ahorro obligatorio y tus pagos recurrentes estimados antes de medir tus gastos.
