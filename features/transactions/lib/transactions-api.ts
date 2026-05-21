@@ -59,7 +59,7 @@ export async function getTransactions(opts?: {
     )
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(100)
+    .limit(500)
 
   if (opts?.type) query = query.eq("type", opts.type)
 

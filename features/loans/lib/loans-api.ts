@@ -103,6 +103,12 @@ export async function createLoan(values: LoanValues): Promise<void> {
 
 export async function updateLoan(id: string, values: LoanValues): Promise<void> {
   const supabase = createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error("Debes iniciar sesión.")
+
   const { error } = await supabase
     .from("loans")
     .update({
@@ -119,6 +125,12 @@ export async function updateLoan(id: string, values: LoanValues): Promise<void> 
 
 export async function deleteLoan(id: string): Promise<void> {
   const supabase = createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error("Debes iniciar sesión.")
+
   const { error } = await supabase.from("loans").delete().eq("id", id)
   if (error) throw new Error(error.message)
 }

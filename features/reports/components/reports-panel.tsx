@@ -115,10 +115,9 @@ function computeMonthlyData(transactions: Transaction[]) {
 }
 
 function computeCategoryBreakdown(transactions: Transaction[]) {
-  const expenses = transactions.filter((t) => t.type === "expense")
-  const total = expenses.reduce((s, t) => s + t.amount, 0)
+  const total = transactions.reduce((s, t) => s + t.amount, 0)
   const map: Record<string, { amount: number; color: string; icon: string }> = {}
-  for (const t of expenses) {
+  for (const t of transactions) {
     const name = t.category?.name ?? "Sin categoría"
     const entry = map[name] ?? {
       amount: 0,
@@ -229,7 +228,8 @@ export function ReportsPanel() {
 
   const monthlyData = computeMonthlyData(all)
   const recurringVsVariableData = computeRecurringVsVariable(all)
-  const filteredForBreakdown = typeFilter === "all" ? all : all.filter((t) => t.type === typeFilter)
+  const breakdownType = typeFilter === "all" ? "expense" : typeFilter
+  const filteredForBreakdown = all.filter((t) => t.type === breakdownType)
   const categoryBreakdown = computeCategoryBreakdown(filteredForBreakdown)
   const maxCategory = categoryBreakdown[0]?.amount ?? 1
 
@@ -422,9 +422,11 @@ export function ReportsPanel() {
           <CardHeader>
             <div className="flex items-start justify-between gap-2">
               <div>
-                <CardTitle className="text-base">Gastos por categoría</CardTitle>
+                <CardTitle className="text-base">
+                  {typeFilter === "income" ? "Ingresos por categoría" : "Gastos por categoría"}
+                </CardTitle>
                 <CardDescription>
-                  Top categorías del período · {all.filter((t) => t.type === "expense").length} gastos
+                  Top categorías del período · {filteredForBreakdown.length} {typeFilter === "income" ? "ingresos" : "gastos"}
                 </CardDescription>
               </div>
               <SegmentedControl

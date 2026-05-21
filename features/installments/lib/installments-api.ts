@@ -212,32 +212,40 @@ export async function payMonthInstallments(
   } = await supabase.auth.getUser()
   if (authError || !user) throw new Error("Debes iniciar sesión.")
 
-  for (const { payment, purchase } of pending) {
-    if (!purchase.category) continue
+  const eligible = pending.filter(({ purchase }) => !!purchase.category)
 
-    const { data: tx, error: txError } = await supabase
-      .from("transactions")
-      .insert({
-        user_id: user.id,
-        category_id: purchase.category.id,
-        type: "expense",
-        amount: payment.amount,
-        description: purchase.description,
-        occurred_on: occurredOn,
-        notes: `Cuota ${payment.paymentNumber}/${purchase.totalInstallments}`,
-      })
-      .select("id")
-      .single()
+  const txResults = await Promise.all(
+    eligible.map(({ payment, purchase }) =>
+      supabase
+        .from("transactions")
+        .insert({
+          user_id: user.id,
+          category_id: purchase.category!.id,
+          type: "expense",
+          amount: payment.amount,
+          description: purchase.description,
+          occurred_on: occurredOn,
+          notes: `Cuota ${payment.paymentNumber}/${purchase.totalInstallments}`,
+        })
+        .select("id")
+        .single()
+    )
+  )
 
-    if (txError) throw new Error(txError.message)
+  const txError = txResults.find((r) => r.error)
+  if (txError?.error) throw new Error(txError.error.message)
 
-    const { error: updateError } = await supabase
-      .from("installment_payments")
-      .update({ transaction_id: tx.id })
-      .eq("id", payment.id)
+  const updateResults = await Promise.all(
+    eligible.map(({ payment }, i) =>
+      supabase
+        .from("installment_payments")
+        .update({ transaction_id: txResults[i].data!.id })
+        .eq("id", payment.id)
+    )
+  )
 
-    if (updateError) throw new Error(updateError.message)
-  }
+  const updateError = updateResults.find((r) => r.error)
+  if (updateError?.error) throw new Error(updateError.error.message)
 }
 
 export function getMonthInstallments(

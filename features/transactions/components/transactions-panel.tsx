@@ -116,9 +116,9 @@ function getDaysRemainingInMonth(date: Date) {
 }
 
 function getDaysUntil(date: string) {
-  const today = new Date()
-  const target = new Date(`${date}T12:00:00`)
-  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  const todayStr = format(new Date(), "yyyy-MM-dd")
+  const diffMs = new Date(`${date}T12:00:00`).getTime() - new Date(`${todayStr}T12:00:00`).getTime()
+  return Math.round(diffMs / (1000 * 60 * 60 * 24))
 }
 
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
