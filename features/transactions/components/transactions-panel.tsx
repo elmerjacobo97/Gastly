@@ -3,9 +3,11 @@
 import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
+  ArrowRightIcon,
   ArrowUpIcon,
   BellRingIcon,
   CalendarClockIcon,
+  CalendarDaysIcon,
   CircleAlertIcon,
   TrendingUpIcon,
   WalletCardsIcon,
@@ -25,7 +27,9 @@ import {
   YAxis,
 } from "recharts"
 
+import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Alert,
   AlertDescription,
@@ -57,7 +61,10 @@ import {
   computeSummary,
   getTransactions,
 } from "@/features/transactions/lib/transactions-api"
-import { formatCurrency } from "@/features/transactions/lib/format-transaction"
+import {
+  formatCurrency,
+  formatDate,
+} from "@/features/transactions/lib/format-transaction"
 
 type TransactionsPanelProps = {
   userEmail?: string
@@ -197,6 +204,11 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
     .filter(({ days }) => days <= 7)
     .sort((a, b) => a.days - b.days)
 
+  const upcomingPayments = recurringPayments
+    .map((expense) => ({ expense, days: getDaysUntil(expense.nextDueOn) }))
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 8)
+
   const intelligentAlerts = [
     ...dueAlerts.map(({ expense, days }) => ({
       key: `due-${expense.id}`,
@@ -215,24 +227,14 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
       description: `Gastaste ${formatCurrency(budget.spent)} de ${formatCurrency(budget.amount)} presupuestados.`,
       variant: (usage >= 100 ? "destructive" : "warning") as "destructive" | "warning" | "default",
     })),
-    ...(plan
+    ...(plan && remaining < 0
       ? [
           {
             key: "remaining",
             icon: WalletCardsIcon,
-            title: remaining >= 0 ? "Dinero libre restante" : "Estás en rojo",
-            description:
-              remaining >= 0
-                ? `Tienes ${formatCurrency(remaining)} libres para el resto del mes.`
-                : `Te pasaste por ${formatCurrency(Math.abs(remaining))}.`,
-            variant: (remaining < 0 ? "destructive" : "default") as "destructive" | "warning" | "default",
-          },
-          {
-            key: "daily",
-            icon: TrendingUpIcon,
-            title: "Gasto diario disponible",
-            description: `Puedes gastar ${formatCurrency(dailyAvailable)} por día durante ${daysRemaining} día${daysRemaining !== 1 ? "s" : ""}.`,
-            variant: (remaining < 0 ? "destructive" : "default") as "destructive" | "warning" | "default",
+            title: "Estás en rojo este mes",
+            description: `Te pasaste por ${formatCurrency(Math.abs(remaining))}.`,
+            variant: "destructive" as "destructive" | "warning" | "default",
           },
         ]
       : []),
@@ -270,8 +272,8 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
     {
       title: "Gasto diario disponible",
       value: formatCurrency(dailyAvailable),
-      description: `${daysRemaining} día${daysRemaining !== 1 ? "s" : ""} restantes del mes`,
-      icon: CircleAlertIcon,
+      description: `S/ ${remaining.toFixed(0)} libres · ${daysRemaining} día${daysRemaining !== 1 ? "s" : ""} restantes`,
+      icon: CalendarDaysIcon,
       positive: remaining >= 0,
     },
   ]
@@ -410,6 +412,83 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
                 <AlertDescription>{alert.description}</AlertDescription>
               </Alert>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upcoming payments */}
+      {!fixedExpensesQuery.isLoading && upcomingPayments.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <div>
+              <CardTitle className="text-base">Próximos pagos</CardTitle>
+              <CardDescription>Pagos recurrentes del mes ordenados por fecha</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" asChild className="text-xs text-muted-foreground">
+              <Link href="/dashboard/fixed-expenses">
+                Ver todos
+                <ArrowRightIcon />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col divide-y">
+              {upcomingPayments.map(({ expense, days }) => {
+                const isPaid = !!expense.paidOn
+                const isOverdue = !isPaid && days < 0
+                const isSoon = !isPaid && days >= 0 && days <= 3
+
+                return (
+                  <div
+                    key={expense.id}
+                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                  >
+                    {expense.category && (
+                      <CategoryIconBadge
+                        icon={expense.category.icon}
+                        color={expense.category.color}
+                        className="size-8 shrink-0 rounded-lg"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{expense.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isPaid
+                          ? `Pagado el ${formatDate(expense.paidOn!)}`
+                          : formatDate(expense.nextDueOn)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-sm font-medium tabular-nums">
+                        {formatCurrency(expense.paidAmount ?? expense.amount)}
+                      </span>
+                      <Badge
+                        variant={isOverdue ? "destructive" : "secondary"}
+                        className={
+                          isPaid
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                            : isSoon
+                              ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                              : undefined
+                        }
+                      >
+                        {isPaid
+                          ? "Pagado"
+                          : isOverdue
+                            ? "Vencido"
+                            : days === 0
+                              ? "Hoy"
+                              : days === 1
+                                ? "Mañana"
+                                : isSoon
+                                  ? `${days} días`
+                                  : "Pendiente"}
+                      </Badge>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
