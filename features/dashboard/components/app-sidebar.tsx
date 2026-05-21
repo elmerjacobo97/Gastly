@@ -3,6 +3,7 @@
 import {
   ArrowLeftRightIcon,
   BarChart3Icon,
+  CalendarClockIcon,
   ChevronsUpDownIcon,
   LayoutDashboardIcon,
   LogOutIcon,
@@ -60,6 +61,12 @@ const navigationItems = [
     title: "Presupuesto",
     href: "/dashboard/budget",
     icon: PiggyBankIcon,
+    exact: false,
+  },
+  {
+    title: "Pagos recurrentes",
+    href: "/dashboard/fixed-expenses",
+    icon: CalendarClockIcon,
     exact: false,
   },
   {
