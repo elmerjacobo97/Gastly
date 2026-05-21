@@ -1,4 +1,4 @@
-import { ChartNoAxesColumnIncreasingIcon, WalletCardsIcon } from "lucide-react"
+import { WalletCardsIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -13,25 +13,20 @@ export function Logo({ className, markClassName, showText = true }: LogoProps) {
     <div className={cn("flex items-center gap-3", className)}>
       <div
         className={cn(
-          "relative grid size-12 place-items-center rounded-2xl border bg-card text-card-foreground shadow-lg shadow-foreground/10 ring-1 ring-foreground/5",
+          "grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground",
           markClassName
         )}
       >
-        <div className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-background">
-          <ChartNoAxesColumnIncreasingIcon className="size-3" />
-        </div>
-        <WalletCardsIcon className="size-6" />
+        <WalletCardsIcon className="size-[45%]" />
       </div>
-      {showText ? (
+      {showText && (
         <div className="flex flex-col leading-none">
-          <span className="font-heading text-xl font-semibold tracking-tight">
-            Gastly
-          </span>
-          <span className="mt-1 text-xs font-medium text-muted-foreground">
-            Personal expense manager
+          <span className="text-lg font-semibold tracking-tight">Gastly</span>
+          <span className="mt-0.5 text-xs text-muted-foreground">
+            Finanzas personales
           </span>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }

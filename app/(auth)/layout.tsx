@@ -10,15 +10,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <div className="absolute inset-x-0 top-0 h-72 bg-linear-to-b from-primary/15 via-primary/5 to-transparent" />
       <div className="absolute left-1/2 top-16 size-72 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
       <div className="relative flex w-full max-w-md flex-col items-center gap-8">
-        <header className="flex flex-col items-center gap-4 text-center">
-          <Logo className="justify-center" />
-          <div className="flex flex-col gap-2">
-            <h1 className="text-balance text-3xl font-semibold tracking-tight">
-              Tus finanzas, ordenadas
-            </h1>
+        <header className="flex flex-col items-center gap-3 text-center">
+          <Logo showText={false} markClassName="size-14 rounded-2xl" />
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight">Gastly</h1>
             <p className="max-w-sm text-pretty text-sm leading-6 text-muted-foreground">
-              Registra ingresos y gastos, define presupuestos por categoría y
-              mantén el control de tu dinero mes a mes.
+              Controla tus ingresos, gastos y presupuestos en un solo lugar.
             </p>
           </div>
         </header>
