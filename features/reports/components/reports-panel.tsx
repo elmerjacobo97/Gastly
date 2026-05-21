@@ -1,20 +1,25 @@
 "use client"
 
-import { type ColumnDef } from "@tanstack/react-table"
 import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
   DownloadIcon,
-  FilterIcon,
   PrinterIcon,
   ScaleIcon,
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { useState } from "react"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -23,14 +28,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { DataTable } from "@/components/ui/data-table"
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getAllTransactions } from "@/features/transactions/lib/charts-api"
 import {
@@ -38,41 +35,52 @@ import {
   formatDate,
 } from "@/features/transactions/lib/format-transaction"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
-import { cn } from "@/lib/utils"
 
-type FilterType = "all" | "expense" | "income"
-
-const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
-  { value: "all", label: "Todos" },
-  { value: "expense", label: "Gastos" },
-  { value: "income", label: "Ingresos" },
+const CHART_COLORS = [
+  "var(--color-chart-1)",
+  "var(--color-chart-2)",
+  "var(--color-chart-3)",
+  "var(--color-chart-4)",
+  "var(--color-chart-5)",
 ]
 
-function TypeFilterBar({
-  value,
-  onChange,
-}: {
-  value: FilterType
-  onChange: (v: FilterType) => void
-}) {
-  return (
-    <div className="flex rounded-md border p-0.5 gap-0.5 print:hidden">
-      {FILTER_OPTIONS.map((opt) => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          className={cn(
-            "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-            opt.value === value
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  )
+function formatCompact(value: number) {
+  if (value >= 1000) return `S/ ${(value / 1000).toFixed(1)}k`
+  return `S/ ${value.toFixed(0)}`
+}
+
+function computeMonthlyData(transactions: Transaction[]) {
+  const map: Record<string, { income: number; expenses: number }> = {}
+  for (const t of transactions) {
+    const key = t.occurredOn.slice(0, 7)
+    if (!map[key]) map[key] = { income: 0, expenses: 0 }
+    if (t.type === "income") map[key].income += t.amount
+    else map[key].expenses += t.amount
+  }
+  return Object.entries(map)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, data]) => ({
+      month: format(new Date(key + "-15"), "MMM", { locale: es }),
+      ...data,
+    }))
+}
+
+function computeCategoryBreakdown(transactions: Transaction[]) {
+  const expenses = transactions.filter((t) => t.type === "expense")
+  const total = expenses.reduce((s, t) => s + t.amount, 0)
+  const map: Record<string, number> = {}
+  for (const t of expenses) {
+    const name = t.category?.name ?? "Sin categoría"
+    map[name] = (map[name] ?? 0) + t.amount
+  }
+  return Object.entries(map)
+    .map(([name, amount]) => ({
+      name,
+      amount,
+      pct: total > 0 ? Math.round((amount / total) * 100) : 0,
+    }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 8)
 }
 
 function exportToCSV(transactions: Transaction[], filename: string) {
@@ -101,71 +109,7 @@ function exportToCSV(transactions: Transaction[], filename: string) {
   URL.revokeObjectURL(url)
 }
 
-const columns: ColumnDef<Transaction>[] = [
-  {
-    accessorKey: "occurredOn",
-    header: "Fecha",
-    cell: ({ row }) => (
-      <span className="whitespace-nowrap text-muted-foreground">
-        {formatDate(row.getValue("occurredOn"))}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "description",
-    header: "Descripción",
-    cell: ({ row }) => (
-      <span className="font-medium">{row.getValue("description")}</span>
-    ),
-  },
-  {
-    accessorFn: (row) => row.category?.name ?? "Sin categoría",
-    id: "category",
-    header: "Categoría",
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{getValue() as string}</span>
-    ),
-  },
-  {
-    accessorKey: "type",
-    header: "Tipo",
-    cell: ({ row }) => {
-      const type = row.getValue("type") as string
-      return (
-        <Badge
-          variant={type === "income" ? "default" : "secondary"}
-          className="text-xs"
-        >
-          {type === "income" ? "Ingreso" : "Gasto"}
-        </Badge>
-      )
-    },
-  },
-  {
-    accessorKey: "amount",
-    enableSorting: false,
-    header: () => <div className="text-right">Monto</div>,
-    cell: ({ row }) => {
-      const t = row.original
-      return (
-        <div
-          className={`text-right font-medium tabular-nums ${
-            t.type === "income"
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-destructive"
-          }`}
-        >
-          {t.type === "income" ? "+" : "-"}
-          {formatCurrency(t.amount)}
-        </div>
-      )
-    },
-  },
-]
-
 export function ReportsPanel() {
-  const [filterType, setFilterType] = useState<FilterType>("all")
-
   const today = new Date()
   const fromDate = format(
     new Date(today.getFullYear(), today.getMonth() - 2, 1),
@@ -182,9 +126,6 @@ export function ReportsPanel() {
   })
 
   const all = transactionsQuery.data ?? []
-  const filtered =
-    filterType === "all" ? all : all.filter((t) => t.type === filterType)
-
   const totalIncome = all
     .filter((t) => t.type === "income")
     .reduce((s, t) => s + t.amount, 0)
@@ -192,6 +133,12 @@ export function ReportsPanel() {
     .filter((t) => t.type === "expense")
     .reduce((s, t) => s + t.amount, 0)
   const balance = totalIncome - totalExpenses
+  const savingsRate =
+    totalIncome > 0 ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100) : 0
+
+  const monthlyData = computeMonthlyData(all)
+  const categoryBreakdown = computeCategoryBreakdown(all)
+  const maxCategory = categoryBreakdown[0]?.amount ?? 1
 
   const monthLabel = format(today, "MMMM yyyy", { locale: es })
   const filename = `gastly-reporte-${format(today, "yyyy-MM")}.csv`
@@ -212,15 +159,18 @@ export function ReportsPanel() {
     {
       title: "Balance neto",
       value: formatCurrency(balance),
+      description: savingsRate > 0 ? `Tasa de ahorro: ${savingsRate}%` : undefined,
       icon: ScaleIcon,
       positive: balance >= 0,
     },
   ]
 
+  const isLoading = transactionsQuery.isLoading
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6 print:p-0">
       {/* Header */}
-      <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between print:rounded-none print:border-0 print:shadow-none">
+      <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
             Reportes
@@ -232,8 +182,8 @@ export function ReportsPanel() {
         <div className="flex items-center gap-2 print:hidden">
           <Button
             variant="outline"
-            disabled={filtered.length === 0}
-            onClick={() => exportToCSV(filtered, filename)}
+            disabled={all.length === 0}
+            onClick={() => exportToCSV(all, filename)}
           >
             <DownloadIcon />
             Exportar CSV
@@ -247,7 +197,7 @@ export function ReportsPanel() {
 
       {/* Summary cards */}
       <section className="grid gap-4 sm:grid-cols-3">
-        {transactionsQuery.isLoading
+        {isLoading
           ? Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
                 <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
@@ -271,6 +221,11 @@ export function ReportsPanel() {
                     >
                       {card.value}
                     </CardTitle>
+                    {card.description && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {card.description}
+                      </p>
+                    )}
                   </div>
                   <div
                     className={`grid size-10 place-items-center rounded-xl ${
@@ -286,40 +241,133 @@ export function ReportsPanel() {
             ))}
       </section>
 
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Movimientos</CardTitle>
-          <CardDescription>
-            {filtered.length} registro{filtered.length !== 1 ? "s" : ""}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={filtered}
-            isLoading={transactionsQuery.isLoading}
-            defaultPageSize={20}
-            searchPlaceholder="Buscar por descripción o categoría..."
-            toolbar={
-              <TypeFilterBar value={filterType} onChange={setFilterType} />
-            }
-            emptyState={
-              <Empty className="border bg-muted/20">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <FilterIcon />
-                  </EmptyMedia>
-                  <EmptyTitle>Sin movimientos</EmptyTitle>
-                  <EmptyDescription>
-                    No hay registros para el período seleccionado.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            }
-          />
-        </CardContent>
-      </Card>
+      {/* Charts */}
+      <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+        {/* Monthly bar chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Ingresos vs gastos</CardTitle>
+            <CardDescription>Comparativa mensual del período</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-52 w-full rounded-lg" />
+            ) : (
+              <ResponsiveContainer width="100%" height={210}>
+                <BarChart
+                  data={monthlyData}
+                  margin={{ top: 0, right: 0, left: -10, bottom: 0 }}
+                  barCategoryGap="30%"
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="var(--border)"
+                  />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={formatCompact}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(val, name) => [
+                      formatCurrency(Number(val)),
+                      name === "income" ? "Ingresos" : "Gastos",
+                    ]}
+                    contentStyle={{
+                      background: "var(--popover)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-md)",
+                      color: "var(--popover-foreground)",
+                      fontSize: 13,
+                    }}
+                    cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+                  />
+                  <Bar dataKey="income" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" fill="var(--color-chart-2)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="size-2.5 rounded-sm" style={{ background: "var(--color-chart-1)" }} />
+                Ingresos
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="size-2.5 rounded-sm" style={{ background: "var(--color-chart-2)" }} />
+                Gastos
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Category breakdown */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Gastos por categoría</CardTitle>
+            <CardDescription>
+              Top categorías del período · {all.filter((t) => t.type === "expense").length} gastos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex flex-col gap-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex flex-col gap-1.5">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-3.5 w-24" />
+                      <Skeleton className="h-3.5 w-16" />
+                    </div>
+                    <Skeleton className="h-2 w-full rounded-full" />
+                  </div>
+                ))}
+              </div>
+            ) : categoryBreakdown.length === 0 ? (
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                Sin gastos en el período
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {categoryBreakdown.map((cat, i) => (
+                  <div key={cat.name} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <div
+                          className="size-2 shrink-0 rounded-full"
+                          style={{
+                            background: CHART_COLORS[i % CHART_COLORS.length],
+                          }}
+                        />
+                        <span className="font-medium">{cat.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className="tabular-nums">{formatCurrency(cat.amount)}</span>
+                        <span className="w-8 text-right tabular-nums">{cat.pct}%</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${(cat.amount / maxCategory) * 100}%`,
+                          background: CHART_COLORS[i % CHART_COLORS.length],
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </main>
   )
 }
