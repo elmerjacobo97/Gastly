@@ -1,16 +1,13 @@
 "use client"
 
-import { type ColumnDef } from "@tanstack/react-table"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
-  PencilIcon,
-  Trash2Icon,
   TrendingUpIcon,
   WalletCardsIcon,
 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import {
   Bar,
   BarChart,
@@ -23,12 +20,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { DataTable } from "@/components/ui/data-table"
 import {
   Card,
   CardContent,
@@ -36,14 +29,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   getCategoryTotals,
@@ -51,13 +36,9 @@ import {
 } from "@/features/transactions/lib/charts-api"
 import {
   computeSummary,
-  deleteTransaction,
   getTransactions,
 } from "@/features/transactions/lib/transactions-api"
-import {
-  formatCurrency,
-  formatDate,
-} from "@/features/transactions/lib/format-transaction"
+import { formatCurrency } from "@/features/transactions/lib/format-transaction"
 import { TransactionDialog } from "@/features/transactions/components/transaction-dialog"
 import { MonthNav } from "@/features/transactions/components/month-nav"
 
@@ -80,7 +61,6 @@ function formatCompact(value: number) {
 
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const [month, setMonth] = useState(() => new Date())
-  const queryClient = useQueryClient()
 
   const transactionsQuery = useQuery({
     queryKey: ["transactions", month.toISOString().slice(0, 7)],
@@ -94,112 +74,9 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
     queryKey: ["category-totals", month.toISOString().slice(0, 7)],
     queryFn: () => getCategoryTotals(month),
   })
-  const deleteMutation = useMutation({
-    mutationFn: deleteTransaction,
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
-      ])
-      toast.success("Movimiento eliminado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo eliminar", { description: error.message })
-    },
-  })
 
   const transactions = transactionsQuery.data ?? []
   const summary = computeSummary(transactions)
-
-  const columns = useMemo<ColumnDef<(typeof transactions)[0]>[]>(
-    () => [
-      {
-        accessorKey: "description",
-        header: "Descripción",
-        cell: ({ row }) => (
-          <span className="font-medium">{row.getValue("description")}</span>
-        ),
-      },
-      {
-        accessorFn: (row) => row.category?.name ?? "Sin categoría",
-        id: "category",
-        header: "Categoría",
-        cell: ({ getValue }) => (
-          <span className="text-muted-foreground">{getValue() as string}</span>
-        ),
-      },
-      {
-        accessorKey: "occurredOn",
-        header: "Fecha",
-        cell: ({ row }) => (
-          <span className="text-muted-foreground">
-            {formatDate(row.getValue("occurredOn"))}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "amount",
-        header: () => <div className="text-right">Monto</div>,
-        cell: ({ row }) => {
-          const t = row.original
-          return (
-            <div
-              className={`text-right font-medium ${
-                t.type === "income"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-destructive"
-              }`}
-            >
-              {t.type === "income" ? "+" : "-"}
-              {formatCurrency(t.amount)}
-            </div>
-          )
-        },
-      },
-      {
-        id: "actions",
-        size: 80,
-        cell: ({ row }) => {
-          const t = row.original
-          return (
-            <div className="flex items-center justify-end gap-1">
-              <TransactionDialog
-                transaction={t}
-                trigger={
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <PencilIcon />
-                    <span className="sr-only">Editar</span>
-                  </Button>
-                }
-              />
-              <ConfirmDialog
-                trigger={
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    className="text-muted-foreground hover:text-destructive"
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2Icon />
-                    <span className="sr-only">Eliminar</span>
-                  </Button>
-                }
-                description="Se eliminará este movimiento permanentemente."
-                onConfirm={() => deleteMutation.mutate(t.id)}
-              />
-            </div>
-          )
-        },
-      },
-    ],
-    [deleteMutation] // eslint-disable-line react-hooks/exhaustive-deps
-  )
 
   const summaryCards = [
     {
@@ -454,40 +331,6 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
           </CardContent>
         </Card>
       </section>
-
-      {/* Transactions table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Movimientos</CardTitle>
-          <CardDescription>
-            {transactions.length} registro{transactions.length !== 1 ? "s" : ""} este mes
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={transactions}
-            isLoading={transactionsQuery.isLoading}
-            searchPlaceholder="Buscar por descripción o categoría..."
-            emptyState={
-              <Empty className="bg-muted/20">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <WalletCardsIcon />
-                  </EmptyMedia>
-                  <EmptyTitle>Sin movimientos este mes</EmptyTitle>
-                  <EmptyDescription>
-                    Registra tu primer gasto o ingreso para ver el resumen.
-                  </EmptyDescription>
-                </EmptyHeader>
-                <EmptyContent>
-                  <TransactionDialog />
-                </EmptyContent>
-              </Empty>
-            }
-          />
-        </CardContent>
-      </Card>
     </main>
   )
 }
