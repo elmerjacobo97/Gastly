@@ -98,6 +98,24 @@ function formatFrequency(expense: FixedExpense) {
   return `Cada ${expense.intervalMonths} meses`
 }
 
+function getPaymentBadge(expense: FixedExpense, monthKey: string) {
+  if (!expense.isActive) return { label: "Pausado", variant: "secondary" as const }
+  if (expense.paidOn) return { label: "Pagado", variant: "default" as const }
+  if (!isRelevantForMonth(expense, monthKey)) {
+    return { label: "Próximo", variant: "secondary" as const }
+  }
+
+  const today = new Date()
+  const dueDate = new Date(`${expense.nextDueOn}T12:00:00`)
+  const daysUntilDue = Math.ceil(
+    (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  if (daysUntilDue < 0) return { label: "Vencido", variant: "destructive" as const }
+  if (daysUntilDue <= 7) return { label: "Vence pronto", variant: "secondary" as const }
+  return { label: "Falta pagar", variant: "secondary" as const }
+}
+
 type PaymentDialogProps = {
   expense: FixedExpense | null
   open: boolean
@@ -280,9 +298,11 @@ export function FixedExpensesPanel() {
 
   const expenses = query.data ?? []
   const monthKey = month.toISOString().slice(0, 7)
+  const activeRegistered = expenses.filter((expense) => expense.isActive)
   const activeExpenses = expenses.filter(
     (expense) => expense.isActive && isRelevantForMonth(expense, monthKey)
   )
+  const totalRegistered = activeRegistered.reduce((sum, expense) => sum + expense.amount, 0)
   const totalCommitted = activeExpenses.reduce((sum, expense) => sum + expense.amount, 0)
   const totalPaid = activeExpenses
     .filter((expense) => expense.paidOn)
@@ -307,21 +327,27 @@ export function FixedExpensesPanel() {
       </section>
 
       {!query.isLoading && expenses.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Estimado</p>
+            <p className="text-xs text-muted-foreground">A pagar este mes</p>
             <p className="mt-1 text-xl font-semibold tabular-nums">
               {formatCurrency(totalCommitted)}
             </p>
           </Card>
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Pagado</p>
+            <p className="text-xs text-muted-foreground">Total recurrentes activos</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums">
+              {formatCurrency(totalRegistered)}
+            </p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs text-muted-foreground">Pagado este mes</p>
             <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
               {formatCurrency(totalPaid)}
             </p>
           </Card>
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Pendiente</p>
+            <p className="text-xs text-muted-foreground">Falta pagar este mes</p>
             <p className="mt-1 text-xl font-semibold tabular-nums text-amber-600 dark:text-amber-400">
               {formatCurrency(totalPending)}
             </p>
@@ -345,6 +371,7 @@ export function FixedExpensesPanel() {
             ))
           : expenses.map((expense) => {
               const isPaid = !!expense.paidOn
+              const badge = getPaymentBadge(expense, monthKey)
 
               return (
                 <Card
@@ -414,14 +441,8 @@ export function FixedExpensesPanel() {
                       <p className="text-2xl font-semibold tabular-nums">
                         {formatCurrency(expense.paidAmount ?? expense.amount)}
                       </p>
-                      <Badge variant={isPaid ? "default" : "secondary"}>
-                        {isPaid
-                          ? "Pagado"
-                          : expense.isActive
-                            ? expense.paymentKind === "variable"
-                              ? "Estimado"
-                              : "Pendiente"
-                            : "Pausado"}
+                      <Badge variant={badge.variant}>
+                        {badge.label}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">

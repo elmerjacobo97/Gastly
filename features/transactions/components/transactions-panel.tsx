@@ -107,6 +107,11 @@ function getHealthState(usage: number, remaining: number) {
   }
 }
 
+function getDaysRemainingInMonth(date: Date) {
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  return Math.max(lastDay - date.getDate() + 1, 1)
+}
+
 export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const today = new Date()
   const monthKey = today.toISOString().slice(0, 7)
@@ -152,6 +157,8 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
   const availableForVariable = Math.max(availableAfterSavings - recurringEstimated, 0)
   const variableSpent = Math.max(summary.expenses - recurringPaid, 0)
   const remaining = availableForVariable - variableSpent
+  const daysRemaining = getDaysRemainingInMonth(today)
+  const dailyAvailable = Math.max(remaining, 0) / daysRemaining
   const usage = availableForVariable > 0
     ? Math.round((variableSpent / availableForVariable) * 100)
     : variableSpent > 0
@@ -177,7 +184,7 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
     {
       title: "Pagos recurrentes",
       value: formatCurrency(recurringEstimated),
-      description: `${recurringPayments.length} pago${recurringPayments.length !== 1 ? "s" : ""} estimado${recurringPayments.length !== 1 ? "s" : ""}`,
+      description: `${recurringPayments.length} pago${recurringPayments.length !== 1 ? "s" : ""} estimado${recurringPayments.length !== 1 ? "s" : ""} este mes`,
       icon: ArrowDownIcon,
       positive: recurringEstimated <= availableAfterSavings,
     },
@@ -187,6 +194,13 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
       description: `${usage}% de tu disponible libre`,
       icon: TrendingUpIcon,
       positive: usage < 85,
+    },
+    {
+      title: "Gasto diario disponible",
+      value: formatCurrency(dailyAvailable),
+      description: `${daysRemaining} día${daysRemaining !== 1 ? "s" : ""} restantes del mes`,
+      icon: CircleAlertIcon,
+      positive: remaining >= 0,
     },
   ]
 
@@ -252,7 +266,7 @@ export function TransactionsPanel({ userEmail }: TransactionsPanelProps) {
       )}
 
       {/* Summary cards */}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {transactionsQuery.isLoading
           ? Array.from({ length: 4 }).map((_, i) => (
               <Card key={i}>
