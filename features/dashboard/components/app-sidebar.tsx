@@ -1,5 +1,6 @@
 "use client"
 
+import { version } from '@/package.json'
 import {
   ArrowLeftRightIcon,
   BarChart3Icon,
@@ -227,6 +228,7 @@ export function AppSidebar({ userEmail, userName }: AppSidebarProps) {
 
       <SidebarFooter>
         <UserFooter userEmail={userEmail} userName={userName} />
+        <p className="px-2 pb-1 text-center text-[10px] text-muted-foreground/50">v{version}</p>
       </SidebarFooter>
 
       <SidebarRail />
