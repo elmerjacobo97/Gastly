@@ -168,7 +168,7 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
               {filtered.map((category) => (
                 <div
                   key={category.id}
-                  className="group flex items-center gap-3 rounded-xl border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+                  className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
                 >
                   <CategoryIconBadge icon={category.icon} color={category.color} />
                   <div className="min-w-0 flex-1">
@@ -182,7 +182,7 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+                        className="shrink-0 text-muted-foreground"
                       >
                         <MoreHorizontalIcon />
                         <span className="sr-only">Acciones</span>
