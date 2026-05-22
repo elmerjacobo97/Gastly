@@ -85,12 +85,6 @@ const navigationItems = [
     icon: BarChart3Icon,
     exact: false,
   },
-  {
-    title: "Configuración",
-    href: "/dashboard/settings",
-    icon: Settings2Icon,
-    exact: false,
-  },
 ]
 
 type AppSidebarProps = {
@@ -157,6 +151,12 @@ function UserFooter({ userEmail, userName }: AppSidebarProps) {
                 </div>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings" className="flex items-center gap-2">
+                <Settings2Icon className="size-4" />
+                Configuración
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <form action={signOut} className="w-full">
