@@ -243,25 +243,41 @@ export function MovementsPanel() {
         </div>
       </section>
 
+      {rows.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="p-4">
+            <p className="text-xs text-muted-foreground">Ingresos</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+              +{formatCurrency(totals.income)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {rows.filter((t) => t.type === "income").length} registro{rows.filter((t) => t.type === "income").length !== 1 ? "s" : ""}
+            </p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs text-muted-foreground">Gastos</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
+              -{formatCurrency(totals.expense)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {rows.filter((t) => t.type === "expense").length} registro{rows.filter((t) => t.type === "expense").length !== 1 ? "s" : ""}
+            </p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs text-muted-foreground">Diferencia</p>
+            <p className={`mt-1 text-xl font-semibold tabular-nums ${totals.income - totals.expense >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+              {totals.income - totals.expense >= 0 ? "+" : ""}{formatCurrency(totals.income - totals.expense)}
+            </p>
+            <p className="text-xs text-muted-foreground">balance del mes</p>
+          </Card>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{cardTitle}</CardTitle>
-          <CardDescription className="flex flex-wrap gap-3">
-            <span>
-              {rows.length} registro{rows.length !== 1 ? "s" : ""}
-            </span>
-            {(typeFilter === "all" || typeFilter === "income") &&
-              totals.income > 0 && (
-                <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                  +{formatCurrency(totals.income)}
-                </span>
-              )}
-            {(typeFilter === "all" || typeFilter === "expense") &&
-              totals.expense > 0 && (
-                <span className="font-medium text-destructive">
-                  -{formatCurrency(totals.expense)}
-                </span>
-              )}
+          <CardDescription>
+            {rows.length} registro{rows.length !== 1 ? "s" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
