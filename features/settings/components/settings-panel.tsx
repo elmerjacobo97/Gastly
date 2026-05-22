@@ -1,94 +1,74 @@
 "use client"
 
-import { KeyRoundIcon, SendIcon, UserIcon } from "lucide-react"
+import { KeyRoundIcon, TagIcon, UserIcon, ZapIcon } from "lucide-react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CategoriesPanel } from "@/features/categories/components/categories-panel"
-import { ChangePasswordForm } from "@/features/settings/components/change-password-form"
-import { TelegramConnect } from "@/features/settings/components/telegram-connect"
+import { Button } from "@/components/ui/button"
+
+import { AccountSection } from "./account-section"
+import { CategoriesSection } from "./categories-section"
+import { IntegrationsSection } from "./integrations-section"
+import { SecuritySection } from "./security-section"
+
+const NAV_ITEMS = [
+  { id: "account", label: "Cuenta", icon: UserIcon },
+  { id: "security", label: "Seguridad", icon: KeyRoundIcon },
+  { id: "categories", label: "Categorías", icon: TagIcon },
+  { id: "integrations", label: "Integraciones", icon: ZapIcon },
+] as const
+
+type SectionId = (typeof NAV_ITEMS)[number]["id"]
+
+const VALID_IDS = NAV_ITEMS.map((n) => n.id) as readonly string[]
 
 type SettingsPanelProps = {
   userEmail: string
   userName: string
 }
 
-function ProfileTab({ userEmail, userName }: SettingsPanelProps) {
-  const displayName = userName || userEmail.split("@")[0] || "Usuario"
-
-  return (
-    <div className="flex flex-col gap-8 p-4 md:p-6">
-      <div className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-lg font-semibold">Perfil</h2>
-          <p className="text-sm text-muted-foreground">Información de tu cuenta.</p>
-        </div>
-        <div className="flex items-center gap-4 rounded-xl border p-4">
-          <div className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <UserIcon className="size-5" />
-          </div>
-          <div>
-            <p className="font-medium">{displayName}</p>
-            <p className="text-sm text-muted-foreground">{userEmail}</p>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <KeyRoundIcon className="size-4 text-muted-foreground" />
-          <div>
-            <h2 className="text-lg font-semibold">Contraseña</h2>
-            <p className="text-sm text-muted-foreground">Actualiza tu contraseña de acceso.</p>
-          </div>
-        </div>
-        <ChangePasswordForm />
-      </div>
-
-      <Separator />
-
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <SendIcon className="size-4 text-muted-foreground" />
-          <div>
-            <h2 className="text-lg font-semibold">Telegram</h2>
-            <p className="text-sm text-muted-foreground">Registra gastos y consulta tu saldo desde Telegram.</p>
-          </div>
-        </div>
-        <TelegramConnect />
-      </div>
-    </div>
-  )
-}
-
 export function SettingsPanel({ userEmail, userName }: SettingsPanelProps) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const raw = searchParams.get("section")
+  const activeSection: SectionId = VALID_IDS.includes(raw ?? "") ? (raw as SectionId) : "account"
+
+  function navigate(id: SectionId) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("section", id)
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-      <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Configuración</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Administra tus categorías y preferencias de cuenta.
-          </p>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Configuración</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Administra tu cuenta y preferencias.</p>
+      </div>
+
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
+        <nav className="flex flex-row gap-1 overflow-x-auto pb-1 lg:w-44 lg:shrink-0 lg:flex-col lg:pb-0">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            <Button
+              key={id}
+              variant={activeSection === id ? "secondary" : "ghost"}
+              onClick={() => navigate(id)}
+              className="shrink-0 justify-start gap-2 lg:w-full"
+            >
+              <Icon className="size-4 shrink-0" />
+              {label}
+            </Button>
+          ))}
+        </nav>
+
+        <div className="min-w-0 flex-1">
+          {activeSection === "account" && <AccountSection userEmail={userEmail} userName={userName} />}
+          {activeSection === "security" && <SecuritySection />}
+          {activeSection === "categories" && <CategoriesSection />}
+          {activeSection === "integrations" && <IntegrationsSection />}
         </div>
-      </section>
-
-      <Tabs defaultValue="categories">
-        <TabsList>
-          <TabsTrigger value="categories">Categorías</TabsTrigger>
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="categories" className="mt-4">
-          <CategoriesPanel embedded />
-        </TabsContent>
-
-        <TabsContent value="profile" className="mt-4">
-          <ProfileTab userEmail={userEmail} userName={userName} />
-        </TabsContent>
-      </Tabs>
+      </div>
     </main>
   )
 }
