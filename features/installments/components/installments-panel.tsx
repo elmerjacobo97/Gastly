@@ -1,98 +1,79 @@
-"use client"
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import {
-  CheckCircle2Icon,
-  CreditCardIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
-  Trash2Icon,
-} from "lucide-react"
-import { useState } from "react"
-import { toast } from "sonner"
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { CheckCircle2Icon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty"
-import { Progress } from "@/components/ui/progress"
-import { Skeleton } from "@/components/ui/skeleton"
-import { MonthNav } from "@/components/month-nav"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
+} from '@/components/ui/dropdown-menu';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { MonthNav } from '@/components/month-nav';
+import { CategoryIconBadge } from '@/features/categories/components/category-icon';
 import {
   deleteInstallmentPurchase,
   getInstallmentPurchases,
   getMonthInstallments,
-} from "@/features/installments/lib/installments-api"
-import { type InstallmentPurchase } from "@/features/installments/types/installment-types"
-import { EditInstallmentDialog } from "@/features/installments/components/edit-installment-dialog"
-import { InstallmentDialog } from "@/features/installments/components/installment-dialog"
-import { PayInstallmentsDialog } from "@/features/installments/components/pay-installments-dialog"
-import { formatCurrency, formatDate } from "@/lib/format"
+} from '@/features/installments/lib/installments-api';
+import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
+import { EditInstallmentDialog } from '@/features/installments/components/edit-installment-dialog';
+import { InstallmentDialog } from '@/features/installments/components/installment-dialog';
+import { PayInstallmentsDialog } from '@/features/installments/components/pay-installments-dialog';
+import { PaySingleInstallmentDialog } from '@/features/installments/components/pay-single-installment-dialog';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 export function InstallmentsPanel() {
-  const [month, setMonth] = useState(() => new Date())
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [editPurchase, setEditPurchase] = useState<InstallmentPurchase | null>(null)
-  const queryClient = useQueryClient()
+  const [month, setMonth] = useState(() => new Date());
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editPurchase, setEditPurchase] = useState<InstallmentPurchase | null>(null);
+  const [payingItem, setPayingItem] = useState<{ payment: InstallmentPayment; purchase: InstallmentPurchase } | null>(
+    null
+  );
+  const queryClient = useQueryClient();
 
   const purchasesQuery = useQuery({
-    queryKey: ["installments"],
+    queryKey: ['installments'],
     queryFn: getInstallmentPurchases,
-  })
+  });
 
   const deleteMutation = useMutation({
     mutationFn: deleteInstallmentPurchase,
     onSuccess: async () => {
-      setDeleteId(null)
-      await queryClient.invalidateQueries({ queryKey: ["installments"] })
-      toast.success("Compra eliminada")
+      setDeleteId(null);
+      await queryClient.invalidateQueries({ queryKey: ['installments'] });
+      toast.success('Compra eliminada');
     },
     onError: (error) => {
-      toast.error("No se pudo eliminar", { description: error.message })
+      toast.error('No se pudo eliminar', { description: error.message });
     },
-  })
+  });
 
-  const purchases = purchasesQuery.data ?? []
-  const monthPayments = getMonthInstallments(purchases, month)
-  const pendingThisMonth = monthPayments.filter(
-    ({ payment }) => !payment.transactionId && !payment.paidExternally
-  )
-  const paidThisMonth = monthPayments.filter(
-    ({ payment }) => payment.transactionId || payment.paidExternally
-  )
-  const totalThisMonth = monthPayments.reduce((s, { payment }) => s + payment.amount, 0)
-  const totalPendingThisMonth = pendingThisMonth.reduce((s, { payment }) => s + payment.amount, 0)
-  const totalPaidThisMonth = paidThisMonth.reduce((s, { payment }) => s + payment.amount, 0)
+  const purchases = purchasesQuery.data ?? [];
+  const monthPayments = getMonthInstallments(purchases, month);
+  const pendingThisMonth = monthPayments.filter(({ payment }) => !payment.transactionId && !payment.paidExternally);
+  const paidThisMonth = monthPayments.filter(({ payment }) => payment.transactionId || payment.paidExternally);
+  const totalThisMonth = monthPayments.reduce((s, { payment }) => s + payment.amount, 0);
+  const totalPendingThisMonth = pendingThisMonth.reduce((s, { payment }) => s + payment.amount, 0);
+  const totalPaidThisMonth = paidThisMonth.reduce((s, { payment }) => s + payment.amount, 0);
 
-  const activePurchases = purchases.filter((p) => p.pendingCount > 0)
-  const completedPurchases = purchases.filter((p) => p.pendingCount === 0)
-  const totalFinanced = purchases.reduce((s, p) => s + p.totalPaid + p.totalPending, 0)
-  const totalPending = activePurchases.reduce((s, p) => s + p.totalPending, 0)
+  const activePurchases = purchases.filter((p) => p.pendingCount > 0);
+  const completedPurchases = purchases.filter((p) => p.pendingCount === 0);
+  const totalFinanced = purchases.reduce((s, p) => s + p.totalPaid + p.totalPending, 0);
+  const totalPending = activePurchases.reduce((s, p) => s + p.totalPending, 0);
 
-  const monthLabel = format(month, "MMMM yyyy", { locale: es })
+  const monthLabel = format(month, 'MMMM yyyy', { locale: es });
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -113,11 +94,10 @@ export function InstallmentsPanel() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">A pagar este mes</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums">
-              {formatCurrency(totalThisMonth)}
-            </p>
+            <p className="mt-1 text-xl font-semibold tabular-nums">{formatCurrency(totalThisMonth)}</p>
             <p className="text-xs text-muted-foreground">
-              {monthPayments.length} cuota{monthPayments.length !== 1 ? "s" : ""} programada{monthPayments.length !== 1 ? "s" : ""}
+              {monthPayments.length} cuota{monthPayments.length !== 1 ? 's' : ''} programada
+              {monthPayments.length !== 1 ? 's' : ''}
             </p>
           </Card>
           <Card className="p-4">
@@ -126,7 +106,8 @@ export function InstallmentsPanel() {
               {formatCurrency(totalPaidThisMonth)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? "s" : ""} pagada{paidThisMonth.length !== 1 ? "s" : ""}
+              {paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? 's' : ''} pagada
+              {paidThisMonth.length !== 1 ? 's' : ''}
             </p>
           </Card>
           <Card className="p-4">
@@ -135,17 +116,13 @@ export function InstallmentsPanel() {
               {formatCurrency(totalPendingThisMonth)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {pendingThisMonth.length} pendiente{pendingThisMonth.length !== 1 ? "s" : ""}
+              {pendingThisMonth.length} pendiente{pendingThisMonth.length !== 1 ? 's' : ''}
             </p>
           </Card>
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">Pendiente total</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
-              {formatCurrency(totalPending)}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(totalFinanced)} financiado en total
-            </p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">{formatCurrency(totalPending)}</p>
+            <p className="text-xs text-muted-foreground">{formatCurrency(totalFinanced)} financiado en total</p>
           </Card>
         </div>
       )}
@@ -157,13 +134,10 @@ export function InstallmentsPanel() {
             <div>
               <CardTitle className="text-base capitalize">Cuotas de {monthLabel}</CardTitle>
               <CardDescription>
-                {monthPayments.length} cuota{monthPayments.length !== 1 ? "s" : ""} ·{" "}
-                {formatCurrency(totalThisMonth)}
+                {monthPayments.length} cuota{monthPayments.length !== 1 ? 's' : ''} · {formatCurrency(totalThisMonth)}
               </CardDescription>
             </div>
-            {pendingThisMonth.length > 0 && (
-              <PayInstallmentsDialog pending={pendingThisMonth} month={month} />
-            )}
+            {pendingThisMonth.length > 0 && <PayInstallmentsDialog pending={pendingThisMonth} month={month} />}
             {pendingThisMonth.length === 0 && (
               <div className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2Icon className="size-4" />
@@ -174,12 +148,9 @@ export function InstallmentsPanel() {
           <CardContent>
             <div className="flex flex-col divide-y">
               {monthPayments.map(({ payment, purchase }) => {
-                const isPaid = !!(payment.transactionId || payment.paidExternally)
+                const isPaid = !!(payment.transactionId || payment.paidExternally);
                 return (
-                  <div
-                    key={payment.id}
-                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                  >
+                  <div key={payment.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                     {purchase.category && (
                       <CategoryIconBadge
                         icon={purchase.category.icon}
@@ -190,27 +161,28 @@ export function InstallmentsPanel() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{purchase.description}</p>
                       <p className="text-xs text-muted-foreground">
-                        Cuota {payment.paymentNumber}/{purchase.totalInstallments} ·{" "}
-                        {formatDate(payment.dueOn)}
+                        Cuota {payment.paymentNumber}/{purchase.totalInstallments} · {formatDate(payment.dueOn)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-sm font-medium tabular-nums">
-                        {formatCurrency(payment.amount)}
-                      </span>
-                      <Badge
-                        variant={isPaid ? "secondary" : "outline"}
-                        className={
-                          isPaid
-                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {isPaid ? "Pagado" : "Pendiente"}
-                      </Badge>
+                      <span className="text-sm font-medium tabular-nums">{formatCurrency(payment.amount)}</span>
+                      {isPaid ? (
+                        <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                          Pagado
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setPayingItem({ payment, purchase })}
+                        >
+                          Pagar
+                        </Button>
+                      )}
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           </CardContent>
@@ -220,8 +192,7 @@ export function InstallmentsPanel() {
       {/* No payments this month */}
       {!purchasesQuery.isLoading && purchases.length > 0 && monthPayments.length === 0 && (
         <div className="rounded-lg border border-muted px-4 py-3 text-sm text-muted-foreground">
-          Sin cuotas programadas para{" "}
-          <span className="capitalize">{monthLabel}</span>.
+          Sin cuotas programadas para <span className="capitalize">{monthLabel}</span>.
         </div>
       )}
 
@@ -243,15 +214,13 @@ export function InstallmentsPanel() {
         </section>
       ) : activePurchases.length > 0 ? (
         <>
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Compras activas ({activePurchases.length})
-          </h2>
+          <h2 className="text-sm font-medium text-muted-foreground">Compras activas ({activePurchases.length})</h2>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {activePurchases.map((purchase) => {
               const pctPaid =
                 purchase.totalInstallments > 0
                   ? Math.round((purchase.paidCount / purchase.totalInstallments) * 100)
-                  : 0
+                  : 0;
 
               return (
                 <Card key={purchase.id}>
@@ -267,21 +236,23 @@ export function InstallmentsPanel() {
                       <div className="min-w-0">
                         <CardTitle className="truncate text-base">{purchase.description}</CardTitle>
                         <CardDescription>
-                          {purchase.paidCount}/{purchase.totalInstallments} cuotas ·{" "}
+                          {purchase.paidCount}/{purchase.totalInstallments} cuotas ·{' '}
                           {formatCurrency(purchase.installmentAmount)}/mes
                           {purchase.interestAmount > 0 && (
-                            <> · <span className="text-amber-600 dark:text-amber-400">{formatCurrency(purchase.interestAmount)} en intereses</span></>
+                            <>
+                              {' '}
+                              ·{' '}
+                              <span className="text-amber-600 dark:text-amber-400">
+                                {formatCurrency(purchase.interestAmount)} en intereses
+                              </span>
+                            </>
                           )}
                         </CardDescription>
                       </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 shrink-0 text-muted-foreground"
-                        >
+                        <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
                           <MoreHorizontalIcon />
                           <span className="sr-only">Acciones</span>
                         </Button>
@@ -307,23 +278,17 @@ export function InstallmentsPanel() {
                       <span>Pagado: {formatCurrency(purchase.totalPaid)}</span>
                       <span>Pendiente: {formatCurrency(purchase.totalPending)}</span>
                     </div>
-                    {purchase.payments.find(
-                      (p) => !p.transactionId && !p.paidExternally
-                    ) && (
+                    {purchase.payments.find((p) => !p.transactionId && !p.paidExternally) && (
                       <p className="text-xs text-muted-foreground">
-                        Próxima cuota:{" "}
+                        Próxima cuota:{' '}
                         <span className="font-medium text-foreground">
-                          {formatDate(
-                            purchase.payments.find(
-                              (p) => !p.transactionId && !p.paidExternally
-                            )!.dueOn
-                          )}
+                          {formatDate(purchase.payments.find((p) => !p.transactionId && !p.paidExternally)!.dueOn)}
                         </span>
                       </p>
                     )}
                   </CardContent>
                 </Card>
-              )
+              );
             })}
           </section>
         </>
@@ -332,9 +297,7 @@ export function InstallmentsPanel() {
       {/* Completed purchases */}
       {!purchasesQuery.isLoading && completedPurchases.length > 0 && (
         <>
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Compras saldadas ({completedPurchases.length})
-          </h2>
+          <h2 className="text-sm font-medium text-muted-foreground">Compras saldadas ({completedPurchases.length})</h2>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {completedPurchases.map((purchase) => (
               <Card key={purchase.id} className="opacity-60">
@@ -352,18 +315,20 @@ export function InstallmentsPanel() {
                       <CardDescription>
                         {purchase.totalInstallments} cuotas · {formatCurrency(purchase.installmentAmount)}/mes
                         {purchase.interestAmount > 0 && (
-                          <> · <span className="text-amber-600 dark:text-amber-400">{formatCurrency(purchase.interestAmount)} en intereses</span></>
+                          <>
+                            {' '}
+                            ·{' '}
+                            <span className="text-amber-600 dark:text-amber-400">
+                              {formatCurrency(purchase.interestAmount)} en intereses
+                            </span>
+                          </>
                         )}
                       </CardDescription>
                     </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0 text-muted-foreground"
-                      >
+                      <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
                         <MoreHorizontalIcon />
                         <span className="sr-only">Acciones</span>
                       </Button>
@@ -421,6 +386,15 @@ export function InstallmentsPanel() {
         />
       )}
 
+      {payingItem && (
+        <PaySingleInstallmentDialog
+          payment={payingItem.payment}
+          purchase={payingItem.purchase}
+          open={!!payingItem}
+          onOpenChange={(o) => !o && setPayingItem(null)}
+        />
+      )}
+
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}
@@ -428,5 +402,5 @@ export function InstallmentsPanel() {
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />
     </main>
-  )
+  );
 }
