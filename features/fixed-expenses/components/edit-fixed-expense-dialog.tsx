@@ -176,14 +176,16 @@ export function EditFixedExpenseDialog({
                             <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>
                           ))}
                         </NativeSelect>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto justify-start gap-1 p-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
                           onClick={() => setQuickCreateOpen(true)}
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                         >
                           <PlusIcon className="size-3" />
                           Nueva categoría con ícono y color
-                        </button>
+                        </Button>
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>
                     )}

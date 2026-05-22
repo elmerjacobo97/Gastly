@@ -18,6 +18,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -159,10 +160,10 @@ function UserFooter({ userEmail, userName }: AppSidebarProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <form action={signOut} className="w-full">
-                <button type="submit" className="flex w-full items-center gap-2">
+                <Button type="submit" variant="ghost" className="h-auto w-full justify-start gap-2 p-0 font-normal">
                   <LogOutIcon className="size-4" />
                   Cerrar sesión
-                </button>
+                </Button>
               </form>
             </DropdownMenuItem>
           </DropdownMenuContent>
