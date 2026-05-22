@@ -149,14 +149,12 @@ CREATE TABLE IF NOT EXISTS "public"."monthly_plans" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "user_id" "uuid" NOT NULL,
     "month" "date" NOT NULL,
-    "expected_income" numeric NOT NULL,
     "savings_mode" "text" DEFAULT 'percent'::"text" NOT NULL,
     "savings_value" numeric NOT NULL,
     "notes" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     CONSTRAINT "monthly_plans_check" CHECK (((("savings_mode" = 'percent'::"text") AND ("savings_value" <= (100)::numeric)) OR ("savings_mode" = 'amount'::"text"))),
-    CONSTRAINT "monthly_plans_expected_income_check" CHECK (("expected_income" > (0)::numeric)),
     CONSTRAINT "monthly_plans_savings_mode_check" CHECK (("savings_mode" = ANY (ARRAY['percent'::"text", 'amount'::"text"]))),
     CONSTRAINT "monthly_plans_savings_value_check" CHECK (("savings_value" >= (0)::numeric))
 );
