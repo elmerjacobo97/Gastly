@@ -96,6 +96,7 @@ export function MovementsPanel() {
         queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
         queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
         queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
       ])
       toast.success("Transacción eliminada")
     },

@@ -109,6 +109,7 @@ export function EditTransactionDialog({
         queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
         queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["categories"] }),
+        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
       ])
       onOpenChange(false)
       toast.success("Transacción actualizada")
