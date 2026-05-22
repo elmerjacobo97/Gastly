@@ -401,6 +401,7 @@ export function FixedExpensesPanel() {
   const invalidate = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] }),
+      queryClient.invalidateQueries({ queryKey: ["fixed-expense-history"] }),
       queryClient.invalidateQueries({ queryKey: ["transactions"] }),
       queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
       queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
