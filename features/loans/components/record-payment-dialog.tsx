@@ -25,6 +25,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import {
   loanPaymentSchema,
