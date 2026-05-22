@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Loader2Icon, WalletIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -53,20 +53,11 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
     },
   })
 
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        amount: loan.pendingAmount,
-        occurredOn: format(new Date(), "yyyy-MM-dd"),
-        notes: "",
-      })
-    }
-  }, [open, loan.pendingAmount]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const mutation = useMutation({
     mutationFn: (values: LoanPaymentValues) => recordLoanPayment(loan.id, values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["loans"] })
+      form.reset({ amount: loan.pendingAmount, occurredOn: format(new Date(), "yyyy-MM-dd"), notes: "" })
       setOpen(false)
       toast.success("Abono registrado")
     },

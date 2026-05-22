@@ -16,7 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { MonthlyPlanDialog } from "@/features/monthly-plan/components/monthly-plan-dialog"
+import { CreateMonthlyPlanDialog } from "@/features/monthly-plan/components/create-monthly-plan-dialog"
+import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-monthly-plan-dialog"
 import {
   calculateSavings,
   getMonthlyPlan,
@@ -68,7 +69,11 @@ export function MonthlyPlanPanel() {
         </div>
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} allowFuture />
-          <MonthlyPlanDialog month={month} plan={plan} />
+          {plan ? (
+            <EditMonthlyPlanDialog month={month} plan={plan} />
+          ) : (
+            <CreateMonthlyPlanDialog month={month} />
+          )}
         </div>
       </section>
 
@@ -143,11 +148,7 @@ export function MonthlyPlanPanel() {
                 Sin plan, el resumen no puede calcular tu dinero realmente disponible.
               </p>
             </div>
-            <MonthlyPlanDialog
-              month={month}
-              triggerLabel="Crear plan mensual"
-              trigger={undefined}
-            />
+            <CreateMonthlyPlanDialog month={month} triggerLabel="Crear plan mensual" />
           </CardContent>
         </Card>
       )}

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -52,16 +52,11 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
     defaultValues: { direction: "lent", currency: "PEN", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
   })
 
-  useEffect(() => {
-    if (open) {
-      form.reset({ direction: "lent", currency: "PEN", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
-    }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const mutation = useMutation({
     mutationFn: createLoan,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["loans"] })
+      form.reset({ direction: "lent", currency: "PEN", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
       setOpen(false)
       toast.success("Préstamo registrado")
     },

@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { addMonths, format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -78,20 +78,6 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
     },
   })
 
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        description: "",
-        categoryId: "",
-        totalAmount: 0,
-        totalInstallments: 6,
-        firstPaymentOn: getNextPaymentDefault(),
-        alreadyPaid: 0 as number,
-        notes: "",
-      })
-    }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const categoriesQuery = useQuery({
     queryKey: ["categories", "expense"],
     queryFn: () => getCategories("expense"),
@@ -102,6 +88,15 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
     mutationFn: createInstallmentPurchase,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["installments"] })
+      form.reset({
+        description: "",
+        categoryId: "",
+        totalAmount: 0,
+        totalInstallments: 6,
+        firstPaymentOn: getNextPaymentDefault(),
+        alreadyPaid: 0 as number,
+        notes: "",
+      })
       setOpen(false)
       toast.success("Compra en cuotas registrada")
     },

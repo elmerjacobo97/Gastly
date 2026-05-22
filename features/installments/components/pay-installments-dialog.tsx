@@ -5,13 +5,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Loader2Icon, WalletCardsIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -60,12 +61,6 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
     defaultValues: { occurredOn: getDefaultPaymentDate(month) },
   })
 
-  useEffect(() => {
-    if (open) {
-      form.reset({ occurredOn: getDefaultPaymentDate(month) })
-    }
-  }, [open, month]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
   const total = pending.reduce((s, { payment }) => s + payment.amount, 0)
 
@@ -79,6 +74,7 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
         queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
         queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
       ])
+      form.reset({ occurredOn: getDefaultPaymentDate(month) })
       setOpen(false)
       toast.success(`${pending.length} cuota${pending.length !== 1 ? "s" : ""} registrada${pending.length !== 1 ? "s" : ""} como gasto`)
     },
@@ -163,6 +159,9 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
         </ScrollArea>
 
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button disabled={mutation.isPending} form="pay-installments-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
             Confirmar pago

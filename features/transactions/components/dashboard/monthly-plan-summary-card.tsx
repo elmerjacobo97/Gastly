@@ -13,7 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { MonthlyPlanDialog } from "@/features/monthly-plan/components/monthly-plan-dialog"
+import { CreateMonthlyPlanDialog } from "@/features/monthly-plan/components/create-monthly-plan-dialog"
+import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-monthly-plan-dialog"
 import { registerSalaryIncome } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types"
 import { formatCurrency } from "@/lib/format"
@@ -61,7 +62,13 @@ export function MonthlyPlanSummaryCard({
               : "Configura tu sueldo estimado y ahorro para que el resumen sea preciso."}
           </CardDescription>
         </div>
-        {!isLoading && <MonthlyPlanDialog month={date} plan={plan} />}
+        {!isLoading && (
+          plan ? (
+            <EditMonthlyPlanDialog month={date} plan={plan} />
+          ) : (
+            <CreateMonthlyPlanDialog month={date} />
+          )
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (

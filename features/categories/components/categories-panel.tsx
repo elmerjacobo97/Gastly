@@ -36,7 +36,8 @@ import {
 } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { CategoryDialog } from "@/features/categories/components/category-dialog"
+import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog"
+import { EditCategoryDialog } from "@/features/categories/components/edit-category-dialog"
 import {
   createSuggestedCategories,
   deleteCategory,
@@ -107,7 +108,7 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
             Organiza gastos e ingresos con categorías reutilizables.
           </p>
         </div>
-        <CategoryDialog />
+        <CreateCategoryDialog />
       </section>
 
       <Card>
@@ -158,7 +159,7 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
                   >
                     Crear categorías sugeridas
                   </Button>
-                  <CategoryDialog />
+                  <CreateCategoryDialog />
                 </div>
               </EmptyContent>
             </Empty>
@@ -209,11 +210,13 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
         </CardContent>
       </Card>
 
-      <CategoryDialog
-        category={editCategory ?? undefined}
-        open={!!editCategory}
-        onOpenChange={(o) => !o && setEditCategory(null)}
-      />
+      {editCategory && (
+        <EditCategoryDialog
+          category={editCategory}
+          open={!!editCategory}
+          onOpenChange={(o) => !o && setEditCategory(null)}
+        />
+      )}
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}
