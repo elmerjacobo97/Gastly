@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { startOfMonth } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -65,12 +65,6 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
       month: startOfMonth(now),
     },
   })
-
-  useEffect(() => {
-    if (open) {
-      form.reset({ categoryId: "", amount: 0, month: startOfMonth(new Date()) })
-    }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const categoriesQuery = useQuery({
     queryKey: ["categories", "expense"],

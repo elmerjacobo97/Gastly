@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { CalendarIcon, Loader2Icon, PlusIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -68,10 +68,6 @@ export function CreateFixedExpenseDialog() {
     resolver: zodResolver(fixedExpenseSchema),
     defaultValues: buildDefaultValues(),
   })
-
-  useEffect(() => {
-    if (open) form.reset(buildDefaultValues())
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const frequency = useWatch({ control: form.control, name: "frequency" })
 

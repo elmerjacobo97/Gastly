@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { CheckIcon, ChevronsUpDownIcon, Loader2Icon, PlusIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -94,10 +94,6 @@ export function CreateTransactionDialog({
     resolver: zodResolver(transactionSchema),
     defaultValues: buildDefaultValues(defaultType),
   })
-
-  useEffect(() => {
-    if (open) form.reset(buildDefaultValues(defaultType))
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentType = useWatch({ control: form.control, name: "type" }) as TransactionType
   const currentCategoryName = useWatch({ control: form.control, name: "categoryName" })
