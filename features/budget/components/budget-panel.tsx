@@ -54,6 +54,7 @@ import {
 } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { formatCurrency } from "@/lib/format"
 import { deleteBudget, getBudgets } from "@/features/budget/lib/budget-api"
+import { getTransactions } from "@/features/transactions/lib/transactions-api"
 import { CreateBudgetDialog } from "@/features/budget/components/create-budget-dialog"
 import { EditBudgetDialog } from "@/features/budget/components/edit-budget-dialog"
 import { type Budget } from "@/features/budget/types/budget-types"
@@ -97,6 +98,10 @@ export function BudgetPanel() {
     queryKey: ["fixed-expenses", monthKey],
     queryFn: () => getFixedExpenses(month),
   })
+  const transactionsQuery = useQuery({
+    queryKey: ["transactions", monthKey],
+    queryFn: () => getTransactions({ month }),
+  })
 
   const deleteMutation = useMutation({
     mutationFn: deleteBudget,
@@ -115,15 +120,18 @@ export function BudgetPanel() {
   const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0)
   const overBudget = budgets.filter((b) => b.spent > b.amount).length
   const plan = planQuery.data ?? null
-  const savings = calculateSavings(plan)
+  const actualIncome = (transactionsQuery.data ?? [])
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + t.amount, 0)
+  const savings = calculateSavings(plan, actualIncome)
   const recurringEstimated = (fixedExpensesQuery.data ?? [])
     .filter((expense) => isRelevantRecurringPayment(expense, monthKey))
     .reduce((sum, expense) => sum + (expense.paidAmount ?? expense.amount), 0)
   const availableForBudget = plan
-    ? Math.max(plan.expectedIncome - savings - recurringEstimated, 0)
+    ? Math.max(actualIncome - savings - recurringEstimated, 0)
     : 0
   const unassigned = availableForBudget - totalBudget
-  const hasPlanningData = !!plan && !planQuery.isLoading && !fixedExpensesQuery.isLoading
+  const hasPlanningData = !!plan && !planQuery.isLoading && !fixedExpensesQuery.isLoading && !transactionsQuery.isLoading
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">

@@ -234,7 +234,7 @@ export function ReportsPanel() {
   const totalRecurring = recurringExpenses.reduce((s, t) => s + t.amount, 0)
   const totalVariable = variableExpenses.reduce((s, t) => s + t.amount, 0)
 
-  const monthlySavings = calculateSavings(plan)
+  const monthlySavings = calculateSavings(plan, totalIncome)
   const projectedAnnualSavings = monthlySavings * 12
 
   const monthlyData = computeMonthlyData(all)

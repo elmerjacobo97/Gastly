@@ -52,10 +52,9 @@ function getYearOptions() {
   return [year - 1, year, year + 1]
 }
 
-function buildDefaultValues(month: Date, plan: MonthlyPlan): MonthlyPlanValues {
+function buildDefaultValues(plan: MonthlyPlan): MonthlyPlanValues {
   return {
     month: startOfMonth(new Date(`${plan.month}T12:00:00`)),
-    expectedIncome: plan.expectedIncome,
     savingsMode: plan.savingsMode,
     savingsValue: plan.savingsValue,
     notes: plan.notes ?? "",
@@ -72,7 +71,6 @@ type EditMonthlyPlanDialogProps = {
 }
 
 export function EditMonthlyPlanDialog({
-  month,
   plan,
   triggerLabel = "Editar plan",
   trigger,
@@ -87,13 +85,11 @@ export function EditMonthlyPlanDialog({
 
   const form = useForm<MonthlyPlanValues>({
     resolver: zodResolver(monthlyPlanSchema),
-    defaultValues: buildDefaultValues(month, plan),
+    defaultValues: buildDefaultValues(plan),
   })
 
   useEffect(() => {
-    if (open) {
-      form.reset(buildDefaultValues(month, plan))
-    }
+    if (open) form.reset(buildDefaultValues(plan))
   }, [open, plan.month]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const mutation = useMutation({
@@ -101,8 +97,6 @@ export function EditMonthlyPlanDialog({
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["monthly-plan"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
       ])
       setOpen(false)
       toast.success("Plan mensual guardado")
@@ -128,7 +122,7 @@ export function EditMonthlyPlanDialog({
         <DialogHeader>
           <DialogTitle>Editar plan mensual</DialogTitle>
           <DialogDescription>
-            Ajusta tu ingreso esperado y el ahorro que no quieres tocar este mes.
+            Ajusta tu meta de ahorro para este mes.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -176,25 +170,6 @@ export function EditMonthlyPlanDialog({
                 </Field>
               )}
             />
-            <Controller
-              control={form.control}
-              name="expectedIncome"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="emp-income">Ingreso estimado en soles</FieldLabel>
-                  <NumberInput
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    id="emp-income"
-                    inputMode="decimal"
-                    min="0"
-                    placeholder="2217.50"
-                    step="0.01"
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
             <div className="grid gap-3 sm:grid-cols-[1fr_1.2fr]">
               <Controller
                 control={form.control}
@@ -234,12 +209,12 @@ export function EditMonthlyPlanDialog({
               name="notes"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="emp-notes">Notas</FieldLabel>
+                  <FieldLabel htmlFor="emp-notes">Notas <span className="text-muted-foreground">(opcional)</span></FieldLabel>
                   <Textarea
                     {...field}
                     aria-invalid={fieldState.invalid}
                     id="emp-notes"
-                    placeholder="Ej. 650 USD convertidos a soles"
+                    placeholder="Ej. Mes con bono de fin de año"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>

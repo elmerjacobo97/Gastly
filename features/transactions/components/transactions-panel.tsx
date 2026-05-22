@@ -92,16 +92,14 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
   const recurringPayments = (fixedExpensesQuery.data ?? []).filter((expense) =>
     isRelevantRecurringPayment(expense, monthKey)
   )
-  const savings = calculateSavings(plan)
+  const savings = calculateSavings(plan, summary.income)
   const recurringEstimated = recurringPayments.reduce((sum, expense) => {
     return sum + (expense.paidAmount ?? expense.amount)
   }, 0)
   const recurringPaid = recurringPayments.reduce((sum, expense) => {
     return sum + (expense.paidAmount ?? 0)
   }, 0)
-  const availableAfterSavings = plan
-    ? Math.max(plan.expectedIncome - savings, 0)
-    : summary.income
+  const availableAfterSavings = Math.max(summary.income - savings, 0)
   const availableForVariable = Math.max(availableAfterSavings - recurringEstimated, 0)
   const variableSpent = Math.max(summary.expenses - recurringPaid, 0)
   const remaining = availableForVariable - variableSpent
@@ -184,7 +182,8 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
       <MonthlyPlanSummaryCard
         date={today}
         plan={plan}
-        isLoading={planQuery.isLoading}
+        isLoading={planQuery.isLoading || transactionsQuery.isLoading}
+        actualIncome={summary.income}
         savings={savings}
         availableAfterSavings={availableAfterSavings}
       />

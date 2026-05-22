@@ -1,15 +1,14 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { startOfMonth } from "date-fns"
-import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { startOfMonth, subMonths } from "date-fns"
+import { CopyIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogClose,
@@ -32,14 +31,12 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  registerSalaryIncome,
-  upsertMonthlyPlan,
-} from "@/features/monthly-plan/lib/monthly-plan-api"
+import { upsertMonthlyPlan } from "@/features/monthly-plan/lib/monthly-plan-api"
 import {
   monthlyPlanSchema,
   type MonthlyPlanValues,
 } from "@/features/monthly-plan/schemas/monthly-plan-schemas"
+import { getMonthlyPlan } from "@/features/monthly-plan/lib/monthly-plan-api"
 
 const MONTHS = [
   { value: 0, label: "Enero" }, { value: 1, label: "Febrero" },
@@ -55,15 +52,9 @@ function getYearOptions() {
   return [year - 1, year, year + 1]
 }
 
-function isCurrentMonth(month: Date) {
-  const now = new Date()
-  return month.getFullYear() === now.getFullYear() && month.getMonth() === now.getMonth()
-}
-
 function buildDefaultValues(month: Date): MonthlyPlanValues {
   return {
     month: startOfMonth(month),
-    expectedIncome: 0,
     savingsMode: "percent",
     savingsValue: 20,
     notes: "",
@@ -82,7 +73,6 @@ export function CreateMonthlyPlanDialog({
   trigger,
 }: CreateMonthlyPlanDialogProps) {
   const [open, setOpen] = useState(false)
-  const [registerIncome, setRegisterIncome] = useState(isCurrentMonth(month))
   const queryClient = useQueryClient()
 
   const form = useForm<MonthlyPlanValues>({
@@ -90,34 +80,42 @@ export function CreateMonthlyPlanDialog({
     defaultValues: buildDefaultValues(month),
   })
 
+  const prevMonthQuery = useQuery({
+    queryKey: ["monthly-plan", subMonths(startOfMonth(month), 1).toISOString().slice(0, 7)],
+    queryFn: () => getMonthlyPlan(subMonths(month, 1)),
+    enabled: open,
+  })
+
   function handleOpenChange(nextOpen: boolean) {
-    if (nextOpen) {
-      setRegisterIncome(isCurrentMonth(month))
-    }
+    if (nextOpen) form.reset(buildDefaultValues(month))
     setOpen(nextOpen)
   }
 
+  function copyFromPrevMonth() {
+    const prev = prevMonthQuery.data
+    if (!prev) return
+    form.setValue("savingsMode", prev.savingsMode)
+    form.setValue("savingsValue", prev.savingsValue)
+    if (prev.notes) form.setValue("notes", prev.notes)
+    toast.info("Valores copiados del mes anterior")
+  }
+
   const mutation = useMutation({
-    mutationFn: async (values: MonthlyPlanValues) => {
-      const savedPlan = await upsertMonthlyPlan(values)
-      if (registerIncome && !savedPlan.salaryTransactionId) {
-        await registerSalaryIncome(savedPlan)
-      }
-    },
+    mutationFn: (values: MonthlyPlanValues) => upsertMonthlyPlan(values),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["monthly-plan"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
       ])
       form.reset(buildDefaultValues(month))
       setOpen(false)
-      toast.success(registerIncome ? "Plan mensual y sueldo guardados" : "Plan mensual guardado")
+      toast.success("Plan mensual guardado")
     },
     onError: (error) => {
       toast.error("No se pudo guardar el plan mensual", { description: error.message })
     },
   })
+
+  const hasPrevMonth = !!prevMonthQuery.data
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -133,7 +131,7 @@ export function CreateMonthlyPlanDialog({
         <DialogHeader>
           <DialogTitle>Nuevo plan mensual</DialogTitle>
           <DialogDescription>
-            Define tu ingreso esperado y el ahorro que no quieres tocar este mes.
+            Define cuánto quieres ahorrar este mes. El ingreso disponible se calcula automáticamente desde tus transacciones reales.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -181,25 +179,6 @@ export function CreateMonthlyPlanDialog({
                 </Field>
               )}
             />
-            <Controller
-              control={form.control}
-              name="expectedIncome"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="cmp-income">Ingreso estimado en soles</FieldLabel>
-                  <NumberInput
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    id="cmp-income"
-                    inputMode="decimal"
-                    min="0"
-                    placeholder="2217.50"
-                    step="0.01"
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
             <div className="grid gap-3 sm:grid-cols-[1fr_1.2fr]">
               <Controller
                 control={form.control}
@@ -239,30 +218,28 @@ export function CreateMonthlyPlanDialog({
               name="notes"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="cmp-notes">Notas</FieldLabel>
+                  <FieldLabel htmlFor="cmp-notes">Notas <span className="text-muted-foreground">(opcional)</span></FieldLabel>
                   <Textarea
                     {...field}
                     aria-invalid={fieldState.invalid}
                     id="cmp-notes"
-                    placeholder="Ej. 650 USD convertidos a soles"
+                    placeholder="Ej. Mes con bono de fin de año"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
-            <label className="flex items-start gap-3 rounded-lg border p-3 text-sm">
-              <Checkbox
-                checked={registerIncome}
-                onCheckedChange={(checked) => setRegisterIncome(checked === true)}
-                className="mt-0.5"
-              />
-              <span className="flex flex-col gap-1">
-                <span className="font-medium">Registrar también como ingreso</span>
-                <span className="text-muted-foreground">
-                  Crea una transacción de ingreso vinculada a este plan para no hacerlo manualmente.
-                </span>
-              </span>
-            </label>
+            {hasPrevMonth && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start gap-2 border-dashed text-muted-foreground hover:text-foreground"
+                onClick={copyFromPrevMonth}
+              >
+                <CopyIcon className="size-4 shrink-0" />
+                Copiar ahorro del mes anterior
+              </Button>
+            )}
           </FieldGroup>
         </form>
         <DialogFooter>

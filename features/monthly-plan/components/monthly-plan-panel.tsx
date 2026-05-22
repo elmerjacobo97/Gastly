@@ -1,11 +1,10 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { CheckCircle2Icon, PiggyBankIcon, WalletCardsIcon } from "lucide-react"
+import { PiggyBankIcon, TrendingUpIcon, WalletCardsIcon } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,40 +20,36 @@ import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-m
 import {
   calculateSavings,
   getMonthlyPlan,
-  registerSalaryIncome,
 } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { MonthNav } from "@/components/month-nav"
+import { CreateTransactionDialog } from "@/features/transactions/components/create-transaction-dialog"
+import { getTransactions } from "@/features/transactions/lib/transactions-api"
 import { formatCurrency } from "@/lib/format"
 
 export function MonthlyPlanPanel() {
   const [month, setMonth] = useState(() => new Date())
-  const queryClient = useQueryClient()
   const monthKey = format(month, "yyyy-MM")
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
 
-  const query = useQuery({
+  const planQuery = useQuery({
     queryKey: ["monthly-plan", monthKey],
     queryFn: () => getMonthlyPlan(month),
   })
 
-  const plan = query.data ?? null
-  const savings = calculateSavings(plan)
-  const availableAfterSavings = plan ? Math.max(plan.expectedIncome - savings, 0) : 0
-
-  const salaryMutation = useMutation({
-    mutationFn: () => registerSalaryIncome(plan!),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["monthly-plan"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
-      ])
-      toast.success("Sueldo registrado como ingreso")
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar el sueldo", { description: error.message })
-    },
+  const transactionsQuery = useQuery({
+    queryKey: ["transactions", monthKey],
+    queryFn: () => getTransactions({ month }),
   })
+
+  const plan = planQuery.data ?? null
+  const transactions = transactionsQuery.data ?? []
+  const actualIncome = transactions
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + t.amount, 0)
+  const savings = calculateSavings(plan, actualIncome)
+  const availableAfterSavings = Math.max(actualIncome - savings, 0)
+
+  const isLoading = planQuery.isLoading || transactionsQuery.isLoading
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -64,20 +59,22 @@ export function MonthlyPlanPanel() {
             Plan mensual
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Define cuánto entra y cuánto debes separar antes de gastar.
+            Define cuánto ahorrar. El ingreso y disponible se calculan desde tus transacciones reales.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} allowFuture />
-          {plan ? (
-            <EditMonthlyPlanDialog month={month} plan={plan} />
-          ) : (
-            <CreateMonthlyPlanDialog month={month} />
+          {!isLoading && (
+            plan ? (
+              <EditMonthlyPlanDialog month={month} plan={plan} />
+            ) : (
+              <CreateMonthlyPlanDialog month={month} />
+            )
           )}
         </div>
       </section>
 
-      {query.isLoading ? (
+      {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <Card key={index} className="p-4">
@@ -90,9 +87,12 @@ export function MonthlyPlanPanel() {
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             <Card className="p-4">
-              <p className="text-xs text-muted-foreground">Ingreso estimado</p>
+              <p className="text-xs text-muted-foreground">Ingreso real del mes</p>
               <p className="mt-1 text-xl font-semibold tabular-nums">
-                {formatCurrency(plan.expectedIncome)}
+                {formatCurrency(actualIncome)}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {transactions.filter((t) => t.type === "income").length} transacción{transactions.filter((t) => t.type === "income").length !== 1 ? "es" : ""} de ingreso
               </p>
             </Card>
             <Card className="p-4">
@@ -100,32 +100,42 @@ export function MonthlyPlanPanel() {
               <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
                 {formatCurrency(savings)}
               </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {plan.savingsMode === "percent"
+                  ? `${plan.savingsValue}% del ingreso`
+                  : "Monto fijo"}
+              </p>
             </Card>
             <Card className="p-4">
               <p className="text-xs text-muted-foreground">Después de ahorrar</p>
               <p className="mt-1 text-xl font-semibold tabular-nums">
                 {formatCurrency(availableAfterSavings)}
               </p>
+              <p className="mt-0.5 text-xs text-muted-foreground capitalize">{monthLabel}</p>
             </Card>
           </div>
-            <Card>
+
+          <Card>
             <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle className="text-base capitalize">{monthLabel}</CardTitle>
                 <CardDescription>
                   {plan.savingsMode === "percent"
-                    ? `Separas ${plan.savingsValue}% de tus ingresos.`
-                    : `Separas ${formatCurrency(plan.savingsValue)} como monto fijo.`}
+                    ? `Separas ${plan.savingsValue}% de cada ingreso que registres.`
+                    : `Separas ${formatCurrency(plan.savingsValue)} como monto fijo al mes.`}
                 </CardDescription>
               </div>
-              <Button
-                disabled={!!plan.salaryTransactionId || salaryMutation.isPending}
-                onClick={() => salaryMutation.mutate()}
-                variant={plan.salaryTransactionId ? "secondary" : "default"}
-              >
-                {plan.salaryTransactionId ? <CheckCircle2Icon /> : null}
-                {plan.salaryTransactionId ? "Sueldo registrado" : "Registrar sueldo como ingreso"}
-              </Button>
+              <CreateTransactionDialog
+                defaultType="income"
+                lockType
+                triggerLabel="Registrar ingreso"
+                trigger={
+                  <Button variant="outline">
+                    <TrendingUpIcon data-icon="inline-start" />
+                    <span>Registrar ingreso</span>
+                  </Button>
+                }
+              />
             </CardHeader>
             {plan.notes && (
               <CardContent>
@@ -145,7 +155,7 @@ export function MonthlyPlanPanel() {
             <div>
               <h2 className="text-lg font-semibold">Configura tu plan de este mes</h2>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Sin plan, el resumen no puede calcular tu dinero realmente disponible.
+                Define tu meta de ahorro y el dashboard calculará tu disponible real automáticamente.
               </p>
             </div>
             <CreateMonthlyPlanDialog month={month} triggerLabel="Crear plan mensual" />
@@ -159,9 +169,9 @@ export function MonthlyPlanPanel() {
             <WalletCardsIcon className="size-5" />
           </div>
           <div className="min-w-0">
-            <CardTitle className="text-base">Cómo se usa este plan</CardTitle>
+            <CardTitle className="text-base">Cómo funciona el plan</CardTitle>
             <CardDescription>
-              El resumen resta tu ahorro obligatorio y tus pagos recurrentes estimados antes de medir tus gastos.
+              El ingreso disponible se calcula desde tus transacciones de ingreso reales. El plan define solo cuánto separas antes de gastar.
             </CardDescription>
           </div>
         </CardHeader>

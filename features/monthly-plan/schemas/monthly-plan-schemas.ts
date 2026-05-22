@@ -3,7 +3,6 @@ import { z } from "zod/v3"
 export const monthlyPlanSchema = z
   .object({
     month: z.date(),
-    expectedIncome: z.coerce.number().positive("El ingreso estimado debe ser mayor a 0."),
     savingsMode: z.enum(["percent", "amount"]),
     savingsValue: z.coerce.number().min(0, "El ahorro no puede ser negativo."),
     notes: z.string().trim().optional(),

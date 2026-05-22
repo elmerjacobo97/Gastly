@@ -1,10 +1,7 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { CheckCircle2Icon, CircleAlertIcon } from "lucide-react"
-import { toast } from "sonner"
+import { CircleAlertIcon } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -15,7 +12,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { CreateMonthlyPlanDialog } from "@/features/monthly-plan/components/create-monthly-plan-dialog"
 import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-monthly-plan-dialog"
-import { registerSalaryIncome } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types"
 import { formatCurrency } from "@/lib/format"
 
@@ -23,6 +19,7 @@ type MonthlyPlanSummaryCardProps = {
   date: Date
   plan: MonthlyPlan | null
   isLoading: boolean
+  actualIncome: number
   savings: number
   availableAfterSavings: number
 }
@@ -31,26 +28,10 @@ export function MonthlyPlanSummaryCard({
   date,
   plan,
   isLoading,
+  actualIncome,
   savings,
   availableAfterSavings,
 }: MonthlyPlanSummaryCardProps) {
-  const queryClient = useQueryClient()
-
-  const salaryMutation = useMutation({
-    mutationFn: () => registerSalaryIncome(plan!),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["monthly-plan"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
-      ])
-      toast.success("Sueldo registrado como ingreso")
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar el sueldo", { description: error.message })
-    },
-  })
-
   return (
     <Card className={!plan && !isLoading ? "border-amber-500/30 bg-amber-500/10" : undefined}>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -58,8 +39,8 @@ export function MonthlyPlanSummaryCard({
           <CardTitle className="text-base">Plan del mes</CardTitle>
           <CardDescription>
             {plan
-              ? "Base para calcular ahorro, pagos recurrentes y disponible libre."
-              : "Configura tu sueldo estimado y ahorro para que el resumen sea preciso."}
+              ? "Ingreso real, ahorro obligatorio y disponible libre."
+              : "Configura tu meta de ahorro para que el resumen sea preciso."}
           </CardDescription>
         </div>
         {!isLoading && (
@@ -84,9 +65,9 @@ export function MonthlyPlanSummaryCard({
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border p-3">
-                <p className="text-xs text-muted-foreground">Ingreso estimado</p>
+                <p className="text-xs text-muted-foreground">Ingreso real del mes</p>
                 <p className="mt-1 text-lg font-semibold tabular-nums">
-                  {formatCurrency(plan.expectedIncome)}
+                  {formatCurrency(actualIncome)}
                 </p>
               </div>
               <div className="rounded-lg border p-3">
@@ -102,21 +83,11 @@ export function MonthlyPlanSummaryCard({
                 </p>
               </div>
             </div>
-            <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3 md:flex-row md:items-center md:justify-between">
-              <p className="text-sm text-muted-foreground">
-                {plan.savingsMode === "percent"
-                  ? `Separas ${plan.savingsValue}% de tus ingresos.`
-                  : `Separas ${formatCurrency(plan.savingsValue)} como monto fijo.`}
-              </p>
-              <Button
-                disabled={!!plan.salaryTransactionId || salaryMutation.isPending}
-                onClick={() => salaryMutation.mutate()}
-                variant={plan.salaryTransactionId ? "secondary" : "default"}
-              >
-                {plan.salaryTransactionId ? <CheckCircle2Icon /> : null}
-                {plan.salaryTransactionId ? "Sueldo registrado" : "Registrar sueldo como ingreso"}
-              </Button>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              {plan.savingsMode === "percent"
+                ? `Separas ${plan.savingsValue}% de tus ingresos.`
+                : `Separas ${formatCurrency(plan.savingsValue)} como monto fijo.`}
+            </p>
           </div>
         ) : (
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
