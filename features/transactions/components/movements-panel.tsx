@@ -40,7 +40,8 @@ import {
 import { MonthNav } from "@/components/month-nav"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { TransactionDialog } from "@/features/transactions/components/transaction-dialog"
+import { CreateTransactionDialog } from "@/features/transactions/components/create-transaction-dialog"
+import { EditTransactionDialog } from "@/features/transactions/components/edit-transaction-dialog"
 import {
   deleteTransaction,
   getTransactions,
@@ -234,7 +235,7 @@ export function MovementsPanel() {
         </div>
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} allowFuture />
-          <TransactionDialog
+          <CreateTransactionDialog
             defaultType={typeFilter === "income" ? "income" : "expense"}
             lockType={typeFilter !== "all"}
             triggerLabel={addLabel}
@@ -294,7 +295,7 @@ export function MovementsPanel() {
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <TransactionDialog
+                  <CreateTransactionDialog
                     defaultType={typeFilter === "income" ? "income" : "expense"}
                     lockType={typeFilter !== "all"}
                     triggerLabel={addLabel}
@@ -306,11 +307,13 @@ export function MovementsPanel() {
         </CardContent>
       </Card>
 
-      <TransactionDialog
-        transaction={editTransaction ?? undefined}
-        open={!!editTransaction}
-        onOpenChange={(o) => !o && setEditTransaction(null)}
-      />
+      {editTransaction && (
+        <EditTransactionDialog
+          transaction={editTransaction}
+          open={!!editTransaction}
+          onOpenChange={(o) => !o && setEditTransaction(null)}
+        />
+      )}
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}

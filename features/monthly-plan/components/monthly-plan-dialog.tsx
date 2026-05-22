@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -302,6 +303,9 @@ export function MonthlyPlanDialog({
           </FieldGroup>
         </form>
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button disabled={mutation.isPending} form="monthly-plan-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar plan

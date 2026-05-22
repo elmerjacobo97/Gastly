@@ -20,7 +20,7 @@ import {
   XCircleIcon,
   Trash2Icon,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -42,6 +42,7 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -79,7 +80,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { FixedExpenseDialog } from "@/features/fixed-expenses/components/fixed-expense-dialog"
+import { CreateFixedExpenseDialog } from "@/features/fixed-expenses/components/create-fixed-expense-dialog"
+import { EditFixedExpenseDialog } from "@/features/fixed-expenses/components/edit-fixed-expense-dialog"
 import {
   deleteFixedExpense,
   getFixedExpenseHistory,
@@ -181,12 +183,23 @@ function PaymentDialog({
 
   const form = useForm<FixedExpensePaymentValues>({
     resolver: zodResolver(fixedExpensePaymentSchema),
-    values: {
+    defaultValues: {
       amount: expense?.amount ?? 0,
       occurredOn: isPayingEarly ? todayStr : (expense?.nextDueOn ?? todayStr),
       notes: expense?.notes ?? "",
     },
   })
+
+  useEffect(() => {
+    if (open && expense) {
+      const today = format(new Date(), "yyyy-MM-dd")
+      form.reset({
+        amount: expense.amount,
+        occurredOn: expense.nextDueOn > today ? today : expense.nextDueOn,
+        notes: expense.notes ?? "",
+      })
+    }
+  }, [open, expense?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -282,6 +295,9 @@ function PaymentDialog({
           </FieldGroup>
         </form>
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button disabled={pending} form="fixed-expense-payment-form" type="submit">
             {pending && <Loader2Icon className="size-4 animate-spin" />}
             Registrar pago
@@ -372,6 +388,7 @@ export function FixedExpensesPanel() {
   const [month, setMonth] = useState(() => new Date())
   const [editExpense, setEditExpense] = useState<FixedExpense | null>(null)
   const [payExpense, setPayExpense] = useState<FixedExpense | null>(null)
+  const [payOpen, setPayOpen] = useState(false)
   const [historyExpense, setHistoryExpense] = useState<FixedExpense | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const queryClient = useQueryClient()
@@ -396,7 +413,7 @@ export function FixedExpensesPanel() {
     mutationFn: (values: FixedExpensePaymentValues) =>
       registerFixedExpensePayment(payExpense!, values),
     onSuccess: async () => {
-      setPayExpense(null)
+      setPayOpen(false)
       await invalidate()
       toast.success("Pago registrado como transacción")
     },
@@ -476,7 +493,7 @@ export function FixedExpensesPanel() {
         </div>
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} allowFuture />
-          <FixedExpenseDialog />
+          <CreateFixedExpenseDialog />
         </div>
       </section>
 
@@ -647,7 +664,7 @@ export function FixedExpensesPanel() {
                     </div>
                     <Button
                       disabled={!expense.isActive || isPaid || registerMutation.isPending}
-                      onClick={() => setPayExpense(expense)}
+                      onClick={() => { setPayExpense(expense); setPayOpen(true) }}
                       variant={isPaid ? "secondary" : "default"}
                       className="w-full"
                     >
@@ -674,23 +691,25 @@ export function FixedExpensesPanel() {
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <FixedExpenseDialog />
+                <CreateFixedExpenseDialog />
               </EmptyContent>
             </Empty>
           </CardContent>
         </Card>
       )}
 
-      <FixedExpenseDialog
-        expense={editExpense ?? undefined}
-        open={!!editExpense}
-        onOpenChange={(open) => !open && setEditExpense(null)}
-      />
+      {editExpense && (
+        <EditFixedExpenseDialog
+          expense={editExpense}
+          open={!!editExpense}
+          onOpenChange={(open) => !open && setEditExpense(null)}
+        />
+      )}
       <PaymentDialog
         expense={payExpense}
-        open={!!payExpense}
+        open={payOpen}
         pending={registerMutation.isPending}
-        onOpenChange={(open) => !open && setPayExpense(null)}
+        onOpenChange={(open) => setPayOpen(open)}
         onSubmit={(values) => registerMutation.mutate(values)}
       />
       <ConfirmDialog

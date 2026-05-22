@@ -22,6 +22,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -431,6 +432,9 @@ export function TransactionDialog({
           </div>
         </ScrollArea>
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button
             disabled={isPending}
             form="transaction-form"

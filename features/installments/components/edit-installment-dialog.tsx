@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -286,6 +287,9 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
           </div>
         </ScrollArea>
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button disabled={mutation.isPending} form="edit-installment-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar cambios

@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -244,6 +245,9 @@ export function BudgetDialog({
           </FieldGroup>
         </form>
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button disabled={mutation.isPending} form="budget-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
             {isEditing ? "Guardar cambios" : "Guardar presupuesto"}

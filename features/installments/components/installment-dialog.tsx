@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -303,6 +304,9 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
           </div>
         </ScrollArea>
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button disabled={mutation.isPending} form="installment-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
             Registrar compra

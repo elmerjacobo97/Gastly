@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -157,6 +158,9 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
           </FieldGroup>
         </form>
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button disabled={mutation.isPending} form="loan-payment-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
             Confirmar abono

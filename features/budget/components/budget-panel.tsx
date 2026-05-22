@@ -54,7 +54,8 @@ import {
 } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { formatCurrency } from "@/lib/format"
 import { deleteBudget, getBudgets } from "@/features/budget/lib/budget-api"
-import { BudgetDialog } from "@/features/budget/components/budget-dialog"
+import { CreateBudgetDialog } from "@/features/budget/components/create-budget-dialog"
+import { EditBudgetDialog } from "@/features/budget/components/edit-budget-dialog"
 import { type Budget } from "@/features/budget/types/budget-types"
 import { MonthNav } from "@/components/month-nav"
 
@@ -137,7 +138,7 @@ export function BudgetPanel() {
         </div>
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} allowFuture />
-          <BudgetDialog />
+          <CreateBudgetDialog />
         </div>
       </section>
 
@@ -381,18 +382,20 @@ export function BudgetPanel() {
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <BudgetDialog />
+                <CreateBudgetDialog />
               </EmptyContent>
             </Empty>
           </CardContent>
         </Card>
       )}
 
-      <BudgetDialog
-        budget={editBudget ?? undefined}
-        open={!!editBudget}
-        onOpenChange={(o) => !o && setEditBudget(null)}
-      />
+      {editBudget && (
+        <EditBudgetDialog
+          budget={editBudget}
+          open={!!editBudget}
+          onOpenChange={(o) => !o && setEditBudget(null)}
+        />
+      )}
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}

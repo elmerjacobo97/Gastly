@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -340,6 +341,9 @@ export function FixedExpenseDialog({
           </div>
         </ScrollArea>
         <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">Cancelar</Button>
+          </DialogClose>
           <Button disabled={mutation.isPending} form="fixed-expense-form" type="submit">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
             {isEditing ? "Guardar cambios" : "Guardar pago recurrente"}
