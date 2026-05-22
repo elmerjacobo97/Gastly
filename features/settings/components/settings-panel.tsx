@@ -1,11 +1,12 @@
 "use client"
 
-import { KeyRoundIcon, UserIcon } from "lucide-react"
+import { KeyRoundIcon, SendIcon, UserIcon } from "lucide-react"
 
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CategoriesPanel } from "@/features/categories/components/categories-panel"
 import { ChangePasswordForm } from "@/features/settings/components/change-password-form"
+import { TelegramConnect } from "@/features/settings/components/telegram-connect"
 
 type SettingsPanelProps = {
   userEmail: string
@@ -44,6 +45,19 @@ function ProfileTab({ userEmail, userName }: SettingsPanelProps) {
           </div>
         </div>
         <ChangePasswordForm />
+      </div>
+
+      <Separator />
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <SendIcon className="size-4 text-muted-foreground" />
+          <div>
+            <h2 className="text-lg font-semibold">Telegram</h2>
+            <p className="text-sm text-muted-foreground">Registra gastos y consulta tu saldo desde Telegram.</p>
+          </div>
+        </div>
+        <TelegramConnect />
       </div>
     </div>
   )
