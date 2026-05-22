@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar"
+import { CurrencyConverterPopover } from "@/components/currency-converter-popover"
 import { PageHeader } from "@/features/dashboard/components/page-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { createClient } from "@/lib/supabase/server"
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
       <SidebarInset>
         <PageHeader />
         {children}
+        <CurrencyConverterPopover />
       </SidebarInset>
     </SidebarProvider>
   )
