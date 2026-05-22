@@ -30,6 +30,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
+import { QuickCreateCategoryDialog } from "@/features/categories/components/quick-create-category-dialog"
 import { getCategories } from "@/features/categories/lib/categories-api"
 import { budgetSchema, type BudgetValues } from "@/features/budget/schemas/budget-schemas"
 import { createBudget } from "@/features/budget/lib/budget-api"
@@ -54,6 +55,7 @@ type CreateBudgetDialogProps = {
 
 export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: CreateBudgetDialogProps) {
   const [open, setOpen] = useState(false)
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const queryClient = useQueryClient()
   const now = new Date()
 
@@ -86,112 +88,128 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
   })
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-8 px-0 has-data-[icon=inline-start]:pl-0 sm:w-auto sm:px-2.5 sm:has-data-[icon=inline-start]:pl-2">
-          <PlusIcon data-icon="inline-start" />
-          <span className="sr-only sm:not-sr-only">{triggerLabel}</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Nuevo presupuesto</DialogTitle>
-          <DialogDescription>
-            Define un límite de gasto por categoría para el mes seleccionado.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          className="flex flex-col gap-5"
-          id="create-budget-form"
-          noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
-        >
-          <FieldGroup>
-            <Controller
-              control={form.control}
-              name="categoryId"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="cb-category">Categoría</FieldLabel>
-                  <NativeSelect {...field} aria-invalid={fieldState.invalid} id="cb-category">
-                    <NativeSelectOption value="">Selecciona una categoría</NativeSelectOption>
-                    {categoriesQuery.data?.map((c) => (
-                      <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="amount"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="cb-amount">Monto límite</FieldLabel>
-                  <NumberInput
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    id="cb-amount"
-                    inputMode="decimal"
-                    min="0"
-                    placeholder="0.00"
-                    step="0.01"
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="month"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Mes</FieldLabel>
-                  <div className="flex gap-2">
-                    <NativeSelect
-                      value={field.value.getMonth()}
-                      onChange={(e) => {
-                        const d = new Date(field.value)
-                        d.setMonth(Number(e.target.value))
-                        field.onChange(startOfMonth(d))
-                      }}
-                      className="flex-1"
-                    >
-                      {MONTHS.map((m) => (
-                        <NativeSelectOption key={m.value} value={m.value}>{m.label}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    <NativeSelect
-                      value={field.value.getFullYear()}
-                      onChange={(e) => {
-                        const d = new Date(field.value)
-                        d.setFullYear(Number(e.target.value))
-                        field.onChange(startOfMonth(d))
-                      }}
-                      className="w-28"
-                    >
-                      {getYearOptions().map((y) => (
-                        <NativeSelectOption key={y} value={y}>{y}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                  </div>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-          </FieldGroup>
-        </form>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
-          </DialogClose>
-          <Button disabled={mutation.isPending} form="create-budget-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
-            Guardar presupuesto
+    <>
+      <QuickCreateCategoryDialog
+        open={quickCreateOpen}
+        onOpenChange={setQuickCreateOpen}
+        defaultType="expense"
+        onCreated={(id) => form.setValue("categoryId", id, { shouldValidate: true })}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-8 px-0 has-data-[icon=inline-start]:pl-0 sm:w-auto sm:px-2.5 sm:has-data-[icon=inline-start]:pl-2">
+            <PlusIcon data-icon="inline-start" />
+            <span className="sr-only sm:not-sr-only">{triggerLabel}</span>
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Nuevo presupuesto</DialogTitle>
+            <DialogDescription>
+              Define un límite de gasto por categoría para el mes seleccionado.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="flex flex-col gap-5"
+            id="create-budget-form"
+            noValidate
+            onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          >
+            <FieldGroup>
+              <Controller
+                control={form.control}
+                name="categoryId"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="cb-category">Categoría</FieldLabel>
+                    <NativeSelect {...field} aria-invalid={fieldState.invalid} id="cb-category">
+                      <NativeSelectOption value="">Selecciona una categoría</NativeSelectOption>
+                      {categoriesQuery.data?.map((c) => (
+                        <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <button
+                      type="button"
+                      onClick={() => setQuickCreateOpen(true)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <PlusIcon className="size-3" />
+                      Nueva categoría con ícono y color
+                    </button>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                control={form.control}
+                name="amount"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="cb-amount">Monto límite</FieldLabel>
+                    <NumberInput
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      id="cb-amount"
+                      inputMode="decimal"
+                      min="0"
+                      placeholder="0.00"
+                      step="0.01"
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                control={form.control}
+                name="month"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Mes</FieldLabel>
+                    <div className="flex gap-2">
+                      <NativeSelect
+                        value={field.value.getMonth()}
+                        onChange={(e) => {
+                          const d = new Date(field.value)
+                          d.setMonth(Number(e.target.value))
+                          field.onChange(startOfMonth(d))
+                        }}
+                        className="flex-1"
+                      >
+                        {MONTHS.map((m) => (
+                          <NativeSelectOption key={m.value} value={m.value}>{m.label}</NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                      <NativeSelect
+                        value={field.value.getFullYear()}
+                        onChange={(e) => {
+                          const d = new Date(field.value)
+                          d.setFullYear(Number(e.target.value))
+                          field.onChange(startOfMonth(d))
+                        }}
+                        className="w-28"
+                      >
+                        {getYearOptions().map((y) => (
+                          <NativeSelectOption key={y} value={y}>{y}</NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                    </div>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </FieldGroup>
+          </form>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" type="button">Cancelar</Button>
+            </DialogClose>
+            <Button disabled={mutation.isPending} form="create-budget-form" type="submit">
+              {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+              Guardar presupuesto
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

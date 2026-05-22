@@ -70,13 +70,13 @@ export async function createCategory(values: CategoryValues) {
     throw new Error("Debes iniciar sesion para crear categorias.")
   }
 
-  const { error } = await supabase.from("categories").insert({
+  const { data, error } = await supabase.from("categories").insert({
     user_id: user.id,
     name: values.name,
     type: values.type,
     color: values.color,
     icon: values.icon,
-  })
+  }).select("id").single()
 
   if (error) {
     if (error.code === "23505") {
@@ -85,6 +85,8 @@ export async function createCategory(values: CategoryValues) {
 
     throw new Error(error.message)
   }
+
+  return data as { id: string }
 }
 
 export async function updateCategory(
