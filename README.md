@@ -54,6 +54,10 @@ pnpm dev
 App runs at [http://localhost:3000](http://localhost:3000).
 Email confirmations are captured by Mailpit at [http://127.0.0.1:54324](http://127.0.0.1:54324).
 
+## Email
+
+See [docs/email.md](docs/email.md) for Resend SMTP setup, auth email flows, and template configuration.
+
 ## Database Migrations
 
 All schema changes go through migration files in `supabase/migrations/`.
