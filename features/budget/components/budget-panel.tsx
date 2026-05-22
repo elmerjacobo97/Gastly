@@ -150,7 +150,16 @@ export function BudgetPanel() {
         </div>
       </section>
 
-      {hasPlanningData && (
+      {planQuery.isLoading || fixedExpensesQuery.isLoading || transactionsQuery.isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="mt-2 h-6 w-28" />
+            </Card>
+          ))}
+        </div>
+      ) : hasPlanningData ? (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             <Card className="p-4">
@@ -192,9 +201,7 @@ export function BudgetPanel() {
               : `Tus presupuestos superan tu disponible libre por ${formatCurrency(Math.abs(unassigned))}.`}
           </div>
         </>
-      )}
-
-      {!hasPlanningData && !planQuery.isLoading && (
+      ) : (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
           Crea tu plan mensual para saber cuánto puedes asignar a presupuestos.
         </div>
