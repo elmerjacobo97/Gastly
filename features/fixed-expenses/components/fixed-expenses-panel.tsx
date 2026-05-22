@@ -7,6 +7,7 @@ import { es } from "date-fns/locale"
 import {
   AlertTriangleIcon,
   CalendarClockIcon,
+  InfoIcon,
   CalendarIcon,
   CheckCircle2Icon,
   HistoryIcon,
@@ -197,9 +198,13 @@ function PaymentDialog({
           </DialogDescription>
         </DialogHeader>
         {isPayingEarly && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
-            Estás pagando antes del vencimiento ({formatDate(expense.nextDueOn)}). La fecha de pago se ajustó a hoy.
-          </div>
+          <Alert variant="info">
+            <InfoIcon />
+            <AlertTitle>Pago anticipado</AlertTitle>
+            <AlertDescription>
+              Vencimiento: {formatDate(expense.nextDueOn)}. La fecha de pago se pre-llenó con hoy, pero puedes cambiarla.
+            </AlertDescription>
+          </Alert>
         )}
         <form
           className="flex flex-col gap-5"
