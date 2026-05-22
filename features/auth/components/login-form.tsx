@@ -78,7 +78,16 @@ export function LoginForm({ error, next }: LoginFormProps) {
               name="password"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="login-password">Contraseña</FieldLabel>
+                  <div className="flex items-center justify-between">
+                    <FieldLabel htmlFor="login-password">Contraseña</FieldLabel>
+                    <Link
+                      className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                      href="/forgot-password"
+                      tabIndex={-1}
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  </div>
                   <PasswordInput
                     {...field}
                     aria-invalid={fieldState.invalid}
