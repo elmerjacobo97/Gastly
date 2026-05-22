@@ -74,9 +74,14 @@ Production runs on Vercel + Supabase cloud.
 ### Apply migrations to production
 
 ```bash
-supabase link --project-ref <prod-project-ref>
-supabase db push --linked
-supabase link --project-ref <dev-project-ref>   # re-link to dev
+supabase db push
+```
+
+If not yet linked to the production project:
+
+```bash
+supabase link --project-ref yadpullgqqehyusoonxs
+supabase db push
 ```
 
 ### Vercel environment variables
