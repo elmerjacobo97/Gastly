@@ -119,7 +119,6 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
     total > 0 && totalInstallments > 0
       ? Math.round((total / totalInstallments) * 100) / 100
       : 0
-
   const lastPaymentLabel = getLastPaymentDate(firstPaymentOn, totalInstallments)
   const remaining = totalInstallments - (alreadyPaid ?? 0)
 

@@ -274,9 +274,10 @@ export function InstallmentsPanel() {
                   </CardHeader>
                   <CardContent className="flex flex-col gap-3">
                     <Progress value={pctPaid} className="[&>div]:bg-primary" />
-                    <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-                      <span>Pagado: {formatCurrency(purchase.totalPaid)}</span>
-                      <span>Pendiente: {formatCurrency(purchase.totalPending)}</span>
+                    <div className="flex items-center justify-between text-xs tabular-nums">
+                      <span className="text-muted-foreground">Pagado: <span className="text-foreground">{formatCurrency(purchase.totalPaid)}</span></span>
+                      <span className="font-medium">Total: {formatCurrency(purchase.totalPaid + purchase.totalPending)}</span>
+                      <span className="text-muted-foreground">Pendiente: <span className="text-foreground">{formatCurrency(purchase.totalPending)}</span></span>
                     </div>
                     {purchase.payments.find((p) => !p.transactionId && !p.paidExternally) && (
                       <p className="text-xs text-muted-foreground">
@@ -345,9 +346,12 @@ export function InstallmentsPanel() {
                   </DropdownMenu>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2Icon className="size-3.5" />
-                    Saldado · {formatCurrency(purchase.totalPaid)} pagados
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2Icon className="size-3.5" />
+                      Saldado
+                    </div>
+                    <span className="tabular-nums text-muted-foreground">Total: {formatCurrency(purchase.totalPaid)}</span>
                   </div>
                 </CardContent>
               </Card>

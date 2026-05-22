@@ -60,6 +60,26 @@ function mapPurchase(row: PurchaseRow, payments: InstallmentPayment[]): Installm
   }
 }
 
+function buildPaymentRows(
+  purchaseId: string,
+  grandTotal: number,
+  installmentAmount: number,
+  totalInstallments: number,
+  firstPaymentOn: string,
+  alreadyPaid: number
+) {
+  const lastAmount =
+    Math.round((grandTotal - installmentAmount * (totalInstallments - 1)) * 100) / 100
+  const firstDate = new Date(`${firstPaymentOn}T12:00:00`)
+  return Array.from({ length: totalInstallments }, (_, i) => ({
+    purchase_id: purchaseId,
+    payment_number: i + 1,
+    due_on: format(addMonths(firstDate, i), "yyyy-MM-dd"),
+    amount: i === totalInstallments - 1 ? lastAmount : installmentAmount,
+    paid_externally: i < alreadyPaid,
+  }))
+}
+
 export async function getInstallmentPurchases(): Promise<InstallmentPurchase[]> {
   const supabase = createClient()
 
@@ -126,14 +146,14 @@ export async function createInstallmentPurchase(
 
   if (purchaseError) throw new Error(purchaseError.message)
 
-  const firstDate = new Date(`${values.firstPaymentOn}T12:00:00`)
-  const payments = Array.from({ length: values.totalInstallments }, (_, i) => ({
-    purchase_id: purchase.id,
-    payment_number: i + 1,
-    due_on: format(addMonths(firstDate, i), "yyyy-MM-dd"),
-    amount: installmentAmount,
-    paid_externally: i < (values.alreadyPaid ?? 0),
-  }))
+  const payments = buildPaymentRows(
+    purchase.id,
+    values.totalAmount + values.interestAmount,
+    installmentAmount,
+    values.totalInstallments,
+    values.firstPaymentOn,
+    values.alreadyPaid ?? 0
+  )
 
   const { error: paymentsError } = await supabase
     .from("installment_payments")
@@ -180,14 +200,14 @@ export async function updateInstallmentPurchase(
       .eq("purchase_id", id)
     if (delError) throw new Error(delError.message)
 
-    const firstDate = new Date(`${values.firstPaymentOn}T12:00:00`)
-    const payments = Array.from({ length: values.totalInstallments }, (_, i) => ({
-      purchase_id: id,
-      payment_number: i + 1,
-      due_on: format(addMonths(firstDate, i), "yyyy-MM-dd"),
-      amount: installmentAmount,
-      paid_externally: i < (values.alreadyPaid ?? 0),
-    }))
+    const payments = buildPaymentRows(
+      id,
+      values.totalAmount + values.interestAmount,
+      installmentAmount,
+      values.totalInstallments,
+      values.firstPaymentOn,
+      values.alreadyPaid ?? 0
+    )
 
     const { error: insError } = await supabase.from("installment_payments").insert(payments)
     if (insError) throw new Error(insError.message)

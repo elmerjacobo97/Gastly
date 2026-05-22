@@ -110,7 +110,6 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
   const total = (Number(totalAmount) || 0) + interest;
   const installmentAmount =
     total > 0 && totalInstallments > 0 ? Math.round((total / totalInstallments) * 100) / 100 : 0;
-
   const lastPaymentLabel = getLastPaymentDate(firstPaymentOn, totalInstallments);
 
   return (
