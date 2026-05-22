@@ -2,8 +2,10 @@
 
 import { type ColumnDef } from "@tanstack/react-table"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { format } from "date-fns"
+import { endOfMonth, format, startOfMonth } from "date-fns"
+import { es } from "date-fns/locale"
 import {
+  DownloadIcon,
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
@@ -12,6 +14,16 @@ import {
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -52,6 +64,30 @@ import {
 } from "@/lib/format"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
 import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+
+function exportToCSV(transactions: Transaction[], filename: string) {
+  const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Notas"]
+  const rows = transactions.map((t) => [
+    t.occurredOn,
+    t.type === "expense" ? "Gasto" : "Ingreso",
+    t.description,
+    t.category?.name ?? "Sin categoría",
+    t.amount.toString(),
+    t.notes ?? "",
+  ])
+  const csvContent = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n")
+  const blob = new Blob(["﻿" + csvContent], { type: "text/csv;charset=utf-8;" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 type TypeFilter = "all" | TransactionType
 
 const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
@@ -65,6 +101,7 @@ export function MovementsPanel() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [csvConfirmOpen, setCsvConfirmOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const query = useQuery({
@@ -77,6 +114,10 @@ export function MovementsPanel() {
   })
 
   const rows = query.data ?? []
+  const csvMonthLabel = format(month, "MMMM yyyy", { locale: es })
+  const csvFrom = format(startOfMonth(month), "d 'de' MMMM", { locale: es })
+  const csvTo = format(endOfMonth(month), "d 'de' MMMM yyyy", { locale: es })
+  const csvFilename = `gastly-transacciones-${format(month, "yyyy-MM")}.csv`
 
   const totals = rows.reduce(
     (acc, t) => {
@@ -236,6 +277,14 @@ export function MovementsPanel() {
         </div>
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} allowFuture />
+          <Button
+            variant="outline"
+            disabled={rows.length === 0}
+            onClick={() => setCsvConfirmOpen(true)}
+          >
+            <DownloadIcon />
+            <span className="hidden sm:inline">Exportar CSV</span>
+          </Button>
           <CreateTransactionDialog
             defaultType={typeFilter === "income" ? "income" : "expense"}
             lockType={typeFilter !== "all"}
@@ -337,6 +386,22 @@ export function MovementsPanel() {
         description="Se eliminará esta transacción permanentemente."
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />
+      <AlertDialog open={csvConfirmOpen} onOpenChange={setCsvConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exportar transacciones</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se descargará un archivo CSV con {rows.length} transacción{rows.length !== 1 ? "es" : ""} del {csvFrom} al {csvTo} ({csvMonthLabel}).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => exportToCSV(rows, csvFilename)}>
+              Descargar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   )
 }

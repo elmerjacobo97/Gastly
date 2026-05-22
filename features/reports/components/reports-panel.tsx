@@ -21,6 +21,16 @@ import {
 } from "date-fns"
 import { es } from "date-fns/locale"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   Bar,
   BarChart,
   CartesianGrid,
@@ -192,6 +202,7 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
 
 export function ReportsPanel() {
   const [period, setPeriod] = useState<Period>("3m")
+  const [csvConfirmOpen, setCsvConfirmOpen] = useState(false)
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("expense")
   const { from: fromDate, to: toDate, label: periodLabel } = getPeriodDates(period)
   const today = new Date()
@@ -285,7 +296,7 @@ export function ReportsPanel() {
             <Button
               variant="outline"
               disabled={all.length === 0}
-              onClick={() => exportToCSV(all, filename)}
+              onClick={() => setCsvConfirmOpen(true)}
             >
               <DownloadIcon />
               Exportar CSV
@@ -626,6 +637,23 @@ export function ReportsPanel() {
           </CardContent>
         </Card>
       </section>
+
+      <AlertDialog open={csvConfirmOpen} onOpenChange={setCsvConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exportar reporte</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se descargará un archivo CSV con {all.length} transacción{all.length !== 1 ? "es" : ""} del {fromDate} al {toDate} ({periodLabel}).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => exportToCSV(all, filename)}>
+              Descargar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   )
 }
