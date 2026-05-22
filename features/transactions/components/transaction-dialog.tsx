@@ -35,6 +35,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import {
   NativeSelect,
   NativeSelectOption,
@@ -249,7 +250,7 @@ export function TransactionDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="transaction-amount">Monto</FieldLabel>
-                  <Input
+                  <NumberInput
                     {...field}
                     aria-invalid={fieldState.invalid}
                     id="transaction-amount"
@@ -257,7 +258,6 @@ export function TransactionDialog({
                     min="0"
                     placeholder="0.00"
                     step="0.01"
-                    type="number"
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

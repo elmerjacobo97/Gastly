@@ -25,7 +25,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import {
   NativeSelect,
   NativeSelectOption,
@@ -147,11 +147,10 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="loan-amount">Monto prestado</FieldLabel>
-                  <Input
+                  <NumberInput
                     {...field}
                     id="loan-amount"
                     aria-invalid={fieldState.invalid}
-                    type="number"
                     inputMode="decimal"
                     min="0"
                     step="0.01"

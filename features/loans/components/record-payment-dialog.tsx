@@ -25,7 +25,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import {
   loanPaymentSchema,
   type LoanPaymentValues,
@@ -102,11 +102,10 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="lp-amount">Monto abonado</FieldLabel>
-                    <Input
+                    <NumberInput
                       {...field}
                       id="lp-amount"
                       aria-invalid={fieldState.invalid}
-                      type="number"
                       inputMode="decimal"
                       min="0"
                       step="0.01"

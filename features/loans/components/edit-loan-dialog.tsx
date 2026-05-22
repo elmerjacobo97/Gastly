@@ -23,7 +23,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import {
   NativeSelect,
   NativeSelectOption,
@@ -153,11 +153,10 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="el-amount">Monto prestado</FieldLabel>
-                  <Input
+                  <NumberInput
                     {...field}
                     id="el-amount"
                     aria-invalid={fieldState.invalid}
-                    type="number"
                     inputMode="decimal"
                     min="0"
                     step="0.01"

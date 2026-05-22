@@ -69,7 +69,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import {
   Popover,
   PopoverContent,
@@ -219,14 +219,13 @@ function PaymentDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="fixed-expense-payment-amount">Monto real en soles</FieldLabel>
-                  <Input
+                  <NumberInput
                     {...field}
                     aria-invalid={fieldState.invalid}
                     id="fixed-expense-payment-amount"
                     inputMode="decimal"
                     min="0"
                     step="0.01"
-                    type="number"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>

@@ -26,6 +26,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import {
   NativeSelect,
   NativeSelectOption,
@@ -179,7 +180,7 @@ export function FixedExpenseDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="fixed-expense-amount">Monto estimado en soles</FieldLabel>
-                  <Input
+                  <NumberInput
                     {...field}
                     aria-invalid={fieldState.invalid}
                     id="fixed-expense-amount"
@@ -187,7 +188,6 @@ export function FixedExpenseDialog({
                     min="0"
                     placeholder="0.00"
                     step="0.01"
-                    type="number"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -243,14 +243,13 @@ export function FixedExpenseDialog({
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="fixed-expense-interval">Intervalo</FieldLabel>
                       <div className="relative">
-                        <Input
+                        <NumberInput
                           {...field}
                           aria-invalid={fieldState.invalid}
                           id="fixed-expense-interval"
                           inputMode="numeric"
                           min="1"
                           max="120"
-                          type="number"
                           className="w-full pr-16"
                         />
                         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">

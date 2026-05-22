@@ -26,6 +26,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import {
   NativeSelect,
   NativeSelectOption,
@@ -188,11 +189,10 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="inst-total">Monto total</FieldLabel>
-                    <Input
+                    <NumberInput
                       {...field}
                       id="inst-total"
                       aria-invalid={fieldState.invalid}
-                      type="number"
                       inputMode="decimal"
                       min="0"
                       step="0.01"
@@ -209,11 +209,10 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="inst-count">Cuotas</FieldLabel>
-                    <Input
+                    <NumberInput
                       {...field}
                       id="inst-count"
                       aria-invalid={fieldState.invalid}
-                      type="number"
                       inputMode="numeric"
                       min="2"
                       max="60"
@@ -263,11 +262,10 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
                     Cuotas ya pagadas{" "}
                     <span className="font-normal text-muted-foreground">(para compras en curso)</span>
                   </FieldLabel>
-                  <Input
+                  <NumberInput
                     {...field}
                     id="inst-already-paid"
                     aria-invalid={fieldState.invalid}
-                    type="number"
                     inputMode="numeric"
                     min="0"
                     placeholder="0"

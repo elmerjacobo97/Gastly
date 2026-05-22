@@ -25,7 +25,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import {
   NativeSelect,
   NativeSelectOption,
@@ -217,7 +217,7 @@ export function MonthlyPlanDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="monthly-plan-income">Ingreso estimado en soles</FieldLabel>
-                  <Input
+                  <NumberInput
                     {...field}
                     aria-invalid={fieldState.invalid}
                     id="monthly-plan-income"
@@ -225,7 +225,6 @@ export function MonthlyPlanDialog({
                     min="0"
                     placeholder="2217.50"
                     step="0.01"
-                    type="number"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -256,14 +255,13 @@ export function MonthlyPlanDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="monthly-plan-savings-value">Valor</FieldLabel>
-                    <Input
+                    <NumberInput
                       {...field}
                       aria-invalid={fieldState.invalid}
                       id="monthly-plan-savings-value"
                       inputMode="decimal"
                       min="0"
                       step="0.01"
-                      type="number"
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>

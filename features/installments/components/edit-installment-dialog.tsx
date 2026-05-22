@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getCategories } from '@/features/categories/lib/categories-api';
@@ -169,11 +170,10 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="ei-total">Monto total</FieldLabel>
-                    <Input
+                    <NumberInput
                       {...field}
                       id="ei-total"
                       aria-invalid={fieldState.invalid}
-                      type="number"
                       inputMode="decimal"
                       min="0"
                       step="0.01"
@@ -191,11 +191,10 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="ei-count">Cuotas</FieldLabel>
-                    <Input
+                    <NumberInput
                       {...field}
                       id="ei-count"
                       aria-invalid={fieldState.invalid}
-                      type="number"
                       inputMode="numeric"
                       min="2"
                       max="60"
@@ -244,11 +243,10 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                       Cuotas ya pagadas{' '}
                       <span className="font-normal text-muted-foreground">(para compras en curso)</span>
                     </FieldLabel>
-                    <Input
+                    <NumberInput
                       {...field}
                       id="ei-already-paid"
                       aria-invalid={fieldState.invalid}
-                      type="number"
                       inputMode="numeric"
                       min="0"
                       placeholder="0"
