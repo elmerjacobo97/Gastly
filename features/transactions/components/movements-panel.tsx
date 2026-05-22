@@ -2,6 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { format } from "date-fns"
 import {
   MoreHorizontalIcon,
   PencilIcon,
@@ -66,7 +67,7 @@ export function MovementsPanel() {
   const queryClient = useQueryClient()
 
   const query = useQuery({
-    queryKey: ["transactions", typeFilter, month.toISOString().slice(0, 7)],
+    queryKey: ["transactions", typeFilter, format(month, "yyyy-MM")],
     queryFn: () =>
       getTransactions({
         type: typeFilter === "all" ? undefined : typeFilter,
@@ -232,7 +233,7 @@ export function MovementsPanel() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <MonthNav value={month} onChange={setMonth} />
+          <MonthNav value={month} onChange={setMonth} allowFuture />
           <TransactionDialog
             defaultType={typeFilter === "income" ? "income" : "expense"}
             lockType={typeFilter !== "all"}

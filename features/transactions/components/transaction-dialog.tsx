@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { format } from "date-fns"
 import { CheckIcon, ChevronsUpDownIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
@@ -70,7 +71,7 @@ type TransactionDialogProps = {
 }
 
 function getToday() {
-  return new Date().toISOString().slice(0, 10)
+  return format(new Date(), "yyyy-MM-dd")
 }
 
 function buildDefaultValues(

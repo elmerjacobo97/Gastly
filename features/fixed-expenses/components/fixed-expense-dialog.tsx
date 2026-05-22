@@ -63,7 +63,7 @@ function buildDefaultValues(expense?: FixedExpense): FixedExpenseValues {
     frequency: expense?.frequency ?? "monthly",
     intervalMonths: expense?.intervalMonths ?? 2,
     paymentKind: expense?.paymentKind ?? "fixed",
-    nextDueOn: expense?.nextDueOn ?? new Date().toISOString().slice(0, 10),
+    nextDueOn: expense?.nextDueOn ?? format(new Date(), "yyyy-MM-dd"),
     notes: expense?.notes ?? "",
   }
 }

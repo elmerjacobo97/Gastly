@@ -1,6 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { format } from "date-fns"
 import {
   AlertTriangleIcon,
   MoreHorizontalIcon,
@@ -81,7 +82,7 @@ export function BudgetPanel() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
-  const monthKey = month.toISOString().slice(0, 7)
+  const monthKey = format(month, "yyyy-MM")
 
   const budgetsQuery = useQuery({
     queryKey: ["budgets", monthKey],

@@ -28,7 +28,7 @@ import { formatCurrency } from "@/lib/format"
 export function MonthlyPlanPanel() {
   const [month, setMonth] = useState(() => new Date())
   const queryClient = useQueryClient()
-  const monthKey = month.toISOString().slice(0, 7)
+  const monthKey = format(month, "yyyy-MM")
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
 
   const query = useQuery({

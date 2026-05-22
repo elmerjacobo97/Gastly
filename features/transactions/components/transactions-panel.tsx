@@ -57,7 +57,7 @@ function getDaysUntil(date: string) {
 
 export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProps) {
   const today = new Date()
-  const monthKey = today.toISOString().slice(0, 7)
+  const monthKey = format(today, "yyyy-MM")
   const monthLabel = format(today, "MMMM yyyy", { locale: es })
   const displayName = userName || userEmail?.split("@")[0] || "Usuario"
 

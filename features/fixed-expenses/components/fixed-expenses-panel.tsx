@@ -133,10 +133,10 @@ function getPaymentBadge(expense: FixedExpense, monthKey: string) {
     }
   }
 
-  const today = new Date()
-  const dueDate = new Date(`${expense.nextDueOn}T12:00:00`)
-  const daysUntilDue = Math.ceil(
-    (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  const todayDateStr = format(new Date(), "yyyy-MM-dd")
+  const daysUntilDue = Math.round(
+    (new Date(`${expense.nextDueOn}T12:00:00`).getTime() - new Date(`${todayDateStr}T12:00:00`).getTime()) /
+      (1000 * 60 * 60 * 24)
   )
 
   if (daysUntilDue < 0) {
@@ -175,11 +175,14 @@ function PaymentDialog({
   onOpenChange,
   onSubmit,
 }: PaymentDialogProps) {
+  const todayStr = format(new Date(), "yyyy-MM-dd")
+  const isPayingEarly = !!expense && expense.nextDueOn > todayStr
+
   const form = useForm<FixedExpensePaymentValues>({
     resolver: zodResolver(fixedExpensePaymentSchema),
     values: {
       amount: expense?.amount ?? 0,
-      occurredOn: expense?.nextDueOn ?? new Date().toISOString().slice(0, 10),
+      occurredOn: isPayingEarly ? todayStr : (expense?.nextDueOn ?? todayStr),
       notes: expense?.notes ?? "",
     },
   })
@@ -193,6 +196,11 @@ function PaymentDialog({
             Ingresa el monto real pagado. El pago quedará como transacción en soles.
           </DialogDescription>
         </DialogHeader>
+        {isPayingEarly && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+            Estás pagando antes del vencimiento ({formatDate(expense.nextDueOn)}). La fecha de pago se ajustó a hoy.
+          </div>
+        )}
         <form
           className="flex flex-col gap-5"
           id="fixed-expense-payment-form"
@@ -365,7 +373,7 @@ export function FixedExpensesPanel() {
   const queryClient = useQueryClient()
 
   const query = useQuery({
-    queryKey: ["fixed-expenses", month.toISOString().slice(0, 7)],
+    queryKey: ["fixed-expenses", format(month, "yyyy-MM")],
     queryFn: () => getFixedExpenses(month),
   })
 
@@ -418,7 +426,7 @@ export function FixedExpensesPanel() {
   })
 
   const expenses = query.data ?? []
-  const monthKey = month.toISOString().slice(0, 7)
+  const monthKey = format(month, "yyyy-MM")
   const activeRegistered = expenses.filter((expense) => expense.isActive)
   const activeExpenses = expenses.filter(
     (expense) => expense.isActive && isRelevantForMonth(expense, monthKey)
@@ -430,22 +438,20 @@ export function FixedExpensesPanel() {
     .reduce((sum, expense) => sum + (expense.paidAmount ?? expense.amount), 0)
   const totalPending = Math.max(totalCommitted - totalPaid, 0)
 
-  const today = new Date()
+  const todayStr = format(new Date(), "yyyy-MM-dd")
   const unpaidActive = activeExpenses.filter((e) => !e.paidOn)
-  const overdueExpenses = unpaidActive.filter(
-    (e) => new Date(`${e.nextDueOn}T12:00:00`) < today
-  )
+  const overdueExpenses = unpaidActive.filter((e) => e.nextDueOn < todayStr)
   const soonExpenses = unpaidActive.filter((e) => {
-    const days = Math.ceil(
-      (new Date(`${e.nextDueOn}T12:00:00`).getTime() - today.getTime()) /
+    const days = Math.round(
+      (new Date(`${e.nextDueOn}T12:00:00`).getTime() - new Date(`${todayStr}T12:00:00`).getTime()) /
         (1000 * 60 * 60 * 24)
     )
     return days >= 0 && days <= 7
   })
 
   function daysLabel(nextDueOn: string) {
-    const days = Math.ceil(
-      (new Date(`${nextDueOn}T12:00:00`).getTime() - today.getTime()) /
+    const days = Math.round(
+      (new Date(`${nextDueOn}T12:00:00`).getTime() - new Date(`${todayStr}T12:00:00`).getTime()) /
         (1000 * 60 * 60 * 24)
     )
     if (days === 0) return "vence hoy"

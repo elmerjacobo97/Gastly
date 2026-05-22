@@ -202,7 +202,7 @@ export function ReportsPanel() {
     queryFn: () => getAllTransactions({ from: fromDate, to: toDate }),
   })
   const planQuery = useQuery({
-    queryKey: ["monthly-plan", today.toISOString().slice(0, 7)],
+    queryKey: ["monthly-plan", format(today, "yyyy-MM")],
     queryFn: () => getMonthlyPlan(today),
   })
 
