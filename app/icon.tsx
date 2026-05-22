@@ -8,7 +8,7 @@ export default function Icon() {
     (
       <div
         style={{
-          background: "#4338ca",
+          background: "#1d42d0",
           width: "100%",
           height: "100%",
           display: "flex",
