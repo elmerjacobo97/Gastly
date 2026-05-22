@@ -12,6 +12,7 @@ import {
   LogOutIcon,
   PiggyBankIcon,
   Settings2Icon,
+  TargetIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -76,6 +77,12 @@ const navigationItems = [
     title: "Préstamos",
     href: "/dashboard/loans",
     icon: HandCoinsIcon,
+    exact: false,
+  },
+  {
+    title: "Metas de ahorro",
+    href: "/dashboard/savings",
+    icon: TargetIcon,
     exact: false,
   },
   {
