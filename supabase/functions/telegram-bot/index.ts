@@ -121,14 +121,19 @@ async function handleGaste(chatId: number, userId: string, args: string) {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  await supabase.from('transactions').insert({
+  const { error } = await supabase.from('transactions').insert({
     user_id: userId,
     type: 'expense',
     amount,
     description,
     category_id: categoryId,
-    date: today,
+    occurred_on: today,
   });
+
+  if (error) {
+    await sendMessage(chatId, `❌ Error al registrar: ${error.message}`);
+    return;
+  }
 
   const categoryName = categories?.find((c) => c.id === categoryId)?.name;
   const reply = categoryName
@@ -163,14 +168,19 @@ async function handleIngreso(chatId: number, userId: string, args: string) {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  await supabase.from('transactions').insert({
+  const { error } = await supabase.from('transactions').insert({
     user_id: userId,
     type: 'income',
     amount,
     description,
     category_id: categoryId,
-    date: today,
+    occurred_on: today,
   });
+
+  if (error) {
+    await sendMessage(chatId, `❌ Error al registrar: ${error.message}`);
+    return;
+  }
 
   await sendMessage(chatId, `✅ Ingreso registrado\n<b>${formatCurrency(amount)}</b> — ${description}`);
 }
@@ -181,20 +191,19 @@ async function handleSaldo(chatId: number, userId: string) {
 
   const { data: plan } = await supabase
     .from('monthly_plans')
-    .select('income, savings_percentage')
+    .select('savings_mode, savings_value')
     .eq('user_id', userId)
-    .eq('month', monthKey)
+    .eq('month', `${monthKey}-01`)
     .single();
 
   const { data: transactions } = await supabase
     .from('transactions')
     .select('type, amount')
     .eq('user_id', userId)
-    .gte('date', `${monthKey}-01`)
-    .lte('date', `${monthKey}-31`);
+    .gte('occurred_on', `${monthKey}-01`)
+    .lte('occurred_on', `${monthKey}-31`);
 
   const actualIncome = (transactions ?? []).filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-
   const totalExpenses = (transactions ?? []).filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
   if (!plan) {
@@ -205,12 +214,17 @@ async function handleSaldo(chatId: number, userId: string) {
     return;
   }
 
-  const savings = actualIncome * (plan.savings_percentage / 100);
+  const savings = plan.savings_mode === 'percent'
+    ? actualIncome * (plan.savings_value / 100)
+    : plan.savings_value;
   const available = Math.max(actualIncome - savings - totalExpenses, 0);
+  const savingsLabel = plan.savings_mode === 'percent'
+    ? `Ahorro (${plan.savings_value}%)`
+    : 'Ahorro (fijo)';
 
   await sendMessage(
     chatId,
-    `📊 <b>Saldo disponible — ${monthKey}</b>\n\nIngresos reales: ${formatCurrency(actualIncome)}\nAhorro (${plan.savings_percentage}%): ${formatCurrency(savings)}\nGastado: ${formatCurrency(totalExpenses)}\n\n<b>Disponible: ${formatCurrency(available)}</b>`
+    `📊 <b>Saldo disponible — ${monthKey}</b>\n\nIngresos reales: ${formatCurrency(actualIncome)}\n${savingsLabel}: ${formatCurrency(savings)}\nGastado: ${formatCurrency(totalExpenses)}\n\n<b>Disponible: ${formatCurrency(available)}</b>`
   );
 }
 
@@ -224,8 +238,8 @@ async function handlePagos(chatId: number, userId: string) {
   const in7DaysStr = in7Days.toISOString().split('T')[0];
 
   const { data: expenses } = await supabase
-    .from('fixed_expenses')
-    .select('description, amount, next_due_on, paid_amount')
+    .from('recurring_expenses')
+    .select('description, amount, next_due_on')
     .eq('user_id', userId)
     .eq('is_active', true)
     .gte('next_due_on', todayStr)
@@ -241,8 +255,7 @@ async function handlePagos(chatId: number, userId: string) {
     const dueDate = new Date(`${e.next_due_on}T12:00:00`);
     const diffDays = Math.round((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     const label = diffDays === 0 ? 'Hoy' : diffDays === 1 ? 'Mañana' : `En ${diffDays} días`;
-    const amount = e.paid_amount ?? e.amount;
-    return `• ${label} — ${e.description}: <b>${formatCurrency(amount)}</b>`;
+    return `• ${label} — ${e.description}: <b>${formatCurrency(e.amount)}</b>`;
   });
 
   await sendMessage(chatId, `📅 <b>Próximos pagos</b>\n\n${lines.join('\n')}`);
@@ -256,8 +269,8 @@ async function handleResumen(chatId: number, userId: string) {
     .from('transactions')
     .select('type, amount, category_id')
     .eq('user_id', userId)
-    .gte('date', `${monthKey}-01`)
-    .lte('date', `${monthKey}-31`);
+    .gte('occurred_on', `${monthKey}-01`)
+    .lte('occurred_on', `${monthKey}-31`);
 
   const income = (transactions ?? []).filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
 
@@ -265,19 +278,7 @@ async function handleResumen(chatId: number, userId: string) {
 
   const balance = income - expenses;
 
-  const { data: budgets } = await supabase
-    .from('budgets')
-    .select('amount, spent')
-    .eq('user_id', userId)
-    .eq('month', monthKey);
-
-  const overBudget = (budgets ?? []).filter((b) => b.spent > b.amount).length;
-
-  let msg = `📈 <b>Resumen ${monthKey}</b>\n\nIngresos: ${formatCurrency(income)}\nGastos: ${formatCurrency(expenses)}\nBalance: <b>${formatCurrency(balance)}</b>`;
-
-  if (overBudget > 0) {
-    msg += `\n\n⚠️ ${overBudget} presupuesto${overBudget > 1 ? 's' : ''} excedido${overBudget > 1 ? 's' : ''}`;
-  }
+  const msg = `📈 <b>Resumen ${monthKey}</b>\n\nIngresos: ${formatCurrency(income)}\nGastos: ${formatCurrency(expenses)}\nBalance: <b>${formatCurrency(balance)}</b>`;
 
   await sendMessage(chatId, msg);
 }
