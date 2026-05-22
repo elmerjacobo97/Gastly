@@ -12,7 +12,6 @@ import {
   LogOutIcon,
   PiggyBankIcon,
   Settings2Icon,
-  WalletCardsIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -190,7 +189,7 @@ export function AppSidebar({ userEmail, userName }: AppSidebarProps) {
             <SidebarMenuButton size="lg" asChild tooltip="Gastly">
               <Link href="/dashboard" onClick={() => setOpenMobile(false)}>
                 <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-                  <WalletCardsIcon className="size-4" />
+                  <span className="text-sm font-bold leading-none">G</span>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Gastly</span>

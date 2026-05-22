@@ -1,5 +1,3 @@
-import { WalletCardsIcon } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 
 type LogoProps = {
@@ -17,7 +15,7 @@ export function Logo({ className, markClassName, showText = true }: LogoProps) {
           markClassName
         )}
       >
-        <WalletCardsIcon className="size-[45%]" />
+        <span className="text-lg font-bold leading-none">G</span>
       </div>
       {showText && (
         <div className="flex flex-col leading-none">
