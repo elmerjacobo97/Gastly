@@ -1,9 +1,11 @@
 "use client"
 
-import { UserIcon } from "lucide-react"
+import { KeyRoundIcon, UserIcon } from "lucide-react"
 
+import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CategoriesPanel } from "@/features/categories/components/categories-panel"
+import { ChangePasswordForm } from "@/features/settings/components/change-password-form"
 
 type SettingsPanelProps = {
   userEmail: string
@@ -14,21 +16,34 @@ function ProfileTab({ userEmail, userName }: SettingsPanelProps) {
   const displayName = userName || userEmail.split("@")[0] || "Usuario"
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6">
-      <div>
-        <h2 className="text-lg font-semibold">Perfil</h2>
-        <p className="text-sm text-muted-foreground">
-          Información de tu cuenta.
-        </p>
-      </div>
-      <div className="flex items-center gap-4 rounded-xl border p-4">
-        <div className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-          <UserIcon className="size-5" />
-        </div>
+    <div className="flex flex-col gap-8 p-4 md:p-6">
+      <div className="flex flex-col gap-4">
         <div>
-          <p className="font-medium">{displayName}</p>
-          <p className="text-sm text-muted-foreground">{userEmail}</p>
+          <h2 className="text-lg font-semibold">Perfil</h2>
+          <p className="text-sm text-muted-foreground">Información de tu cuenta.</p>
         </div>
+        <div className="flex items-center gap-4 rounded-xl border p-4">
+          <div className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <UserIcon className="size-5" />
+          </div>
+          <div>
+            <p className="font-medium">{displayName}</p>
+            <p className="text-sm text-muted-foreground">{userEmail}</p>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <KeyRoundIcon className="size-4 text-muted-foreground" />
+          <div>
+            <h2 className="text-lg font-semibold">Contraseña</h2>
+            <p className="text-sm text-muted-foreground">Actualiza tu contraseña de acceso.</p>
+          </div>
+        </div>
+        <ChangePasswordForm />
       </div>
     </div>
   )
