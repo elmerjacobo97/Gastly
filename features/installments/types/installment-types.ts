@@ -19,6 +19,7 @@ export type InstallmentPurchase = {
   id: string
   description: string
   installmentAmount: number
+  interestAmount: number
   totalInstallments: number
   firstPaymentOn: string
   notes: string | null

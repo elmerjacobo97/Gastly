@@ -11,6 +11,7 @@ type PurchaseRow = {
   id: string
   description: string
   installment_amount: number | string
+  interest_amount: number | string
   total_installments: number
   first_payment_on: string
   notes: string | null
@@ -46,6 +47,7 @@ function mapPurchase(row: PurchaseRow, payments: InstallmentPayment[]): Installm
     id: row.id,
     description: row.description,
     installmentAmount: Number(row.installment_amount),
+    interestAmount: Number(row.interest_amount ?? 0),
     totalInstallments: row.total_installments,
     firstPaymentOn: row.first_payment_on,
     notes: row.notes,
@@ -64,7 +66,7 @@ export async function getInstallmentPurchases(): Promise<InstallmentPurchase[]> 
   const { data: purchases, error } = await supabase
     .from("installment_purchases")
     .select(
-      "id, description, installment_amount, total_installments, first_payment_on, notes, categories(id, name, color, icon)"
+      "id, description, installment_amount, interest_amount, total_installments, first_payment_on, notes, categories(id, name, color, icon)"
     )
     .order("created_at", { ascending: false })
     .returns<PurchaseRow[]>()
@@ -105,7 +107,7 @@ export async function createInstallmentPurchase(
   if (authError || !user) throw new Error("Debes iniciar sesión.")
 
   const installmentAmount =
-    Math.round((values.totalAmount / values.totalInstallments) * 100) / 100
+    Math.round(((values.totalAmount + values.interestAmount) / values.totalInstallments) * 100) / 100
 
   const { data: purchase, error: purchaseError } = await supabase
     .from("installment_purchases")
@@ -114,6 +116,7 @@ export async function createInstallmentPurchase(
       category_id: values.categoryId,
       description: values.description,
       installment_amount: installmentAmount,
+      interest_amount: values.interestAmount,
       total_installments: values.totalInstallments,
       first_payment_on: values.firstPaymentOn,
       notes: values.notes || null,
@@ -151,6 +154,7 @@ export async function updateInstallmentPurchase(
     category_id: string
     notes: string | null
     installment_amount?: number
+    interest_amount?: number
     total_installments?: number
     first_payment_on?: string
   }
@@ -163,9 +167,10 @@ export async function updateInstallmentPurchase(
 
   if (paidCount === 0) {
     const installmentAmount =
-      Math.round((values.totalAmount / values.totalInstallments) * 100) / 100
+      Math.round(((values.totalAmount + values.interestAmount) / values.totalInstallments) * 100) / 100
 
     updateData.installment_amount = installmentAmount
+    updateData.interest_amount = values.interestAmount
     updateData.total_installments = values.totalInstallments
     updateData.first_payment_on = values.firstPaymentOn
 

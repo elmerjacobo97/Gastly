@@ -269,6 +269,9 @@ export function InstallmentsPanel() {
                         <CardDescription>
                           {purchase.paidCount}/{purchase.totalInstallments} cuotas ·{" "}
                           {formatCurrency(purchase.installmentAmount)}/mes
+                          {purchase.interestAmount > 0 && (
+                            <> · <span className="text-amber-600 dark:text-amber-400">{formatCurrency(purchase.interestAmount)} en intereses</span></>
+                          )}
                         </CardDescription>
                       </div>
                     </div>
@@ -348,6 +351,9 @@ export function InstallmentsPanel() {
                       <CardTitle className="truncate text-base">{purchase.description}</CardTitle>
                       <CardDescription>
                         {purchase.totalInstallments} cuotas · {formatCurrency(purchase.installmentAmount)}/mes
+                        {purchase.interestAmount > 0 && (
+                          <> · <span className="text-amber-600 dark:text-amber-400">{formatCurrency(purchase.interestAmount)} en intereses</span></>
+                        )}
                       </CardDescription>
                     </div>
                   </div>

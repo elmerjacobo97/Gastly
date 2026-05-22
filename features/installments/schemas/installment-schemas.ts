@@ -5,6 +5,7 @@ export const installmentPurchaseSchema = z
     description: z.string().trim().min(2, "Ingresa una descripción."),
     categoryId: z.string().min(1, "Selecciona una categoría."),
     totalAmount: z.coerce.number().positive("El monto total debe ser mayor a 0."),
+    interestAmount: z.coerce.number().min(0),
     totalInstallments: z.coerce
       .number()
       .int("Debe ser un número entero.")

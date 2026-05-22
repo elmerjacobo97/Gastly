@@ -57,7 +57,8 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
     defaultValues: {
       description: purchase.description,
       categoryId: purchase.category?.id ?? '',
-      totalAmount: Math.round(purchase.installmentAmount * purchase.totalInstallments * 100) / 100,
+      totalAmount: Math.round((purchase.installmentAmount * purchase.totalInstallments - purchase.interestAmount) * 100) / 100,
+      interestAmount: purchase.interestAmount,
       totalInstallments: purchase.totalInstallments,
       firstPaymentOn: purchase.firstPaymentOn,
       alreadyPaid: 0 as number,
@@ -70,7 +71,8 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
       form.reset({
         description: purchase.description,
         categoryId: purchase.category?.id ?? '',
-        totalAmount: Math.round(purchase.installmentAmount * purchase.totalInstallments * 100) / 100,
+        totalAmount: Math.round((purchase.installmentAmount * purchase.totalInstallments - purchase.interestAmount) * 100) / 100,
+        interestAmount: purchase.interestAmount,
         totalInstallments: purchase.totalInstallments,
         firstPaymentOn: purchase.firstPaymentOn,
         alreadyPaid: 0 as number,
@@ -99,12 +101,15 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
   });
 
   const totalAmount = useWatch({ control: form.control, name: 'totalAmount' });
+  const interestAmount = useWatch({ control: form.control, name: 'interestAmount' });
   const totalInstallments = useWatch({ control: form.control, name: 'totalInstallments' });
   const firstPaymentOn = useWatch({ control: form.control, name: 'firstPaymentOn' });
   const alreadyPaid = useWatch({ control: form.control, name: 'alreadyPaid' });
 
+  const interest = Number(interestAmount) || 0;
+  const total = (Number(totalAmount) || 0) + interest;
   const installmentAmount =
-    totalAmount > 0 && totalInstallments > 0 ? Math.round((totalAmount / totalInstallments) * 100) / 100 : 0;
+    total > 0 && totalInstallments > 0 ? Math.round((total / totalInstallments) * 100) / 100 : 0;
 
   const lastPaymentLabel = getLastPaymentDate(firstPaymentOn, totalInstallments);
 
@@ -170,7 +175,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                 name="totalAmount"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ei-total">Monto total</FieldLabel>
+                    <FieldLabel htmlFor="ei-total">Precio original</FieldLabel>
                     <NumberInput
                       {...field}
                       id="ei-total"
@@ -186,6 +191,31 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                 )}
               />
 
+              <Controller
+                control={form.control}
+                name="interestAmount"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="ei-interest">
+                      Intereses <span className="font-normal text-muted-foreground">(opc.)</span>
+                    </FieldLabel>
+                    <NumberInput
+                      {...field}
+                      id="ei-interest"
+                      aria-invalid={fieldState.invalid}
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      disabled={!canEditFinancials}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <Controller
                 control={form.control}
                 name="totalInstallments"
@@ -206,12 +236,26 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                   </Field>
                 )}
               />
+
+              <Field>
+                <FieldLabel>Total a pagar</FieldLabel>
+                <Input
+                  readOnly
+                  disabled
+                  value={total > 0 ? `S/ ${total.toFixed(2)}` : ''}
+                  placeholder="—"
+                  className="tabular-nums"
+                />
+              </Field>
             </div>
 
             {installmentAmount > 0 && canEditFinancials && (
               <div className="rounded-lg bg-muted/50 px-3 py-2 text-sm">
                 <span className="text-muted-foreground">Por cuota: </span>
                 <span className="font-semibold">S/ {installmentAmount.toFixed(2)}</span>
+                {interest > 0 && (
+                  <span className="text-muted-foreground"> · Intereses: S/ {interest.toFixed(2)}</span>
+                )}
                 {lastPaymentLabel && <span className="text-muted-foreground"> · Último pago: {lastPaymentLabel}</span>}
               </div>
             )}
