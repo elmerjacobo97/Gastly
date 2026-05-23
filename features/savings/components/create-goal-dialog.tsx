@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { PlusIcon, Loader2Icon } from "lucide-react"
+import { CheckIcon, PlusIcon, Loader2Icon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -24,6 +24,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
@@ -43,8 +44,18 @@ const defaultValues: SavingsGoalValues = {
   notes: "",
 }
 
-export function CreateGoalDialog() {
-  const [open, setOpen] = useState(false)
+type CreateGoalDialogProps = {
+  trigger?: React.ReactNode
+  onSuccess?: (id: string) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onOpenChange: controlledOnOpenChange }: CreateGoalDialogProps = {}) {
+  const isControlled = controlledOpen !== undefined
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
   const queryClient = useQueryClient()
 
   const form = useForm<SavingsGoalValues>({
@@ -54,11 +65,12 @@ export function CreateGoalDialog() {
 
   const mutation = useMutation({
     mutationFn: createSavingsGoal,
-    onSuccess: async () => {
+    onSuccess: async (id: string) => {
       await queryClient.invalidateQueries({ queryKey: ["savings-goals"] })
       form.reset(defaultValues)
       setOpen(false)
       toast.success("Meta creada")
+      onSuccess?.(id)
     },
     onError: (error) => {
       toast.error("No se pudo crear la meta", { description: error.message })
@@ -67,12 +79,16 @@ export function CreateGoalDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon data-icon="inline-start" />
-          <span className="hidden sm:inline">Nueva meta</span>
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button>
+              <PlusIcon data-icon="inline-start" />
+              <span className="hidden sm:inline">Nueva meta</span>
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Nueva meta de ahorro</DialogTitle>
@@ -84,7 +100,10 @@ export function CreateGoalDialog() {
           id="create-goal-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={(e) => {
+            e.stopPropagation()
+            form.handleSubmit((v) => mutation.mutate(v))(e)
+          }}
         >
           <FieldGroup>
             <Controller
@@ -130,11 +149,11 @@ export function CreateGoalDialog() {
                   <FieldLabel htmlFor="cg-date">
                     Fecha objetivo <span className="text-muted-foreground">(opcional)</span>
                   </FieldLabel>
-                  <Input
-                    {...field}
+                  <DatePicker
                     id="cg-date"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
-                    type="date"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -146,21 +165,25 @@ export function CreateGoalDialog() {
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Color</FieldLabel>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 rounded-lg border p-3">
                     {GOAL_COLORS.map((c) => (
-                      <button
+                      <Button
                         key={c}
                         type="button"
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => field.onChange(c)}
                         className={cn(
-                          "size-7 rounded-full ring-offset-background transition-all",
-                          field.value === c
-                            ? "ring-2 ring-ring ring-offset-2"
-                            : "hover:scale-110"
+                          "rounded-full hover:bg-transparent hover:scale-110",
+                          field.value === c && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                         )}
                         style={{ backgroundColor: c }}
                         aria-label={c}
-                      />
+                      >
+                        {field.value === c && (
+                          <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
+                        )}
+                      </Button>
                     ))}
                   </div>
                 </Field>

@@ -168,22 +168,24 @@ export function CreateCategoryDialog() {
                       <FieldLabel>Color</FieldLabel>
                       <div className="flex flex-wrap gap-2 rounded-lg border p-3">
                         {colorOptions.map((option) => (
-                          <button
+                          <Button
                             key={option.value}
                             type="button"
+                            variant="ghost"
+                            size="icon-sm"
                             onClick={() => field.onChange(option.value)}
                             className={cn(
-                              "grid size-7 place-items-center rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                              "rounded-full hover:bg-transparent hover:scale-110",
                               selectedColor === option.value &&
-                                "ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                                "ring-2 ring-primary ring-offset-2 ring-offset-background"
                             )}
-                            style={{ background: option.hex }}
+                            style={{ backgroundColor: option.hex }}
                             title={option.value}
                           >
                             {selectedColor === option.value && (
                               <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
                             )}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -201,18 +203,20 @@ export function CreateCategoryDialog() {
                           {categoryIconOptions.map((option) => (
                             <Tooltip key={option.value}>
                               <TooltipTrigger asChild>
-                                <button
+                                <Button
                                   type="button"
+                                  variant="ghost"
+                                  size="icon-lg"
                                   onClick={() => field.onChange(option.value)}
                                   className={cn(
-                                    "grid size-9 place-items-center rounded-lg border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                    "border text-muted-foreground hover:bg-muted hover:text-foreground",
                                     selectedIcon === option.value &&
-                                      "border-foreground bg-muted text-foreground"
+                                      "border-primary bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
                                   )}
                                 >
                                   <CategoryIcon name={option.value} className="size-4" />
                                   <span className="sr-only">{option.label}</span>
-                                </button>
+                                </Button>
                               </TooltipTrigger>
                               <TooltipContent>{option.label}</TooltipContent>
                             </Tooltip>

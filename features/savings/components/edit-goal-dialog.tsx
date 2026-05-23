@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Loader2Icon } from "lucide-react"
+import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -23,6 +23,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
@@ -132,11 +133,11 @@ export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps
                   <FieldLabel htmlFor="eg-date">
                     Fecha objetivo <span className="text-muted-foreground">(opcional)</span>
                   </FieldLabel>
-                  <Input
-                    {...field}
+                  <DatePicker
                     id="eg-date"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
-                    type="date"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -148,21 +149,25 @@ export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Color</FieldLabel>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 rounded-lg border p-3">
                     {GOAL_COLORS.map((c) => (
-                      <button
+                      <Button
                         key={c}
                         type="button"
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => field.onChange(c)}
                         className={cn(
-                          "size-7 rounded-full ring-offset-background transition-all",
-                          field.value === c
-                            ? "ring-2 ring-ring ring-offset-2"
-                            : "hover:scale-110"
+                          "rounded-full hover:bg-transparent hover:scale-110",
+                          field.value === c && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                         )}
                         style={{ backgroundColor: c }}
                         aria-label={c}
-                      />
+                      >
+                        {field.value === c && (
+                          <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
+                        )}
+                      </Button>
                     ))}
                   </div>
                 </Field>
