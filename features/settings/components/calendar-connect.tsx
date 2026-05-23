@@ -1,7 +1,7 @@
 "use client"
 
 import { CalendarIcon, CheckIcon, CopyIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,30 +9,22 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 
 type CalendarConnectProps = {
-  token: string
+  url: string
 }
 
-export function CalendarConnect({ token }: CalendarConnectProps) {
-  const [webcalUrl, setWebcalUrl] = useState("")
-  const [httpsUrl, setHttpsUrl] = useState("")
+export function CalendarConnect({ url }: CalendarConnectProps) {
   const [copied, setCopied] = useState(false)
 
-  useEffect(() => {
-    const base = `${window.location.host}/api/calendar/${token}.ics`
-    setWebcalUrl(`webcal://${base}`)
-    setHttpsUrl(`${window.location.protocol}//${base}`)
-  }, [token])
-
   function copy() {
-    if (!webcalUrl) return
-    navigator.clipboard.writeText(webcalUrl)
+    if (!url) return
+    navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   function subscribe() {
-    if (!webcalUrl) return
-    window.location.href = webcalUrl
+    if (!url) return
+    window.location.href = url
   }
 
   return (
@@ -72,11 +64,11 @@ export function CalendarConnect({ token }: CalendarConnectProps) {
         <div className="flex gap-2">
           <Input
             readOnly
-            value={webcalUrl || "Cargando..."}
+            value={url}
             className="font-mono text-xs"
             onClick={(e) => (e.target as HTMLInputElement).select()}
           />
-          <Button variant="outline" size="icon" onClick={copy} disabled={!webcalUrl}>
+          <Button variant="outline" size="icon" onClick={copy} disabled={!url}>
             {copied
               ? <CheckIcon className="size-4 text-emerald-500" />
               : <CopyIcon className="size-4" />}
@@ -84,7 +76,7 @@ export function CalendarConnect({ token }: CalendarConnectProps) {
           </Button>
         </div>
 
-        <Button onClick={subscribe} disabled={!webcalUrl} className="w-fit gap-2">
+        <Button onClick={subscribe} disabled={!url} className="w-fit gap-2">
           <CalendarIcon className="size-4" />
           Suscribir en Calendar
         </Button>
@@ -110,8 +102,8 @@ export function CalendarConnect({ token }: CalendarConnectProps) {
             <p className="text-sm font-medium mb-1.5">Google Calendar</p>
             <ol className="flex flex-col gap-1 text-xs text-muted-foreground list-decimal list-inside">
               <li>Ve a calendar.google.com</li>
-              <li>Click <span className="font-medium">+</span> junto a "Otros calendarios"</li>
-              <li>Selecciona "Desde URL"</li>
+              <li>Click <span className="font-medium">+</span> junto a &quot;Otros calendarios&quot;</li>
+              <li>Selecciona &quot;Desde URL&quot;</li>
               <li>Pega la URL y confirma</li>
             </ol>
           </div>

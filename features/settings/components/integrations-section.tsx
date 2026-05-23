@@ -6,10 +6,10 @@ import { CalendarConnect } from "./calendar-connect"
 import { TelegramConnect } from "./telegram-connect"
 
 type IntegrationsSectionProps = {
-  calendarToken: string
+  calendarUrl: string
 }
 
-export function IntegrationsSection({ calendarToken }: IntegrationsSectionProps) {
+export function IntegrationsSection({ calendarUrl }: IntegrationsSectionProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -51,7 +51,7 @@ export function IntegrationsSection({ calendarToken }: IntegrationsSectionProps)
             </div>
           </CardHeader>
           <CardContent>
-            <CalendarConnect token={calendarToken} />
+            <CalendarConnect url={calendarUrl} />
           </CardContent>
         </Card>
       </div>

@@ -24,10 +24,10 @@ const VALID_IDS = NAV_ITEMS.map((n) => n.id) as readonly string[]
 type SettingsPanelProps = {
   userEmail: string
   userName: string
-  calendarToken: string
+  calendarUrl: string
 }
 
-export function SettingsPanel({ userEmail, userName, calendarToken }: SettingsPanelProps) {
+export function SettingsPanel({ userEmail, userName, calendarUrl }: SettingsPanelProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -67,7 +67,7 @@ export function SettingsPanel({ userEmail, userName, calendarToken }: SettingsPa
         {activeSection === "account" && <AccountSection userEmail={userEmail} userName={userName} />}
         {activeSection === "security" && <SecuritySection />}
         {activeSection === "categories" && <CategoriesSection />}
-        {activeSection === "integrations" && <IntegrationsSection calendarToken={calendarToken} />}
+        {activeSection === "integrations" && <IntegrationsSection calendarUrl={calendarUrl} />}
       </div>
     </main>
   )

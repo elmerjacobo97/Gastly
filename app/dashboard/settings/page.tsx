@@ -1,3 +1,4 @@
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { SettingsPanel } from "@/features/settings/components/settings-panel"
@@ -6,6 +7,8 @@ import { createClient } from "@/lib/supabase/server"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
+  const headersList = await headers()
+  const host = headersList.get("host") ?? ""
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -14,11 +17,14 @@ export default async function SettingsPage() {
     redirect("/login")
   }
 
+  const calendarToken = encodeCalendarToken(user.id)
+  const calendarUrl = host ? `webcal://${host}/api/calendar/${calendarToken}.ics` : ""
+
   return (
     <SettingsPanel
       userEmail={user.email ?? ""}
       userName={user.user_metadata?.full_name ?? ""}
-      calendarToken={encodeCalendarToken(user.id)}
+      calendarUrl={calendarUrl}
     />
   )
 }

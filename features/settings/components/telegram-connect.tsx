@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { getTelegramConnection } from '@/features/settings/lib/settings-api'
 import {
   disconnectTelegram,
@@ -14,6 +15,21 @@ import {
 } from '@/features/settings/server/actions'
 
 const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? ""
+
+function TelegramConnectionSkeleton() {
+  return (
+    <div className="flex items-center justify-between rounded-xl border p-4">
+      <div className="flex items-center gap-3">
+        <Skeleton className="size-9 rounded-full" />
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+      <Skeleton className="h-8 w-28" />
+    </div>
+  )
+}
 
 export function TelegramConnect() {
   const [linkToken, setLinkToken] = useState<string | null>(null)
@@ -57,7 +73,7 @@ export function TelegramConnect() {
   }
 
   if (connectionQuery.isLoading) {
-    return <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+    return <TelegramConnectionSkeleton />
   }
 
   const connection = connectionQuery.data
