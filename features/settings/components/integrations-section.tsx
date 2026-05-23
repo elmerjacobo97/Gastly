@@ -1,10 +1,15 @@
-import { SendIcon } from "lucide-react"
+import { CalendarDaysIcon, SendIcon } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+import { CalendarConnect } from "./calendar-connect"
 import { TelegramConnect } from "./telegram-connect"
 
-export function IntegrationsSection() {
+type IntegrationsSectionProps = {
+  calendarToken: string
+}
+
+export function IntegrationsSection({ calendarToken }: IntegrationsSectionProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -28,6 +33,25 @@ export function IntegrationsSection() {
           </CardHeader>
           <CardContent>
             <TelegramConnect />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+                <CalendarDaysIcon className="size-4" />
+              </div>
+              <div>
+                <CardTitle>Calendario</CardTitle>
+                <CardDescription>
+                  Suscripción webcal con pagos recurrentes, cuotas y metas de ahorro.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CalendarConnect token={calendarToken} />
           </CardContent>
         </Card>
       </div>

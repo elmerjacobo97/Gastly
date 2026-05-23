@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { SettingsPanel } from "@/features/settings/components/settings-panel"
+import { encodeCalendarToken } from "@/lib/calendar-token"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function SettingsPage() {
@@ -17,6 +18,7 @@ export default async function SettingsPage() {
     <SettingsPanel
       userEmail={user.email ?? ""}
       userName={user.user_metadata?.full_name ?? ""}
+      calendarToken={encodeCalendarToken(user.id)}
     />
   )
 }
