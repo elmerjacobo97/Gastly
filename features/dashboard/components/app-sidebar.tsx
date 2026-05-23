@@ -99,7 +99,7 @@ type AppSidebarProps = {
 }
 
 function UserFooter({ userEmail, userName }: AppSidebarProps) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   const displayName = userName || userEmail?.split("@")[0] || "Usuario"
   const initials = displayName
@@ -158,7 +158,7 @@ function UserFooter({ userEmail, userName }: AppSidebarProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings" className="flex items-center gap-2">
+              <Link href="/dashboard/settings" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
                 <Settings2Icon className="size-4" />
                 Configuración
               </Link>
