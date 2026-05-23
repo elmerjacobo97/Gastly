@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { startOfMonth } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
@@ -30,10 +30,9 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import { QuickCreateCategoryDialog } from "@/features/categories/components/quick-create-category-dialog"
-import { getCategories } from "@/features/categories/lib/categories-api"
 import { budgetSchema, type BudgetValues } from "@/features/budget/schemas/budget-schemas"
 import { createBudget } from "@/features/budget/lib/budget-api"
+import { CategoryCombobox } from "@/features/categories/components/category-combobox"
 
 const MONTHS = [
   { value: 0, label: "Enero" }, { value: 1, label: "Febrero" },
@@ -55,7 +54,6 @@ type CreateBudgetDialogProps = {
 
 export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: CreateBudgetDialogProps) {
   const [open, setOpen] = useState(false)
-  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const queryClient = useQueryClient()
   const now = new Date()
 
@@ -66,12 +64,6 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
       amount: 0,
       month: startOfMonth(now),
     },
-  })
-
-  const categoriesQuery = useQuery({
-    queryKey: ["categories", "expense"],
-    queryFn: () => getCategories("expense"),
-    enabled: open,
   })
 
   const mutation = useMutation({
@@ -88,14 +80,7 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
   })
 
   return (
-    <>
-      <QuickCreateCategoryDialog
-        open={quickCreateOpen}
-        onOpenChange={setQuickCreateOpen}
-        defaultType="expense"
-        onCreated={(id) => form.setValue("categoryId", id, { shouldValidate: true })}
-      />
-      <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button className="w-8 px-0 has-data-[icon=inline-start]:pl-0 sm:w-auto sm:px-2.5 sm:has-data-[icon=inline-start]:pl-2">
             <PlusIcon data-icon="inline-start" />
@@ -122,22 +107,13 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="cb-category">Categoría</FieldLabel>
-                    <NativeSelect {...field} aria-invalid={fieldState.invalid} id="cb-category">
-                      <NativeSelectOption value="">Selecciona una categoría</NativeSelectOption>
-                      {categoriesQuery.data?.map((c) => (
-                        <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto justify-start gap-1 p-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
-                      onClick={() => setQuickCreateOpen(true)}
-                    >
-                      <PlusIcon className="size-3" />
-                      Nueva categoría con ícono y color
-                    </Button>
+                    <CategoryCombobox
+                      id="cb-category"
+                      value={field.value}
+                      onChange={field.onChange}
+                      type="expense"
+                      aria-invalid={fieldState.invalid}
+                    />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}
@@ -212,6 +188,5 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
   )
 }

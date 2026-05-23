@@ -1,15 +1,15 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { CalendarIcon, Loader2Icon, PlusIcon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Dialog,
   DialogClose,
@@ -31,22 +31,15 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { QuickCreateCategoryDialog } from "@/features/categories/components/quick-create-category-dialog"
-import { getCategories } from "@/features/categories/lib/categories-api"
 import { updateFixedExpense } from "@/features/fixed-expenses/lib/fixed-expenses-api"
+import { CategoryCombobox } from "@/features/categories/components/category-combobox"
 import {
   fixedExpenseSchema,
   type FixedExpenseValues,
 } from "@/features/fixed-expenses/schemas/fixed-expense-schemas"
 import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
-import { formatDate } from "@/lib/format"
 
 type EditFixedExpenseDialogProps = {
   expense: FixedExpense
@@ -72,7 +65,6 @@ export function EditFixedExpenseDialog({
   open,
   onOpenChange,
 }: EditFixedExpenseDialogProps) {
-  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const form = useForm<FixedExpenseValues>({
@@ -85,12 +77,6 @@ export function EditFixedExpenseDialog({
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const frequency = useWatch({ control: form.control, name: "frequency" })
-
-  const categoriesQuery = useQuery({
-    queryKey: ["categories", "expense"],
-    queryFn: () => getCategories("expense"),
-    enabled: open,
-  })
 
   const mutation = useMutation({
     mutationFn: (values: FixedExpenseValues) => updateFixedExpense(expense.id, values),
@@ -105,14 +91,7 @@ export function EditFixedExpenseDialog({
   })
 
   return (
-    <>
-      <QuickCreateCategoryDialog
-        open={quickCreateOpen}
-        onOpenChange={setQuickCreateOpen}
-        defaultType="expense"
-        onCreated={(id) => form.setValue("categoryId", id, { shouldValidate: true })}
-      />
-      <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar pago recurrente</DialogTitle>
@@ -170,22 +149,13 @@ export function EditFixedExpenseDialog({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="efe-category">Categoría</FieldLabel>
-                        <NativeSelect {...field} aria-invalid={fieldState.invalid} id="efe-category">
-                          <NativeSelectOption value="">Selecciona una categoría</NativeSelectOption>
-                          {categoriesQuery.data?.map((c) => (
-                            <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>
-                          ))}
-                        </NativeSelect>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto justify-start gap-1 p-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
-                          onClick={() => setQuickCreateOpen(true)}
-                        >
-                          <PlusIcon className="size-3" />
-                          Nueva categoría con ícono y color
-                        </Button>
+                        <CategoryCombobox
+                          id="efe-category"
+                          value={field.value}
+                          onChange={field.onChange}
+                          type="expense"
+                          aria-invalid={fieldState.invalid}
+                        />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>
                     )}
@@ -260,28 +230,12 @@ export function EditFixedExpenseDialog({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel>Próxima fecha de pago</FieldLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              aria-invalid={fieldState.invalid}
-                              type="button"
-                              variant="outline"
-                              className="justify-start text-left font-normal"
-                            >
-                              <CalendarIcon />
-                              {field.value ? formatDate(field.value) : "Selecciona una fecha"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
-                              onSelect={(date) => {
-                                if (date) field.onChange(format(date, "yyyy-MM-dd"))
-                              }}
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <DatePicker
+                          id="efe-next-due"
+                          value={field.value}
+                          onChange={field.onChange}
+                          aria-invalid={fieldState.invalid}
+                        />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>
                     )}
@@ -317,6 +271,5 @@ export function EditFixedExpenseDialog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
   )
 }

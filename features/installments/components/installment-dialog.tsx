@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { addMonths, format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Loader2Icon, PlusIcon } from "lucide-react"
@@ -26,14 +26,11 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { getCategories } from "@/features/categories/lib/categories-api"
+import { CategoryCombobox } from "@/features/categories/components/category-combobox"
 import {
   installmentPurchaseSchema,
   type InstallmentPurchaseValues,
@@ -77,12 +74,6 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
       alreadyPaid: 0 as number,
       notes: "",
     },
-  })
-
-  const categoriesQuery = useQuery({
-    queryKey: ["categories", "expense"],
-    queryFn: () => getCategories("expense"),
-    enabled: open,
   })
 
   const mutation = useMutation({
@@ -169,14 +160,13 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="inst-category">Categoría</FieldLabel>
-                  <NativeSelect {...field} id="inst-category" aria-invalid={fieldState.invalid}>
-                    <NativeSelectOption value="">Selecciona una categoría</NativeSelectOption>
-                    {categoriesQuery.data?.map((c) => (
-                      <NativeSelectOption key={c.id} value={c.id}>
-                        {c.name}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
+                  <CategoryCombobox
+                    id="inst-category"
+                    value={field.value}
+                    onChange={field.onChange}
+                    type="expense"
+                    aria-invalid={fieldState.invalid}
+                  />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -278,11 +268,11 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="inst-first-payment">Fecha del primer pago</FieldLabel>
-                  <Input
-                    {...field}
+                  <DatePicker
                     id="inst-first-payment"
+                    value={field.value}
+                    onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
-                    type="date"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
