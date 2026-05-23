@@ -95,12 +95,14 @@ export function CurrencyConverterCard() {
         ) : isError ? (
           <>
             <p className="text-sm text-destructive">Error al obtener tasa</p>
-            <button
+            <Button
+              variant="link"
+              size="sm"
               onClick={() => refetch()}
-              className="mt-0.5 text-xs text-muted-foreground underline underline-offset-2"
+              className="mt-0.5 h-auto p-0 text-xs text-muted-foreground"
             >
               Reintentar
-            </button>
+            </Button>
           </>
         ) : (
           <>
