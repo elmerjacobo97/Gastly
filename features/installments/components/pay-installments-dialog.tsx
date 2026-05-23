@@ -26,7 +26,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import {
@@ -144,11 +144,11 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="pay-date">Fecha de pago</FieldLabel>
-                      <Input
-                        {...field}
+                      <DatePicker
                         id="pay-date"
+                        value={field.value}
+                        onChange={field.onChange}
                         aria-invalid={fieldState.invalid}
-                        type="date"
                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>

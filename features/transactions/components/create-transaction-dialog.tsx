@@ -35,6 +35,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import {
@@ -324,11 +325,11 @@ export function CreateTransactionDialog({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="ct-date">Fecha</FieldLabel>
-                        <Input
-                          {...field}
-                          aria-invalid={fieldState.invalid}
+                        <DatePicker
                           id="ct-date"
-                          type="date"
+                          value={field.value}
+                          onChange={field.onChange}
+                          aria-invalid={fieldState.invalid}
                         />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>

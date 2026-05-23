@@ -25,7 +25,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
 import { addContribution } from "@/features/savings/lib/savings-api"
@@ -37,32 +37,34 @@ import { type SavingsGoal } from "@/features/savings/types/savings-types"
 
 type AddContributionDialogProps = {
   goal: SavingsGoal
+  trigger?: React.ReactNode
+  defaultAmount?: number
 }
 
 function getToday() {
   return format(new Date(), "yyyy-MM-dd")
 }
 
-const defaultValues: ContributionValues = {
+const emptyValues: ContributionValues = {
   amount: 0,
   occurredOn: "",
   notes: "",
 }
 
-export function AddContributionDialog({ goal }: AddContributionDialogProps) {
+export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContributionDialogProps) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const form = useForm<ContributionValues>({
     resolver: zodResolver(contributionSchema),
-    defaultValues: { ...defaultValues, occurredOn: getToday() },
+    defaultValues: { ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() },
   })
 
   const mutation = useMutation({
     mutationFn: (values: ContributionValues) => addContribution(goal, values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["savings-goals"] })
-      form.reset({ ...defaultValues, occurredOn: getToday() })
+      form.reset({ ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() })
       setOpen(false)
       toast.success("Aporte registrado")
     },
@@ -74,10 +76,12 @@ export function AddContributionDialog({ goal }: AddContributionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={goal.isCompleted}>
-          <PlusIcon className="size-4" />
-          Añadir aporte
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" disabled={goal.isCompleted}>
+            <PlusIcon className="size-4" />
+            Añadir aporte
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -118,11 +122,11 @@ export function AddContributionDialog({ goal }: AddContributionDialogProps) {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="ac-date">Fecha</FieldLabel>
-                  <Input
-                    {...field}
+                  <DatePicker
                     id="ac-date"
+                    value={field.value}
+                    onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
-                    type="date"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>

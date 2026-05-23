@@ -1,8 +1,8 @@
 "use client"
 
-import { format, parseISO } from "date-fns"
-import { es } from "date-fns/locale"
+import { parseISO } from "date-fns"
 import { CalendarIcon } from "lucide-react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 type DatePickerProps = {
@@ -30,34 +31,41 @@ export function DatePicker({
   className,
   "aria-invalid": ariaInvalid,
 }: DatePickerProps) {
+  const [open, setOpen] = useState(false)
   const selected = value ? parseISO(value) : undefined
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           id={id}
           type="button"
           variant="outline"
+          aria-invalid={ariaInvalid}
           className={cn(
             "w-full justify-start text-left font-normal",
             !selected && "text-muted-foreground",
-            ariaInvalid && "border-destructive",
             className
           )}
         >
           <CalendarIcon className="mr-2 size-4 shrink-0" />
-          {selected
-            ? format(selected, "d MMM yyyy", { locale: es })
-            : placeholder}
+          {value ? formatDate(value) : placeholder}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
           selected={selected}
-          onSelect={(day) => onChange(day ? format(day, "yyyy-MM-dd") : "")}
-          locale={es}
+          defaultMonth={selected}
+          onSelect={(day) => {
+            if (day) {
+              const y = day.getFullYear()
+              const m = String(day.getMonth() + 1).padStart(2, "0")
+              const d = String(day.getDate()).padStart(2, "0")
+              onChange(`${y}-${m}-${d}`)
+              setOpen(false)
+            }
+          }}
           captionLayout="dropdown"
           autoFocus
         />

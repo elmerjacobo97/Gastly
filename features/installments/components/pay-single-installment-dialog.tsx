@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { payMonthInstallments } from '@/features/installments/lib/installments-api';
 import { payInstallmentsSchema, type PayInstallmentsValues } from '@/features/installments/schemas/installment-schemas';
 import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
@@ -75,7 +75,12 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="psi-date">Fecha de pago</FieldLabel>
-                  <Input {...field} id="psi-date" aria-invalid={fieldState.invalid} type="date" />
+                  <DatePicker
+                    id="psi-date"
+                    value={field.value}
+                    onChange={field.onChange}
+                    aria-invalid={fieldState.invalid}
+                  />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
