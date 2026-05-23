@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2Icon, CopyIcon, Loader2Icon, SendIcon, UnlinkIcon } from 'lucide-react'
+import { CheckCircle2Icon, CopyIcon, ExternalLinkIcon, Loader2Icon, RefreshCwIcon, SendIcon, UnlinkIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -12,6 +12,8 @@ import {
   disconnectTelegram,
   generateTelegramLinkToken,
 } from '@/features/settings/server/actions'
+
+const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? ""
 
 export function TelegramConnect() {
   const [linkToken, setLinkToken] = useState<string | null>(null)
@@ -28,12 +30,10 @@ export function TelegramConnect() {
     setIsGenerating(true)
     const result = await generateTelegramLinkToken()
     setIsGenerating(false)
-
     if (!result || 'error' in result) {
       toast.error('No se pudo generar el código', { description: 'error' in result! ? result.error : undefined })
       return
     }
-
     setLinkToken(result.token)
   }
 
@@ -41,12 +41,10 @@ export function TelegramConnect() {
     setIsDisconnecting(true)
     const result = await disconnectTelegram()
     setIsDisconnecting(false)
-
     if (result && 'error' in result) {
       toast.error('No se pudo desconectar', { description: result.error })
       return
     }
-
     setLinkToken(null)
     await queryClient.invalidateQueries({ queryKey: ['telegram-connection'] })
     toast.success('Telegram desconectado')
@@ -73,9 +71,9 @@ export function TelegramConnect() {
           </div>
           <div>
             <p className="text-sm font-medium">Cuenta vinculada</p>
-            {connection.telegram_username && (
-              <p className="text-xs text-muted-foreground">@{connection.telegram_username}</p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              {connection.telegram_username ? `@${connection.telegram_username}` : 'Telegram conectado'}
+            </p>
           </div>
         </div>
         <Button
@@ -85,11 +83,7 @@ export function TelegramConnect() {
           onClick={handleDisconnect}
           className="text-destructive hover:text-destructive"
         >
-          {isDisconnecting ? (
-            <Loader2Icon className="size-4 animate-spin" />
-          ) : (
-            <UnlinkIcon className="size-4" />
-          )}
+          {isDisconnecting ? <Loader2Icon className="size-4 animate-spin" /> : <UnlinkIcon className="size-4" />}
           Desconectar
         </Button>
       </div>
@@ -97,57 +91,90 @@ export function TelegramConnect() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-xl border p-4 text-sm text-muted-foreground">
-        <p>Vincula tu cuenta para registrar gastos y consultar tu saldo directamente desde Telegram.</p>
-        <div className="mt-3 flex flex-col gap-1 text-xs">
-          <span>Comandos disponibles:</span>
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono">/gaste 50 almuerzo</code>
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono">/ingreso 2500 sueldo</code>
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono">/saldo · /pagos · /resumen</code>
+    <div className="flex flex-col gap-3">
+      {/* Step 1 */}
+      <div className="rounded-xl border p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">1</span>
+          <p className="text-sm font-medium">Abre el bot en Telegram</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {BOT_USERNAME && (
+            <Button variant="outline" size="sm" className="w-fit gap-2" asChild>
+              <a href={`https://t.me/${BOT_USERNAME}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLinkIcon className="size-3.5" />
+                Abrir @{BOT_USERNAME}
+              </a>
+            </Button>
+          )}
+          <div className="rounded-lg border bg-muted/40 p-3">
+            <p className="mb-2 text-xs font-medium">Comandos disponibles:</p>
+            <div className="flex flex-col gap-1 font-mono text-xs text-muted-foreground">
+              <span>/gaste 50 almuerzo</span>
+              <span>/ingreso 2500 sueldo</span>
+              <span>/saldo · /pagos · /resumen</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {!linkToken ? (
-        <Button
-          variant="outline"
-          className="w-fit gap-2"
-          disabled={isGenerating}
-          onClick={handleGenerate}
-        >
-          {isGenerating ? (
-            <Loader2Icon className="size-4 animate-spin" />
-          ) : (
-            <SendIcon className="size-4" />
-          )}
-          Generar código de vinculación
-        </Button>
-      ) : (
-        <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">Expira en 10 min</Badge>
-          </div>
-          <p className="text-sm">
-            Abre el bot en Telegram y envía este mensaje:
-          </p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 overflow-x-auto rounded-lg border bg-card px-3 py-2 text-xs font-mono">
-              /start {linkToken}
-            </code>
-            <Button variant="outline" size="icon" onClick={handleCopy}>
-              <CopyIcon className="size-4" />
+      {/* Step 2 */}
+      <div className="rounded-xl border p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">2</span>
+          <p className="text-sm font-medium">Genera tu código de vinculación</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-muted-foreground">Único y expira en 10 minutos.</p>
+          {!linkToken ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-fit gap-2"
+              disabled={isGenerating}
+              onClick={handleGenerate}
+            >
+              {isGenerating ? <Loader2Icon className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
+              Generar código
             </Button>
-          </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Badge variant="secondary" className="w-fit text-xs">Expira en 10 min</Badge>
+              <div className="flex items-center gap-2">
+                <code className="min-w-0 flex-1 overflow-x-auto rounded-lg border bg-card px-3 py-2 text-xs font-mono">
+                  /start {linkToken}
+                </code>
+                <Button variant="outline" size="icon" className="shrink-0" onClick={handleCopy}>
+                  <CopyIcon className="size-4" />
+                  <span className="sr-only">Copiar</span>
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Step 3 */}
+      <div className="rounded-xl border p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">3</span>
+          <p className="text-sm font-medium">Envía el mensaje al bot</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-muted-foreground">
+            Copia el código del paso 2 y pégalo en el chat del bot. El bot confirmará la vinculación.
+          </p>
           <Button
             variant="ghost"
             size="sm"
-            className="w-fit text-xs text-muted-foreground"
-            onClick={() => { setLinkToken(null); connectionQuery.refetch() }}
+            className="w-fit gap-2 text-xs text-muted-foreground"
+            onClick={() => connectionQuery.refetch()}
           >
-            Ya vinculé mi cuenta
+            <RefreshCwIcon className="size-3.5" />
+            Ya lo envié, verificar vinculación
           </Button>
         </div>
-      )}
+      </div>
     </div>
   )
 }
