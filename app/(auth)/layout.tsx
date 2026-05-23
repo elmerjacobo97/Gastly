@@ -1,4 +1,7 @@
 import { Logo } from "@/components/logo"
+import { privateMetadata } from "@/lib/seo"
+
+export const metadata = privateMetadata
 
 type AuthLayoutProps = {
   children: React.ReactNode
