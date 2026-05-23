@@ -24,9 +24,10 @@ const VALID_IDS = NAV_ITEMS.map((n) => n.id) as readonly string[]
 type SettingsPanelProps = {
   userEmail: string
   userName: string
+  calendarToken: string
 }
 
-export function SettingsPanel({ userEmail, userName }: SettingsPanelProps) {
+export function SettingsPanel({ userEmail, userName, calendarToken }: SettingsPanelProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -41,33 +42,32 @@ export function SettingsPanel({ userEmail, userName }: SettingsPanelProps) {
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Configuración</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Administra tu cuenta y preferencias.</p>
-      </div>
-
-      <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
-        <nav className="flex flex-row gap-1 overflow-x-auto pb-1 lg:w-44 lg:shrink-0 lg:flex-col lg:pb-0">
+    <main className="flex flex-1 flex-col">
+      <div className="sticky top-14 z-10 border-b bg-background/95 backdrop-blur-sm">
+        <div className="px-4 pt-5 md:px-6">
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Configuración</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Administra tu cuenta y preferencias.</p>
+        </div>
+        <nav className="flex flex-row gap-1 overflow-x-auto px-4 py-2 md:px-6">
           {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
             <Button
               key={id}
               variant={activeSection === id ? "secondary" : "ghost"}
               onClick={() => navigate(id)}
-              className="shrink-0 justify-start gap-2 lg:w-full"
+              className="shrink-0 justify-start gap-2"
             >
               <Icon className="size-4 shrink-0" />
               {label}
             </Button>
           ))}
         </nav>
+      </div>
 
-        <div className="min-w-0 flex-1">
-          {activeSection === "account" && <AccountSection userEmail={userEmail} userName={userName} />}
-          {activeSection === "security" && <SecuritySection />}
-          {activeSection === "categories" && <CategoriesSection />}
-          {activeSection === "integrations" && <IntegrationsSection />}
-        </div>
+      <div className="min-w-0 flex-1 p-4 md:p-6">
+        {activeSection === "account" && <AccountSection userEmail={userEmail} userName={userName} />}
+        {activeSection === "security" && <SecuritySection />}
+        {activeSection === "categories" && <CategoriesSection />}
+        {activeSection === "integrations" && <IntegrationsSection calendarToken={calendarToken} />}
       </div>
     </main>
   )
