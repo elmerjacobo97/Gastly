@@ -7,8 +7,6 @@ import { createClient } from "@/lib/supabase/server"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
-  const headersList = await headers()
-  const host = headersList.get("host") ?? ""
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -16,6 +14,9 @@ export default async function SettingsPage() {
   if (!user) {
     redirect("/login")
   }
+
+  const headersList = await headers()
+  const host = headersList.get("host") ?? ""
 
   const calendarToken = encodeCalendarToken(user.id)
   const calendarUrl = host ? `webcal://${host}/api/calendar/${calendarToken}.ics` : ""
