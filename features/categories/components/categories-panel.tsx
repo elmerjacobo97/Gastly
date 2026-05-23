@@ -87,17 +87,19 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <Wrapper className={embedded ? "flex flex-col gap-6" : "flex flex-1 flex-col gap-6 p-4 md:p-6"}>
-      <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-            Categorías
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Organiza gastos e ingresos con categorías reutilizables.
-          </p>
-        </div>
-        <CreateCategoryDialog />
-      </section>
+      {!embedded && (
+        <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Categorías
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Organiza gastos e ingresos con categorías reutilizables.
+            </p>
+          </div>
+          <CreateCategoryDialog />
+        </section>
+      )}
 
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
