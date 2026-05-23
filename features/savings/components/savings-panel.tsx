@@ -60,6 +60,13 @@ function estimatedCompletion(goal: SavingsGoal): string | null {
   return format(estimatedDate, "MMM yyyy", { locale: es })
 }
 
+function monthlyNeeded(goal: SavingsGoal): number | null {
+  if (goal.isCompleted || !goal.targetDate || goal.remaining <= 0) return null
+  const months = differenceInMonths(parseISO(goal.targetDate), new Date())
+  if (months <= 0) return null
+  return Math.ceil(goal.remaining / months)
+}
+
 function GoalCard({
   goal,
   onEdit,
@@ -70,6 +77,7 @@ function GoalCard({
   onDelete: (id: string) => void
 }) {
   const estimated = estimatedCompletion(goal)
+  const needed = monthlyNeeded(goal)
 
   return (
     <Card className="flex flex-col">
@@ -140,10 +148,15 @@ function GoalCard({
 
         <div className="flex flex-col gap-1 text-xs text-muted-foreground">
           {goal.targetDate && (
-            <span>Meta: {formatDate(goal.targetDate)}</span>
+            <span>Fecha límite: {formatDate(goal.targetDate)}</span>
+          )}
+          {needed && (
+            <span className="text-primary font-medium">
+              Ahorra {formatCurrency(needed)}/mes para llegar a tiempo
+            </span>
           )}
           {estimated && (
-            <span>Estimado: {estimated} (ritmo actual)</span>
+            <span>Al ritmo actual llegarás en {estimated}</span>
           )}
         </div>
 

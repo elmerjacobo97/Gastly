@@ -44,20 +44,25 @@ export async function getSavingsGoals(): Promise<SavingsGoal[]> {
   return (data ?? []).map(mapGoal)
 }
 
-export async function createSavingsGoal(values: SavingsGoalValues): Promise<void> {
+export async function createSavingsGoal(values: SavingsGoalValues): Promise<string> {
   const supabase = createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error("Debes iniciar sesión.")
 
-  const { error } = await supabase.from("savings_goals").insert({
-    user_id: user.id,
-    name: values.name,
-    target_amount: values.targetAmount,
-    target_date: values.targetDate || null,
-    color: values.color,
-    notes: values.notes || null,
-  })
+  const { data, error } = await supabase
+    .from("savings_goals")
+    .insert({
+      user_id: user.id,
+      name: values.name,
+      target_amount: values.targetAmount,
+      target_date: values.targetDate || null,
+      color: values.color,
+      notes: values.notes || null,
+    })
+    .select("id")
+    .single()
   if (error) throw new Error(error.message)
+  return (data as { id: string }).id
 }
 
 export async function updateSavingsGoal(id: string, values: SavingsGoalValues): Promise<void> {
