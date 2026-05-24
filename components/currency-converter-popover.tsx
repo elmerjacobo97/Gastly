@@ -51,12 +51,12 @@ export function CurrencyConverterPopover() {
     <div className="fixed bottom-6 right-6 z-50">
       <Popover>
         <PopoverTrigger asChild>
-          <Button size="icon" className="size-12 rounded-full shadow-lg">
+          <Button size="icon" variant="ghost" className="size-12 rounded-full border border-border bg-accent text-foreground shadow-xl hover:bg-accent/80">
             <CoinsIcon className="size-5" />
             <span className="sr-only">Conversor de moneda</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent side="top" align="end" className="w-72 p-4">
+        <PopoverContent side="top" align="end" className="w-72 bg-accent/60 p-4 shadow-xl backdrop-blur-sm">
           <p className="mb-3 text-sm font-semibold">Conversor de moneda</p>
 
           <div className="flex items-center gap-2">
@@ -98,12 +98,14 @@ export function CurrencyConverterPopover() {
             {isError ? (
               <>
                 <p className="text-sm text-destructive">Error al obtener tasa</p>
-                <button
+                <Button
+                  variant="link"
+                  size="sm"
                   onClick={() => refetch()}
-                  className="mt-0.5 text-xs text-muted-foreground underline underline-offset-2"
+                  className="mt-0.5 h-auto p-0 text-xs text-muted-foreground"
                 >
                   Reintentar
-                </button>
+                </Button>
               </>
             ) : (
               <div className={isFetching && from !== to ? "opacity-50 transition-opacity" : "transition-opacity"}>
