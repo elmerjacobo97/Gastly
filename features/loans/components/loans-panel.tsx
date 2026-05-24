@@ -6,6 +6,7 @@ import { es } from "date-fns/locale"
 import {
   CheckCircle2Icon,
   HandCoinsIcon,
+  HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
@@ -27,8 +28,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EditLoanDialog } from "@/features/loans/components/edit-loan-dialog"
@@ -37,6 +47,63 @@ import { RecordPaymentDialog } from "@/features/loans/components/record-payment-
 import { deleteLoan, getLoans } from "@/features/loans/lib/loans-api"
 import { type Loan, type LoanCurrency } from "@/features/loans/types/loan-types"
 import { formatCurrency } from "@/lib/format"
+
+function LoanPaymentHistoryDialog({
+  loan,
+  open,
+  onOpenChange,
+}: {
+  loan: Loan | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const payments = loan?.payments ?? []
+  const total = payments.reduce((sum, p) => sum + p.amount, 0)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Historial de abonos</DialogTitle>
+          <DialogDescription>
+            {loan?.personName} · {payments.length} abono{payments.length !== 1 ? "s" : ""} registrado{payments.length !== 1 ? "s" : ""}
+          </DialogDescription>
+        </DialogHeader>
+        {payments.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            Sin abonos registrados aún.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <ScrollArea className="max-h-72">
+              <div className="flex flex-col divide-y">
+                {payments.map((p) => (
+                  <div key={p.id} className="flex items-start justify-between gap-3 py-3 first:pt-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">
+                        {format(new Date(`${p.occurredOn}T12:00:00`), "d MMM yyyy", { locale: es })}
+                      </p>
+                      {p.notes && (
+                        <p className="mt-0.5 text-xs text-muted-foreground italic">{p.notes}</p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                      +{formatCurrency(p.amount, loan!.currency)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">Total abonado</span>
+              <span className="font-semibold tabular-nums">{formatCurrency(total, loan!.currency)}</span>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 const currencyOrder: LoanCurrency[] = ["PEN", "USD", "MXN"]
 
@@ -59,6 +126,7 @@ function formatCurrencyTotals(loans: Loan[]) {
 export function LoansPanel() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editLoan, setEditLoan] = useState<Loan | null>(null)
+  const [historyLoan, setHistoryLoan] = useState<Loan | null>(null)
   const queryClient = useQueryClient()
 
   const { data: loans = [], isLoading } = useQuery({
@@ -179,6 +247,9 @@ export function LoansPanel() {
                               locale: es,
                             })}
                           </CardDescription>
+                          <p className="mt-1 text-sm font-semibold tabular-nums">
+                            {formatCurrency(loan.amount, loan.currency)}
+                          </p>
                           {loan.expectedOn && (
                             <Badge variant="secondary" className="mt-1.5 text-xs font-normal">
                               Devolución:{" "}
@@ -204,6 +275,11 @@ export function LoansPanel() {
                               <PencilIcon />
                               Editar
                             </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setHistoryLoan(loan)}>
+                              <HistoryIcon />
+                              Historial de abonos
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onSelect={() => setDeleteId(loan.id)}
                               className="text-destructive focus:text-destructive"
@@ -226,27 +302,6 @@ export function LoansPanel() {
 
                         {loan.notes && (
                           <p className="text-xs text-muted-foreground">{loan.notes}</p>
-                        )}
-
-                        {loan.payments.length > 0 && (
-                          <ul className="flex flex-col gap-0.5 border-t pt-2">
-                            {loan.payments.map((p) => (
-                              <li
-                                key={p.id}
-                                className="flex items-center justify-between text-xs text-muted-foreground"
-                              >
-                                <span>
-                                  {format(new Date(`${p.occurredOn}T12:00:00`), "d MMM yyyy", {
-                                    locale: es,
-                                  })}
-                                  {p.notes && ` · ${p.notes}`}
-                                </span>
-                                <span className="tabular-nums text-emerald-600 dark:text-emerald-400">
-                                  +{formatCurrency(p.amount, loan.currency)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
                         )}
 
                         <RecordPaymentDialog loan={loan} />
@@ -281,6 +336,9 @@ export function LoansPanel() {
                               locale: es,
                             })}
                           </CardDescription>
+                          <p className="mt-1 text-sm font-semibold tabular-nums">
+                            {formatCurrency(loan.amount, loan.currency)}
+                          </p>
                           {loan.expectedOn && (
                             <Badge variant="secondary" className="mt-1.5 text-xs font-normal">
                               Pagar antes del{" "}
@@ -302,6 +360,11 @@ export function LoansPanel() {
                               <PencilIcon />
                               Editar
                             </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setHistoryLoan(loan)}>
+                              <HistoryIcon />
+                              Historial de abonos
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={() => setDeleteId(loan.id)} className="text-destructive focus:text-destructive">
                               <Trash2Icon />
                               Eliminar
@@ -319,21 +382,6 @@ export function LoansPanel() {
                         </div>
                         {loan.notes && (
                           <p className="text-xs text-muted-foreground">{loan.notes}</p>
-                        )}
-                        {loan.payments.length > 0 && (
-                          <ul className="flex flex-col gap-0.5 border-t pt-2">
-                            {loan.payments.map((p) => (
-                              <li key={p.id} className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>
-                                  {format(new Date(`${p.occurredOn}T12:00:00`), "d MMM yyyy", { locale: es })}
-                                  {p.notes && ` · ${p.notes}`}
-                                </span>
-                                <span className="tabular-nums text-foreground">
-                                  -{formatCurrency(p.amount, loan.currency)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
                         )}
                         <RecordPaymentDialog loan={loan} />
                       </CardContent>
@@ -407,6 +455,12 @@ export function LoansPanel() {
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará este préstamo y todo su historial de abonos permanentemente."
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+      />
+
+      <LoanPaymentHistoryDialog
+        loan={historyLoan}
+        open={!!historyLoan}
+        onOpenChange={(o) => !o && setHistoryLoan(null)}
       />
     </main>
   )
