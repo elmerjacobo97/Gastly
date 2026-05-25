@@ -151,8 +151,8 @@ export function BudgetPanel() {
       </section>
 
       {planQuery.isLoading || fixedExpensesQuery.isLoading || transactionsQuery.isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} className="p-4">
               <Skeleton className="h-3 w-24" />
               <Skeleton className="mt-2 h-6 w-28" />
@@ -161,17 +161,11 @@ export function BudgetPanel() {
         </div>
       ) : hasPlanningData ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Card className="p-4">
               <p className="text-xs text-muted-foreground">Disponible libre</p>
               <p className="mt-1 text-xl font-semibold tabular-nums">
                 {formatCurrency(availableForBudget)}
-              </p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-muted-foreground">Presupuestado</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums">
-                {formatCurrency(totalBudget)}
               </p>
             </Card>
             <Card className="p-4">
@@ -186,6 +180,24 @@ export function BudgetPanel() {
                 }`}
               >
                 {formatCurrency(Math.abs(unassigned))}
+              </p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs text-muted-foreground">Total gastado</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
+                {formatCurrency(totalSpent)}
+              </p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs text-muted-foreground">Restante</p>
+              <p
+                className={`mt-1 text-xl font-semibold tabular-nums ${
+                  totalBudget - totalSpent >= 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-destructive"
+                }`}
+              >
+                {formatCurrency(Math.max(totalBudget - totalSpent, 0))}
               </p>
             </Card>
           </div>
@@ -204,35 +216,6 @@ export function BudgetPanel() {
       ) : (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
           Crea tu plan mensual para saber cuánto puedes asignar a presupuestos.
-        </div>
-      )}
-
-      {!budgetsQuery.isLoading && budgets.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Presupuesto total</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums">
-              {formatCurrency(totalBudget)}
-            </p>
-          </Card>
-          <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Total gastado</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
-              {formatCurrency(totalSpent)}
-            </p>
-          </Card>
-          <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Restante</p>
-            <p
-              className={`mt-1 text-xl font-semibold tabular-nums ${
-                totalBudget - totalSpent >= 0
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-destructive"
-              }`}
-            >
-              {formatCurrency(Math.max(totalBudget - totalSpent, 0))}
-            </p>
-          </Card>
         </div>
       )}
 
