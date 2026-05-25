@@ -36,6 +36,7 @@ import {
   type InstallmentPurchaseValues,
 } from "@/features/installments/schemas/installment-schemas"
 import { createInstallmentPurchase } from "@/features/installments/lib/installments-api"
+import { AccountCombobox } from "@/features/accounts/components/account-combobox"
 
 function getNextPaymentDefault(): string {
   const today = new Date()
@@ -72,6 +73,7 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
       totalInstallments: 6,
       firstPaymentOn: getNextPaymentDefault(),
       alreadyPaid: 0 as number,
+      accountId: "",
       notes: "",
     },
   })
@@ -88,6 +90,7 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
         totalInstallments: 6,
         firstPaymentOn: getNextPaymentDefault(),
         alreadyPaid: 0 as number,
+        accountId: "",
         notes: "",
       })
       setOpen(false)
@@ -302,6 +305,23 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
                       Quedan {remaining} cuota{remaining !== 1 ? "s" : ""} por pagar.
                     </p>
                   )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="accountId"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="inst-account">
+                    Cuenta de débito <span className="font-normal text-muted-foreground">(opcional)</span>
+                  </FieldLabel>
+                  <AccountCombobox
+                    id="inst-account"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                  />
                 </Field>
               )}
             />

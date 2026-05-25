@@ -31,6 +31,7 @@ import {
 } from '@/features/installments/schemas/installment-schemas';
 import { updateInstallmentPurchase } from '@/features/installments/lib/installments-api';
 import { type InstallmentPurchase } from '@/features/installments/types/installment-types';
+import { AccountCombobox } from '@/features/accounts/components/account-combobox';
 
 function getLastPaymentDate(firstPaymentOn: string, totalInstallments: number): string | null {
   if (!firstPaymentOn || !totalInstallments || totalInstallments < 2) return null;
@@ -62,6 +63,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
       totalInstallments: purchase.totalInstallments,
       firstPaymentOn: purchase.firstPaymentOn,
       alreadyPaid: 0 as number,
+      accountId: purchase.accountId ?? '',
       notes: purchase.notes ?? '',
     },
   });
@@ -76,6 +78,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
         totalInstallments: purchase.totalInstallments,
         firstPaymentOn: purchase.firstPaymentOn,
         alreadyPaid: 0 as number,
+        accountId: purchase.accountId ?? '',
         notes: purchase.notes ?? '',
       });
     }
@@ -298,6 +301,23 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                 )}
               />
             )}
+
+            <Controller
+              control={form.control}
+              name="accountId"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="ei-account">
+                    Cuenta de débito <span className="font-normal text-muted-foreground">(opcional)</span>
+                  </FieldLabel>
+                  <AccountCombobox
+                    id="ei-account"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                  />
+                </Field>
+              )}
+            />
 
             <Controller
               control={form.control}

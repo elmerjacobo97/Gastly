@@ -12,6 +12,7 @@ export const fixedExpenseSchema = z.object({
     .max(120, "El intervalo no puede ser mayor a 120 meses."),
   paymentKind: z.enum(["fixed", "variable"]),
   nextDueOn: z.string().min(1, "Selecciona la proxima fecha de pago."),
+  accountId: z.string().optional(),
   notes: z.string().trim().optional(),
 })
 

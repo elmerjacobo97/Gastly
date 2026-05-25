@@ -34,6 +34,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { updateFixedExpense } from "@/features/fixed-expenses/lib/fixed-expenses-api"
+import { AccountCombobox } from "@/features/accounts/components/account-combobox"
 import { CategoryCombobox } from "@/features/categories/components/category-combobox"
 import {
   fixedExpenseSchema,
@@ -56,6 +57,7 @@ function buildValues(expense: FixedExpense): FixedExpenseValues {
     intervalMonths: expense.intervalMonths ?? 2,
     paymentKind: expense.paymentKind,
     nextDueOn: expense.nextDueOn,
+    accountId: expense.accountId ?? "",
     notes: expense.notes ?? "",
   }
 }
@@ -237,6 +239,22 @@ export function EditFixedExpenseDialog({
                           aria-invalid={fieldState.invalid}
                         />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="accountId"
+                    render={({ field }) => (
+                      <Field>
+                        <FieldLabel htmlFor="efe-account">
+                          Cuenta de débito <span className="font-normal text-muted-foreground">(opcional)</span>
+                        </FieldLabel>
+                        <AccountCombobox
+                          id="efe-account"
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                        />
                       </Field>
                     )}
                   />

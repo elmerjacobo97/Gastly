@@ -47,6 +47,7 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
         queryClient.invalidateQueries({ queryKey: ['monthly-totals'] }),
         queryClient.invalidateQueries({ queryKey: ['category-totals'] }),
         queryClient.invalidateQueries({ queryKey: ['report-transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['accounts'] }),
       ]);
       form.reset({ occurredOn: payment.dueOn });
       onOpenChange(false);

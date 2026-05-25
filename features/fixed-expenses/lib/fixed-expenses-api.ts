@@ -18,6 +18,7 @@ type FixedExpenseRow = {
   billing_day: number
   notes: string | null
   is_active: boolean
+  account_id: string | null
   categories: {
     id: string
     name: string
@@ -48,6 +49,7 @@ function mapFixedExpense(
     notes: row.notes,
     isActive: row.is_active,
     category: row.categories,
+    accountId: row.account_id,
     paidOn: paidByExpense.get(row.id) ?? null,
     paidAmount: paidAmountByExpense.get(row.id) ?? null,
   }
@@ -97,6 +99,7 @@ export async function getFixedExpenses(month?: Date) {
       billing_day,
       notes,
       is_active,
+      account_id,
       categories(id, name, color, icon)
     `
     )
@@ -152,6 +155,7 @@ export async function createFixedExpense(values: FixedExpenseValues) {
     billing_day: new Date(`${values.nextDueOn}T12:00:00`).getDate(),
     notes: values.notes || null,
     is_active: true,
+    account_id: values.accountId || null,
   })
 
   if (error) {
@@ -173,6 +177,7 @@ export async function updateFixedExpense(id: string, values: FixedExpenseValues)
       next_due_on: values.nextDueOn,
       billing_day: new Date(`${values.nextDueOn}T12:00:00`).getDate(),
       notes: values.notes || null,
+      account_id: values.accountId || null,
     })
     .eq("id", id)
 
@@ -269,5 +274,13 @@ export async function registerFixedExpensePayment(
 
   if (updateError) {
     throw new Error(updateError.message)
+  }
+
+  if (expense.accountId) {
+    const { error: balanceError } = await supabase.rpc("decrement_account_balance", {
+      p_account_id: expense.accountId,
+      p_amount: values.amount,
+    })
+    if (balanceError) throw new Error(balanceError.message)
   }
 }

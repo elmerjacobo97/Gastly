@@ -13,6 +13,7 @@ export const installmentPurchaseSchema = z
       .max(60, "Máximo 60 cuotas."),
     firstPaymentOn: z.string().min(1, "Selecciona la fecha del primer pago."),
     alreadyPaid: z.coerce.number().int().min(0),
+    accountId: z.string().optional(),
     notes: z.string().trim().optional(),
   })
   .refine((data) => data.alreadyPaid < data.totalInstallments, {

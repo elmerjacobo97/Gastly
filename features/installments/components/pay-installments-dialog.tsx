@@ -74,6 +74,7 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
         queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
         queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
         queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["accounts"] }),
       ])
       form.reset({ occurredOn: getDefaultPaymentDate(month) })
       setOpen(false)

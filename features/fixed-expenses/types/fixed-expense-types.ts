@@ -16,6 +16,7 @@ export type FixedExpense = {
   notes: string | null
   isActive: boolean
   category: FixedExpenseCategory | null
+  accountId: string | null
   paidOn: string | null
   paidAmount: number | null
 }

@@ -15,6 +15,7 @@ type PurchaseRow = {
   total_installments: number
   first_payment_on: string
   notes: string | null
+  account_id: string | null
   categories: { id: string; name: string; color: string; icon: string } | null
 }
 
@@ -52,6 +53,7 @@ function mapPurchase(row: PurchaseRow, payments: InstallmentPayment[]): Installm
     firstPaymentOn: row.first_payment_on,
     notes: row.notes,
     category: row.categories,
+    accountId: row.account_id,
     payments,
     paidCount: paid.length,
     pendingCount: pending.length,
@@ -86,7 +88,7 @@ export async function getInstallmentPurchases(): Promise<InstallmentPurchase[]> 
   const { data: purchases, error } = await supabase
     .from("installment_purchases")
     .select(
-      "id, description, installment_amount, interest_amount, total_installments, first_payment_on, notes, categories(id, name, color, icon)"
+      "id, description, installment_amount, interest_amount, total_installments, first_payment_on, notes, account_id, categories(id, name, color, icon)"
     )
     .order("created_at", { ascending: false })
     .returns<PurchaseRow[]>()
@@ -140,6 +142,7 @@ export async function createInstallmentPurchase(
       total_installments: values.totalInstallments,
       first_payment_on: values.firstPaymentOn,
       notes: values.notes || null,
+      account_id: values.accountId || null,
     })
     .select("id")
     .single()
@@ -173,6 +176,7 @@ export async function updateInstallmentPurchase(
     description: string
     category_id: string
     notes: string | null
+    account_id: string | null
     installment_amount?: number
     interest_amount?: number
     total_installments?: number
@@ -183,6 +187,7 @@ export async function updateInstallmentPurchase(
     description: values.description,
     category_id: values.categoryId,
     notes: values.notes || null,
+    account_id: values.accountId || null,
   }
 
   if (paidCount === 0) {
@@ -271,6 +276,20 @@ export async function payMonthInstallments(
 
   const updateError = updateResults.find((r) => r.error)
   if (updateError?.error) throw new Error(updateError.error.message)
+
+  const decrementResults = await Promise.all(
+    eligible
+      .filter(({ purchase }) => !!purchase.accountId)
+      .map(({ payment, purchase }) =>
+        supabase.rpc("decrement_account_balance", {
+          p_account_id: purchase.accountId!,
+          p_amount: payment.amount,
+        })
+      )
+  )
+
+  const decrementError = decrementResults.find((r) => r.error)
+  if (decrementError?.error) throw new Error(decrementError.error.message)
 }
 
 export function getMonthInstallments(

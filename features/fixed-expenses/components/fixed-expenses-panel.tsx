@@ -407,6 +407,7 @@ export function FixedExpensesPanel() {
       queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
       queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
       queryClient.invalidateQueries({ queryKey: ["budgets"] }),
+      queryClient.invalidateQueries({ queryKey: ["accounts"] }),
     ])
   }
 

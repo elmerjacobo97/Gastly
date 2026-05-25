@@ -24,6 +24,7 @@ export type InstallmentPurchase = {
   firstPaymentOn: string
   notes: string | null
   category: InstallmentCategory | null
+  accountId: string | null
   payments: InstallmentPayment[]
   paidCount: number
   pendingCount: number
