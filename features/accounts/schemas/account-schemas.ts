@@ -19,7 +19,6 @@ export const accountSchema = z.object({
   name: z.string().trim().min(2, "Ingresa el nombre de la cuenta."),
   currency: z.enum(ACCOUNT_CURRENCIES),
   balance: z.coerce.number().min(0, "El saldo no puede ser negativo."),
-  isSavings: z.boolean(),
   color: z.string(),
   notes: z.string().trim().optional(),
 })

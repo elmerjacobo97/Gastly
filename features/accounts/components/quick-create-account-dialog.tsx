@@ -36,11 +36,11 @@ export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: Quic
 
   const form = useForm<AccountValues>({
     resolver: zodResolver(accountSchema),
-    defaultValues: { name: "", currency: "PEN", balance: 0, isSavings: false, color: ACCOUNT_COLORS[0], notes: "" },
+    defaultValues: { name: "", currency: "PEN", balance: 0, color: ACCOUNT_COLORS[0], notes: "" },
   })
 
   useEffect(() => {
-    if (open) form.reset({ name: "", currency: "PEN", balance: 0, isSavings: false, color: ACCOUNT_COLORS[0], notes: "" })
+    if (open) form.reset({ name: "", currency: "PEN", balance: 0, color: ACCOUNT_COLORS[0], notes: "" })
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedColor = form.watch("color")

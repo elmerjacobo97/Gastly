@@ -39,8 +39,7 @@ export function AccountCombobox({ value, onChange, "aria-invalid": ariaInvalid, 
     queryFn: getAccounts,
   })
 
-  const spendable = accounts.filter((a) => !a.isSavings)
-  const selected = spendable.find((a) => a.id === value)
+  const selected = accounts.find((a) => a.id === value)
 
   return (
     <>
@@ -80,7 +79,7 @@ export function AccountCombobox({ value, onChange, "aria-invalid": ariaInvalid, 
             <CommandInput placeholder="Buscar cuenta..." />
             <CommandList>
               <CommandEmpty>Sin resultados</CommandEmpty>
-              {spendable.length > 0 && (
+              {accounts.length > 0 && (
                 <CommandGroup>
                   {value && (
                     <CommandItem
@@ -94,7 +93,7 @@ export function AccountCombobox({ value, onChange, "aria-invalid": ariaInvalid, 
                       Sin cuenta vinculada
                     </CommandItem>
                   )}
-                  {spendable.map((a) => (
+                  {accounts.map((a) => (
                     <CommandItem
                       key={a.id}
                       value={a.name}

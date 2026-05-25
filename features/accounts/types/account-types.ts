@@ -5,7 +5,6 @@ export type Account = {
   name: string
   currency: AccountCurrency
   balance: number
-  isSavings: boolean
   color: string
   notes: string | null
   createdAt: string

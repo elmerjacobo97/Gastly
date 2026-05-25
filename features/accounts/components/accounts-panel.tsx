@@ -8,14 +8,12 @@ import {
   DownloadIcon,
   MoreHorizontalIcon,
   PencilIcon,
-  PiggyBankIcon,
   Trash2Icon,
   WalletIcon,
 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -91,7 +89,6 @@ export function AccountsPanel() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [transferFromId, setTransferFromId] = useState<string | undefined>(undefined)
   const [transferOpen, setTransferOpen] = useState(false)
-  const [savingsBlockedName, setSavingsBlockedName] = useState<string | null>(null)
   const [csvConfirmOpen, setCsvConfirmOpen] = useState(false)
   const queryClient = useQueryClient()
 
@@ -135,45 +132,21 @@ export function AccountsPanel() {
         <CreateAccountDialog />
       </section>
 
-      {!isLoading && accounts.length > 0 && totalByAll.length > 0 && (() => {
-        const savingsAccounts = accounts.filter((a) => a.isSavings)
-        const savingsByCurrency = CURRENCY_ORDER.map((currency) => ({
-          currency,
-          total: savingsAccounts.filter((a) => a.currency === currency).reduce((s, a) => s + a.balance, 0),
-        })).filter((x) => x.total > 0)
-
-        return (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {totalByAll.map(({ currency, total }) => (
-              <Card key={currency} className="p-4">
-                <p className="text-xs text-muted-foreground">Total en {currency}</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums">
-                  {formatCurrency(total, currency)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {accounts.filter((a) => a.currency === currency).length} cuenta{accounts.filter((a) => a.currency === currency).length !== 1 ? "s" : ""}
-                </p>
-              </Card>
-            ))}
-            {savingsByCurrency.length > 0 && (
-              <Card className="border-primary/20 bg-primary/5 p-4">
-                <div className="flex items-center gap-1.5">
-                  <PiggyBankIcon className="size-3.5 text-primary" />
-                  <p className="text-xs font-medium text-primary">Total ahorrado</p>
-                </div>
-                {savingsByCurrency.map(({ currency, total }) => (
-                  <p key={currency} className="mt-1 text-xl font-semibold tabular-nums text-primary">
-                    {formatCurrency(total, currency)}
-                  </p>
-                ))}
-                <p className="text-xs text-muted-foreground">
-                  {savingsAccounts.length} cuenta{savingsAccounts.length !== 1 ? "s" : ""} de ahorro
-                </p>
-              </Card>
-            )}
-          </div>
-        )
-      })()}
+      {!isLoading && totalByAll.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {totalByAll.map(({ currency, total }) => (
+            <Card key={currency} className="p-4">
+              <p className="text-xs text-muted-foreground">Total en {currency}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">
+                {formatCurrency(total, currency)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {accounts.filter((a) => a.currency === currency).length} cuenta{accounts.filter((a) => a.currency === currency).length !== 1 ? "s" : ""}
+              </p>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {isLoading ? (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -219,11 +192,6 @@ export function AccountsPanel() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <CardTitle className="truncate text-base">{account.name}</CardTitle>
-                    {account.isSavings && (
-                      <Badge variant="secondary" className="shrink-0 bg-primary/10 text-primary text-xs">
-                        Ahorro
-                      </Badge>
-                    )}
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{account.currency}</p>
                 </div>
@@ -242,10 +210,6 @@ export function AccountsPanel() {
                     {accounts.length >= 2 && (
                       <DropdownMenuItem
                         onSelect={() => {
-                          if (account.isSavings) {
-                            setSavingsBlockedName(account.name)
-                            return
-                          }
                           setTransferFromId(account.id)
                           setTransferOpen(true)
                         }}
@@ -325,22 +289,6 @@ export function AccountsPanel() {
           onOpenChange={(o) => !o && setEditAccount(null)}
         />
       )}
-
-      <AlertDialog open={!!savingsBlockedName} onOpenChange={(o) => !o && setSavingsBlockedName(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cuenta de ahorro bloqueada</AlertDialogTitle>
-            <AlertDialogDescription>
-              <strong>{savingsBlockedName}</strong> está marcada como cuenta de ahorro. Las transferencias desde cuentas de ahorro están deshabilitadas para proteger tu dinero.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setSavingsBlockedName(null)}>
-              Entendido
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <TransferDialog
         accounts={accounts}

@@ -22,7 +22,6 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { NumberInput } from "@/components/ui/number-input"
-import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { createAccount } from "@/features/accounts/lib/accounts-api"
 import {
@@ -37,7 +36,6 @@ const EMPTY_DEFAULTS: AccountValues = {
   name: "",
   currency: "PEN",
   balance: 0,
-  isSavings: false,
   color: "#3b82f6",
   notes: "",
 }
@@ -141,26 +139,6 @@ export function CreateAccountDialog() {
                 )}
               />
             </div>
-            <Controller
-              control={form.control}
-              name="isSavings"
-              render={({ field }) => (
-                <Field>
-                  <div className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
-                      <FieldLabel className="text-sm font-medium">Cuenta de ahorro</FieldLabel>
-                      <p className="text-xs text-muted-foreground">
-                        Su saldo contará como dinero ahorrado total.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </div>
-                </Field>
-              )}
-            />
             <Controller
               control={form.control}
               name="color"

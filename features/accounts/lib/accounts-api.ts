@@ -7,7 +7,6 @@ type AccountRow = {
   name: string
   currency: AccountCurrency
   balance: string | number
-  is_savings: boolean
   color: string
   notes: string | null
   created_at: string
@@ -31,7 +30,6 @@ function mapAccount(row: AccountRow): Account {
     name: row.name,
     currency: row.currency,
     balance: Number(row.balance),
-    isSavings: row.is_savings,
     color: row.color,
     notes: row.notes,
     createdAt: row.created_at,
@@ -58,7 +56,7 @@ export async function getAccounts(): Promise<Account[]> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from("accounts")
-    .select("id, name, currency, balance, is_savings, color, notes, created_at")
+    .select("id, name, currency, balance, color, notes, created_at")
     .order("created_at", { ascending: true })
     .returns<AccountRow[]>()
   if (error) throw new Error(error.message)
@@ -77,11 +75,10 @@ export async function createAccount(values: AccountValues): Promise<Account> {
       name: values.name,
       currency: values.currency,
       balance: values.balance,
-      is_savings: values.isSavings,
       color: values.color,
       notes: values.notes || null,
     })
-    .select("id, name, currency, balance, is_savings, color, notes, created_at")
+    .select("id, name, currency, balance, color, notes, created_at")
     .single()
   if (error) throw new Error(error.message)
   return mapAccount(data as AccountRow)
@@ -95,7 +92,6 @@ export async function updateAccount(id: string, values: AccountValues): Promise<
       name: values.name,
       currency: values.currency,
       balance: values.balance,
-      is_savings: values.isSavings,
       color: values.color,
       notes: values.notes || null,
       updated_at: new Date().toISOString(),
