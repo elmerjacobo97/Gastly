@@ -19,6 +19,7 @@ type FixedExpenseRow = {
   notes: string | null
   is_active: boolean
   account_id: string | null
+  accounts: { id: string; name: string; color: string } | null
   categories: {
     id: string
     name: string
@@ -50,6 +51,7 @@ function mapFixedExpense(
     isActive: row.is_active,
     category: row.categories,
     accountId: row.account_id,
+    account: row.accounts ?? null,
     paidOn: paidByExpense.get(row.id) ?? null,
     paidAmount: paidAmountByExpense.get(row.id) ?? null,
   }
@@ -100,6 +102,7 @@ export async function getFixedExpenses(month?: Date) {
       notes,
       is_active,
       account_id,
+      accounts!account_id(id, name, color),
       categories(id, name, color, icon)
     `
     )

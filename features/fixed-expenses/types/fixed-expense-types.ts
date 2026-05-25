@@ -17,6 +17,7 @@ export type FixedExpense = {
   isActive: boolean
   category: FixedExpenseCategory | null
   accountId: string | null
+  account: { id: string; name: string; color: string } | null
   paidOn: string | null
   paidAmount: number | null
 }

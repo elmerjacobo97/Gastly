@@ -607,6 +607,12 @@ export function FixedExpensesPanel() {
                           ? `Pagado el ${formatDate(expense.paidOn)}`
                           : `Próximo pago: ${formatDate(expense.nextDueOn)}`} · {expense.category?.name ?? "Sin categoría"}
                       </CardDescription>
+                      {expense.account && (
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: expense.account.color }} />
+                          <span className="text-xs text-muted-foreground">{expense.account.name}</span>
+                        </div>
+                      )}
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
