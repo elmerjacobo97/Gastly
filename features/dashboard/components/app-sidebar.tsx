@@ -13,6 +13,7 @@ import {
   PiggyBankIcon,
   Settings2Icon,
   TargetIcon,
+  WalletIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -77,6 +78,12 @@ const navigationItems = [
     title: "Préstamos",
     href: "/dashboard/loans",
     icon: HandCoinsIcon,
+    exact: false,
+  },
+  {
+    title: "Cuentas",
+    href: "/dashboard/accounts",
+    icon: WalletIcon,
     exact: false,
   },
   {
