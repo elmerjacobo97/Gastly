@@ -96,8 +96,13 @@ export function InstallmentsPanel() {
           <SummaryCard
             title="Programado este mes"
             value={formatCurrency(totalThisMonth)}
-            description={`${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} del mes`}
+            description={
+              totalPendingThisMonth === 0
+                ? `${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} · todo pagado`
+                : `${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} del mes`
+            }
             icon={CalendarIcon}
+            variant={totalPendingThisMonth === 0 ? 'positive' : 'default'}
           />
           <SummaryCard
             title="Pagado este mes"
