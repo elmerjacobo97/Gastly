@@ -11,6 +11,7 @@ import {
   HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
+  ScaleIcon,
   Trash2Icon,
 } from "lucide-react"
 import { useState } from "react"
@@ -126,6 +127,18 @@ function formatCurrencyTotals(loans: Loan[]) {
   return values.length > 0 ? values.join(" · ") : formatCurrency(0)
 }
 
+function formatNetBalance(lent: Loan[], borrowed: Loan[]) {
+  const nets: Record<string, number> = {}
+  for (const loan of lent) nets[loan.currency] = (nets[loan.currency] ?? 0) + loan.pendingAmount
+  for (const loan of borrowed) nets[loan.currency] = (nets[loan.currency] ?? 0) - loan.pendingAmount
+
+  const values = currencyOrder
+    .filter((c) => nets[c] !== undefined && nets[c] !== 0)
+    .map((c) => `${nets[c]! >= 0 ? "+" : "-"}${formatCurrency(Math.abs(nets[c]!), c)}`)
+
+  return values.length > 0 ? values.join(" · ") : formatCurrency(0)
+}
+
 export function LoansPanel() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editLoan, setEditLoan] = useState<Loan | null>(null)
@@ -157,6 +170,8 @@ export function LoansPanel() {
   const settledBorrowed = settled.filter((l) => l.direction === "borrowed")
   const totalToReceive = formatCurrencyTotals(activeLent)
   const totalToPay = formatCurrencyTotals(activeBorrowed)
+  const netBalance = formatNetBalance(activeLent, activeBorrowed)
+  const isNetPositive = activeLent.reduce((s, l) => s + l.pendingAmount, 0) >= activeBorrowed.reduce((s, l) => s + l.pendingAmount, 0)
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -172,7 +187,7 @@ export function LoansPanel() {
 
       {/* Summary cards */}
       {!isLoading && loans.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <SummaryCard
             title="Me deben"
             value={totalToReceive}
@@ -186,6 +201,13 @@ export function LoansPanel() {
             description={`${activeBorrowed.length} deuda${activeBorrowed.length !== 1 ? "s" : ""} pendiente${activeBorrowed.length !== 1 ? "s" : ""} de pago`}
             icon={ArrowUpIcon}
             variant="negative"
+          />
+          <SummaryCard
+            title="Balance neto"
+            value={netBalance}
+            description={isNetPositive ? "A tu favor" : "En tu contra"}
+            icon={ScaleIcon}
+            variant={isNetPositive ? "positive" : "negative"}
           />
         </div>
       )}
