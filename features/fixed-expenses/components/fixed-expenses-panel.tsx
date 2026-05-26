@@ -537,7 +537,13 @@ export function FixedExpensesPanel() {
 
       {!query.isLoading && expenses.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SummaryCard title="A pagar este mes" value={<CurrencyGroupDisplay map={committedGrouped} />} icon={CalendarIcon} />
+          <SummaryCard
+            title="Programado este mes"
+            value={<CurrencyGroupDisplay map={committedGrouped} />}
+            description={pendingGrouped.size === 0 ? "todo pagado" : undefined}
+            icon={CalendarIcon}
+            variant={pendingGrouped.size === 0 ? "positive" : "default"}
+          />
           <SummaryCard title="Total recurrentes activos" value={<CurrencyGroupDisplay map={registeredGrouped} />} icon={RepeatIcon} />
           <SummaryCard title="Pagado este mes" value={<CurrencyGroupDisplay map={paidGrouped} />} icon={CheckCircle2Icon} variant="positive" />
           <SummaryCard title="Falta pagar este mes" value={<CurrencyGroupDisplay map={pendingGrouped} />} icon={ClockIcon} variant="warning" />
