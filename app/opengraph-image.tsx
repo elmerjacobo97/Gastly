@@ -19,8 +19,8 @@ export default function OpenGraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "linear-gradient(135deg, #07111f 0%, #102a6b 52%, #1d42d0 100%)",
-          color: "white",
+          background: "#163300",
+          color: "#ffffff",
           padding: "72px",
           fontFamily: "Inter, Arial, sans-serif",
         }}
@@ -33,18 +33,18 @@ export default function OpenGraphImage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: "20px",
-              background: "rgba(255,255,255,0.16)",
-              border: "1px solid rgba(255,255,255,0.22)",
+              borderRadius: "18px",
+              background: "#9fe870",
               fontSize: "40px",
               fontWeight: 800,
+              color: "#163300",
             }}
           >
             G
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "42px", fontWeight: 800, letterSpacing: "-0.04em" }}>{SITE_NAME}</span>
-            <span style={{ color: "#bfdbfe", fontSize: "24px" }}>Finanzas personales</span>
+            <span style={{ fontSize: "42px", fontWeight: 800, letterSpacing: "-0.04em", color: "#ffffff" }}>{SITE_NAME}</span>
+            <span style={{ color: "#9fe870", fontSize: "24px" }}>Finanzas personales</span>
           </div>
         </div>
 
@@ -54,13 +54,14 @@ export default function OpenGraphImage() {
               margin: 0,
               fontSize: "76px",
               lineHeight: 0.95,
-              letterSpacing: "-0.06em",
-              fontWeight: 850,
+              letterSpacing: "-0.05em",
+              fontWeight: 900,
+              color: "#ffffff",
             }}
           >
             Controla tu dinero sin perderte en hojas de calculo.
           </h1>
-          <p style={{ margin: 0, color: "#dbeafe", fontSize: "30px", lineHeight: 1.35 }}>{SITE_DESCRIPTION}</p>
+          <p style={{ margin: 0, color: "#e8ebe6", fontSize: "28px", lineHeight: 1.4 }}>{SITE_DESCRIPTION}</p>
         </div>
       </div>
     ),
