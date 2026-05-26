@@ -51,7 +51,9 @@ type EditInstallmentDialogProps = {
 
 export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInstallmentDialogProps) {
   const queryClient = useQueryClient();
-  const canEditFinancials = purchase.paidCount === 0;
+  const trackedPaidCount = purchase.payments.filter((p) => !!p.transactionId).length;
+  const canEditFinancials = trackedPaidCount === 0;
+  const externallyPaidCount = purchase.payments.filter((p) => p.paidExternally).length;
 
   const form = useForm<InstallmentPurchaseValues>({
     resolver: zodResolver(installmentPurchaseSchema),
@@ -62,7 +64,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
       interestAmount: purchase.interestAmount,
       totalInstallments: purchase.totalInstallments,
       firstPaymentOn: purchase.firstPaymentOn,
-      alreadyPaid: 0 as number,
+      alreadyPaid: externallyPaidCount,
       accountId: purchase.accountId ?? '',
       notes: purchase.notes ?? '',
     },
@@ -77,7 +79,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
         interestAmount: purchase.interestAmount,
         totalInstallments: purchase.totalInstallments,
         firstPaymentOn: purchase.firstPaymentOn,
-        alreadyPaid: 0 as number,
+        alreadyPaid: externallyPaidCount,
         accountId: purchase.accountId ?? '',
         notes: purchase.notes ?? '',
       });
@@ -86,7 +88,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
 
   const mutation = useMutation({
     mutationFn: (values: InstallmentPurchaseValues) =>
-      updateInstallmentPurchase(purchase.id, values, purchase.paidCount),
+      updateInstallmentPurchase(purchase.id, values, trackedPaidCount),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['installments'] });
       onOpenChange(false);
@@ -116,8 +118,8 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
           <DialogTitle>Editar compra en cuotas</DialogTitle>
           <DialogDescription>
             {canEditFinancials
-              ? 'Sin pagos registrados — puedes editar todos los campos.'
-              : 'Ya hay pagos registrados — solo puedes editar descripción, categoría y notas.'}
+              ? 'Sin pagos registrados en app — puedes editar todos los campos.'
+              : 'Ya hay pagos registrados — solo puedes editar descripción, categoría, cuenta y notas.'}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="-mx-4 min-h-0">

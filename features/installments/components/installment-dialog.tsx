@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { addMonths, format } from "date-fns"
+import { addMonths, format, subMonths } from "date-fns"
 import { es } from "date-fns/locale"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
@@ -298,6 +298,12 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
                     inputMode="numeric"
                     min="0"
                     placeholder="0"
+                    onChange={(e) => {
+                      field.onChange(e)
+                      const paid = Number((e.target as HTMLInputElement).value) || 0
+                      const nextPayment = new Date(`${getNextPaymentDefault()}T12:00:00`)
+                      form.setValue("firstPaymentOn", format(subMonths(nextPayment, paid), "yyyy-MM-dd"))
+                    }}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   {remaining > 0 && (alreadyPaid ?? 0) > 0 && (
