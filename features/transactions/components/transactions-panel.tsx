@@ -1,16 +1,10 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import {
-  CalendarClockIcon,
-  CircleAlertIcon,
-  WalletCardsIcon,
-} from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
 import { Badge } from "@/components/ui/badge"
-import { getBudgets } from "@/features/budget/lib/budget-api"
 import {
   calculateSavings,
   getMonthlyPlan,
@@ -21,7 +15,6 @@ import {
   getCategoryTotals,
   getMonthlyTotals,
 } from "@/features/transactions/lib/charts-api"
-import { DashboardAlerts, type DashboardAlert } from "@/features/transactions/components/dashboard/dashboard-alerts"
 import { DashboardCharts } from "@/features/transactions/components/dashboard/dashboard-charts"
 import { DashboardSummaryCards } from "@/features/transactions/components/dashboard/dashboard-summary-cards"
 import { FinancialHealthCard } from "@/features/transactions/components/dashboard/financial-health-card"
@@ -31,7 +24,6 @@ import {
   computeSummary,
   getTransactions,
 } from "@/features/transactions/lib/transactions-api"
-import { formatCurrency } from "@/lib/format"
 
 type TransactionsPanelProps = {
   userEmail?: string
@@ -73,10 +65,6 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
     queryKey: ["fixed-expenses", monthKey],
     queryFn: () => getFixedExpenses(today),
   })
-  const budgetsQuery = useQuery({
-    queryKey: ["budgets", monthKey],
-    queryFn: () => getBudgets(today),
-  })
   const monthlyQuery = useQuery({
     queryKey: ["monthly-totals"],
     queryFn: () => getMonthlyTotals(6),
@@ -111,19 +99,6 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
     : variableSpent > 0
       ? 100
       : 0
-  const budgetAlerts = (budgetsQuery.data ?? [])
-    .map((budget) => ({
-      budget,
-      usage: budget.amount > 0 ? Math.round((budget.spent / budget.amount) * 100) : 0,
-    }))
-    .filter(({ usage }) => usage >= 80)
-    .sort((a, b) => b.usage - a.usage)
-
-  const dueAlerts = recurringPayments
-    .filter((expense) => !expense.paidOn && expense.isActive)
-    .map((expense) => ({ expense, days: getDaysUntil(expense.nextDueOn) }))
-    .filter(({ days }) => days <= 7)
-    .sort((a, b) => a.days - b.days)
 
   const upcomingPayments = recurringPayments
     .map((expense) => ({ expense, days: getDaysUntil(expense.nextDueOn) }))
@@ -132,37 +107,6 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
 
   const summaryIsLoading =
     transactionsQuery.isLoading || planQuery.isLoading || fixedExpensesQuery.isLoading
-
-  const intelligentAlerts: DashboardAlert[] = [
-    ...dueAlerts.map(({ expense, days }) => ({
-      key: `due-${expense.id}`,
-      icon: CalendarClockIcon,
-      title: days < 0 ? `${expense.description} está vencido` : `${expense.description} vence pronto`,
-      description:
-        days < 0
-          ? `Debió pagarse hace ${Math.abs(days)} día${Math.abs(days) !== 1 ? "s" : ""}.`
-          : `Vence en ${days} día${days !== 1 ? "s" : ""}.`,
-      variant: (days < 0 ? "destructive" : "warning") as "destructive" | "warning" | "default",
-    })),
-    ...budgetAlerts.map(({ budget, usage }) => ({
-      key: `budget-${budget.id}`,
-      icon: CircleAlertIcon,
-      title: `Ya usaste ${usage}% de ${budget.category.name}`,
-      description: `Gastaste ${formatCurrency(budget.spent)} de ${formatCurrency(budget.amount)} presupuestados.`,
-      variant: (usage >= 100 ? "destructive" : "warning") as "destructive" | "warning" | "default",
-    })),
-    ...(plan && remaining < 0
-      ? [
-          {
-            key: "remaining",
-            icon: WalletCardsIcon,
-            title: "Estás en rojo este mes",
-            description: `Te pasaste por ${formatCurrency(Math.abs(remaining))}.`,
-            variant: "destructive" as "destructive" | "warning" | "default",
-          },
-        ]
-      : []),
-  ].slice(0, 6)
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -205,8 +149,6 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
         remaining={remaining}
         daysRemaining={daysRemaining}
       />
-
-      <DashboardAlerts alerts={intelligentAlerts} />
 
       <UpcomingPaymentsCard
         isLoading={fixedExpensesQuery.isLoading}
