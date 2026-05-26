@@ -18,7 +18,6 @@ import {
   PencilIcon,
   PlayCircleIcon,
   ReceiptTextIcon,
-  RepeatIcon,
   XCircleIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -483,11 +482,9 @@ export function FixedExpensesPanel() {
 
   const expenses = query.data ?? []
   const monthKey = format(month, "yyyy-MM")
-  const activeRegistered = expenses.filter((expense) => expense.isActive)
   const activeExpenses = expenses.filter(
     (expense) => expense.isActive && isRelevantForMonth(expense, monthKey)
   )
-  const registeredGrouped = groupByCurrency(activeRegistered.map((e) => ({ amount: e.amount, currency: e.currency })))
   const committedGrouped = groupByCurrency(activeExpenses.map((e) => ({ amount: e.amount, currency: e.currency })))
   const paidExpenses = activeExpenses.filter((e) => e.paidOn)
   const paidGrouped = groupByCurrency(paidExpenses.map((e) => ({ amount: e.paidAmount ?? e.amount, currency: e.currency })))
@@ -544,7 +541,6 @@ export function FixedExpensesPanel() {
             icon={CalendarIcon}
             variant={pendingGrouped.size === 0 ? "positive" : "default"}
           />
-          <SummaryCard title="Total recurrentes activos" value={<CurrencyGroupDisplay map={registeredGrouped} />} icon={RepeatIcon} />
           <SummaryCard title="Pagado este mes" value={<CurrencyGroupDisplay map={paidGrouped} />} icon={CheckCircle2Icon} variant="positive" />
           <SummaryCard title="Falta pagar este mes" value={<CurrencyGroupDisplay map={pendingGrouped} />} icon={ClockIcon} variant="warning" />
         </div>
