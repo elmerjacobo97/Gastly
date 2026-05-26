@@ -133,17 +133,17 @@ export function AccountsPanel() {
       </section>
 
       {!isLoading && totalByAll.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {totalByAll.map(({ currency, total }) => (
-            <Card key={currency} className="p-4">
+            <div key={currency} className="rounded-lg border p-3">
               <p className="text-xs text-muted-foreground">Total en {currency}</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums">
+              <p className="mt-1 text-lg font-semibold tabular-nums">
                 {formatCurrency(total, currency)}
               </p>
               <p className="text-xs text-muted-foreground">
                 {accounts.filter((a) => a.currency === currency).length} cuenta{accounts.filter((a) => a.currency === currency).length !== 1 ? "s" : ""}
               </p>
-            </Card>
+            </div>
           ))}
         </div>
       )}

@@ -169,25 +169,25 @@ export function LoansPanel() {
 
       {/* Summary cards */}
       {!isLoading && loans.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="p-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Me deben</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1 text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
               {totalToReceive}
             </p>
             <p className="text-xs text-muted-foreground">
               {activeLent.length} préstamo{activeLent.length !== 1 ? "s" : ""} pendiente{activeLent.length !== 1 ? "s" : ""} de cobro
             </p>
-          </Card>
-          <Card className="p-4">
+          </div>
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Debo</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
+            <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">
               {totalToPay}
             </p>
             <p className="text-xs text-muted-foreground">
               {activeBorrowed.length} deuda{activeBorrowed.length !== 1 ? "s" : ""} pendiente{activeBorrowed.length !== 1 ? "s" : ""} de pago
             </p>
-          </Card>
+          </div>
         </div>
       )}
 

@@ -151,29 +151,29 @@ export function BudgetPanel() {
       </section>
 
       {planQuery.isLoading || fixedExpensesQuery.isLoading || transactionsQuery.isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="p-4">
+            <div key={i} className="rounded-lg border p-3">
               <Skeleton className="h-3 w-24" />
               <Skeleton className="mt-2 h-6 w-28" />
-            </Card>
+            </div>
           ))}
         </div>
       ) : hasPlanningData ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Card className="p-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-lg border p-3">
               <p className="text-xs text-muted-foreground">Disponible libre</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums">
+              <p className="mt-1 text-lg font-semibold tabular-nums">
                 {formatCurrency(availableForBudget)}
               </p>
-            </Card>
-            <Card className="p-4">
+            </div>
+            <div className="rounded-lg border p-3">
               <p className="text-xs text-muted-foreground">
                 {unassigned >= 0 ? "Sin asignar" : "Sobreasignado"}
               </p>
               <p
-                className={`mt-1 text-xl font-semibold tabular-nums ${
+                className={`mt-1 text-lg font-semibold tabular-nums ${
                   unassigned >= 0
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-destructive"
@@ -181,17 +181,17 @@ export function BudgetPanel() {
               >
                 {formatCurrency(Math.abs(unassigned))}
               </p>
-            </Card>
-            <Card className="p-4">
+            </div>
+            <div className="rounded-lg border p-3">
               <p className="text-xs text-muted-foreground">Total gastado</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">
+              <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">
                 {formatCurrency(totalSpent)}
               </p>
-            </Card>
-            <Card className="p-4">
+            </div>
+            <div className="rounded-lg border p-3">
               <p className="text-xs text-muted-foreground">Restante</p>
               <p
-                className={`mt-1 text-xl font-semibold tabular-nums ${
+                className={`mt-1 text-lg font-semibold tabular-nums ${
                   totalBudget - totalSpent >= 0
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-destructive"
@@ -199,7 +199,7 @@ export function BudgetPanel() {
               >
                 {formatCurrency(Math.max(totalBudget - totalSpent, 0))}
               </p>
-            </Card>
+            </div>
           </div>
           <div
             className={`rounded-lg border px-4 py-3 text-sm ${

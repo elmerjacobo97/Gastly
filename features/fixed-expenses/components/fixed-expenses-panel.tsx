@@ -130,17 +130,14 @@ function CurrencyGroupDisplay({
   className?: string
 }) {
   if (map.size === 0) {
-    return <p className={cn("mt-1 text-xl font-semibold tabular-nums", className)}>{formatCurrency(0)}</p>
+    return <p className={cn("mt-1 text-lg font-semibold tabular-nums", className)}>{formatCurrency(0)}</p>
   }
   return (
-    <div className="mt-1 flex flex-col gap-1">
+    <div className="mt-1 flex flex-col gap-0.5">
       {[...map.entries()].map(([currency, total]) => (
-        <div key={currency} className="flex items-baseline gap-2">
-          <span className={cn("text-xl font-semibold tabular-nums", className)}>
-            {formatCurrency(total, currency)}
-          </span>
-          <span className="text-xs font-medium text-muted-foreground">{currency}</span>
-        </div>
+        <p key={currency} className={cn("text-sm font-semibold tabular-nums", className)}>
+          {formatCurrency(total, currency)}
+        </p>
       ))}
     </div>
   )
@@ -542,23 +539,23 @@ export function FixedExpensesPanel() {
       </section>
 
       {!query.isLoading && expenses.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="p-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">A pagar este mes</p>
             <CurrencyGroupDisplay map={committedGrouped} />
-          </Card>
-          <Card className="p-4">
+          </div>
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Total recurrentes activos</p>
             <CurrencyGroupDisplay map={registeredGrouped} />
-          </Card>
-          <Card className="p-4">
+          </div>
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Pagado este mes</p>
             <CurrencyGroupDisplay map={paidGrouped} className="text-emerald-600 dark:text-emerald-400" />
-          </Card>
-          <Card className="p-4">
+          </div>
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Falta pagar este mes</p>
             <CurrencyGroupDisplay map={pendingGrouped} className="text-amber-600 dark:text-amber-400" />
-          </Card>
+          </div>
         </div>
       )}
 

@@ -91,38 +91,38 @@ export function InstallmentsPanel() {
       </section>
 
       {!purchasesQuery.isLoading && purchases.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="p-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Programado este mes</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums">{formatCurrency(totalThisMonth)}</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums">{formatCurrency(totalThisMonth)}</p>
             <p className="text-xs text-muted-foreground">
               {monthPayments.length} cuota{monthPayments.length !== 1 ? 's' : ''} del mes
             </p>
-          </Card>
-          <Card className="p-4">
+          </div>
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Pagado este mes</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1 text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
               {formatCurrency(totalPaidThisMonth)}
             </p>
             <p className="text-xs text-muted-foreground">
               {paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? 's' : ''} pagada
               {paidThisMonth.length !== 1 ? 's' : ''}
             </p>
-          </Card>
-          <Card className="p-4">
+          </div>
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Falta pagar este mes</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+            <p className="mt-1 text-lg font-semibold tabular-nums text-amber-600 dark:text-amber-400">
               {formatCurrency(totalPendingThisMonth)}
             </p>
             <p className="text-xs text-muted-foreground">
               {pendingThisMonth.length} pendiente{pendingThisMonth.length !== 1 ? 's' : ''}
             </p>
-          </Card>
-          <Card className="p-4">
+          </div>
+          <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Pendiente total</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-destructive">{formatCurrency(totalPending)}</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">{formatCurrency(totalPending)}</p>
             <p className="text-xs text-muted-foreground">{formatCurrency(totalFinanced)} financiado en total</p>
-          </Card>
+          </div>
         </div>
       )}
 
