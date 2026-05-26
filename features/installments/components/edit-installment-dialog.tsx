@@ -24,7 +24,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CategoryCombobox } from '@/features/categories/components/category-combobox';
+import { CategorySelect } from '@/features/categories/components/category-select';
 import {
   installmentPurchaseSchema,
   type InstallmentPurchaseValues,
@@ -32,7 +32,7 @@ import {
 import { updateInstallmentPurchase } from '@/features/installments/lib/installments-api';
 import { getNextPaymentDefault } from '@/features/installments/lib/installment-date-utils';
 import { type InstallmentPurchase } from '@/features/installments/types/installment-types';
-import { AccountCombobox } from '@/features/accounts/components/account-combobox';
+import { AccountSelect } from '@/features/accounts/components/account-select';
 
 function getLastPaymentDate(firstPaymentOn: string, totalInstallments: number): string | null {
   if (!firstPaymentOn || !totalInstallments || totalInstallments < 2) return null;
@@ -155,7 +155,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="ei-category">Categoría</FieldLabel>
-                  <CategoryCombobox
+                  <CategorySelect
                     id="ei-category"
                     value={field.value}
                     onChange={field.onChange}
@@ -319,7 +319,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                   <FieldLabel htmlFor="ei-account">
                     Cuenta de débito <span className="font-normal text-muted-foreground">(opcional)</span>
                   </FieldLabel>
-                  <AccountCombobox
+                  <AccountSelect
                     id="ei-account"
                     value={field.value ?? ""}
                     onChange={field.onChange}

@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/native-select"
 import { budgetSchema, type BudgetValues } from "@/features/budget/schemas/budget-schemas"
 import { createBudget } from "@/features/budget/lib/budget-api"
-import { CategoryCombobox } from "@/features/categories/components/category-combobox"
+import { CategorySelect } from "@/features/categories/components/category-select"
 
 const MONTHS = [
   { value: 0, label: "Enero" }, { value: 1, label: "Febrero" },
@@ -107,7 +107,7 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="cb-category">Categoría</FieldLabel>
-                    <CategoryCombobox
+                    <CategorySelect
                       id="cb-category"
                       value={field.value}
                       onChange={field.onChange}

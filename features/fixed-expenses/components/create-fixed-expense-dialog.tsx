@@ -35,8 +35,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { createFixedExpense } from "@/features/fixed-expenses/lib/fixed-expenses-api"
-import { AccountCombobox } from "@/features/accounts/components/account-combobox"
-import { CategoryCombobox } from "@/features/categories/components/category-combobox"
+import { AccountSelect } from "@/features/accounts/components/account-select"
+import { CategorySelect } from "@/features/categories/components/category-select"
 import {
   fixedExpenseSchema,
   type FixedExpenseValues,
@@ -145,7 +145,7 @@ export function CreateFixedExpenseDialog() {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="cfe-category">Categoría</FieldLabel>
-                        <CategoryCombobox
+                        <CategorySelect
                           id="cfe-category"
                           value={field.value}
                           onChange={field.onChange}
@@ -244,7 +244,7 @@ export function CreateFixedExpenseDialog() {
                         <FieldLabel htmlFor="cfe-account">
                           Cuenta de débito <span className="font-normal text-muted-foreground">(opcional)</span>
                         </FieldLabel>
-                        <AccountCombobox
+                        <AccountSelect
                           id="cfe-account"
                           value={field.value ?? ""}
                           onChange={field.onChange}

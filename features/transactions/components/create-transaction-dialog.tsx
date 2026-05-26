@@ -3,21 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { CheckIcon, ChevronsUpDownIcon, Loader2Icon, PlusIcon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command"
 import {
   Dialog,
   DialogClose,
@@ -30,7 +21,6 @@ import {
 } from "@/components/ui/dialog"
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -42,12 +32,15 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { QuickCreateCategoryDialog } from "@/features/categories/components/quick-create-category-dialog"
@@ -89,7 +82,6 @@ export function CreateTransactionDialog({
   trigger,
 }: CreateTransactionDialogProps) {
   const [open, setOpen] = useState(false)
-  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const queryClient = useQueryClient()
 
@@ -99,7 +91,6 @@ export function CreateTransactionDialog({
   })
 
   const currentType = useWatch({ control: form.control, name: "type" }) as TransactionType
-  const currentCategoryName = useWatch({ control: form.control, name: "categoryName" })
 
   const categoriesQuery = useQuery({
     queryKey: ["categories", currentType],
@@ -128,11 +119,6 @@ export function CreateTransactionDialog({
   })
 
   const existingCategories = categoriesQuery.data ?? []
-  const isNewCategory =
-    currentCategoryName.trim().length >= 2 &&
-    !existingCategories.some(
-      (c) => c.name.toLowerCase() === currentCategoryName.trim().toLowerCase()
-    )
 
   const defaultTrigger = (
     <Button>
@@ -228,93 +214,35 @@ export function CreateTransactionDialog({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel>Categoría</FieldLabel>
-                        <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={categoryPopoverOpen}
-                              aria-invalid={fieldState.invalid}
-                              className="w-full justify-between font-normal"
-                            >
-                              <span className={field.value ? "text-foreground" : "text-muted-foreground"}>
-                                {field.value || "Selecciona o escribe una categoría"}
-                              </span>
-                              <ChevronsUpDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-full p-0" align="start">
-                            <Command>
-                              <CommandInput
-                                placeholder="Buscar o crear categoría..."
-                                value={field.value}
-                                onValueChange={field.onChange}
-                              />
-                              <CommandList>
-                                <CommandEmpty>
-                                  <span className="text-muted-foreground">Sin resultados</span>
-                                </CommandEmpty>
-                                {existingCategories.length > 0 && (
-                                  <CommandGroup heading="Categorías existentes">
-                                    {existingCategories.map((cat) => (
-                                      <CommandItem
-                                        key={cat.id}
-                                        value={cat.name}
-                                        onSelect={() => {
-                                          field.onChange(cat.name)
-                                          setCategoryPopoverOpen(false)
-                                        }}
-                                      >
-                                        <CheckIcon
-                                          className={cn(
-                                            "size-4",
-                                            field.value === cat.name ? "opacity-100" : "opacity-0"
-                                          )}
-                                        />
-                                        <CategoryIconBadge
-                                          icon={cat.icon}
-                                          color={cat.color}
-                                          className="size-7 rounded-md"
-                                        />
-                                        {cat.name}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                )}
-                                {isNewCategory && (
-                                  <>
-                                    {existingCategories.length > 0 && <CommandSeparator />}
-                                    <CommandGroup heading="Nueva">
-                                      <CommandItem
-                                        value={`__new__${field.value}`}
-                                        onSelect={() => setCategoryPopoverOpen(false)}
-                                      >
-                                        <PlusIcon className="mr-2 size-4" />
-                                        Crear &ldquo;{field.value}&rdquo;
-                                      </CommandItem>
-                                    </CommandGroup>
-                                  </>
-                                )}
-                                <CommandSeparator />
-                                <CommandGroup>
-                                  <CommandItem
-                                    value="__quick_create__"
-                                    onSelect={() => {
-                                      setCategoryPopoverOpen(false)
-                                      setQuickCreateOpen(true)
-                                    }}
-                                  >
-                                    <PlusIcon className="mr-2 size-4" />
-                                    Nueva categoría con ícono y color
-                                  </CommandItem>
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        {isNewCategory && (
-                          <FieldDescription>Esta categoría se creará automáticamente.</FieldDescription>
-                        )}
+                        <div className="flex gap-2">
+                          <Select value={field.value || undefined} onValueChange={field.onChange}>
+                            <SelectTrigger aria-invalid={fieldState.invalid} className="flex-1">
+                              <SelectValue placeholder="Selecciona una categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                {existingCategories.map((cat) => (
+                                  <SelectItem key={cat.id} value={cat.name}>
+                                    <CategoryIconBadge
+                                      icon={cat.icon}
+                                      color={cat.color}
+                                      className="size-5 rounded-md"
+                                    />
+                                    {cat.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setQuickCreateOpen(true)}
+                          >
+                            <PlusIcon className="size-4" />
+                          </Button>
+                        </div>
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>
                     )}
