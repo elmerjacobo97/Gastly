@@ -36,14 +36,8 @@ import {
   type InstallmentPurchaseValues,
 } from "@/features/installments/schemas/installment-schemas"
 import { createInstallmentPurchase } from "@/features/installments/lib/installments-api"
+import { getNextPaymentDefault } from "@/features/installments/lib/installment-date-utils"
 import { AccountCombobox } from "@/features/accounts/components/account-combobox"
-
-function getNextPaymentDefault(): string {
-  const today = new Date()
-  const candidate = new Date(today.getFullYear(), today.getMonth(), 20)
-  if (today.getDate() > 20) candidate.setMonth(candidate.getMonth() + 1)
-  return format(candidate, "yyyy-MM-dd")
-}
 
 function getLastPaymentDate(firstPaymentOn: string, totalInstallments: number): string | null {
   if (!firstPaymentOn || !totalInstallments || totalInstallments < 2) return null

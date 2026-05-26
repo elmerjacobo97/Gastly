@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { addMonths, format } from 'date-fns';
+import { addMonths, format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Loader2Icon } from 'lucide-react';
 import { useEffect } from 'react';
@@ -30,6 +30,7 @@ import {
   type InstallmentPurchaseValues,
 } from '@/features/installments/schemas/installment-schemas';
 import { updateInstallmentPurchase } from '@/features/installments/lib/installments-api';
+import { getNextPaymentDefault } from '@/features/installments/lib/installment-date-utils';
 import { type InstallmentPurchase } from '@/features/installments/types/installment-types';
 import { AccountCombobox } from '@/features/accounts/components/account-combobox';
 
@@ -291,6 +292,12 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
                       inputMode="numeric"
                       min="0"
                       placeholder="0"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        const paid = Number((e.target as HTMLInputElement).value) || 0;
+                        const nextPayment = new Date(`${getNextPaymentDefault()}T12:00:00`);
+                        form.setValue('firstPaymentOn', format(subMonths(nextPayment, paid), 'yyyy-MM-dd'));
+                      }}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     {totalInstallments > 0 && (alreadyPaid ?? 0) > 0 && (
