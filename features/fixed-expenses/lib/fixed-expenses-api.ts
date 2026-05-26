@@ -257,6 +257,7 @@ export async function registerFixedExpensePayment(
     recurring_expense_id: expense.id,
     type: "expense",
     amount: values.amount,
+    currency: expense.currency,
     description: expense.description,
     occurred_on: values.occurredOn,
     notes: values.notes || expense.notes,

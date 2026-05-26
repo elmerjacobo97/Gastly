@@ -45,6 +45,7 @@ import { QuickCreateCategoryDialog } from "@/features/categories/components/quic
 import { getCategories } from "@/features/categories/lib/categories-api"
 import { updateTransaction } from "@/features/transactions/lib/transactions-api"
 import {
+  CURRENCIES,
   type TransactionType,
   type TransactionValues,
   transactionSchema,
@@ -61,6 +62,7 @@ function buildValues(transaction: Transaction): TransactionValues {
   return {
     type: transaction.type,
     amount: transaction.amount,
+    currency: (CURRENCIES.includes(transaction.currency as typeof CURRENCIES[number]) ? transaction.currency : "PEN") as typeof CURRENCIES[number],
     description: transaction.description,
     categoryName: transaction.category?.name ?? "",
     occurredOn: transaction.occurredOn,
@@ -157,25 +159,41 @@ export function EditTransactionDialog({
                       </Field>
                     )}
                   />
-                  <Controller
-                    control={form.control}
-                    name="amount"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="et-amount">Monto</FieldLabel>
-                        <NumberInput
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          id="et-amount"
-                          inputMode="decimal"
-                          min="0"
-                          placeholder="0.00"
-                          step="0.01"
-                        />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Controller
+                      control={form.control}
+                      name="amount"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel htmlFor="et-amount">Monto</FieldLabel>
+                          <NumberInput
+                            {...field}
+                            aria-invalid={fieldState.invalid}
+                            id="et-amount"
+                            inputMode="decimal"
+                            min="0"
+                            placeholder="0.00"
+                            step="0.01"
+                          />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={form.control}
+                      name="currency"
+                      render={({ field }) => (
+                        <Field>
+                          <FieldLabel htmlFor="et-currency">Moneda</FieldLabel>
+                          <NativeSelect {...field} id="et-currency" className="w-full">
+                            {CURRENCIES.map((c) => (
+                              <NativeSelectOption key={c} value={c}>{c}</NativeSelectOption>
+                            ))}
+                          </NativeSelect>
+                        </Field>
+                      )}
+                    />
+                  </div>
                   <Controller
                     control={form.control}
                     name="description"

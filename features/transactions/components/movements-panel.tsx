@@ -67,16 +67,17 @@ import {
   formatDate,
 } from "@/lib/format"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
-import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+import { CURRENCIES, type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
 
 function exportToCSV(transactions: Transaction[], filename: string) {
-  const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Notas"]
+  const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Moneda", "Notas"]
   const rows = transactions.map((t) => [
     t.occurredOn,
     t.type === "expense" ? "Gasto" : "Ingreso",
     t.description,
     t.category?.name ?? "Sin categoría",
     t.amount.toString(),
+    t.currency,
     t.notes ?? "",
   ])
   const csvContent = [headers, ...rows]
@@ -123,6 +124,7 @@ export function MovementsPanel() {
   const csvTo = format(endOfMonth(month), "d 'de' MMMM yyyy", { locale: es })
   const csvFilename = `gastly-transacciones-${format(month, "yyyy-MM")}.csv`
 
+  // Totals for variant logic (currency-agnostic sum for positive/negative color)
   const totals = rows.reduce(
     (acc, t) => {
       if (t.type === "income") acc.income += t.amount
@@ -131,6 +133,39 @@ export function MovementsPanel() {
     },
     { income: 0, expense: 0 }
   )
+
+  // Per-currency totals for display
+  const byCurrency = rows.reduce(
+    (acc, t) => {
+      const c = t.currency || "PEN"
+      if (!acc[c]) acc[c] = { income: 0, expense: 0 }
+      if (t.type === "income") acc[c].income += t.amount
+      else acc[c].expense += t.amount
+      return acc
+    },
+    {} as Record<string, { income: number; expense: number }>
+  )
+
+  const incomeDisplay =
+    CURRENCIES.filter((c) => (byCurrency[c]?.income ?? 0) > 0)
+      .map((c) => `+${formatCurrency(byCurrency[c].income, c)}`)
+      .join(" · ") || `+${formatCurrency(0)}`
+
+  const expenseDisplay =
+    CURRENCIES.filter((c) => (byCurrency[c]?.expense ?? 0) > 0)
+      .map((c) => `-${formatCurrency(byCurrency[c].expense, c)}`)
+      .join(" · ") || `-${formatCurrency(0)}`
+
+  const diffDisplay = (() => {
+    const active = CURRENCIES.filter((c) => byCurrency[c])
+    if (!active.length) return formatCurrency(0)
+    return active
+      .map((c) => {
+        const diff = (byCurrency[c]?.income ?? 0) - (byCurrency[c]?.expense ?? 0)
+        return `${diff >= 0 ? "+" : ""}${formatCurrency(diff, c)}`
+      })
+      .join(" · ")
+  })()
 
   const deleteMutation = useMutation({
     mutationFn: deleteTransaction,
@@ -208,7 +243,7 @@ export function MovementsPanel() {
               }`}
             >
               {t.type === "income" ? "+" : "-"}
-              {formatCurrency(t.amount)}
+              {formatCurrency(t.amount, t.currency)}
             </div>
           )
         },
@@ -301,21 +336,21 @@ export function MovementsPanel() {
         <div className="grid gap-3 sm:grid-cols-3">
           <SummaryCard
             title="Ingresos"
-            value={`+${formatCurrency(totals.income)}`}
+            value={incomeDisplay}
             description={`${rows.filter((t) => t.type === "income").length} registro${rows.filter((t) => t.type === "income").length !== 1 ? "s" : ""}`}
             icon={ArrowUpIcon}
             variant="positive"
           />
           <SummaryCard
             title="Gastos"
-            value={`-${formatCurrency(totals.expense)}`}
+            value={expenseDisplay}
             description={`${rows.filter((t) => t.type === "expense").length} registro${rows.filter((t) => t.type === "expense").length !== 1 ? "s" : ""}`}
             icon={ArrowDownIcon}
             variant="negative"
           />
           <SummaryCard
             title="Diferencia"
-            value={`${totals.income - totals.expense >= 0 ? "+" : ""}${formatCurrency(totals.income - totals.expense)}`}
+            value={diffDisplay}
             description="balance del mes"
             icon={ScaleIcon}
             variant={totals.income - totals.expense >= 0 ? "positive" : "negative"}

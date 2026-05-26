@@ -12,6 +12,7 @@ export type Transaction = {
   id: string
   type: TransactionType
   amount: number
+  currency: string
   description: string
   occurredOn: string
   notes: string | null

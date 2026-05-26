@@ -15,6 +15,7 @@ type TransactionRow = {
   id: string
   type: TransactionType
   amount: number | string
+  currency: string
   description: string
   occurred_on: string
   notes: string | null
@@ -38,6 +39,7 @@ function mapTransaction(row: TransactionRow): Transaction {
     id: row.id,
     type: row.type,
     amount: Number(row.amount),
+    currency: row.currency,
     description: row.description,
     occurredOn: row.occurred_on,
     notes: row.notes,
@@ -55,7 +57,7 @@ export async function getTransactions(opts?: {
   let query = supabase
     .from("transactions")
     .select(
-      "id, type, amount, description, occurred_on, notes, categories(id, name, type, color, icon)"
+      "id, type, amount, currency, description, occurred_on, notes, categories(id, name, type, color, icon)"
     )
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })
@@ -123,6 +125,7 @@ export async function updateTransaction(id: string, values: TransactionValues) {
       category_id: category.id,
       type: values.type,
       amount: values.amount,
+      currency: values.currency,
       description: values.description,
       occurred_on: values.occurredOn,
       notes: values.notes || null,
@@ -159,6 +162,7 @@ export async function createTransaction(values: TransactionValues) {
     category_id: category.id,
     type: values.type,
     amount: values.amount,
+    currency: values.currency,
     description: values.description,
     occurred_on: values.occurredOn,
     notes: values.notes || null,
