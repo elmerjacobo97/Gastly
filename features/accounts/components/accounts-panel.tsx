@@ -48,6 +48,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
+import { SummaryCard } from "@/components/summary-card"
 import { CreateAccountDialog } from "@/features/accounts/components/create-account-dialog"
 import { EditAccountDialog } from "@/features/accounts/components/edit-account-dialog"
 import { TransferDialog } from "@/features/accounts/components/transfer-dialog"
@@ -134,17 +135,18 @@ export function AccountsPanel() {
 
       {!isLoading && totalByAll.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {totalByAll.map(({ currency, total }) => (
-            <div key={currency} className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Total en {currency}</p>
-              <p className="mt-1 text-lg font-semibold tabular-nums">
-                {formatCurrency(total, currency)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {accounts.filter((a) => a.currency === currency).length} cuenta{accounts.filter((a) => a.currency === currency).length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          ))}
+          {totalByAll.map(({ currency, total }) => {
+            const count = accounts.filter((a) => a.currency === currency).length
+            return (
+              <SummaryCard
+                key={currency}
+                title={`Total en ${currency}`}
+                value={formatCurrency(total, currency)}
+                description={`${count} cuenta${count !== 1 ? "s" : ""}`}
+                icon={WalletIcon}
+              />
+            )
+          })}
         </div>
       )}
 

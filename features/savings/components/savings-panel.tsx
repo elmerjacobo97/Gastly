@@ -7,8 +7,10 @@ import {
   CheckCircle2Icon,
   MoreHorizontalIcon,
   PencilIcon,
+  PiggyBankIcon,
   TargetIcon,
   Trash2Icon,
+  TrendingUpIcon,
 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -39,6 +41,7 @@ import {
 } from "@/components/ui/empty"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
+import { SummaryCard } from "@/components/summary-card"
 import { AddContributionDialog } from "@/features/savings/components/add-contribution-dialog"
 import { CreateGoalDialog } from "@/features/savings/components/create-goal-dialog"
 import { EditGoalDialog } from "@/features/savings/components/edit-goal-dialog"
@@ -237,44 +240,33 @@ export function SavingsPanel() {
 
       {(query.isLoading || goals.length > 0) && (
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Metas activas</p>
-            {query.isLoading ? (
-              <Skeleton className="mt-1 h-6 w-12" />
-            ) : (
-              <p className="mt-1 text-lg font-semibold tabular-nums">{active.length}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {completed.length} completada{completed.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Total ahorrado</p>
-            {query.isLoading ? (
-              <Skeleton className="mt-1 h-6 w-28" />
-            ) : (
-              <p className="mt-1 text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(totalSaved)}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              de {query.isLoading ? "—" : formatCurrency(totalTarget)}
-            </p>
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Progreso global</p>
-            {query.isLoading ? (
-              <>
-                <Skeleton className="mt-1 h-6 w-16" />
-                <Skeleton className="mt-1 h-1.5 w-full rounded-full" />
-              </>
-            ) : (
-              <>
-                <p className="mt-1 text-lg font-semibold tabular-nums">{overallProgress}%</p>
-                <Progress value={overallProgress} className="mt-1.5 h-1.5" />
-              </>
-            )}
-          </div>
+          <SummaryCard
+            title="Metas activas"
+            value={query.isLoading ? <Skeleton className="h-6 w-12" /> : active.length}
+            description={`${completed.length} completada${completed.length !== 1 ? "s" : ""}`}
+            icon={TargetIcon}
+          />
+          <SummaryCard
+            title="Total ahorrado"
+            value={query.isLoading ? <Skeleton className="h-6 w-28" /> : formatCurrency(totalSaved)}
+            description={`de ${query.isLoading ? "—" : formatCurrency(totalTarget)}`}
+            icon={PiggyBankIcon}
+            variant="positive"
+          />
+          <SummaryCard
+            title="Progreso global"
+            value={
+              query.isLoading ? (
+                <Skeleton className="h-6 w-16" />
+              ) : (
+                <div>
+                  <span>{overallProgress}%</span>
+                  <Progress value={overallProgress} className="mt-1.5 h-1.5" />
+                </div>
+              )
+            }
+            icon={TrendingUpIcon}
+          />
         </div>
       )}
 

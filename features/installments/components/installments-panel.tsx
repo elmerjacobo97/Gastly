@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CheckCircle2Icon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { CalendarIcon, CheckCircle2Icon, ClockIcon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -21,6 +21,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MonthNav } from '@/components/month-nav';
+import { SummaryCard } from '@/components/summary-card';
 import { CategoryIconBadge } from '@/features/categories/components/category-icon';
 import {
   deleteInstallmentPurchase,
@@ -92,37 +93,33 @@ export function InstallmentsPanel() {
 
       {!purchasesQuery.isLoading && purchases.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Programado este mes</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums">{formatCurrency(totalThisMonth)}</p>
-            <p className="text-xs text-muted-foreground">
-              {monthPayments.length} cuota{monthPayments.length !== 1 ? 's' : ''} del mes
-            </p>
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Pagado este mes</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(totalPaidThisMonth)}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? 's' : ''} pagada
-              {paidThisMonth.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Falta pagar este mes</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums text-amber-600 dark:text-amber-400">
-              {formatCurrency(totalPendingThisMonth)}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {pendingThisMonth.length} pendiente{pendingThisMonth.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Pendiente total</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">{formatCurrency(totalPending)}</p>
-            <p className="text-xs text-muted-foreground">{formatCurrency(totalFinanced)} financiado en total</p>
-          </div>
+          <SummaryCard
+            title="Programado este mes"
+            value={formatCurrency(totalThisMonth)}
+            description={`${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} del mes`}
+            icon={CalendarIcon}
+          />
+          <SummaryCard
+            title="Pagado este mes"
+            value={formatCurrency(totalPaidThisMonth)}
+            description={`${paidThisMonth.length} cuota${paidThisMonth.length !== 1 ? 's' : ''} pagada${paidThisMonth.length !== 1 ? 's' : ''}`}
+            icon={CheckCircle2Icon}
+            variant="positive"
+          />
+          <SummaryCard
+            title="Falta pagar este mes"
+            value={formatCurrency(totalPendingThisMonth)}
+            description={`${pendingThisMonth.length} pendiente${pendingThisMonth.length !== 1 ? 's' : ''}`}
+            icon={ClockIcon}
+            variant="warning"
+          />
+          <SummaryCard
+            title="Pendiente total"
+            value={formatCurrency(totalPending)}
+            description={`${formatCurrency(totalFinanced)} financiado en total`}
+            icon={CreditCardIcon}
+            variant="negative"
+          />
         </div>
       )}
 

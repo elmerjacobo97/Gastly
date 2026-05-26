@@ -7,7 +7,10 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   PiggyBankIcon,
+  ReceiptIcon,
   Trash2Icon,
+  TrendingDownIcon,
+  WalletIcon,
   XCircleIcon,
 } from "lucide-react"
 import { useState } from "react"
@@ -59,6 +62,7 @@ import { CreateBudgetDialog } from "@/features/budget/components/create-budget-d
 import { EditBudgetDialog } from "@/features/budget/components/edit-budget-dialog"
 import { type Budget } from "@/features/budget/types/budget-types"
 import { MonthNav } from "@/components/month-nav"
+import { SummaryCard } from "@/components/summary-card"
 
 function usageColor(usage: number) {
   if (usage >= 100) return "text-destructive"
@@ -162,44 +166,29 @@ export function BudgetPanel() {
       ) : hasPlanningData ? (
         <>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Disponible libre</p>
-              <p className="mt-1 text-lg font-semibold tabular-nums">
-                {formatCurrency(availableForBudget)}
-              </p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">
-                {unassigned >= 0 ? "Sin asignar" : "Sobreasignado"}
-              </p>
-              <p
-                className={`mt-1 text-lg font-semibold tabular-nums ${
-                  unassigned >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-destructive"
-                }`}
-              >
-                {formatCurrency(Math.abs(unassigned))}
-              </p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Total gastado</p>
-              <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">
-                {formatCurrency(totalSpent)}
-              </p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Restante</p>
-              <p
-                className={`mt-1 text-lg font-semibold tabular-nums ${
-                  totalBudget - totalSpent >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-destructive"
-                }`}
-              >
-                {formatCurrency(Math.max(totalBudget - totalSpent, 0))}
-              </p>
-            </div>
+            <SummaryCard
+              title="Disponible libre"
+              value={formatCurrency(availableForBudget)}
+              icon={WalletIcon}
+            />
+            <SummaryCard
+              title={unassigned >= 0 ? "Sin asignar" : "Sobreasignado"}
+              value={formatCurrency(Math.abs(unassigned))}
+              icon={PiggyBankIcon}
+              variant={unassigned >= 0 ? "positive" : "negative"}
+            />
+            <SummaryCard
+              title="Total gastado"
+              value={formatCurrency(totalSpent)}
+              icon={ReceiptIcon}
+              variant="negative"
+            />
+            <SummaryCard
+              title="Restante"
+              value={formatCurrency(Math.max(totalBudget - totalSpent, 0))}
+              icon={TrendingDownIcon}
+              variant={totalBudget - totalSpent >= 0 ? "positive" : "negative"}
+            />
           </div>
           <div
             className={`rounded-lg border px-4 py-3 text-sm ${

@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import {
+  ArrowDownIcon,
+  ArrowUpIcon,
   CheckCircle2Icon,
   HandCoinsIcon,
   HistoryIcon,
@@ -32,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { SummaryCard } from "@/components/summary-card"
 import {
   Dialog,
   DialogContent,
@@ -170,24 +173,20 @@ export function LoansPanel() {
       {/* Summary cards */}
       {!isLoading && loans.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Me deben</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-              {totalToReceive}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {activeLent.length} préstamo{activeLent.length !== 1 ? "s" : ""} pendiente{activeLent.length !== 1 ? "s" : ""} de cobro
-            </p>
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Debo</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">
-              {totalToPay}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {activeBorrowed.length} deuda{activeBorrowed.length !== 1 ? "s" : ""} pendiente{activeBorrowed.length !== 1 ? "s" : ""} de pago
-            </p>
-          </div>
+          <SummaryCard
+            title="Me deben"
+            value={totalToReceive}
+            description={`${activeLent.length} préstamo${activeLent.length !== 1 ? "s" : ""} pendiente${activeLent.length !== 1 ? "s" : ""} de cobro`}
+            icon={ArrowDownIcon}
+            variant="positive"
+          />
+          <SummaryCard
+            title="Debo"
+            value={totalToPay}
+            description={`${activeBorrowed.length} deuda${activeBorrowed.length !== 1 ? "s" : ""} pendiente${activeBorrowed.length !== 1 ? "s" : ""} de pago`}
+            icon={ArrowUpIcon}
+            variant="negative"
+          />
         </div>
       )}
 

@@ -6,14 +6,8 @@ import {
   WalletCardsIcon,
 } from "lucide-react"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { SummaryCard } from "@/components/summary-card"
 import { formatCurrency } from "@/lib/format"
 
 type DashboardSummaryCardsProps = {
@@ -86,39 +80,24 @@ export function DashboardSummaryCards({
   ]
 
   return (
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {isLoading
         ? Array.from({ length: 5 }).map((_, index) => (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <div className="min-w-0 flex-1">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="mt-2 h-8 w-28" />
-                </div>
-                <Skeleton className="size-10 rounded-xl" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-3 w-full max-w-40" />
-              </CardContent>
-            </Card>
+            <div key={index} className="rounded-lg border p-3">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="mt-2 h-7 w-28" />
+              <Skeleton className="mt-2 h-3 w-full max-w-40" />
+            </div>
           ))
         : summaryCards.map((card) => (
-            <Card key={card.title}>
-              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <div>
-                  <CardDescription className="text-xs">{card.title}</CardDescription>
-                  <CardTitle className={`mt-1.5 text-2xl ${card.positive ? "text-foreground" : "text-destructive"}`}>
-                    {card.value}
-                  </CardTitle>
-                </div>
-                <div className={`grid size-10 place-items-center rounded-xl ${card.positive ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
-                  <card.icon className="size-5" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">{card.description}</p>
-              </CardContent>
-            </Card>
+            <SummaryCard
+              key={card.title}
+              title={card.title}
+              value={card.value}
+              description={card.description}
+              icon={card.icon}
+              variant={card.positive ? "default" : "negative"}
+            />
           ))}
     </section>
   )

@@ -7,6 +7,7 @@ import { es } from "date-fns/locale"
 import {
   AlertTriangleIcon,
   CalendarClockIcon,
+  ClockIcon,
   InfoIcon,
   CalendarIcon,
   CheckCircle2Icon,
@@ -17,6 +18,7 @@ import {
   PencilIcon,
   PlayCircleIcon,
   ReceiptTextIcon,
+  RepeatIcon,
   XCircleIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -96,6 +98,7 @@ import {
 } from "@/features/fixed-expenses/schemas/fixed-expense-schemas"
 import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
 import { MonthNav } from "@/components/month-nav"
+import { SummaryCard } from "@/components/summary-card"
 import {
   formatCurrency,
   formatDate,
@@ -122,20 +125,14 @@ function formatCurrencyGroup(map: Map<string, number>): string {
     .join(" · ")
 }
 
-function CurrencyGroupDisplay({
-  map,
-  className,
-}: {
-  map: Map<string, number>
-  className?: string
-}) {
+function CurrencyGroupDisplay({ map }: { map: Map<string, number> }) {
   if (map.size === 0) {
-    return <p className={cn("mt-1 text-lg font-semibold tabular-nums", className)}>{formatCurrency(0)}</p>
+    return <span className="text-lg font-semibold tabular-nums">{formatCurrency(0)}</span>
   }
   return (
-    <div className="mt-1 flex flex-col gap-0.5">
+    <div className="flex flex-col gap-0.5">
       {[...map.entries()].map(([currency, total]) => (
-        <p key={currency} className={cn("text-sm font-semibold tabular-nums", className)}>
+        <p key={currency} className="text-sm font-semibold tabular-nums">
           {formatCurrency(total, currency)}
         </p>
       ))}
@@ -540,22 +537,10 @@ export function FixedExpensesPanel() {
 
       {!query.isLoading && expenses.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">A pagar este mes</p>
-            <CurrencyGroupDisplay map={committedGrouped} />
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Total recurrentes activos</p>
-            <CurrencyGroupDisplay map={registeredGrouped} />
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Pagado este mes</p>
-            <CurrencyGroupDisplay map={paidGrouped} className="text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Falta pagar este mes</p>
-            <CurrencyGroupDisplay map={pendingGrouped} className="text-amber-600 dark:text-amber-400" />
-          </div>
+          <SummaryCard title="A pagar este mes" value={<CurrencyGroupDisplay map={committedGrouped} />} icon={CalendarIcon} />
+          <SummaryCard title="Total recurrentes activos" value={<CurrencyGroupDisplay map={registeredGrouped} />} icon={RepeatIcon} />
+          <SummaryCard title="Pagado este mes" value={<CurrencyGroupDisplay map={paidGrouped} />} icon={CheckCircle2Icon} variant="positive" />
+          <SummaryCard title="Falta pagar este mes" value={<CurrencyGroupDisplay map={pendingGrouped} />} icon={ClockIcon} variant="warning" />
         </div>
       )}
 
