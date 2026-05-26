@@ -15,6 +15,12 @@ export type InstallmentPayment = {
   paidExternally: boolean
 }
 
+export type InstallmentAccount = {
+  id: string
+  name: string
+  color: string
+}
+
 export type InstallmentPurchase = {
   id: string
   description: string
@@ -25,6 +31,7 @@ export type InstallmentPurchase = {
   notes: string | null
   category: InstallmentCategory | null
   accountId: string | null
+  account: InstallmentAccount | null
   payments: InstallmentPayment[]
   paidCount: number
   pendingCount: number

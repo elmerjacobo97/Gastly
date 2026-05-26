@@ -17,6 +17,7 @@ type PurchaseRow = {
   notes: string | null
   account_id: string | null
   categories: { id: string; name: string; color: string; icon: string } | null
+  accounts: { id: string; name: string; color: string } | null
 }
 
 type PaymentRow = {
@@ -54,6 +55,7 @@ function mapPurchase(row: PurchaseRow, payments: InstallmentPayment[]): Installm
     notes: row.notes,
     category: row.categories,
     accountId: row.account_id,
+    account: row.accounts ?? null,
     payments,
     paidCount: paid.length,
     pendingCount: pending.length,
@@ -88,7 +90,7 @@ export async function getInstallmentPurchases(): Promise<InstallmentPurchase[]> 
   const { data: purchases, error } = await supabase
     .from("installment_purchases")
     .select(
-      "id, description, installment_amount, interest_amount, total_installments, first_payment_on, notes, account_id, categories(id, name, color, icon)"
+      "id, description, installment_amount, interest_amount, total_installments, first_payment_on, notes, account_id, categories(id, name, color, icon), accounts!account_id(id, name, color)"
     )
     .order("created_at", { ascending: false })
     .returns<PurchaseRow[]>()

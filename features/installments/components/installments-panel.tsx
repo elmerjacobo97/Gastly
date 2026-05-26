@@ -287,6 +287,12 @@ export function InstallmentsPanel() {
                         </span>
                       </p>
                     )}
+                    {purchase.account && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: purchase.account.color }} />
+                        <span className="text-xs text-muted-foreground">{purchase.account.name}</span>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -345,7 +351,7 @@ export function InstallmentsPanel() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex flex-col gap-2">
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                       <CheckCircle2Icon className="size-3.5" />
@@ -353,6 +359,12 @@ export function InstallmentsPanel() {
                     </div>
                     <span className="tabular-nums text-muted-foreground">Total: {formatCurrency(purchase.totalPaid)}</span>
                   </div>
+                  {purchase.account && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: purchase.account.color }} />
+                      <span className="text-xs text-muted-foreground">{purchase.account.name}</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
