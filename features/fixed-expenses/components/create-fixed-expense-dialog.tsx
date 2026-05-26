@@ -46,6 +46,7 @@ function buildDefaultValues(): FixedExpenseValues {
   return {
     description: "",
     amount: 0,
+    currency: "PEN",
     categoryId: "",
     frequency: "monthly",
     intervalMonths: 2,
@@ -120,25 +121,42 @@ export function CreateFixedExpenseDialog() {
                       </Field>
                     )}
                   />
-                  <Controller
-                    control={form.control}
-                    name="amount"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="cfe-amount">Monto estimado en soles</FieldLabel>
-                        <NumberInput
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          id="cfe-amount"
-                          inputMode="decimal"
-                          min="0"
-                          placeholder="0.00"
-                          step="0.01"
-                        />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Controller
+                      control={form.control}
+                      name="amount"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel htmlFor="cfe-amount">Monto estimado</FieldLabel>
+                          <NumberInput
+                            {...field}
+                            aria-invalid={fieldState.invalid}
+                            id="cfe-amount"
+                            inputMode="decimal"
+                            min="0"
+                            placeholder="0.00"
+                            step="0.01"
+                          />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={form.control}
+                      name="currency"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel htmlFor="cfe-currency">Moneda</FieldLabel>
+                          <NativeSelect {...field} aria-invalid={fieldState.invalid} id="cfe-currency">
+                            <NativeSelectOption value="PEN">PEN – Soles</NativeSelectOption>
+                            <NativeSelectOption value="USD">USD – Dólares</NativeSelectOption>
+                            <NativeSelectOption value="MXN">MXN – Pesos MX</NativeSelectOption>
+                          </NativeSelect>
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                  </div>
                   <Controller
                     control={form.control}
                     name="categoryId"

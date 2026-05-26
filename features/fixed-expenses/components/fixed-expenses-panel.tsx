@@ -107,6 +107,21 @@ function isRelevantForMonth(expense: FixedExpense, monthKey: string) {
   return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
 }
 
+function groupByCurrency(items: { amount: number; currency: string }[]): Map<string, number> {
+  const map = new Map<string, number>()
+  for (const item of items) {
+    map.set(item.currency, (map.get(item.currency) ?? 0) + item.amount)
+  }
+  return map
+}
+
+function formatCurrencyGroup(map: Map<string, number>): string {
+  if (map.size === 0) return formatCurrency(0)
+  return [...map.entries()]
+    .map(([currency, total]) => formatCurrency(total, currency))
+    .join(" · ")
+}
+
 function formatFrequency(expense: FixedExpense) {
   if (expense.frequency === "monthly") return "Mensual"
   if (expense.frequency === "yearly") return "Anual"
@@ -454,12 +469,15 @@ export function FixedExpensesPanel() {
   const activeExpenses = expenses.filter(
     (expense) => expense.isActive && isRelevantForMonth(expense, monthKey)
   )
-  const totalRegistered = activeRegistered.reduce((sum, expense) => sum + expense.amount, 0)
-  const totalCommitted = activeExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-  const totalPaid = activeExpenses
-    .filter((expense) => expense.paidOn)
-    .reduce((sum, expense) => sum + (expense.paidAmount ?? expense.amount), 0)
-  const totalPending = Math.max(totalCommitted - totalPaid, 0)
+  const registeredGrouped = groupByCurrency(activeRegistered.map((e) => ({ amount: e.amount, currency: e.currency })))
+  const committedGrouped = groupByCurrency(activeExpenses.map((e) => ({ amount: e.amount, currency: e.currency })))
+  const paidExpenses = activeExpenses.filter((e) => e.paidOn)
+  const paidGrouped = groupByCurrency(paidExpenses.map((e) => ({ amount: e.paidAmount ?? e.amount, currency: e.currency })))
+  const pendingGrouped = new Map<string, number>()
+  for (const [currency, committed] of committedGrouped) {
+    const pending = Math.max(committed - (paidGrouped.get(currency) ?? 0), 0)
+    if (pending > 0) pendingGrouped.set(currency, pending)
+  }
 
   const todayStr = format(new Date(), "yyyy-MM-dd")
   const unpaidActive = activeExpenses.filter((e) => !e.paidOn)
@@ -504,25 +522,25 @@ export function FixedExpensesPanel() {
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">A pagar este mes</p>
             <p className="mt-1 text-xl font-semibold tabular-nums">
-              {formatCurrency(totalCommitted)}
+              {formatCurrencyGroup(committedGrouped)}
             </p>
           </Card>
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">Total recurrentes activos</p>
             <p className="mt-1 text-xl font-semibold tabular-nums">
-              {formatCurrency(totalRegistered)}
+              {formatCurrencyGroup(registeredGrouped)}
             </p>
           </Card>
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">Pagado este mes</p>
             <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(totalPaid)}
+              {formatCurrencyGroup(paidGrouped)}
             </p>
           </Card>
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">Falta pagar este mes</p>
             <p className="mt-1 text-xl font-semibold tabular-nums text-amber-600 dark:text-amber-400">
-              {formatCurrency(totalPending)}
+              {formatCurrencyGroup(pendingGrouped)}
             </p>
           </Card>
         </div>
@@ -555,7 +573,7 @@ export function FixedExpensesPanel() {
               </AlertTitle>
               <AlertDescription>
                 {soonExpenses.length === 1
-                  ? formatCurrency(soonExpenses[0].amount)
+                  ? formatCurrency(soonExpenses[0].amount, soonExpenses[0].currency)
                   : soonExpenses
                       .map((e) => `${e.description} (${daysLabel(e.nextDueOn)})`)
                       .join(", ")}
@@ -659,7 +677,7 @@ export function FixedExpensesPanel() {
                   <CardContent className="flex flex-col gap-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-2xl font-semibold tabular-nums">
-                        {formatCurrency(expense.paidAmount ?? expense.amount)}
+                        {formatCurrency(expense.paidAmount ?? expense.amount, expense.currency)}
                       </p>
                       <Badge variant={badge.variant} className={badge.className}>
                         {badge.label}

@@ -3,6 +3,7 @@ import { z } from "zod/v3"
 export const fixedExpenseSchema = z.object({
   description: z.string().trim().min(2, "Ingresa un nombre."),
   amount: z.coerce.number().positive("El monto estimado debe ser mayor a 0."),
+  currency: z.string().min(1, "Selecciona una moneda."),
   categoryId: z.string().min(1, "Selecciona una categoria."),
   frequency: z.enum(["monthly", "custom_months", "yearly"]),
   intervalMonths: z.coerce
