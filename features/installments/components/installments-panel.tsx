@@ -93,11 +93,10 @@ export function InstallmentsPanel() {
       {!purchasesQuery.isLoading && purchases.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">A pagar este mes</p>
+            <p className="text-xs text-muted-foreground">Programado este mes</p>
             <p className="mt-1 text-xl font-semibold tabular-nums">{formatCurrency(totalThisMonth)}</p>
             <p className="text-xs text-muted-foreground">
-              {monthPayments.length} cuota{monthPayments.length !== 1 ? 's' : ''} programada
-              {monthPayments.length !== 1 ? 's' : ''}
+              {monthPayments.length} cuota{monthPayments.length !== 1 ? 's' : ''} del mes
             </p>
           </Card>
           <Card className="p-4">
