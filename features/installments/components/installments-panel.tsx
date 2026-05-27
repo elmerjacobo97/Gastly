@@ -119,9 +119,9 @@ export function InstallmentsPanel() {
             variant="warning"
           />
           <SummaryCard
-            title="Pendiente total"
+            title="Restante total"
             value={formatCurrency(totalPending)}
-            description={`${formatCurrency(totalFinanced)} financiado en total`}
+            description="suma de todos los meses futuros"
             icon={CreditCardIcon}
             variant="negative"
           />

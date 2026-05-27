@@ -179,7 +179,7 @@ export function LoansPanel() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Préstamos</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Dinero prestado a otras personas. Registra abonos para hacer seguimiento.
+            Préstamos y deudas con terceros. Registra abonos para hacer seguimiento.
           </p>
         </div>
         <LoanDialog />
