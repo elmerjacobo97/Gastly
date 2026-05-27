@@ -5,10 +5,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
 import { Badge } from "@/components/ui/badge"
-import {
-  calculateSavings,
-  getMonthlyPlan,
-} from "@/features/monthly-plan/lib/monthly-plan-api"
+import { getUserSettings } from "@/features/settings/lib/user-settings-api"
 import { getFixedExpenses } from "@/features/fixed-expenses/lib/fixed-expenses-api"
 import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
 import {
@@ -17,8 +14,6 @@ import {
 } from "@/features/transactions/lib/charts-api"
 import { DashboardCharts } from "@/features/transactions/components/dashboard/dashboard-charts"
 import { DashboardSummaryCards } from "@/features/transactions/components/dashboard/dashboard-summary-cards"
-import { FinancialHealthCard } from "@/features/transactions/components/dashboard/financial-health-card"
-import { MonthlyPlanSummaryCard } from "@/features/transactions/components/dashboard/monthly-plan-summary-card"
 import { UpcomingPaymentsCard } from "@/features/transactions/components/dashboard/upcoming-payments-card"
 import {
   computeSummary,
@@ -57,9 +52,9 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
     queryKey: ["transactions", monthKey],
     queryFn: () => getTransactions({ month: today }),
   })
-  const planQuery = useQuery({
-    queryKey: ["monthly-plan", monthKey],
-    queryFn: () => getMonthlyPlan(today),
+  const settingsQuery = useQuery({
+    queryKey: ["user-settings"],
+    queryFn: getUserSettings,
   })
   const fixedExpensesQuery = useQuery({
     queryKey: ["fixed-expenses", monthKey],
@@ -76,11 +71,11 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
 
   const transactions = transactionsQuery.data ?? []
   const summary = computeSummary(transactions)
-  const plan = planQuery.data ?? null
   const recurringPayments = (fixedExpensesQuery.data ?? []).filter((expense) =>
     isRelevantRecurringPayment(expense, monthKey)
   )
-  const savings = calculateSavings(plan, summary.income)
+  const savingsPct = settingsQuery.data?.savingsPercentage ?? 20
+  const savings = Math.round((summary.income * savingsPct) / 100 * 100) / 100
   const recurringPen = recurringPayments.filter((e) => e.currency === "PEN")
   const recurringEstimated = recurringPen.reduce((sum, expense) => {
     return sum + (expense.paidAmount ?? expense.amount)
@@ -106,7 +101,7 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
     .slice(0, 8)
 
   const summaryIsLoading =
-    transactionsQuery.isLoading || planQuery.isLoading || fixedExpensesQuery.isLoading
+    transactionsQuery.isLoading || settingsQuery.isLoading || fixedExpensesQuery.isLoading
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -124,20 +119,9 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
         </div>
       </section>
 
-      <MonthlyPlanSummaryCard
-        date={today}
-        plan={plan}
-        isLoading={planQuery.isLoading || transactionsQuery.isLoading}
-        actualIncome={summary.income}
-        savings={savings}
-        availableAfterSavings={availableAfterSavings}
-      />
-
-      {plan && <FinancialHealthCard usage={usage} remaining={remaining} />}
-
       <DashboardSummaryCards
         isLoading={summaryIsLoading}
-        hasPlan={!!plan}
+        hasPlan={true}
         availableForVariable={availableForVariable}
         savings={savings}
         recurringEstimated={recurringEstimated}
