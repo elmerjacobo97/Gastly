@@ -239,7 +239,7 @@ function PaymentDialog({
         <DialogHeader>
           <DialogTitle>Registrar pago</DialogTitle>
           <DialogDescription>
-            Ingresa el monto real pagado. El pago quedará como transacción en soles.
+            Ingresa el monto real pagado. El pago quedará registrado como transacción.
           </DialogDescription>
         </DialogHeader>
         {isPayingEarly && (
@@ -263,7 +263,7 @@ function PaymentDialog({
               name="amount"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="fixed-expense-payment-amount">Monto real en soles</FieldLabel>
+                  <FieldLabel htmlFor="fixed-expense-payment-amount">Monto real pagado</FieldLabel>
                   <NumberInput
                     {...field}
                     aria-invalid={fieldState.invalid}
@@ -583,62 +583,78 @@ export function FixedExpensesPanel() {
         </div>
       )}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {query.isLoading
-          ? Array.from({ length: 6 }).map((_, index) => (
-              <Card key={index}>
-                <CardHeader className="pb-3">
-                  <Skeleton className="h-5 w-28" />
-                  <Skeleton className="mt-1 h-4 w-24" />
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3">
-                  <Skeleton className="h-7 w-20" />
-                  <Skeleton className="h-9 w-full" />
-                </CardContent>
-              </Card>
-            ))
-          : expenses.map((expense) => {
-              const isPaid = !!expense.paidOn
-              const badge = getPaymentBadge(expense, monthKey)
-
-              return (
-                <Card
-                  key={expense.id}
-                  className={cn(!expense.isActive && "opacity-70")}
-                >
-                  <CardHeader className="flex flex-row items-start justify-between pb-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        {expense.category && (
-                          <CategoryIconBadge
-                            icon={expense.category.icon}
-                            color={expense.category.color}
-                            className="size-7 rounded-md"
-                          />
-                        )}
-                        <CardTitle className="truncate text-base">
-                          {expense.description}
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="mt-0.5">
+      <Card>
+        <CardContent className="p-0">
+          {query.isLoading ? (
+            <div className="flex flex-col divide-y px-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 py-4">
+                  <Skeleton className="size-8 rounded-lg shrink-0" />
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-5 w-16 shrink-0" />
+                  <Skeleton className="h-8 w-28 shrink-0" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col divide-y">
+              {expenses.map((expense) => {
+                const isPaid = !!expense.paidOn
+                const badge = getPaymentBadge(expense, monthKey)
+                return (
+                  <div
+                    key={expense.id}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3.5",
+                      !expense.isActive && "opacity-60"
+                    )}
+                  >
+                    {expense.category && (
+                      <CategoryIconBadge
+                        icon={expense.category.icon}
+                        color={expense.category.color}
+                        className="size-8 shrink-0 rounded-lg"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-sm font-medium">{expense.description}</p>
+                      <p className="text-xs text-muted-foreground">
                         {expense.paidOn
                           ? `Pagado el ${formatDate(expense.paidOn)}`
-                          : `Próximo pago: ${formatDate(expense.nextDueOn)}`} · {expense.category?.name ?? "Sin categoría"}
-                      </CardDescription>
-                      {expense.account && (
-                        <div className="mt-1.5 flex items-center gap-1.5">
-                          <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: expense.account.color }} />
-                          <span className="text-xs text-muted-foreground">{expense.account.name}</span>
-                        </div>
-                      )}
+                          : `Vence el ${formatDate(expense.nextDueOn)}`}
+                        {expense.account && (
+                          <>
+                            {" · "}
+                            <span style={{ color: expense.account.color }}>
+                              {expense.account.name}
+                            </span>
+                          </>
+                        )}
+                        {" · "}{formatFrequency(expense)}
+                      </p>
                     </div>
+                    <p className="shrink-0 text-sm font-semibold tabular-nums">
+                      {formatCurrency(expense.paidAmount ?? expense.amount, expense.currency)}
+                    </p>
+                    <Badge variant={badge.variant} className={cn("shrink-0 hidden sm:inline-flex", badge.className)}>
+                      {badge.label}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      disabled={!expense.isActive || isPaid || registerMutation.isPending}
+                      onClick={() => { setPayExpense(expense); setPayOpen(true) }}
+                      variant={isPaid ? "secondary" : "default"}
+                      className="shrink-0 h-8"
+                    >
+                      {isPaid ? <CheckCircle2Icon className="size-3.5" /> : <ReceiptTextIcon className="size-3.5" />}
+                      {isPaid ? "Pagado" : "Pagar"}
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground"
-                        >
+                        <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
                           <MoreHorizontalIcon />
                           <span className="sr-only">Acciones</span>
                         </Button>
@@ -653,12 +669,7 @@ export function FixedExpensesPanel() {
                           Historial de pagos
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onSelect={() =>
-                            activeMutation.mutate({
-                              id: expense.id,
-                              active: !expense.isActive,
-                            })
-                          }
+                          onSelect={() => activeMutation.mutate({ id: expense.id, active: !expense.isActive })}
                         >
                           {expense.isActive ? <PauseCircleIcon /> : <PlayCircleIcon />}
                           {expense.isActive ? "Pausar" : "Activar"}
@@ -673,35 +684,13 @@ export function FixedExpensesPanel() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-2xl font-semibold tabular-nums">
-                        {formatCurrency(expense.paidAmount ?? expense.amount, expense.currency)}
-                      </p>
-                      <Badge variant={badge.variant} className={badge.className}>
-                        {badge.label}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span>{formatFrequency(expense)}</span>
-                      <span>·</span>
-                      <span>{expense.paymentKind === "fixed" ? "Monto fijo" : "Monto variable"}</span>
-                    </div>
-                    <Button
-                      disabled={!expense.isActive || isPaid || registerMutation.isPending}
-                      onClick={() => { setPayExpense(expense); setPayOpen(true) }}
-                      variant={isPaid ? "secondary" : "default"}
-                      className="w-full"
-                    >
-                      {isPaid ? <CheckCircle2Icon /> : <ReceiptTextIcon />}
-                      {isPaid ? "Pago registrado" : "Registrar pago"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              )
-            })}
-      </section>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {!query.isLoading && expenses.length === 0 && (
         <Card>
