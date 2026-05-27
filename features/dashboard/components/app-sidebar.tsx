@@ -10,10 +10,8 @@ import {
   HandCoinsIcon,
   LayoutDashboardIcon,
   LogOutIcon,
-  PiggyBankIcon,
   Settings2Icon,
   TargetIcon,
-  WalletIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -56,12 +54,12 @@ const navigationItems = [
     icon: ArrowLeftRightIcon,
     exact: false,
   },
-  {
-    title: "Presupuesto",
-    href: "/dashboard/budget",
-    icon: PiggyBankIcon,
-    exact: false,
-  },
+  // {
+  //   title: "Presupuesto",
+  //   href: "/dashboard/budget",
+  //   icon: PiggyBankIcon,
+  //   exact: false,
+  // },
   {
     title: "Pagos recurrentes",
     href: "/dashboard/fixed-expenses",
@@ -80,12 +78,12 @@ const navigationItems = [
     icon: HandCoinsIcon,
     exact: false,
   },
-  {
-    title: "Cuentas",
-    href: "/dashboard/accounts",
-    icon: WalletIcon,
-    exact: false,
-  },
+  // {
+  //   title: "Cuentas",
+  //   href: "/dashboard/accounts",
+  //   icon: WalletIcon,
+  //   exact: false,
+  // },
   {
     title: "Metas de ahorro",
     href: "/dashboard/savings",
