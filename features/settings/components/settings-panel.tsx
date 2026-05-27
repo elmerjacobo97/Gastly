@@ -1,18 +1,22 @@
 "use client"
 
-import { KeyRoundIcon, TagIcon, UserIcon, ZapIcon } from "lucide-react"
+import { KeyRoundIcon, TagIcon, UserIcon, WalletIcon, ZapIcon, TrendingUpIcon } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 
 import { AccountSection } from "./account-section"
+import { AccountsSection } from "./accounts-section"
 import { CategoriesSection } from "./categories-section"
+import { FinancesSection } from "./finances-section"
 import { IntegrationsSection } from "./integrations-section"
 import { SecuritySection } from "./security-section"
 
 const NAV_ITEMS = [
   { id: "account", label: "Cuenta", icon: UserIcon },
   { id: "security", label: "Seguridad", icon: KeyRoundIcon },
+  { id: "finances", label: "Finanzas", icon: TrendingUpIcon },
+  { id: "cuentas", label: "Cuentas", icon: WalletIcon },
   { id: "categories", label: "Categorías", icon: TagIcon },
   { id: "integrations", label: "Integraciones", icon: ZapIcon },
 ] as const
@@ -66,6 +70,8 @@ export function SettingsPanel({ userEmail, userName, calendarUrl }: SettingsPane
       <div className="min-w-0 flex-1 p-4 md:p-6">
         {activeSection === "account" && <AccountSection userEmail={userEmail} userName={userName} />}
         {activeSection === "security" && <SecuritySection />}
+        {activeSection === "finances" && <FinancesSection />}
+        {activeSection === "cuentas" && <AccountsSection />}
         {activeSection === "categories" && <CategoriesSection />}
         {activeSection === "integrations" && <IntegrationsSection calendarUrl={calendarUrl} />}
       </div>
