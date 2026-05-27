@@ -65,33 +65,35 @@ export function FinancesSection() {
       <CardContent>
         <form
           onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
-          className="flex flex-col gap-4 sm:flex-row sm:items-start"
+          className="flex flex-col gap-4"
         >
-          <FieldGroup className="flex-1 max-w-xs">
+          <FieldGroup className="max-w-xs">
             <Controller
               control={form.control}
               name="savingsPercentage"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="savings-pct">Porcentaje de ahorro (%)</FieldLabel>
-                  <NumberInput
-                    {...field}
-                    id="savings-pct"
-                    inputMode="decimal"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    placeholder="20"
-                  />
+                  <div className="flex items-center gap-3">
+                    <NumberInput
+                      {...field}
+                      id="savings-pct"
+                      inputMode="decimal"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      placeholder="20"
+                    />
+                    <Button type="submit" disabled={mutation.isPending} className="shrink-0">
+                      {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+                      Guardar
+                    </Button>
+                  </div>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
           </FieldGroup>
-          <Button type="submit" disabled={mutation.isPending} className="sm:mt-6">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
-            Guardar
-          </Button>
         </form>
       </CardContent>
     </Card>
