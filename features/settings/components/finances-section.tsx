@@ -15,7 +15,7 @@ import { NumberInput } from "@/components/ui/number-input"
 import { getUserSettings, upsertUserSettings } from "@/features/settings/lib/user-settings-api"
 
 const schema = z.object({
-  savingsPercentage: z
+  savingsPercentage: z.coerce
     .number({ invalid_type_error: "Ingresa un porcentaje" })
     .min(0, "Mínimo 0%")
     .max(100, "Máximo 100%"),
@@ -65,7 +65,7 @@ export function FinancesSection() {
       <CardContent>
         <form
           onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
-          className="flex items-end gap-4"
+          className="flex flex-col gap-4 sm:flex-row sm:items-start"
         >
           <FieldGroup className="flex-1 max-w-xs">
             <Controller
@@ -88,7 +88,7 @@ export function FinancesSection() {
               )}
             />
           </FieldGroup>
-          <Button type="submit" disabled={mutation.isPending}>
+          <Button type="submit" disabled={mutation.isPending} className="sm:mt-6">
             {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar
           </Button>
