@@ -8,7 +8,6 @@ export type FixedExpenseCategory = {
 export type FixedExpense = {
   id: string
   amount: number
-  currency: string
   description: string
   frequency: "monthly" | "custom_months" | "yearly"
   intervalMonths: number

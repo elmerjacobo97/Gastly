@@ -1,13 +1,11 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addMonths, format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Loader2Icon } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +27,7 @@ import {
   installmentPurchaseSchema,
   type InstallmentPurchaseValues,
 } from '@/features/installments/schemas/installment-schemas';
-import { updateInstallmentPurchase } from '@/features/installments/lib/installments-api';
+import { useUpdateInstallmentPurchase } from '@/features/installments/hooks/mutations';
 import { getNextPaymentDefault } from '@/features/installments/lib/installment-date-utils';
 import { type InstallmentPurchase } from '@/features/installments/types/installment-types';
 import { AccountSelect } from '@/features/accounts/components/account-select';
@@ -51,7 +49,6 @@ type EditInstallmentDialogProps = {
 };
 
 export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInstallmentDialogProps) {
-  const queryClient = useQueryClient();
   const trackedPaidCount = purchase.payments.filter((p) => !!p.transactionId).length;
   const canEditFinancials = trackedPaidCount === 0;
   const externallyPaidCount = purchase.payments.filter((p) => p.paidExternally).length;
@@ -87,18 +84,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useMutation({
-    mutationFn: (values: InstallmentPurchaseValues) =>
-      updateInstallmentPurchase(purchase.id, values, trackedPaidCount),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['installments'] });
-      onOpenChange(false);
-      toast.success('Compra actualizada');
-    },
-    onError: (error) => {
-      toast.error('No se pudo actualizar', { description: error.message });
-    },
-  });
+  const mutation = useUpdateInstallmentPurchase(purchase.id, trackedPaidCount);
 
   const totalAmount = useWatch({ control: form.control, name: 'totalAmount' });
   const interestAmount = useWatch({ control: form.control, name: 'interestAmount' });
@@ -129,7 +115,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
               id="edit-installment-form"
               className="flex flex-col gap-5"
               noValidate
-              onSubmit={form.handleSubmit((v) => mutation.mutate(v as InstallmentPurchaseValues))}
+              onSubmit={form.handleSubmit((v) => mutation.mutate(v as InstallmentPurchaseValues, { onSuccess: () => onOpenChange(false) }))}
             >
               <FieldGroup>
             <Controller

@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { startOfMonth } from "date-fns"
 import { Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,7 +24,7 @@ import {
 } from "@/components/ui/field"
 import { NumberInput } from "@/components/ui/number-input"
 import { budgetSchema, type BudgetValues } from "@/features/budget/schemas/budget-schemas"
-import { updateBudget } from "@/features/budget/lib/budget-api"
+import { useUpdateBudget } from "@/features/budget/hooks/mutations"
 import { type Budget } from "@/features/budget/types/budget-types"
 
 type EditBudgetDialogProps = {
@@ -36,8 +34,6 @@ type EditBudgetDialogProps = {
 }
 
 export function EditBudgetDialog({ budget, open, onOpenChange }: EditBudgetDialogProps) {
-  const queryClient = useQueryClient()
-
   const form = useForm<BudgetValues>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
@@ -57,17 +53,7 @@ export function EditBudgetDialog({ budget, open, onOpenChange }: EditBudgetDialo
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useMutation({
-    mutationFn: (values: BudgetValues) => updateBudget(budget.id, values.amount),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["budgets"] })
-      onOpenChange(false)
-      toast.success("Presupuesto actualizado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo actualizar el presupuesto", { description: error.message })
-    },
-  })
+  const mutation = useUpdateBudget(budget.id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,7 +68,7 @@ export function EditBudgetDialog({ budget, open, onOpenChange }: EditBudgetDialo
           className="flex flex-col gap-5"
           id="edit-budget-form"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v.amount, { onSuccess: () => onOpenChange(false) }))}
         >
           <FieldGroup>
             <Controller

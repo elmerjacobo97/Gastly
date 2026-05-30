@@ -1,11 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -27,7 +25,7 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { updateSavingsGoal } from "@/features/savings/lib/savings-api"
+import { useUpdateSavingsGoal } from "@/features/savings/hooks/mutations"
 import {
   GOAL_COLORS,
   savingsGoalSchema,
@@ -53,8 +51,6 @@ function buildValues(goal: SavingsGoal): SavingsGoalValues {
 }
 
 export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps) {
-  const queryClient = useQueryClient()
-
   const form = useForm<SavingsGoalValues>({
     resolver: zodResolver(savingsGoalSchema),
     defaultValues: buildValues(goal),
@@ -64,17 +60,7 @@ export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps
     if (open) form.reset(buildValues(goal))
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useMutation({
-    mutationFn: (values: SavingsGoalValues) => updateSavingsGoal(goal.id, values),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["savings-goals"] })
-      onOpenChange(false)
-      toast.success("Meta actualizada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo actualizar la meta", { description: error.message })
-    },
-  })
+  const mutation = useUpdateSavingsGoal(goal.id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,7 +73,7 @@ export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps
           id="edit-goal-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
         >
           <FieldGroup>
             <Controller

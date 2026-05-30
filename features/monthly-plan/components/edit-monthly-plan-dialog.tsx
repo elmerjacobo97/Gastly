@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { startOfMonth } from "date-fns"
 import { Loader2Icon, PencilIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -31,7 +29,7 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
-import { upsertMonthlyPlan } from "@/features/monthly-plan/lib/monthly-plan-api"
+import { useUpsertMonthlyPlan } from "@/features/monthly-plan/hooks/mutations"
 import {
   monthlyPlanSchema,
   type MonthlyPlanValues,
@@ -81,7 +79,6 @@ export function EditMonthlyPlanDialog({
   const [internalOpen, setInternalOpen] = useState(false)
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
-  const queryClient = useQueryClient()
 
   const form = useForm<MonthlyPlanValues>({
     resolver: zodResolver(monthlyPlanSchema),
@@ -92,19 +89,7 @@ export function EditMonthlyPlanDialog({
     if (open) form.reset(buildDefaultValues(plan))
   }, [open, plan.month]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useMutation({
-    mutationFn: (values: MonthlyPlanValues) => upsertMonthlyPlan(values),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["monthly-plan"] }),
-      ])
-      setOpen(false)
-      toast.success("Plan mensual guardado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo guardar el plan mensual", { description: error.message })
-    },
-  })
+  const mutation = useUpsertMonthlyPlan()
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -129,7 +114,7 @@ export function EditMonthlyPlanDialog({
           className="flex flex-col gap-5"
           id="edit-monthly-plan-form"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => setOpen(false) }))}
         >
           <FieldGroup>
             <Controller

@@ -1,6 +1,5 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import {
   AlertTriangleIcon,
@@ -14,7 +13,6 @@ import {
   XCircleIcon,
 } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 
 import {
   Alert,
@@ -49,20 +47,18 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { getFixedExpenses } from "@/features/fixed-expenses/lib/fixed-expenses-api"
 import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
-import {
-  calculateSavings,
-  getMonthlyPlan,
-} from "@/features/monthly-plan/lib/monthly-plan-api"
+import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { formatCurrency } from "@/lib/format"
-import { deleteBudget, getBudgets } from "@/features/budget/lib/budget-api"
-import { getTransactions } from "@/features/transactions/lib/transactions-api"
+import { useBudgets } from "@/features/budget/hooks/queries"
+import { useDeleteBudget } from "@/features/budget/hooks/mutations"
+import { useMonthlyPlan } from "@/features/monthly-plan/hooks/queries"
+import { useFixedExpenses } from "@/features/fixed-expenses/hooks/queries"
+import { useTransactions } from "@/features/transactions/hooks/queries"
 import { CreateBudgetDialog } from "@/features/budget/components/create-budget-dialog"
 import { EditBudgetDialog } from "@/features/budget/components/edit-budget-dialog"
 import { type Budget } from "@/features/budget/types/budget-types"
 import { MonthNav } from "@/components/month-nav"
-import { SummaryCard } from "@/components/summary-card"
 
 function usageColor(usage: number) {
   if (usage >= 100) return "text-destructive"
@@ -86,38 +82,15 @@ export function BudgetPanel() {
   const [month, setMonth] = useState(() => new Date())
   const [editBudget, setEditBudget] = useState<Budget | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const queryClient = useQueryClient()
 
   const monthKey = format(month, "yyyy-MM")
 
-  const budgetsQuery = useQuery({
-    queryKey: ["budgets", monthKey],
-    queryFn: () => getBudgets(month),
-  })
-  const planQuery = useQuery({
-    queryKey: ["monthly-plan", monthKey],
-    queryFn: () => getMonthlyPlan(month),
-  })
-  const fixedExpensesQuery = useQuery({
-    queryKey: ["fixed-expenses", monthKey],
-    queryFn: () => getFixedExpenses(month),
-  })
-  const transactionsQuery = useQuery({
-    queryKey: ["transactions", monthKey],
-    queryFn: () => getTransactions({ month }),
-  })
+  const budgetsQuery = useBudgets(month)
+  const planQuery = useMonthlyPlan(month)
+  const fixedExpensesQuery = useFixedExpenses(month)
+  const transactionsQuery = useTransactions({ month })
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteBudget,
-    onSuccess: async () => {
-      setDeleteId(null)
-      await queryClient.invalidateQueries({ queryKey: ["budgets"] })
-      toast.success("Presupuesto eliminado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo eliminar el presupuesto", { description: error.message })
-    },
-  })
+  const deleteMutation = useDeleteBudget()
 
   const budgets = budgetsQuery.data ?? []
   const totalBudget = budgets.reduce((sum, b) => sum + b.amount, 0)
@@ -166,29 +139,50 @@ export function BudgetPanel() {
       ) : hasPlanningData ? (
         <>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard
-              title="Disponible libre"
-              value={formatCurrency(availableForBudget)}
-              icon={WalletIcon}
-            />
-            <SummaryCard
-              title={unassigned >= 0 ? "Sin asignar" : "Sobreasignado"}
-              value={formatCurrency(Math.abs(unassigned))}
-              icon={PiggyBankIcon}
-              variant={unassigned >= 0 ? "positive" : "negative"}
-            />
-            <SummaryCard
-              title="Total gastado"
-              value={formatCurrency(totalSpent)}
-              icon={ReceiptIcon}
-              variant="negative"
-            />
-            <SummaryCard
-              title="Restante"
-              value={formatCurrency(Math.max(totalBudget - totalSpent, 0))}
-              icon={TrendingDownIcon}
-              variant={totalBudget - totalSpent >= 0 ? "positive" : "negative"}
-            />
+            <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted/50 text-muted-foreground">
+                <WalletIcon className="size-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-muted-foreground">Disponible libre</p>
+              </div>
+              <p className="text-lg font-semibold tabular-nums text-foreground">
+                {formatCurrency(availableForBudget)}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+              <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${unassigned >= 0 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
+                <PiggyBankIcon className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-muted-foreground">{unassigned >= 0 ? "Sin asignar" : "Sobreasignado"}</p>
+              </div>
+              <p className={`text-lg font-semibold tabular-nums ${unassigned >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                {formatCurrency(Math.abs(unassigned))}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive">
+                <ReceiptIcon className="size-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-muted-foreground">Total gastado</p>
+              </div>
+              <p className="text-lg font-semibold tabular-nums text-destructive">
+                {formatCurrency(totalSpent)}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+              <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${totalBudget - totalSpent >= 0 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
+                <TrendingDownIcon className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-muted-foreground">Restante</p>
+              </div>
+              <p className={`text-lg font-semibold tabular-nums ${totalBudget - totalSpent >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                {formatCurrency(Math.max(totalBudget - totalSpent, 0))}
+              </p>
+            </div>
           </div>
           <div
             className={`rounded-lg border px-4 py-3 text-sm ${
@@ -387,7 +381,7 @@ export function BudgetPanel() {
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará este presupuesto permanentemente."
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
     </main>
   )

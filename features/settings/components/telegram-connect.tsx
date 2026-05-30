@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2Icon, CopyIcon, ExternalLinkIcon, Loader2Icon, RefreshCwIcon, SendIcon, UnlinkIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getTelegramConnection } from '@/features/settings/lib/settings-api'
+import { useTelegramConnection } from '@/features/settings/hooks/queries'
 import {
   disconnectTelegram,
   generateTelegramLinkToken,
@@ -37,10 +37,7 @@ export function TelegramConnect() {
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const queryClient = useQueryClient()
 
-  const connectionQuery = useQuery({
-    queryKey: ['telegram-connection'],
-    queryFn: getTelegramConnection,
-  })
+  const connectionQuery = useTelegramConnection()
 
   async function handleGenerate() {
     setIsGenerating(true)

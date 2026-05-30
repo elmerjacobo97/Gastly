@@ -1,7 +1,6 @@
 "use client"
 
 import { type ColumnDef } from "@tanstack/react-table"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { endOfMonth, format, startOfMonth } from "date-fns"
 import { es } from "date-fns/locale"
 import {
@@ -15,7 +14,6 @@ import {
   WalletCardsIcon,
 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { toast } from "sonner"
 
 import {
   AlertDialog,
@@ -53,31 +51,27 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { MonthNav } from "@/components/month-nav"
-import { SummaryCard } from "@/components/summary-card"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { CreateTransactionDialog } from "@/features/transactions/components/create-transaction-dialog"
 import { EditTransactionDialog } from "@/features/transactions/components/edit-transaction-dialog"
-import {
-  deleteTransaction,
-  getTransactions,
-} from "@/features/transactions/lib/transactions-api"
+import { useTransactions } from "@/features/transactions/hooks/queries"
+import { useDeleteTransaction } from "@/features/transactions/hooks/mutations"
 import {
   formatCurrency,
   formatDate,
 } from "@/lib/format"
 import { type Transaction } from "@/features/transactions/types/transaction-types"
-import { CURRENCIES, type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
 
 function exportToCSV(transactions: Transaction[], filename: string) {
-  const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Moneda", "Notas"]
+  const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Notas"]
   const rows = transactions.map((t) => [
     t.occurredOn,
     t.type === "expense" ? "Gasto" : "Ingreso",
     t.description,
     t.category?.name ?? "Sin categoría",
     t.amount.toString(),
-    t.currency,
     t.notes ?? "",
   ])
   const csvContent = [headers, ...rows]
@@ -107,15 +101,10 @@ export function MovementsPanel() {
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [csvConfirmOpen, setCsvConfirmOpen] = useState(false)
-  const queryClient = useQueryClient()
 
-  const query = useQuery({
-    queryKey: ["transactions", typeFilter, format(month, "yyyy-MM")],
-    queryFn: () =>
-      getTransactions({
-        type: typeFilter === "all" ? undefined : typeFilter,
-        month,
-      }),
+  const query = useTransactions({
+    type: typeFilter === "all" ? undefined : typeFilter,
+    month,
   })
 
   const rows = query.data ?? []
@@ -124,7 +113,6 @@ export function MovementsPanel() {
   const csvTo = format(endOfMonth(month), "d 'de' MMMM yyyy", { locale: es })
   const csvFilename = `gastly-transacciones-${format(month, "yyyy-MM")}.csv`
 
-  // Totals for variant logic (currency-agnostic sum for positive/negative color)
   const totals = rows.reduce(
     (acc, t) => {
       if (t.type === "income") acc.income += t.amount
@@ -133,57 +121,9 @@ export function MovementsPanel() {
     },
     { income: 0, expense: 0 }
   )
+  const diff = totals.income - totals.expense
 
-  // Per-currency totals for display
-  const byCurrency = rows.reduce(
-    (acc, t) => {
-      const c = t.currency || "PEN"
-      if (!acc[c]) acc[c] = { income: 0, expense: 0 }
-      if (t.type === "income") acc[c].income += t.amount
-      else acc[c].expense += t.amount
-      return acc
-    },
-    {} as Record<string, { income: number; expense: number }>
-  )
-
-  const incomeDisplay =
-    CURRENCIES.filter((c) => (byCurrency[c]?.income ?? 0) > 0)
-      .map((c) => `+${formatCurrency(byCurrency[c].income, c)}`)
-      .join(" · ") || `+${formatCurrency(0)}`
-
-  const expenseDisplay =
-    CURRENCIES.filter((c) => (byCurrency[c]?.expense ?? 0) > 0)
-      .map((c) => `-${formatCurrency(byCurrency[c].expense, c)}`)
-      .join(" · ") || `-${formatCurrency(0)}`
-
-  const diffDisplay = (() => {
-    const active = CURRENCIES.filter((c) => byCurrency[c])
-    if (!active.length) return formatCurrency(0)
-    return active
-      .map((c) => {
-        const diff = (byCurrency[c]?.income ?? 0) - (byCurrency[c]?.expense ?? 0)
-        return `${diff >= 0 ? "+" : ""}${formatCurrency(diff, c)}`
-      })
-      .join(" · ")
-  })()
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteTransaction,
-    onSuccess: async () => {
-      setDeleteId(null)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
-      ])
-      toast.success("Transacción eliminada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo eliminar", { description: error.message })
-    },
-  })
+  const deleteMutation = useDeleteTransaction()
 
   const columns = useMemo<ColumnDef<Transaction>[]>(
     () => [
@@ -196,7 +136,7 @@ export function MovementsPanel() {
             <div className="flex flex-col">
               <span className="font-medium">{t.description}</span>
               {t.notes && (
-                <span className="text-xs text-muted-foreground">{t.notes}</span>
+                <span className="truncate text-xs text-muted-foreground">{t.notes}</span>
               )}
             </div>
           )
@@ -243,7 +183,7 @@ export function MovementsPanel() {
               }`}
             >
               {t.type === "income" ? "+" : "-"}
-              {formatCurrency(t.amount, t.currency)}
+              {formatCurrency(t.amount)}
             </div>
           )
         },
@@ -334,27 +274,24 @@ export function MovementsPanel() {
 
       {rows.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryCard
-            title="Ingresos"
-            value={incomeDisplay}
-            description={`${rows.filter((t) => t.type === "income").length} registro${rows.filter((t) => t.type === "income").length !== 1 ? "s" : ""}`}
-            icon={ArrowUpIcon}
-            variant="positive"
-          />
-          <SummaryCard
-            title="Gastos"
-            value={expenseDisplay}
-            description={`${rows.filter((t) => t.type === "expense").length} registro${rows.filter((t) => t.type === "expense").length !== 1 ? "s" : ""}`}
-            icon={ArrowDownIcon}
-            variant="negative"
-          />
-          <SummaryCard
-            title="Diferencia"
-            value={diffDisplay}
-            description="balance del mes"
-            icon={ScaleIcon}
-            variant={totals.income - totals.expense >= 0 ? "positive" : "negative"}
-          />
+          {[
+            { label: "Ingresos", amount: totals.income, icon: ArrowUpIcon, color: "emerald", count: rows.filter((t) => t.type === "income").length },
+            { label: "Gastos", amount: totals.expense, icon: ArrowDownIcon, color: "red", count: rows.filter((t) => t.type === "expense").length },
+            { label: "Diferencia", amount: diff, icon: ScaleIcon, color: diff >= 0 ? "emerald" : "red", count: null },
+          ].map(({ label, amount, icon: Icon, color, count }) => (
+            <div key={label} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+              <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${color === "emerald" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
+                <Icon className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
+                {count !== null && <p className="truncate text-xs text-muted-foreground">{count} registro{count !== 1 ? "s" : ""}</p>}
+              </div>
+              <p className={`text-lg font-semibold tabular-nums ${color === "emerald" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                {label === "Diferencia" && diff >= 0 ? "+" : ""}{formatCurrency(amount)}
+              </p>
+            </div>
+          ))}
         </div>
       )}
 
@@ -419,7 +356,7 @@ export function MovementsPanel() {
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará esta transacción permanentemente."
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
       <AlertDialog open={csvConfirmOpen} onOpenChange={setCsvConfirmOpen}>
         <AlertDialogContent>

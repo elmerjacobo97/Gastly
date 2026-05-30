@@ -1,6 +1,5 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
 import { PlusIcon } from "lucide-react"
 import { useState } from "react"
 
@@ -15,7 +14,7 @@ import {
 } from "@/components/ui/select"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { QuickCreateCategoryDialog } from "@/features/categories/components/quick-create-category-dialog"
-import { getCategories } from "@/features/categories/lib/categories-api"
+import { useCategories } from "@/features/categories/hooks/queries"
 import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
 
 type CategorySelectProps = {
@@ -35,10 +34,7 @@ export function CategorySelect({
 }: CategorySelectProps) {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
 
-  const categoriesQuery = useQuery({
-    queryKey: ["categories", type],
-    queryFn: () => getCategories(type),
-  })
+  const categoriesQuery = useCategories(type)
 
   const categories = categoriesQuery.data ?? []
 

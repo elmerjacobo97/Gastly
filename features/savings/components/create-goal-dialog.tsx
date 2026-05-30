@@ -1,11 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, PlusIcon, Loader2Icon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,7 +26,7 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { createSavingsGoal } from "@/features/savings/lib/savings-api"
+import { useCreateSavingsGoal } from "@/features/savings/hooks/mutations"
 import {
   GOAL_COLORS,
   savingsGoalSchema,
@@ -56,26 +54,13 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
   const [internalOpen, setInternalOpen] = useState(false)
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
-  const queryClient = useQueryClient()
 
   const form = useForm<SavingsGoalValues>({
     resolver: zodResolver(savingsGoalSchema),
     defaultValues,
   })
 
-  const mutation = useMutation({
-    mutationFn: createSavingsGoal,
-    onSuccess: async (id: string) => {
-      await queryClient.invalidateQueries({ queryKey: ["savings-goals"] })
-      form.reset(defaultValues)
-      setOpen(false)
-      toast.success("Meta creada")
-      onSuccess?.(id)
-    },
-    onError: (error) => {
-      toast.error("No se pudo crear la meta", { description: error.message })
-    },
-  })
+  const mutation = useCreateSavingsGoal()
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -102,7 +87,9 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
           noValidate
           onSubmit={(e) => {
             e.stopPropagation()
-            form.handleSubmit((v) => mutation.mutate(v))(e)
+            form.handleSubmit((v) => mutation.mutate(v, {
+              onSuccess: (id: string) => { form.reset(defaultValues); setOpen(false); onSuccess?.(id) },
+            }))(e)
           }}
         >
           <FieldGroup>

@@ -7,7 +7,6 @@ import {
 } from "lucide-react"
 
 import { Skeleton } from "@/components/ui/skeleton"
-import { SummaryCard } from "@/components/summary-card"
 import { formatCurrency } from "@/lib/format"
 
 type DashboardSummaryCardsProps = {
@@ -43,37 +42,35 @@ export function DashboardSummaryCards({
     {
       title: "Disponible libre",
       value: formatCurrency(availableForVariable),
-      description: hasPlan
-        ? "Después de ahorro y pagos recurrentes"
-        : "Configura tu plan para mayor precisión",
+      description: hasPlan ? "Tras ahorro y recurrentes" : "Sin plan configurado",
       icon: WalletCardsIcon,
       positive: remaining >= 0,
     },
     {
-      title: "Ahorro obligatorio",
+      title: "Ahorro",
       value: formatCurrency(savings),
-      description: hasPlan ? "Dinero que no debes tocar" : "Sin plan mensual",
+      description: hasPlan ? "No tocar" : "Sin plan mensual",
       icon: ArrowUpIcon,
       positive: true,
     },
     {
-      title: "Pagos recurrentes",
+      title: "Recurrentes",
       value: formatCurrency(recurringEstimated),
-      description: `${recurringPaymentCount} pago${recurringPaymentCount !== 1 ? "s" : ""} estimado${recurringPaymentCount !== 1 ? "s" : ""} este mes`,
+      description: `${recurringPaymentCount} pago${recurringPaymentCount !== 1 ? "s" : ""} este mes`,
       icon: ArrowDownIcon,
       positive: recurringEstimated <= availableAfterSavings,
     },
     {
-      title: "Gastos variables",
+      title: "Variables",
       value: formatCurrency(variableSpent),
-      description: `${usage}% de tu disponible libre`,
+      description: `${usage}% del disponible`,
       icon: TrendingUpIcon,
       positive: usage < 85,
     },
     {
-      title: "Gasto diario disponible",
+      title: "Gasto diario",
       value: formatCurrency(dailyAvailable),
-      description: `S/ ${remaining.toFixed(0)} libres · ${daysRemaining} día${daysRemaining !== 1 ? "s" : ""} restantes`,
+      description: `${daysRemaining} día${daysRemaining !== 1 ? "s" : ""} restantes`,
       icon: CalendarDaysIcon,
       positive: remaining >= 0,
     },
@@ -89,16 +86,24 @@ export function DashboardSummaryCards({
               <Skeleton className="mt-2 h-3 w-full max-w-40" />
             </div>
           ))
-        : summaryCards.map((card) => (
-            <SummaryCard
-              key={card.title}
-              title={card.title}
-              value={card.value}
-              description={card.description}
-              icon={card.icon}
-              variant={card.positive ? "default" : "negative"}
-            />
-          ))}
+        : summaryCards.map((card) => {
+            const Icon = card.icon
+            const isPositive = card.positive
+            return (
+              <div key={card.title} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+                <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${isPositive ? "bg-muted/50 text-muted-foreground" : "bg-destructive/10 text-destructive"}`}>
+                  <Icon className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-muted-foreground">{card.title}</p>
+                  <p className="truncate text-xs text-muted-foreground">{card.description}</p>
+                </div>
+                <p className={`shrink-0 text-lg font-semibold tabular-nums ${isPositive ? "text-foreground" : "text-destructive"}`}>
+                  {card.value}
+                </p>
+              </div>
+            )
+          })}
     </section>
   )
 }

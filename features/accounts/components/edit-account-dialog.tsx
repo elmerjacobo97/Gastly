@@ -1,11 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,13 +17,11 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { updateAccount } from "@/features/accounts/lib/accounts-api"
+import { useUpdateAccount } from "@/features/accounts/hooks/mutations"
 import {
   ACCOUNT_COLORS,
-  ACCOUNT_CURRENCIES,
   accountSchema,
   type AccountValues,
 } from "@/features/accounts/schemas/account-schemas"
@@ -41,7 +37,6 @@ type EditAccountDialogProps = {
 function buildValues(account: Account): AccountValues {
   return {
     name: account.name,
-    currency: account.currency,
     balance: account.balance,
     color: account.color,
     notes: account.notes ?? "",
@@ -49,8 +44,6 @@ function buildValues(account: Account): AccountValues {
 }
 
 export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDialogProps) {
-  const queryClient = useQueryClient()
-
   const form = useForm<AccountValues>({
     resolver: zodResolver(accountSchema),
     defaultValues: buildValues(account),
@@ -62,17 +55,7 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
 
   const selectedColor = useWatch({ control: form.control, name: "color" })
 
-  const mutation = useMutation({
-    mutationFn: (values: AccountValues) => updateAccount(account.id, values),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["accounts"] })
-      onOpenChange(false)
-      toast.success("Cuenta actualizada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo actualizar la cuenta", { description: error.message })
-    },
-  })
+  const mutation = useUpdateAccount(account.id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,7 +70,7 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
           id="edit-account-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
         >
           <FieldGroup>
             <Controller
@@ -106,42 +89,25 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
                 </Field>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ea-currency">Moneda</FieldLabel>
-                    <NativeSelect {...field} id="ea-currency" className="w-full">
-                      {ACCOUNT_CURRENCIES.map((c) => (
-                        <NativeSelectOption key={c} value={c}>{c}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-              <Controller
-                control={form.control}
-                name="balance"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ea-balance">Saldo actual</FieldLabel>
-                    <NumberInput
-                      {...field}
-                      id="ea-balance"
-                      aria-invalid={fieldState.invalid}
-                      inputMode="decimal"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </div>
+            <Controller
+              control={form.control}
+              name="balance"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="ea-balance">Saldo actual (PEN)</FieldLabel>
+                  <NumberInput
+                    {...field}
+                    id="ea-balance"
+                    aria-invalid={fieldState.invalid}
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <Controller
               control={form.control}
               name="color"

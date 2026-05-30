@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -44,15 +42,13 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { QuickCreateCategoryDialog } from "@/features/categories/components/quick-create-category-dialog"
-import { getCategories } from "@/features/categories/lib/categories-api"
-import { createTransaction } from "@/features/transactions/lib/transactions-api"
+import { useCategories } from "@/features/categories/hooks/queries"
+import { useCreateTransaction } from "@/features/transactions/hooks/mutations"
 import {
-  CURRENCIES,
   type TransactionType,
   type TransactionValues,
   transactionSchema,
 } from "@/features/transactions/schemas/transaction-schemas"
-import { cn } from "@/lib/utils"
 
 type CreateTransactionDialogProps = {
   defaultType?: TransactionType
@@ -69,7 +65,6 @@ function buildDefaultValues(defaultType: TransactionType): TransactionValues {
   return {
     type: defaultType,
     amount: 0,
-    currency: "PEN",
     description: "",
     categoryName: "",
     occurredOn: getToday(),
@@ -85,7 +80,6 @@ export function CreateTransactionDialog({
 }: CreateTransactionDialogProps) {
   const [open, setOpen] = useState(false)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<TransactionValues>({
     resolver: zodResolver(transactionSchema),
@@ -94,31 +88,9 @@ export function CreateTransactionDialog({
 
   const currentType = useWatch({ control: form.control, name: "type" }) as TransactionType
 
-  const categoriesQuery = useQuery({
-    queryKey: ["categories", currentType],
-    queryFn: () => getCategories(currentType),
-    enabled: open,
-  })
+  const categoriesQuery = useCategories(currentType, open)
 
-  const mutation = useMutation({
-    mutationFn: createTransaction,
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
-      ])
-      form.reset(buildDefaultValues(defaultType))
-      setOpen(false)
-      toast.success("Transacción registrada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar la transacción", { description: error.message })
-    },
-  })
+  const mutation = useCreateTransaction()
 
   const existingCategories = categoriesQuery.data ?? []
 
@@ -152,7 +124,9 @@ export function CreateTransactionDialog({
                 className="flex flex-col gap-5"
                 id="create-transaction-form"
                 noValidate
-                onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+                onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+                  onSuccess: () => { form.reset(buildDefaultValues(defaultType)); setOpen(false) },
+                }))}
               >
                 <FieldGroup>
                   <Controller
@@ -175,41 +149,25 @@ export function CreateTransactionDialog({
                       </Field>
                     )}
                   />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Controller
-                      control={form.control}
-                      name="amount"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="ct-amount">Monto</FieldLabel>
-                          <NumberInput
-                            {...field}
-                            aria-invalid={fieldState.invalid}
-                            id="ct-amount"
-                            inputMode="decimal"
-                            min="0"
-                            placeholder="0.00"
-                            step="0.01"
-                          />
-                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      control={form.control}
-                      name="currency"
-                      render={({ field }) => (
-                        <Field>
-                          <FieldLabel htmlFor="ct-currency">Moneda</FieldLabel>
-                          <NativeSelect {...field} id="ct-currency" className="w-full">
-                            {CURRENCIES.map((c) => (
-                              <NativeSelectOption key={c} value={c}>{c}</NativeSelectOption>
-                            ))}
-                          </NativeSelect>
-                        </Field>
-                      )}
-                    />
-                  </div>
+                  <Controller
+                    control={form.control}
+                    name="amount"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="ct-amount">Monto (PEN)</FieldLabel>
+                        <NumberInput
+                          {...field}
+                          aria-invalid={fieldState.invalid}
+                          id="ct-amount"
+                          inputMode="decimal"
+                          min="0"
+                          placeholder="0.00"
+                          step="0.01"
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
                   <Controller
                     control={form.control}
                     name="description"

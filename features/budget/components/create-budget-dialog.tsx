@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { startOfMonth } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -31,7 +29,7 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { budgetSchema, type BudgetValues } from "@/features/budget/schemas/budget-schemas"
-import { createBudget } from "@/features/budget/lib/budget-api"
+import { useCreateBudget } from "@/features/budget/hooks/mutations"
 import { CategorySelect } from "@/features/categories/components/category-select"
 
 const MONTHS = [
@@ -54,7 +52,6 @@ type CreateBudgetDialogProps = {
 
 export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: CreateBudgetDialogProps) {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
   const now = new Date()
 
   const form = useForm<BudgetValues>({
@@ -66,18 +63,7 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: createBudget,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["budgets"] })
-      form.reset({ categoryId: "", amount: 0, month: startOfMonth(new Date()) })
-      setOpen(false)
-      toast.success("Presupuesto guardado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo guardar el presupuesto", { description: error.message })
-    },
-  })
+  const mutation = useCreateBudget()
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -98,7 +84,9 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
             className="flex flex-col gap-5"
             id="create-budget-form"
             noValidate
-            onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+            onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+              onSuccess: () => { form.reset({ categoryId: "", amount: 0, month: startOfMonth(new Date()) }); setOpen(false) },
+            }))}
           >
             <FieldGroup>
               <Controller

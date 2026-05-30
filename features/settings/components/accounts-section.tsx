@@ -1,11 +1,8 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -19,31 +16,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { CreateAccountDialog } from "@/features/accounts/components/create-account-dialog"
 import { EditAccountDialog } from "@/features/accounts/components/edit-account-dialog"
-import { deleteAccount, getAccounts } from "@/features/accounts/lib/accounts-api"
+import { useAccounts } from "@/features/accounts/hooks/queries"
+import { useDeleteAccount } from "@/features/accounts/hooks/mutations"
 import { type Account } from "@/features/accounts/types/account-types"
 import { formatCurrency } from "@/lib/format"
 
 export function AccountsSection() {
   const [editAccount, setEditAccount] = useState<Account | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const queryClient = useQueryClient()
 
-  const { data: accounts = [], isLoading } = useQuery({
-    queryKey: ["accounts"],
-    queryFn: getAccounts,
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteAccount,
-    onSuccess: async () => {
-      setDeleteId(null)
-      await queryClient.invalidateQueries({ queryKey: ["accounts"] })
-      toast.success("Cuenta eliminada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo eliminar la cuenta", { description: error.message })
-    },
-  })
+  const { data: accounts = [], isLoading } = useAccounts()
+  const deleteMutation = useDeleteAccount()
 
   return (
     <>
@@ -85,11 +68,8 @@ export function AccountsSection() {
                       <span className="ml-2 text-xs text-muted-foreground">{account.notes}</span>
                     )}
                   </div>
-                  <Badge variant="secondary" className="shrink-0 text-xs font-normal">
-                    {account.currency}
-                  </Badge>
                   <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                    {formatCurrency(account.balance, account.currency)}
+                    {formatCurrency(account.balance)}
                   </span>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -134,7 +114,7 @@ export function AccountsSection() {
         title="Eliminar cuenta"
         description="Se eliminará la cuenta. Esta acción no se puede deshacer."
         confirmLabel="Eliminar"
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
     </>
   )

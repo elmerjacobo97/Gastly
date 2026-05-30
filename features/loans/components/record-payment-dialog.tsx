@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Loader2Icon, WalletIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -32,7 +30,7 @@ import {
   loanPaymentSchema,
   type LoanPaymentValues,
 } from "@/features/loans/schemas/loan-schemas"
-import { recordLoanPayment } from "@/features/loans/lib/loans-api"
+import { useRecordLoanPayment } from "@/features/loans/hooks/mutations"
 import { type Loan } from "@/features/loans/types/loan-types"
 import { formatCurrency } from "@/lib/format"
 
@@ -42,7 +40,6 @@ type RecordPaymentDialogProps = {
 
 export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<LoanPaymentValues>({
     resolver: zodResolver(loanPaymentSchema),
@@ -53,18 +50,7 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (values: LoanPaymentValues) => recordLoanPayment(loan.id, values),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["loans"] })
-      form.reset({ amount: loan.pendingAmount, occurredOn: format(new Date(), "yyyy-MM-dd"), notes: "" })
-      setOpen(false)
-      toast.success("Abono registrado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar el abono", { description: error.message })
-    },
-  })
+  const mutation = useRecordLoanPayment(loan.id)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -78,14 +64,16 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
         <DialogHeader>
           <DialogTitle>Abono de {loan.personName}</DialogTitle>
           <DialogDescription>
-            Pendiente: {formatCurrency(loan.pendingAmount, loan.currency)}
+            Pendiente: {formatCurrency(loan.pendingAmount)}
           </DialogDescription>
         </DialogHeader>
         <form
           id="loan-payment-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+            onSuccess: () => { form.reset({ amount: loan.pendingAmount, occurredOn: format(new Date(), "yyyy-MM-dd"), notes: "" }); setOpen(false) },
+          }))}
         >
           <FieldGroup>
             <div className="grid grid-cols-2 gap-3">

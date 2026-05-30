@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -50,11 +49,9 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import {
-  calculateSavings,
-  getMonthlyPlan,
-} from "@/features/monthly-plan/lib/monthly-plan-api"
-import { getAllTransactions } from "@/features/transactions/lib/charts-api"
+import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api"
+import { useMonthlyPlan } from "@/features/monthly-plan/hooks/queries"
+import { useAllTransactions } from "@/features/transactions/hooks/queries"
 import { formatCurrency } from "@/lib/format"
 import { CHART_COLORS, formatCompact } from "@/lib/chart-utils"
 import { SegmentedControl } from "@/components/ui/segmented-control"
@@ -208,14 +205,8 @@ export function ReportsPanel() {
   const today = new Date()
   const filename = `gastly-reporte-${fromDate}-${toDate}.csv`
 
-  const transactionsQuery = useQuery({
-    queryKey: ["report-transactions", fromDate, toDate],
-    queryFn: () => getAllTransactions({ from: fromDate, to: toDate }),
-  })
-  const planQuery = useQuery({
-    queryKey: ["monthly-plan", format(today, "yyyy-MM")],
-    queryFn: () => getMonthlyPlan(today),
-  })
+  const transactionsQuery = useAllTransactions({ from: fromDate, to: toDate })
+  const planQuery = useMonthlyPlan(today)
 
   const all = transactionsQuery.data ?? []
   const plan = planQuery.data ?? null
@@ -316,48 +307,30 @@ export function ReportsPanel() {
       </section>
 
       {/* Summary cards */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading
           ? Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                  <div className="flex flex-col gap-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-7 w-28" />
-                  </div>
-                  <Skeleton className="size-10 rounded-xl" />
-                </CardHeader>
-              </Card>
+              <div key={i} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+                <Skeleton className="size-8 shrink-0 rounded-lg" />
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-5 w-28" />
+                </div>
+              </div>
             ))
           : summaryCards.map((card) => (
-              <Card key={card.title}>
-                <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                  <div>
-                    <CardDescription className="text-xs">{card.title}</CardDescription>
-                    <CardTitle
-                      className={`mt-1.5 text-2xl tabular-nums ${
-                        card.positive ? "text-foreground" : "text-destructive"
-                      }`}
-                    >
-                      {card.value}
-                    </CardTitle>
-                    {card.description && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {card.description}
-                      </p>
-                    )}
-                  </div>
-                  <div
-                    className={`grid size-10 place-items-center rounded-xl ${
-                      card.positive
-                        ? "bg-primary/10 text-primary"
-                        : "bg-destructive/10 text-destructive"
-                    }`}
-                  >
-                    <card.icon className="size-5" />
-                  </div>
-                </CardHeader>
-              </Card>
+              <div key={card.title} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+                <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${card.positive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
+                  <card.icon className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-muted-foreground">{card.title}</p>
+                  {card.description && <p className="truncate text-xs text-muted-foreground">{card.description}</p>}
+                </div>
+                <p className={`text-lg font-semibold tabular-nums shrink-0 ${card.positive ? "text-foreground" : "text-destructive"}`}>
+                  {card.value}
+                </p>
+              </div>
             ))}
       </section>
 

@@ -1,11 +1,9 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarIcon, CheckCircle2Icon, ClockIcon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,13 +19,10 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MonthNav } from '@/components/month-nav';
-import { SummaryCard } from '@/components/summary-card';
 import { CategoryIconBadge } from '@/features/categories/components/category-icon';
-import {
-  deleteInstallmentPurchase,
-  getInstallmentPurchases,
-  getMonthInstallments,
-} from '@/features/installments/lib/installments-api';
+import { getMonthInstallments } from '@/features/installments/lib/installments-api';
+import { useInstallmentPurchases } from '@/features/installments/hooks/queries';
+import { useDeleteInstallmentPurchase } from '@/features/installments/hooks/mutations';
 import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
 import { EditInstallmentDialog } from '@/features/installments/components/edit-installment-dialog';
 import { InstallmentDialog } from '@/features/installments/components/installment-dialog';
@@ -42,24 +37,8 @@ export function InstallmentsPanel() {
   const [payingItem, setPayingItem] = useState<{ payment: InstallmentPayment; purchase: InstallmentPurchase } | null>(
     null
   );
-  const queryClient = useQueryClient();
-
-  const purchasesQuery = useQuery({
-    queryKey: ['installments'],
-    queryFn: getInstallmentPurchases,
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteInstallmentPurchase,
-    onSuccess: async () => {
-      setDeleteId(null);
-      await queryClient.invalidateQueries({ queryKey: ['installments'] });
-      toast.success('Compra eliminada');
-    },
-    onError: (error) => {
-      toast.error('No se pudo eliminar', { description: error.message });
-    },
-  });
+  const purchasesQuery = useInstallmentPurchases();
+  const deleteMutation = useDeleteInstallmentPurchase();
 
   const purchases = purchasesQuery.data ?? [];
   const monthPayments = getMonthInstallments(purchases, month);
@@ -93,38 +72,58 @@ export function InstallmentsPanel() {
 
       {!purchasesQuery.isLoading && purchases.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SummaryCard
-            title="Programado este mes"
-            value={formatCurrency(totalThisMonth)}
-            description={
-              totalPendingThisMonth === 0
-                ? `${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} · todo pagado`
-                : `${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} del mes`
-            }
-            icon={CalendarIcon}
-            variant={totalPendingThisMonth === 0 ? 'positive' : 'default'}
-          />
-          <SummaryCard
-            title="Pagado este mes"
-            value={formatCurrency(totalPaidThisMonth)}
-            description={`${paidThisMonth.length} cuota${paidThisMonth.length !== 1 ? 's' : ''} pagada${paidThisMonth.length !== 1 ? 's' : ''}`}
-            icon={CheckCircle2Icon}
-            variant="positive"
-          />
-          <SummaryCard
-            title="Falta pagar este mes"
-            value={formatCurrency(totalPendingThisMonth)}
-            description={`${pendingThisMonth.length} pendiente${pendingThisMonth.length !== 1 ? 's' : ''}`}
-            icon={ClockIcon}
-            variant="warning"
-          />
-          <SummaryCard
-            title="Restante total"
-            value={formatCurrency(totalPending)}
-            description="suma de todos los meses futuros"
-            icon={CreditCardIcon}
-            variant="negative"
-          />
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${totalPendingThisMonth === 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted/50 text-muted-foreground'}`}>
+              <CalendarIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Programado este mes</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {totalPendingThisMonth === 0
+                  ? `${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} · todo pagado`
+                  : `${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} del mes`}
+              </p>
+            </div>
+            <p className={`text-lg font-semibold tabular-nums ${totalPendingThisMonth === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>
+              {formatCurrency(totalThisMonth)}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2Icon className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Pagado este mes</p>
+              <p className="truncate text-xs text-muted-foreground">{paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? 's' : ''} pagada{paidThisMonth.length !== 1 ? 's' : ''}</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(totalPaidThisMonth)}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <ClockIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Falta pagar este mes</p>
+              <p className="truncate text-xs text-muted-foreground">{pendingThisMonth.length} pendiente{pendingThisMonth.length !== 1 ? 's' : ''}</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+              {formatCurrency(totalPendingThisMonth)}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive">
+              <CreditCardIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Restante total</p>
+              <p className="truncate text-xs text-muted-foreground">cuotas futuras pendientes</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-destructive">
+              {formatCurrency(totalPending)}
+            </p>
+          </div>
         </div>
       )}
 
@@ -161,7 +160,7 @@ export function InstallmentsPanel() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{purchase.description}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground">
                         Cuota {payment.paymentNumber}/{purchase.totalInstallments} · {formatDate(payment.dueOn)}
                       </p>
                     </div>
@@ -281,7 +280,7 @@ export function InstallmentsPanel() {
                       <span className="text-muted-foreground">Pendiente: <span className="text-foreground">{formatCurrency(purchase.totalPending)}</span></span>
                     </div>
                     {purchase.payments.find((p) => !p.transactionId && !p.paidExternally) && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground">
                         Próxima cuota:{' '}
                         <span className="font-medium text-foreground">
                           {formatDate(purchase.payments.find((p) => !p.transactionId && !p.paidExternally)!.dueOn)}
@@ -291,7 +290,7 @@ export function InstallmentsPanel() {
                     {purchase.account && (
                       <div className="flex items-center gap-1.5">
                         <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: purchase.account.color }} />
-                        <span className="text-xs text-muted-foreground">{purchase.account.name}</span>
+                        <span className="truncate text-xs text-muted-foreground">{purchase.account.name}</span>
                       </div>
                     )}
                   </CardContent>
@@ -363,7 +362,7 @@ export function InstallmentsPanel() {
                   {purchase.account && (
                     <div className="flex items-center gap-1.5">
                       <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: purchase.account.color }} />
-                      <span className="text-xs text-muted-foreground">{purchase.account.name}</span>
+                      <span className="truncate text-xs text-muted-foreground">{purchase.account.name}</span>
                     </div>
                   )}
                 </CardContent>
@@ -416,7 +415,7 @@ export function InstallmentsPanel() {
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará esta compra y todas sus cuotas permanentemente."
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
     </main>
   );

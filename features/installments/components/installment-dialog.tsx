@@ -1,13 +1,11 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { addMonths, format, subMonths } from "date-fns"
 import { es } from "date-fns/locale"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -35,7 +33,7 @@ import {
   installmentPurchaseSchema,
   type InstallmentPurchaseValues,
 } from "@/features/installments/schemas/installment-schemas"
-import { createInstallmentPurchase } from "@/features/installments/lib/installments-api"
+import { useCreateInstallmentPurchase } from "@/features/installments/hooks/mutations"
 import { getNextPaymentDefault } from "@/features/installments/lib/installment-date-utils"
 import { AccountSelect } from "@/features/accounts/components/account-select"
 
@@ -55,7 +53,6 @@ type InstallmentDialogProps = {
 
 export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: InstallmentDialogProps) {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<InstallmentPurchaseValues>({
     resolver: zodResolver(installmentPurchaseSchema),
@@ -72,28 +69,7 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: createInstallmentPurchase,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["installments"] })
-      form.reset({
-        description: "",
-        categoryId: "",
-        totalAmount: 0,
-        interestAmount: 0,
-        totalInstallments: 6,
-        firstPaymentOn: getNextPaymentDefault(),
-        alreadyPaid: 0 as number,
-        accountId: "",
-        notes: "",
-      })
-      setOpen(false)
-      toast.success("Compra en cuotas registrada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar", { description: error.message })
-    },
-  })
+  const mutation = useCreateInstallmentPurchase()
 
   const totalAmount = useWatch({ control: form.control, name: "totalAmount" })
   const interestAmount = useWatch({ control: form.control, name: "interestAmount" })
@@ -131,7 +107,12 @@ export function InstallmentDialog({ triggerLabel = "Nueva compra en cuotas" }: I
               id="installment-form"
               className="flex flex-col gap-5"
               noValidate
-              onSubmit={form.handleSubmit((v) => mutation.mutate(v as InstallmentPurchaseValues))}
+              onSubmit={form.handleSubmit((v) => mutation.mutate(v as InstallmentPurchaseValues, {
+                onSuccess: () => {
+                  form.reset({ description: "", categoryId: "", totalAmount: 0, interestAmount: 0, totalInstallments: 6, firstPaymentOn: getNextPaymentDefault(), alreadyPaid: 0 as number, accountId: "", notes: "" })
+                  setOpen(false)
+                },
+              }))}
             >
               <FieldGroup>
             <Controller

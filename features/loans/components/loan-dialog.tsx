@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -33,7 +31,7 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
-import { createLoan } from "@/features/loans/lib/loans-api"
+import { useCreateLoan } from "@/features/loans/hooks/mutations"
 
 function getTodayStr() {
   return format(new Date(), "yyyy-MM-dd")
@@ -45,25 +43,13 @@ type LoanDialogProps = {
 
 export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps) {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<LoanValues>({
     resolver: zodResolver(loanSchema),
-    defaultValues: { direction: "lent", currency: "PEN", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
+    defaultValues: { direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
   })
 
-  const mutation = useMutation({
-    mutationFn: createLoan,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["loans"] })
-      form.reset({ direction: "lent", currency: "PEN", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
-      setOpen(false)
-      toast.success("Préstamo registrado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar", { description: error.message })
-    },
-  })
+  const mutation = useCreateLoan()
 
   const direction = useWatch({ control: form.control, name: "direction" })
 
@@ -86,9 +72,11 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
           id="loan-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+            onSuccess: () => { form.reset({ direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" }); setOpen(false) },
+          }))}
         >
-          <div className="grid grid-cols-2 gap-3">
+          <FieldGroup>
             <Controller
               control={form.control}
               name="direction"
@@ -103,22 +91,6 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
               )}
             />
 
-            <Controller
-              control={form.control}
-              name="currency"
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel htmlFor="loan-currency">Moneda</FieldLabel>
-                  <NativeSelect {...field} id="loan-currency">
-                    <NativeSelectOption value="PEN">PEN</NativeSelectOption>
-                    <NativeSelectOption value="USD">USD</NativeSelectOption>
-                    <NativeSelectOption value="MXN">MXN</NativeSelectOption>
-                  </NativeSelect>
-                </Field>
-              )}
-            />
-          </div>
-          <FieldGroup>
             <Controller
               control={form.control}
               name="personName"
@@ -143,7 +115,7 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
               name="amount"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="loan-amount">Monto prestado</FieldLabel>
+                  <FieldLabel htmlFor="loan-amount">Monto prestado (PEN)</FieldLabel>
                   <NumberInput
                     {...field}
                     id="loan-amount"

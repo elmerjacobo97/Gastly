@@ -1,11 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -39,7 +37,7 @@ import {
   CategoryIcon,
   categoryIconOptions,
 } from "@/features/categories/components/category-icon"
-import { updateCategory } from "@/features/categories/lib/categories-api"
+import { useUpdateCategory } from "@/features/categories/hooks/mutations"
 import {
   type CategoryValues,
   categorySchema,
@@ -75,8 +73,6 @@ type EditCategoryDialogProps = {
 }
 
 export function EditCategoryDialog({ category, open, onOpenChange }: EditCategoryDialogProps) {
-  const queryClient = useQueryClient()
-
   const form = useForm<CategoryValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
@@ -101,23 +97,7 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
   const selectedColor = useWatch({ control: form.control, name: "color" })
   const selectedIcon = useWatch({ control: form.control, name: "icon" })
 
-  const mutation = useMutation({
-    mutationFn: (values: CategoryValues) => updateCategory(category.id, values),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] }),
-        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
-        queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
-      ])
-      onOpenChange(false)
-      toast.success("Categoría actualizada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo actualizar la categoría", { description: error.message })
-    },
-  })
+  const mutation = useUpdateCategory(category.id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -134,7 +114,7 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
               className="flex flex-col gap-5"
               id="edit-category-form"
               noValidate
-              onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+              onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
             >
               <FieldGroup>
                 <Controller

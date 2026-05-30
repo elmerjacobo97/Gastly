@@ -1,6 +1,5 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 
@@ -13,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { getAccounts } from "@/features/accounts/lib/accounts-api"
+import { useAccounts } from "@/features/accounts/hooks/queries"
 import { QuickCreateAccountDialog } from "@/features/accounts/components/quick-create-account-dialog"
 
 type AccountSelectProps = {
@@ -26,10 +25,7 @@ type AccountSelectProps = {
 export function AccountSelect({ value, onChange, "aria-invalid": ariaInvalid, id }: AccountSelectProps) {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
 
-  const { data: accounts = [] } = useQuery({
-    queryKey: ["accounts"],
-    queryFn: getAccounts,
-  })
+  const { data: accounts = [] } = useAccounts()
 
   return (
     <>
@@ -49,7 +45,6 @@ export function AccountSelect({ value, onChange, "aria-invalid": ariaInvalid, id
                 <SelectItem key={a.id} value={a.id}>
                   <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: a.color }} />
                   {a.name}
-                  <span className="text-xs text-muted-foreground">{a.currency}</span>
                 </SelectItem>
               ))}
             </SelectGroup>

@@ -1,8 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { startOfMonth, subMonths } from "date-fns"
+import { startOfMonth } from "date-fns"
 import { CopyIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
@@ -31,7 +30,8 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
-import { upsertMonthlyPlan, getMonthlyPlan } from "@/features/monthly-plan/lib/monthly-plan-api"
+import { usePrevMonthPlan } from "@/features/monthly-plan/hooks/queries"
+import { useUpsertMonthlyPlan } from "@/features/monthly-plan/hooks/mutations"
 import {
   monthlyPlanSchema,
   type MonthlyPlanValues,
@@ -72,18 +72,13 @@ export function CreateMonthlyPlanDialog({
   trigger,
 }: CreateMonthlyPlanDialogProps) {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<MonthlyPlanValues>({
     resolver: zodResolver(monthlyPlanSchema),
     defaultValues: buildDefaultValues(month),
   })
 
-  const prevMonthQuery = useQuery({
-    queryKey: ["monthly-plan", subMonths(startOfMonth(month), 1).toISOString().slice(0, 7)],
-    queryFn: () => getMonthlyPlan(subMonths(month, 1)),
-    enabled: open,
-  })
+  const prevMonthQuery = usePrevMonthPlan(month, open)
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) form.reset(buildDefaultValues(month))
@@ -99,20 +94,7 @@ export function CreateMonthlyPlanDialog({
     toast.info("Valores copiados del mes anterior")
   }
 
-  const mutation = useMutation({
-    mutationFn: (values: MonthlyPlanValues) => upsertMonthlyPlan(values),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["monthly-plan"] }),
-      ])
-      form.reset(buildDefaultValues(month))
-      setOpen(false)
-      toast.success("Plan mensual guardado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo guardar el plan mensual", { description: error.message })
-    },
-  })
+  const mutation = useUpsertMonthlyPlan()
 
   const hasPrevMonth = !!prevMonthQuery.data
 
@@ -137,7 +119,9 @@ export function CreateMonthlyPlanDialog({
           className="flex flex-col gap-5"
           id="create-monthly-plan-form"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+            onSuccess: () => { form.reset(buildDefaultValues(month)); setOpen(false) },
+          }))}
         >
           <FieldGroup>
             <Controller

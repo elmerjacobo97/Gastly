@@ -1,6 +1,5 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { PiggyBankIcon, TrendingUpIcon, WalletCardsIcon } from "lucide-react"
@@ -17,29 +16,19 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { CreateMonthlyPlanDialog } from "@/features/monthly-plan/components/create-monthly-plan-dialog"
 import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-monthly-plan-dialog"
-import {
-  calculateSavings,
-  getMonthlyPlan,
-} from "@/features/monthly-plan/lib/monthly-plan-api"
+import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api"
+import { useMonthlyPlan } from "@/features/monthly-plan/hooks/queries"
 import { MonthNav } from "@/components/month-nav"
 import { CreateTransactionDialog } from "@/features/transactions/components/create-transaction-dialog"
-import { getTransactions } from "@/features/transactions/lib/transactions-api"
+import { useTransactions } from "@/features/transactions/hooks/queries"
 import { formatCurrency } from "@/lib/format"
 
 export function MonthlyPlanPanel() {
   const [month, setMonth] = useState(() => new Date())
-  const monthKey = format(month, "yyyy-MM")
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
 
-  const planQuery = useQuery({
-    queryKey: ["monthly-plan", monthKey],
-    queryFn: () => getMonthlyPlan(month),
-  })
-
-  const transactionsQuery = useQuery({
-    queryKey: ["transactions", monthKey],
-    queryFn: () => getTransactions({ month }),
-  })
+  const planQuery = useMonthlyPlan(month)
+  const transactionsQuery = useTransactions({ month })
 
   const plan = planQuery.data ?? null
   const transactions = transactionsQuery.data ?? []

@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,7 +26,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { addContribution } from "@/features/savings/lib/savings-api"
+import { useAddContribution } from "@/features/savings/hooks/mutations"
 import {
   contributionSchema,
   type ContributionValues,
@@ -53,25 +51,13 @@ const emptyValues: ContributionValues = {
 
 export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContributionDialogProps) {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<ContributionValues>({
     resolver: zodResolver(contributionSchema),
     defaultValues: { ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() },
   })
 
-  const mutation = useMutation({
-    mutationFn: (values: ContributionValues) => addContribution(goal, values),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["savings-goals"] })
-      form.reset({ ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() })
-      setOpen(false)
-      toast.success("Aporte registrado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar el aporte", { description: error.message })
-    },
-  })
+  const mutation = useAddContribution(goal)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -94,7 +80,9 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
           id="contribution-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+            onSuccess: () => { form.reset({ ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() }); setOpen(false) },
+          }))}
         >
           <FieldGroup>
             <Controller

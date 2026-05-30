@@ -1,11 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,9 +18,8 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { createAccount } from "@/features/accounts/lib/accounts-api"
-import { ACCOUNT_COLORS, ACCOUNT_CURRENCIES, accountSchema, type AccountValues } from "@/features/accounts/schemas/account-schemas"
+import { useCreateAccount } from "@/features/accounts/hooks/mutations"
+import { ACCOUNT_COLORS, accountSchema, type AccountValues } from "@/features/accounts/schemas/account-schemas"
 import { cn } from "@/lib/utils"
 
 type QuickCreateAccountDialogProps = {
@@ -32,31 +29,18 @@ type QuickCreateAccountDialogProps = {
 }
 
 export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: QuickCreateAccountDialogProps) {
-  const queryClient = useQueryClient()
-
   const form = useForm<AccountValues>({
     resolver: zodResolver(accountSchema),
-    defaultValues: { name: "", currency: "PEN", balance: 0, color: ACCOUNT_COLORS[0], notes: "" },
+    defaultValues: { name: "", balance: 0, color: ACCOUNT_COLORS[0], notes: "" },
   })
 
   useEffect(() => {
-    if (open) form.reset({ name: "", currency: "PEN", balance: 0, color: ACCOUNT_COLORS[0], notes: "" })
+    if (open) form.reset({ name: "", balance: 0, color: ACCOUNT_COLORS[0], notes: "" })
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedColor = form.watch("color")
 
-  const mutation = useMutation({
-    mutationFn: createAccount,
-    onSuccess: async (account) => {
-      await queryClient.invalidateQueries({ queryKey: ["accounts"] })
-      onCreated(account.id)
-      onOpenChange(false)
-      toast.success("Cuenta creada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo crear la cuenta", { description: error.message })
-    },
-  })
+  const mutation = useCreateAccount()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,7 +55,9 @@ export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: Quic
           noValidate
           onSubmit={(e) => {
             e.stopPropagation()
-            form.handleSubmit((v) => mutation.mutate(v))(e)
+            form.handleSubmit((v) => mutation.mutate(v, {
+              onSuccess: (account) => { onCreated(account.id); onOpenChange(false) },
+            }))(e)
           }}
         >
           <FieldGroup>
@@ -86,34 +72,17 @@ export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: Quic
                 </Field>
               )}
             />
-            <div className="grid grid-cols-2 gap-3">
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="qca-currency">Moneda</FieldLabel>
-                    <NativeSelect {...field} id="qca-currency">
-                      {ACCOUNT_CURRENCIES.map((c) => (
-                        <NativeSelectOption key={c} value={c}>{c}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-              <Controller
-                control={form.control}
-                name="balance"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="qca-balance">Saldo inicial</FieldLabel>
-                    <NumberInput {...field} id="qca-balance" inputMode="decimal" min="0" step="0.01" placeholder="0.00" aria-invalid={fieldState.invalid} />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </div>
+            <Controller
+              control={form.control}
+              name="balance"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="qca-balance">Saldo inicial (PEN)</FieldLabel>
+                  <NumberInput {...field} id="qca-balance" inputMode="decimal" min="0" step="0.01" placeholder="0.00" aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <Controller
               control={form.control}
               name="color"

@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { Loader2Icon, PlusIcon } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -33,7 +31,7 @@ import {
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { updateFixedExpense } from "@/features/fixed-expenses/lib/fixed-expenses-api"
+import { useUpdateFixedExpense } from "@/features/fixed-expenses/hooks/mutations"
 import { AccountSelect } from "@/features/accounts/components/account-select"
 import { CategorySelect } from "@/features/categories/components/category-select"
 import {
@@ -52,7 +50,6 @@ function buildValues(expense: FixedExpense): FixedExpenseValues {
   return {
     description: expense.description,
     amount: expense.amount,
-    currency: expense.currency,
     categoryId: expense.category?.id ?? "",
     frequency: expense.frequency,
     intervalMonths: expense.intervalMonths ?? 2,
@@ -68,8 +65,6 @@ export function EditFixedExpenseDialog({
   open,
   onOpenChange,
 }: EditFixedExpenseDialogProps) {
-  const queryClient = useQueryClient()
-
   const form = useForm<FixedExpenseValues>({
     resolver: zodResolver(fixedExpenseSchema),
     defaultValues: buildValues(expense),
@@ -81,17 +76,7 @@ export function EditFixedExpenseDialog({
 
   const frequency = useWatch({ control: form.control, name: "frequency" })
 
-  const mutation = useMutation({
-    mutationFn: (values: FixedExpenseValues) => updateFixedExpense(expense.id, values),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] })
-      onOpenChange(false)
-      toast.success("Pago recurrente actualizado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo actualizar el pago recurrente", { description: error.message })
-    },
-  })
+  const mutation = useUpdateFixedExpense(expense.id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,7 +93,7 @@ export function EditFixedExpenseDialog({
                 className="flex flex-col gap-5"
                 id="edit-fixed-expense-form"
                 noValidate
-                onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+                onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
               >
                 <FieldGroup>
                   <Controller
@@ -127,42 +112,25 @@ export function EditFixedExpenseDialog({
                       </Field>
                     )}
                   />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Controller
-                      control={form.control}
-                      name="amount"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="efe-amount">Monto estimado</FieldLabel>
-                          <NumberInput
-                            {...field}
-                            aria-invalid={fieldState.invalid}
-                            id="efe-amount"
-                            inputMode="decimal"
-                            min="0"
-                            placeholder="0.00"
-                            step="0.01"
-                          />
-                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      control={form.control}
-                      name="currency"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="efe-currency">Moneda</FieldLabel>
-                          <NativeSelect {...field} aria-invalid={fieldState.invalid} id="efe-currency">
-                            <NativeSelectOption value="PEN">PEN – Soles</NativeSelectOption>
-                            <NativeSelectOption value="USD">USD – Dólares</NativeSelectOption>
-                            <NativeSelectOption value="MXN">MXN – Pesos MX</NativeSelectOption>
-                          </NativeSelect>
-                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                  </div>
+                  <Controller
+                    control={form.control}
+                    name="amount"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="efe-amount">Monto estimado (PEN)</FieldLabel>
+                        <NumberInput
+                          {...field}
+                          aria-invalid={fieldState.invalid}
+                          id="efe-amount"
+                          inputMode="decimal"
+                          min="0"
+                          placeholder="0.00"
+                          step="0.01"
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
                   <Controller
                     control={form.control}
                     name="categoryId"

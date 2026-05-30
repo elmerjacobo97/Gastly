@@ -1,12 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -34,7 +32,7 @@ import {
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { createFixedExpense } from "@/features/fixed-expenses/lib/fixed-expenses-api"
+import { useCreateFixedExpense } from "@/features/fixed-expenses/hooks/mutations"
 import { AccountSelect } from "@/features/accounts/components/account-select"
 import { CategorySelect } from "@/features/categories/components/category-select"
 import {
@@ -46,7 +44,6 @@ function buildDefaultValues(): FixedExpenseValues {
   return {
     description: "",
     amount: 0,
-    currency: "PEN",
     categoryId: "",
     frequency: "monthly",
     intervalMonths: 2,
@@ -59,7 +56,6 @@ function buildDefaultValues(): FixedExpenseValues {
 
 export function CreateFixedExpenseDialog() {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<FixedExpenseValues>({
     resolver: zodResolver(fixedExpenseSchema),
@@ -68,18 +64,7 @@ export function CreateFixedExpenseDialog() {
 
   const frequency = useWatch({ control: form.control, name: "frequency" })
 
-  const mutation = useMutation({
-    mutationFn: createFixedExpense,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] })
-      form.reset(buildDefaultValues())
-      setOpen(false)
-      toast.success("Pago recurrente guardado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo guardar el pago recurrente", { description: error.message })
-    },
-  })
+  const mutation = useCreateFixedExpense()
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -102,7 +87,9 @@ export function CreateFixedExpenseDialog() {
                 className="flex flex-col gap-5"
                 id="create-fixed-expense-form"
                 noValidate
-                onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+                onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+                  onSuccess: () => { form.reset(buildDefaultValues()); setOpen(false) },
+                }))}
               >
                 <FieldGroup>
                   <Controller
@@ -121,42 +108,25 @@ export function CreateFixedExpenseDialog() {
                       </Field>
                     )}
                   />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Controller
-                      control={form.control}
-                      name="amount"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="cfe-amount">Monto estimado</FieldLabel>
-                          <NumberInput
-                            {...field}
-                            aria-invalid={fieldState.invalid}
-                            id="cfe-amount"
-                            inputMode="decimal"
-                            min="0"
-                            placeholder="0.00"
-                            step="0.01"
-                          />
-                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      control={form.control}
-                      name="currency"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="cfe-currency">Moneda</FieldLabel>
-                          <NativeSelect {...field} aria-invalid={fieldState.invalid} id="cfe-currency">
-                            <NativeSelectOption value="PEN">PEN – Soles</NativeSelectOption>
-                            <NativeSelectOption value="USD">USD – Dólares</NativeSelectOption>
-                            <NativeSelectOption value="MXN">MXN – Pesos MX</NativeSelectOption>
-                          </NativeSelect>
-                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                        </Field>
-                      )}
-                    />
-                  </div>
+                  <Controller
+                    control={form.control}
+                    name="amount"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="cfe-amount">Monto estimado (PEN)</FieldLabel>
+                        <NumberInput
+                          {...field}
+                          aria-invalid={fieldState.invalid}
+                          id="cfe-amount"
+                          inputMode="decimal"
+                          min="0"
+                          placeholder="0.00"
+                          step="0.01"
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
                   <Controller
                     control={form.control}
                     name="categoryId"

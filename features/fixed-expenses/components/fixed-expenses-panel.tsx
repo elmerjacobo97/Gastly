@@ -1,7 +1,6 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import {
@@ -23,7 +22,6 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import {
   Alert,
@@ -84,20 +82,20 @@ import { CategoryIconBadge } from "@/features/categories/components/category-ico
 import { CreateFixedExpenseDialog } from "@/features/fixed-expenses/components/create-fixed-expense-dialog"
 import { EditFixedExpenseDialog } from "@/features/fixed-expenses/components/edit-fixed-expense-dialog"
 import {
-  deleteFixedExpense,
-  getFixedExpenseHistory,
-  getFixedExpenses,
-  registerFixedExpensePayment,
-  setFixedExpenseActive,
   type PaymentHistoryEntry,
 } from "@/features/fixed-expenses/lib/fixed-expenses-api"
+import { useFixedExpenses, useFixedExpenseHistory } from "@/features/fixed-expenses/hooks/queries"
+import {
+  useDeleteFixedExpense,
+  useSetFixedExpenseActive,
+  useRegisterFixedExpensePayment,
+} from "@/features/fixed-expenses/hooks/mutations"
 import {
   fixedExpensePaymentSchema,
   type FixedExpensePaymentValues,
 } from "@/features/fixed-expenses/schemas/fixed-expense-schemas"
 import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
 import { MonthNav } from "@/components/month-nav"
-import { SummaryCard } from "@/components/summary-card"
 import {
   formatCurrency,
   formatDate,
@@ -107,36 +105,6 @@ import { cn } from "@/lib/utils"
 function isRelevantForMonth(expense: FixedExpense, monthKey: string) {
   if (expense.frequency === "monthly") return true
   return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
-}
-
-function groupByCurrency(items: { amount: number; currency: string }[]): Map<string, number> {
-  const map = new Map<string, number>()
-  for (const item of items) {
-    map.set(item.currency, (map.get(item.currency) ?? 0) + item.amount)
-  }
-  return map
-}
-
-function formatCurrencyGroup(map: Map<string, number>): string {
-  if (map.size === 0) return formatCurrency(0)
-  return [...map.entries()]
-    .map(([currency, total]) => formatCurrency(total, currency))
-    .join(" · ")
-}
-
-function CurrencyGroupDisplay({ map }: { map: Map<string, number> }) {
-  if (map.size === 0) {
-    return <span className="text-lg font-semibold tabular-nums">{formatCurrency(0)}</span>
-  }
-  return (
-    <div className="flex flex-col gap-0.5">
-      {[...map.entries()].map(([currency, total]) => (
-        <p key={currency} className="text-sm font-semibold tabular-nums">
-          {formatCurrency(total, currency)}
-        </p>
-      ))}
-    </div>
-  )
 }
 
 function formatFrequency(expense: FixedExpense) {
@@ -349,11 +317,7 @@ function PaymentHistoryDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const historyQuery = useQuery({
-    queryKey: ["fixed-expense-history", expense?.id],
-    queryFn: () => getFixedExpenseHistory(expense!.id),
-    enabled: open && !!expense,
-  })
+  const historyQuery = useFixedExpenseHistory(expense?.id, open && !!expense)
 
   const entries: PaymentHistoryEntry[] = historyQuery.data ?? []
   const total = entries.reduce((sum, e) => sum + e.amount, 0)
@@ -392,7 +356,7 @@ function PaymentHistoryDialog({
                       <p className="text-sm font-medium capitalize">
                         {format(new Date(`${entry.occurredOn}T12:00:00`), "MMMM yyyy", { locale: es })}
                       </p>
-                      <p className="text-xs text-muted-foreground">{formatDate(entry.occurredOn)}</p>
+                      <p className="truncate text-xs text-muted-foreground">{formatDate(entry.occurredOn)}</p>
                       {entry.notes && (
                         <p className="mt-0.5 text-xs text-muted-foreground italic">{entry.notes}</p>
                       )}
@@ -423,76 +387,22 @@ export function FixedExpensesPanel() {
   const [payOpen, setPayOpen] = useState(false)
   const [historyExpense, setHistoryExpense] = useState<FixedExpense | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const queryClient = useQueryClient()
 
-  const query = useQuery({
-    queryKey: ["fixed-expenses", format(month, "yyyy-MM")],
-    queryFn: () => getFixedExpenses(month),
-  })
-
-  const invalidate = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] }),
-      queryClient.invalidateQueries({ queryKey: ["fixed-expense-history"] }),
-      queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-      queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
-      queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
-      queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
-      queryClient.invalidateQueries({ queryKey: ["budgets"] }),
-      queryClient.invalidateQueries({ queryKey: ["accounts"] }),
-    ])
-  }
-
-  const registerMutation = useMutation({
-    mutationFn: (values: FixedExpensePaymentValues) =>
-      registerFixedExpensePayment(payExpense!, values),
-    onSuccess: async () => {
-      setPayOpen(false)
-      await invalidate()
-      toast.success("Pago registrado como transacción")
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar el pago", { description: error.message })
-    },
-  })
-
-  const activeMutation = useMutation({
-    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-      setFixedExpenseActive(id, active),
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] })
-      toast.success(variables.active ? "Gasto fijo activado" : "Gasto fijo pausado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo actualizar el estado", { description: error.message })
-    },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteFixedExpense,
-    onSuccess: async () => {
-      setDeleteId(null)
-      await queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] })
-      toast.success("Gasto fijo eliminado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo eliminar el gasto fijo", { description: error.message })
-    },
-  })
+  const query = useFixedExpenses(month)
+  const registerMutation = useRegisterFixedExpensePayment(payExpense)
+  const activeMutation = useSetFixedExpenseActive()
+  const deleteMutation = useDeleteFixedExpense()
 
   const expenses = query.data ?? []
   const monthKey = format(month, "yyyy-MM")
   const activeExpenses = expenses.filter(
     (expense) => expense.isActive && isRelevantForMonth(expense, monthKey)
   )
-  const committedGrouped = groupByCurrency(activeExpenses.map((e) => ({ amount: e.amount, currency: e.currency })))
+  const totalCommitted = activeExpenses.reduce((sum, e) => sum + e.amount, 0)
   const paidExpenses = activeExpenses.filter((e) => e.paidOn)
-  const paidGrouped = groupByCurrency(paidExpenses.map((e) => ({ amount: e.paidAmount ?? e.amount, currency: e.currency })))
-  const pendingGrouped = new Map<string, number>()
-  for (const [currency, committed] of committedGrouped) {
-    const pending = Math.max(committed - (paidGrouped.get(currency) ?? 0), 0)
-    if (pending > 0) pendingGrouped.set(currency, pending)
-  }
+  const totalPaid = paidExpenses.reduce((sum, e) => sum + (e.paidAmount ?? e.amount), 0)
+  const totalPending = Math.max(totalCommitted - totalPaid, 0)
+  const allPaid = totalPending === 0
 
   const todayStr = format(new Date(), "yyyy-MM-dd")
   const unpaidActive = activeExpenses.filter((e) => !e.paidOn)
@@ -533,16 +443,41 @@ export function FixedExpensesPanel() {
       </section>
 
       {!query.isLoading && expenses.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SummaryCard
-            title="Programado este mes"
-            value={<CurrencyGroupDisplay map={committedGrouped} />}
-            description={pendingGrouped.size === 0 ? "todo pagado" : undefined}
-            icon={CalendarIcon}
-            variant={pendingGrouped.size === 0 ? "positive" : "default"}
-          />
-          <SummaryCard title="Pagado este mes" value={<CurrencyGroupDisplay map={paidGrouped} />} icon={CheckCircle2Icon} variant="positive" />
-          <SummaryCard title="Falta pagar este mes" value={<CurrencyGroupDisplay map={pendingGrouped} />} icon={ClockIcon} variant="warning" />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${allPaid ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted/50 text-muted-foreground"}`}>
+              <CalendarIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Programado este mes</p>
+              {allPaid && <p className="truncate text-xs text-muted-foreground">todo pagado</p>}
+            </div>
+            <p className={`text-lg font-semibold tabular-nums ${allPaid ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
+              {formatCurrency(totalCommitted)}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2Icon className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Pagado este mes</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(totalPaid)}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <ClockIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Falta pagar este mes</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+              {formatCurrency(totalPending)}
+            </p>
+          </div>
         </div>
       )}
 
@@ -573,7 +508,7 @@ export function FixedExpensesPanel() {
               </AlertTitle>
               <AlertDescription>
                 {soonExpenses.length === 1
-                  ? formatCurrency(soonExpenses[0].amount, soonExpenses[0].currency)
+                  ? formatCurrency(soonExpenses[0].amount)
                   : soonExpenses
                       .map((e) => `${e.description} (${daysLabel(e.nextDueOn)})`)
                       .join(", ")}
@@ -621,7 +556,7 @@ export function FixedExpensesPanel() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="truncate text-sm font-medium">{expense.description}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground">
                         {expense.paidOn
                           ? `Pagado el ${formatDate(expense.paidOn)}`
                           : `Vence el ${formatDate(expense.nextDueOn)}`}
@@ -637,7 +572,7 @@ export function FixedExpensesPanel() {
                       </p>
                     </div>
                     <p className="shrink-0 text-sm font-semibold tabular-nums">
-                      {formatCurrency(expense.paidAmount ?? expense.amount, expense.currency)}
+                      {formatCurrency(expense.paidAmount ?? expense.amount)}
                     </p>
                     <Badge variant={badge.variant} className={cn("shrink-0 hidden sm:inline-flex", badge.className)}>
                       {badge.label}
@@ -725,7 +660,7 @@ export function FixedExpensesPanel() {
         open={payOpen}
         pending={registerMutation.isPending}
         onOpenChange={(open) => setPayOpen(open)}
-        onSubmit={(values) => registerMutation.mutate(values)}
+        onSubmit={(values) => registerMutation.mutate(values, { onSuccess: () => setPayOpen(false) })}
       />
       <ConfirmDialog
         open={!!deleteId}
@@ -733,7 +668,7 @@ export function FixedExpensesPanel() {
         title="Eliminar gasto fijo"
         description="Esta acción no elimina transacciones ya registradas, solo el gasto fijo recurrente."
         confirmLabel="Eliminar"
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
       <PaymentHistoryDialog
         expense={historyExpense}

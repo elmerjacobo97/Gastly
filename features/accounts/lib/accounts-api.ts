@@ -1,11 +1,10 @@
 import { createClient } from "@/lib/supabase/browser"
-import { type Account, type AccountTransfer, type AccountCurrency } from "@/features/accounts/types/account-types"
+import { type Account, type AccountTransfer } from "@/features/accounts/types/account-types"
 import { type AccountValues, type TransferValues } from "@/features/accounts/schemas/account-schemas"
 
 type AccountRow = {
   id: string
   name: string
-  currency: AccountCurrency
   balance: string | number
   color: string
   notes: string | null
@@ -16,19 +15,17 @@ type TransferRow = {
   id: string
   from_account_id: string
   to_account_id: string
-  from_amount: string | number
-  to_amount: string | number
+  amount: string | number
   occurred_on: string
   notes: string | null
-  from_account: { name: string; currency: AccountCurrency } | null
-  to_account: { name: string; currency: AccountCurrency } | null
+  from_account: { name: string } | null
+  to_account: { name: string } | null
 }
 
 function mapAccount(row: AccountRow): Account {
   return {
     id: row.id,
     name: row.name,
-    currency: row.currency,
     balance: Number(row.balance),
     color: row.color,
     notes: row.notes,
@@ -41,12 +38,9 @@ function mapTransfer(row: TransferRow): AccountTransfer {
     id: row.id,
     fromAccountId: row.from_account_id,
     fromAccountName: row.from_account?.name ?? "",
-    fromCurrency: row.from_account?.currency ?? "PEN",
     toAccountId: row.to_account_id,
     toAccountName: row.to_account?.name ?? "",
-    toCurrency: row.to_account?.currency ?? "PEN",
-    fromAmount: Number(row.from_amount),
-    toAmount: Number(row.to_amount),
+    amount: Number(row.amount),
     occurredOn: row.occurred_on,
     notes: row.notes,
   }
@@ -56,7 +50,7 @@ export async function getAccounts(): Promise<Account[]> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from("accounts")
-    .select("id, name, currency, balance, color, notes, created_at")
+    .select("id, name, balance, color, notes, created_at")
     .order("created_at", { ascending: true })
     .returns<AccountRow[]>()
   if (error) throw new Error(error.message)
@@ -73,12 +67,11 @@ export async function createAccount(values: AccountValues): Promise<Account> {
     .insert({
       user_id: user.id,
       name: values.name,
-      currency: values.currency,
       balance: values.balance,
       color: values.color,
       notes: values.notes || null,
     })
-    .select("id, name, currency, balance, color, notes, created_at")
+    .select("id, name, balance, color, notes, created_at")
     .single()
   if (error) throw new Error(error.message)
   return mapAccount(data as AccountRow)
@@ -90,7 +83,6 @@ export async function updateAccount(id: string, values: AccountValues): Promise<
     .from("accounts")
     .update({
       name: values.name,
-      currency: values.currency,
       balance: values.balance,
       color: values.color,
       notes: values.notes || null,
@@ -111,9 +103,9 @@ export async function getAccountTransfers(accountId?: string): Promise<AccountTr
   let query = supabase
     .from("account_transfers")
     .select(`
-      id, from_account_id, to_account_id, from_amount, to_amount, occurred_on, notes,
-      from_account:accounts!from_account_id(name, currency),
-      to_account:accounts!to_account_id(name, currency)
+      id, from_account_id, to_account_id, amount, occurred_on, notes,
+      from_account:accounts!from_account_id(name),
+      to_account:accounts!to_account_id(name)
     `)
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })
@@ -138,8 +130,7 @@ export async function createTransfer(values: TransferValues): Promise<void> {
       user_id: user.id,
       from_account_id: values.fromAccountId,
       to_account_id: values.toAccountId,
-      from_amount: values.fromAmount,
-      to_amount: values.toAmount,
+      amount: values.amount,
       occurred_on: values.occurredOn,
       notes: values.notes || null,
     })
@@ -160,13 +151,13 @@ export async function createTransfer(values: TransferValues): Promise<void> {
   if (fromAccount.data) {
     await supabase
       .from("accounts")
-      .update({ balance: Number(fromAccount.data.balance) - values.fromAmount, updated_at: new Date().toISOString() })
+      .update({ balance: Number(fromAccount.data.balance) - values.amount, updated_at: new Date().toISOString() })
       .eq("id", values.fromAccountId)
   }
   if (toAccount.data) {
     await supabase
       .from("accounts")
-      .update({ balance: Number(toAccount.data.balance) + values.toAmount, updated_at: new Date().toISOString() })
+      .update({ balance: Number(toAccount.data.balance) + values.amount, updated_at: new Date().toISOString() })
       .eq("id", values.toAccountId)
   }
 }

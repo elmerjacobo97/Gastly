@@ -1,11 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,13 +18,11 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { createAccount } from "@/features/accounts/lib/accounts-api"
+import { useCreateAccount } from "@/features/accounts/hooks/mutations"
 import {
   ACCOUNT_COLORS,
-  ACCOUNT_CURRENCIES,
   accountSchema,
   type AccountValues,
 } from "@/features/accounts/schemas/account-schemas"
@@ -34,7 +30,6 @@ import { cn } from "@/lib/utils"
 
 const EMPTY_DEFAULTS: AccountValues = {
   name: "",
-  currency: "PEN",
   balance: 0,
   color: "#3b82f6",
   notes: "",
@@ -42,7 +37,6 @@ const EMPTY_DEFAULTS: AccountValues = {
 
 export function CreateAccountDialog() {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<AccountValues>({
     resolver: zodResolver(accountSchema),
@@ -51,18 +45,7 @@ export function CreateAccountDialog() {
 
   const selectedColor = useWatch({ control: form.control, name: "color" })
 
-  const mutation = useMutation({
-    mutationFn: createAccount,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["accounts"] })
-      form.reset(EMPTY_DEFAULTS)
-      setOpen(false)
-      toast.success("Cuenta creada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo crear la cuenta", { description: error.message })
-    },
-  })
+  const mutation = useCreateAccount()
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -83,7 +66,9 @@ export function CreateAccountDialog() {
           id="create-account-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+            onSuccess: () => { form.reset(EMPTY_DEFAULTS); setOpen(false) },
+          }))}
         >
           <FieldGroup>
             <Controller
@@ -103,42 +88,25 @@ export function CreateAccountDialog() {
                 </Field>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ca-currency">Moneda</FieldLabel>
-                    <NativeSelect {...field} id="ca-currency" className="w-full">
-                      {ACCOUNT_CURRENCIES.map((c) => (
-                        <NativeSelectOption key={c} value={c}>{c}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-              <Controller
-                control={form.control}
-                name="balance"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ca-balance">Saldo actual</FieldLabel>
-                    <NumberInput
-                      {...field}
-                      id="ca-balance"
-                      aria-invalid={fieldState.invalid}
-                      inputMode="decimal"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </div>
+            <Controller
+              control={form.control}
+              name="balance"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="ca-balance">Saldo actual (PEN)</FieldLabel>
+                  <NumberInput
+                    {...field}
+                    id="ca-balance"
+                    aria-invalid={fieldState.invalid}
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <Controller
               control={form.control}
               name="color"

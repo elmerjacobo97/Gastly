@@ -1,6 +1,5 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   MoreHorizontalIcon,
   PencilIcon,
@@ -8,7 +7,6 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -38,10 +36,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog"
 import { EditCategoryDialog } from "@/features/categories/components/edit-category-dialog"
-import {
-  deleteCategory,
-  getCategories,
-} from "@/features/categories/lib/categories-api"
+import { useCategories } from "@/features/categories/hooks/queries"
+import { useDeleteCategory } from "@/features/categories/hooks/mutations"
 import { type Category } from "@/features/categories/types/category-types"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 
@@ -57,27 +53,9 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
   const [editCategory, setEditCategory] = useState<Category | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const queryClient = useQueryClient()
 
-  const categoriesQuery = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => getCategories(),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteCategory,
-    onSuccess: async () => {
-      setDeleteId(null)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-      ])
-      toast.success("Categoría eliminada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo eliminar la categoría", { description: error.message })
-    },
-  })
+  const categoriesQuery = useCategories()
+  const deleteMutation = useDeleteCategory()
 
   const categories = categoriesQuery.data ?? []
   const filtered =
@@ -203,7 +181,7 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará esta categoría. Las transacciones asociadas quedarán sin categoría."
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
     </Wrapper>
   )

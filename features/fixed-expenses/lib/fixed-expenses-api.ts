@@ -10,7 +10,6 @@ import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense
 type FixedExpenseRow = {
   id: string
   amount: number | string
-  currency: string
   description: string
   frequency: "monthly" | "custom_months" | "yearly"
   interval_months: number
@@ -43,7 +42,6 @@ function mapFixedExpense(
   return {
     id: row.id,
     amount: Number(row.amount),
-    currency: row.currency,
     description: row.description,
     frequency: row.frequency,
     intervalMonths: row.interval_months,
@@ -95,7 +93,6 @@ export async function getFixedExpenses(month?: Date) {
       `
       id,
       amount,
-      currency,
       description,
       frequency,
       interval_months,
@@ -153,7 +150,6 @@ export async function createFixedExpense(values: FixedExpenseValues) {
     user_id: userId,
     category_id: values.categoryId,
     amount: values.amount,
-    currency: values.currency,
     description: values.description,
     frequency: values.frequency,
     interval_months: values.frequency === "custom_months" ? values.intervalMonths : values.frequency === "yearly" ? 12 : 1,
@@ -177,7 +173,6 @@ export async function updateFixedExpense(id: string, values: FixedExpenseValues)
     .update({
       category_id: values.categoryId,
       amount: values.amount,
-      currency: values.currency,
       description: values.description,
       frequency: values.frequency,
       interval_months: values.frequency === "custom_months" ? values.intervalMonths : values.frequency === "yearly" ? 12 : 1,
@@ -257,7 +252,6 @@ export async function registerFixedExpensePayment(
     recurring_expense_id: expense.id,
     type: "expense",
     amount: values.amount,
-    currency: expense.currency,
     description: expense.description,
     occurred_on: values.occurredOn,
     notes: values.notes || expense.notes,

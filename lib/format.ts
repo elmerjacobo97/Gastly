@@ -1,7 +1,7 @@
-export function formatCurrency(value: number, currency = "PEN") {
+export function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-PE", {
     style: "currency",
-    currency,
+    currency: "PEN",
   }).format(value)
 }
 

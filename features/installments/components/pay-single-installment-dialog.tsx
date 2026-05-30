@@ -1,10 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2Icon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { DatePicker } from '@/components/ui/date-picker';
-import { payMonthInstallments } from '@/features/installments/lib/installments-api';
+import { usePaySingleInstallment } from '@/features/installments/hooks/mutations';
 import { payInstallmentsSchema, type PayInstallmentsValues } from '@/features/installments/schemas/installment-schemas';
 import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
 import { formatCurrency } from '@/lib/format';
@@ -31,32 +29,12 @@ type PaySingleInstallmentDialogProps = {
 };
 
 export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChange }: PaySingleInstallmentDialogProps) {
-  const queryClient = useQueryClient();
-
   const form = useForm<PayInstallmentsValues>({
     resolver: zodResolver(payInstallmentsSchema),
     defaultValues: { occurredOn: payment.dueOn },
   });
 
-  const mutation = useMutation({
-    mutationFn: ({ occurredOn }: PayInstallmentsValues) => payMonthInstallments([{ payment, purchase }], occurredOn),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['installments'] }),
-        queryClient.invalidateQueries({ queryKey: ['transactions'] }),
-        queryClient.invalidateQueries({ queryKey: ['monthly-totals'] }),
-        queryClient.invalidateQueries({ queryKey: ['category-totals'] }),
-        queryClient.invalidateQueries({ queryKey: ['report-transactions'] }),
-        queryClient.invalidateQueries({ queryKey: ['accounts'] }),
-      ]);
-      form.reset({ occurredOn: payment.dueOn });
-      onOpenChange(false);
-      toast.success('Cuota registrada como gasto');
-    },
-    onError: (error) => {
-      toast.error('No se pudo registrar el pago', { description: error.message });
-    },
-  });
+  const mutation = usePaySingleInstallment(payment, purchase);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,7 +46,7 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
             {formatCurrency(payment.amount)}
           </DialogDescription>
         </DialogHeader>
-        <form id="pay-single-installment-form" noValidate onSubmit={form.handleSubmit((v) => mutation.mutate(v))}>
+        <form id="pay-single-installment-form" noValidate onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => { form.reset({ occurredOn: payment.dueOn }); onOpenChange(false); } }))}>
           <FieldGroup>
             <Controller
               control={form.control}

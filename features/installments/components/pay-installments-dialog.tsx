@@ -1,13 +1,11 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Loader2Icon, WalletCardsIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,7 +31,7 @@ import {
   payInstallmentsSchema,
   type PayInstallmentsValues,
 } from "@/features/installments/schemas/installment-schemas"
-import { payMonthInstallments } from "@/features/installments/lib/installments-api"
+import { usePayMonthInstallments } from "@/features/installments/hooks/mutations"
 import {
   type InstallmentPayment,
   type InstallmentPurchase,
@@ -54,7 +52,6 @@ function getDefaultPaymentDate(month: Date): string {
 
 export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogProps) {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
 
   const form = useForm<PayInstallmentsValues>({
     resolver: zodResolver(payInstallmentsSchema),
@@ -64,26 +61,7 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
   const total = pending.reduce((s, { payment }) => s + payment.amount, 0)
 
-  const mutation = useMutation({
-    mutationFn: ({ occurredOn }: PayInstallmentsValues) =>
-      payMonthInstallments(pending, occurredOn),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["installments"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["monthly-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
-        queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["accounts"] }),
-      ])
-      form.reset({ occurredOn: getDefaultPaymentDate(month) })
-      setOpen(false)
-      toast.success(`${pending.length} cuota${pending.length !== 1 ? "s" : ""} registrada${pending.length !== 1 ? "s" : ""} como gasto`)
-    },
-    onError: (error) => {
-      toast.error("No se pudo registrar el pago", { description: error.message })
-    },
-  })
+  const mutation = usePayMonthInstallments(pending)
 
   if (pending.length === 0) return null
 
@@ -136,7 +114,9 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
               id="pay-installments-form"
               className="mt-5"
               noValidate
-              onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+              onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
+                onSuccess: () => { form.reset({ occurredOn: getDefaultPaymentDate(month) }); setOpen(false) },
+              }))}
             >
               <FieldGroup>
                 <Controller

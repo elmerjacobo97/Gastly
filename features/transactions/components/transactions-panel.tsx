@@ -1,24 +1,21 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
 import { Badge } from "@/components/ui/badge"
-import { getUserSettings } from "@/features/settings/lib/user-settings-api"
-import { getFixedExpenses } from "@/features/fixed-expenses/lib/fixed-expenses-api"
+import { useUserSettings } from "@/features/settings/hooks/queries"
+import { useFixedExpenses } from "@/features/fixed-expenses/hooks/queries"
 import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
+import { DashboardCharts } from "@/features/transactions/components/dashboard-charts"
+import { DashboardSummaryCards } from "@/features/transactions/components/dashboard-summary-cards"
+import { UpcomingPaymentsCard } from "@/features/transactions/components/upcoming-payments-card"
+import { computeSummary } from "@/features/transactions/lib/transactions-api"
 import {
-  getCategoryTotals,
-  getMonthlyTotals,
-} from "@/features/transactions/lib/charts-api"
-import { DashboardCharts } from "@/features/transactions/components/dashboard/dashboard-charts"
-import { DashboardSummaryCards } from "@/features/transactions/components/dashboard/dashboard-summary-cards"
-import { UpcomingPaymentsCard } from "@/features/transactions/components/dashboard/upcoming-payments-card"
-import {
-  computeSummary,
-  getTransactions,
-} from "@/features/transactions/lib/transactions-api"
+  useTransactions,
+  useMonthlyTotals,
+  useCategoryTotals,
+} from "@/features/transactions/hooks/queries"
 
 type TransactionsPanelProps = {
   userEmail?: string
@@ -48,26 +45,11 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
   const monthLabel = format(today, "MMMM yyyy", { locale: es })
   const displayName = userName || userEmail?.split("@")[0] || "Usuario"
 
-  const transactionsQuery = useQuery({
-    queryKey: ["transactions", monthKey],
-    queryFn: () => getTransactions({ month: today }),
-  })
-  const settingsQuery = useQuery({
-    queryKey: ["user-settings"],
-    queryFn: getUserSettings,
-  })
-  const fixedExpensesQuery = useQuery({
-    queryKey: ["fixed-expenses", monthKey],
-    queryFn: () => getFixedExpenses(today),
-  })
-  const monthlyQuery = useQuery({
-    queryKey: ["monthly-totals"],
-    queryFn: () => getMonthlyTotals(6),
-  })
-  const categoryQuery = useQuery({
-    queryKey: ["category-totals", monthKey],
-    queryFn: () => getCategoryTotals(today),
-  })
+  const transactionsQuery = useTransactions({ month: today })
+  const settingsQuery = useUserSettings()
+  const fixedExpensesQuery = useFixedExpenses(today)
+  const monthlyQuery = useMonthlyTotals(6)
+  const categoryQuery = useCategoryTotals(today)
 
   const transactions = transactionsQuery.data ?? []
   const summary = computeSummary(transactions)
@@ -76,11 +58,10 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
   )
   const savingsPct = settingsQuery.data?.savingsPercentage ?? 20
   const savings = Math.round((summary.income * savingsPct) / 100 * 100) / 100
-  const recurringPen = recurringPayments.filter((e) => e.currency === "PEN")
-  const recurringEstimated = recurringPen.reduce((sum, expense) => {
+  const recurringEstimated = recurringPayments.reduce((sum, expense) => {
     return sum + (expense.paidAmount ?? expense.amount)
   }, 0)
-  const recurringPaid = recurringPen.reduce((sum, expense) => {
+  const recurringPaid = recurringPayments.reduce((sum, expense) => {
     return sum + (expense.paidAmount ?? 0)
   }, 0)
   const availableAfterSavings = Math.max(summary.income - savings, 0)
@@ -125,7 +106,7 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
         availableForVariable={availableForVariable}
         savings={savings}
         recurringEstimated={recurringEstimated}
-        recurringPaymentCount={recurringPen.length}
+        recurringPaymentCount={recurringPayments.length}
         availableAfterSavings={availableAfterSavings}
         variableSpent={variableSpent}
         usage={usage}

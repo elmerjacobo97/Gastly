@@ -1,11 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -30,7 +28,7 @@ import {
   CategoryIcon,
   categoryIconOptions,
 } from "@/features/categories/components/category-icon"
-import { createCategory } from "@/features/categories/lib/categories-api"
+import { useCreateCategory } from "@/features/categories/hooks/mutations"
 import {
   type CategoryValues,
   categorySchema,
@@ -74,8 +72,6 @@ export function QuickCreateCategoryDialog({
   initialName = "",
   onCreated,
 }: QuickCreateCategoryDialogProps) {
-  const queryClient = useQueryClient()
-
   const form = useForm<CategoryValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: { name: initialName, type: defaultType, color: "blue", icon: "tag" },
@@ -90,22 +86,7 @@ export function QuickCreateCategoryDialog({
   const selectedColor = useWatch({ control: form.control, name: "color" })
   const selectedIcon = useWatch({ control: form.control, name: "icon" })
 
-  const mutation = useMutation({
-    mutationFn: createCategory,
-    onSuccess: async (data, values) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
-        queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
-      ])
-      onCreated(data.id, values.name)
-      onOpenChange(false)
-      toast.success("Categoría creada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo crear la categoría", { description: error.message })
-    },
-  })
+  const mutation = useCreateCategory()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,7 +105,9 @@ export function QuickCreateCategoryDialog({
               noValidate
               onSubmit={(e) => {
                 e.stopPropagation()
-                form.handleSubmit((v) => mutation.mutate(v))(e)
+                form.handleSubmit((v) => mutation.mutate(v, {
+                  onSuccess: (data, values) => { onCreated(data.id, values.name); onOpenChange(false) },
+                }))(e)
               }}
             >
               <FieldGroup>

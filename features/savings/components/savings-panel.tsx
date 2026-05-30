@@ -1,6 +1,5 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { differenceInMonths, format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import {
@@ -13,7 +12,6 @@ import {
   TrendingUpIcon,
 } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,11 +39,11 @@ import {
 } from "@/components/ui/empty"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { SummaryCard } from "@/components/summary-card"
 import { AddContributionDialog } from "@/features/savings/components/add-contribution-dialog"
 import { CreateGoalDialog } from "@/features/savings/components/create-goal-dialog"
 import { EditGoalDialog } from "@/features/savings/components/edit-goal-dialog"
-import { deleteSavingsGoal, getSavingsGoals } from "@/features/savings/lib/savings-api"
+import { useSavingsGoals } from "@/features/savings/hooks/queries"
+import { useDeleteSavingsGoal } from "@/features/savings/hooks/mutations"
 import { type SavingsGoal } from "@/features/savings/types/savings-types"
 import { formatCurrency, formatDate } from "@/lib/format"
 
@@ -197,24 +195,9 @@ function GoalSkeleton() {
 export function SavingsPanel() {
   const [editGoal, setEditGoal] = useState<SavingsGoal | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const queryClient = useQueryClient()
 
-  const query = useQuery({
-    queryKey: ["savings-goals"],
-    queryFn: getSavingsGoals,
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteSavingsGoal,
-    onSuccess: async () => {
-      setDeleteId(null)
-      await queryClient.invalidateQueries({ queryKey: ["savings-goals"] })
-      toast.success("Meta eliminada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo eliminar la meta", { description: error.message })
-    },
-  })
+  const query = useSavingsGoals()
+  const deleteMutation = useDeleteSavingsGoal()
 
   const goals = query.data ?? []
   const active = goals.filter((g) => !g.isCompleted)
@@ -240,33 +223,42 @@ export function SavingsPanel() {
 
       {(query.isLoading || goals.length > 0) && (
         <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryCard
-            title="Metas activas"
-            value={query.isLoading ? <Skeleton className="h-6 w-12" /> : active.length}
-            description={`${completed.length} completada${completed.length !== 1 ? "s" : ""}`}
-            icon={TargetIcon}
-          />
-          <SummaryCard
-            title="Total ahorrado"
-            value={query.isLoading ? <Skeleton className="h-6 w-28" /> : formatCurrency(totalSaved)}
-            description={`de ${query.isLoading ? "—" : formatCurrency(totalTarget)}`}
-            icon={PiggyBankIcon}
-            variant="positive"
-          />
-          <SummaryCard
-            title="Progreso global"
-            value={
-              query.isLoading ? (
-                <Skeleton className="h-6 w-16" />
-              ) : (
-                <div>
-                  <span>{overallProgress}%</span>
-                  <Progress value={overallProgress} className="mt-1.5 h-1.5" />
-                </div>
-              )
-            }
-            icon={TrendingUpIcon}
-          />
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted/50 text-muted-foreground">
+              <TargetIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Metas activas</p>
+              <p className="truncate text-xs text-muted-foreground">{completed.length} completada{completed.length !== 1 ? "s" : ""}</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-foreground">
+              {query.isLoading ? <Skeleton className="h-6 w-12" /> : active.length}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <PiggyBankIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Total ahorrado</p>
+              <p className="truncate text-xs text-muted-foreground">de {query.isLoading ? "—" : formatCurrency(totalTarget)}</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {query.isLoading ? <Skeleton className="h-6 w-28" /> : formatCurrency(totalSaved)}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted/50 text-muted-foreground">
+              <TrendingUpIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Progreso global</p>
+              {!query.isLoading && <Progress value={overallProgress} className="mt-1 h-1.5" />}
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-foreground">
+              {query.isLoading ? <Skeleton className="h-6 w-16" /> : `${overallProgress}%`}
+            </p>
+          </div>
         </div>
       )}
 
@@ -335,7 +327,7 @@ export function SavingsPanel() {
         open={!!deleteId}
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará esta meta permanentemente junto con su progreso."
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
     </main>
   )

@@ -1,6 +1,5 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import {
@@ -12,7 +11,6 @@ import {
   WalletIcon,
 } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -48,26 +46,22 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
-import { SummaryCard } from "@/components/summary-card"
 import { CreateAccountDialog } from "@/features/accounts/components/create-account-dialog"
 import { EditAccountDialog } from "@/features/accounts/components/edit-account-dialog"
 import { TransferDialog } from "@/features/accounts/components/transfer-dialog"
-import { deleteAccount, getAccountTransfers, getAccounts } from "@/features/accounts/lib/accounts-api"
-import { type Account, type AccountCurrency, type AccountTransfer } from "@/features/accounts/types/account-types"
+import { useAccounts, useAccountTransfers } from "@/features/accounts/hooks/queries"
+import { useDeleteAccount } from "@/features/accounts/hooks/mutations"
+import { type Account, type AccountTransfer } from "@/features/accounts/types/account-types"
 import { formatCurrency, formatDate } from "@/lib/format"
-
-const CURRENCY_ORDER: AccountCurrency[] = ["PEN", "USD", "MXN"]
+import { cn } from "@/lib/utils"
 
 function exportTransfersCSV(transfers: AccountTransfer[], filename: string) {
-  const headers = ["Fecha", "Origen", "Destino", "Monto enviado", "Moneda origen", "Monto recibido", "Moneda destino", "Notas"]
+  const headers = ["Fecha", "Origen", "Destino", "Monto", "Notas"]
   const rows = transfers.map((t) => [
     t.occurredOn,
     t.fromAccountName,
     t.toAccountName,
-    t.fromAmount.toString(),
-    t.fromCurrency,
-    t.toAmount.toString(),
-    t.toCurrency,
+    t.amount.toString(),
     t.notes ?? "",
   ])
   const csvContent = [headers, ...rows]
@@ -84,42 +78,22 @@ function exportTransfersCSV(transfers: AccountTransfer[], filename: string) {
   URL.revokeObjectURL(url)
 }
 
-
 export function AccountsPanel() {
   const [editAccount, setEditAccount] = useState<Account | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [transferFromId, setTransferFromId] = useState<string | undefined>(undefined)
   const [transferOpen, setTransferOpen] = useState(false)
   const [csvConfirmOpen, setCsvConfirmOpen] = useState(false)
-  const queryClient = useQueryClient()
 
-  const { data: accounts = [], isLoading } = useQuery({
-    queryKey: ["accounts"],
-    queryFn: getAccounts,
-  })
+  const { data: accounts = [], isLoading } = useAccounts()
+  const { data: transfers = [] } = useAccountTransfers(accounts.length > 0)
+  const deleteMutation = useDeleteAccount()
 
-  const { data: transfers = [] } = useQuery({
-    queryKey: ["account-transfers"],
-    queryFn: () => getAccountTransfers(),
-    enabled: accounts.length > 0,
-  })
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id, { onSuccess: () => setDeleteId(null) })
+  }
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteAccount,
-    onSuccess: async () => {
-      setDeleteId(null)
-      await queryClient.invalidateQueries({ queryKey: ["accounts"] })
-      toast.success("Cuenta eliminada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo eliminar la cuenta", { description: error.message })
-    },
-  })
-
-  const totalByAll = CURRENCY_ORDER.map((currency) => {
-    const total = accounts.filter((a) => a.currency === currency).reduce((s, a) => s + a.balance, 0)
-    return { currency, total }
-  }).filter((x) => x.total > 0)
+  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0)
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -133,20 +107,18 @@ export function AccountsPanel() {
         <CreateAccountDialog />
       </section>
 
-      {!isLoading && totalByAll.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {totalByAll.map(({ currency, total }) => {
-            const count = accounts.filter((a) => a.currency === currency).length
-            return (
-              <SummaryCard
-                key={currency}
-                title={`Total en ${currency}`}
-                value={formatCurrency(total, currency)}
-                description={`${count} cuenta${count !== 1 ? "s" : ""}`}
-                icon={WalletIcon}
-              />
-            )
-          })}
+      {!isLoading && accounts.length > 0 && (
+        <div className="rounded-xl border bg-card p-3.5 flex items-center gap-3">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <WalletIcon className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-muted-foreground">Total en cuentas</p>
+            <p className="truncate text-xs text-muted-foreground">{accounts.length} cuenta{accounts.length !== 1 ? "s" : ""}</p>
+          </div>
+          <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+            {formatCurrency(totalBalance)}
+          </p>
         </div>
       )}
 
@@ -192,10 +164,8 @@ export function AccountsPanel() {
               <div className="h-1.5 w-full" style={{ backgroundColor: account.color }} />
               <CardHeader className="flex flex-row items-start justify-between pb-2 pt-4">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="truncate text-base">{account.name}</CardTitle>
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{account.currency}</p>
+                  <CardTitle className="truncate text-base">{account.name}</CardTitle>
+                  <p className="mt-0.5 text-xs text-muted-foreground">PEN</p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -233,7 +203,7 @@ export function AccountsPanel() {
               </CardHeader>
               <CardContent className="pb-4">
                 <p className="text-2xl font-semibold tabular-nums">
-                  {formatCurrency(account.balance, account.currency)}
+                  {formatCurrency(account.balance)}
                 </p>
                 {account.notes && (
                   <p className="mt-1 text-xs text-muted-foreground">{account.notes}</p>
@@ -262,21 +232,14 @@ export function AccountsPanel() {
                     <p className="text-sm font-medium">
                       {t.fromAccountName} → {t.toAccountName}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="truncate text-xs text-muted-foreground">
                       {formatDate(t.occurredOn)}
                       {t.notes && ` · ${t.notes}`}
                     </p>
                   </div>
-                  <div className="shrink-0 text-right tabular-nums">
-                    <p className="text-sm font-medium text-destructive">
-                      -{formatCurrency(t.fromAmount, t.fromCurrency)}
-                    </p>
-                    {t.fromCurrency !== t.toCurrency && (
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                        +{formatCurrency(t.toAmount, t.toCurrency)}
-                      </p>
-                    )}
-                  </div>
+                  <p className="shrink-0 text-sm font-medium tabular-nums text-destructive">
+                    -{formatCurrency(t.amount)}
+                  </p>
                 </div>
               ))}
             </CardContent>
@@ -305,7 +268,7 @@ export function AccountsPanel() {
         title="Eliminar cuenta"
         description="Se eliminará la cuenta y su historial de transferencias. Esta acción no se puede deshacer."
         confirmLabel="Eliminar"
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onConfirm={() => deleteId && handleDelete(deleteId)}
       />
 
       <AlertDialog open={csvConfirmOpen} onOpenChange={setCsvConfirmOpen}>

@@ -1,18 +1,17 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
 import { z } from "zod/v3"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { NumberInput } from "@/components/ui/number-input"
-import { getUserSettings, upsertUserSettings } from "@/features/settings/lib/user-settings-api"
+import { useUserSettings } from "@/features/settings/hooks/queries"
+import { useUpsertUserSettings } from "@/features/settings/hooks/mutations"
 
 const schema = z.object({
   savingsPercentage: z.coerce
@@ -24,12 +23,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function FinancesSection() {
-  const queryClient = useQueryClient()
-
-  const settingsQuery = useQuery({
-    queryKey: ["user-settings"],
-    queryFn: getUserSettings,
-  })
+  const settingsQuery = useUserSettings()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -42,17 +36,7 @@ export function FinancesSection() {
     }
   }, [settingsQuery.data]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useMutation({
-    mutationFn: (values: FormValues) =>
-      upsertUserSettings({ savingsPercentage: values.savingsPercentage }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["user-settings"] })
-      toast.success("Configuración guardada")
-    },
-    onError: (error) => {
-      toast.error("No se pudo guardar", { description: error.message })
-    },
-  })
+  const mutation = useUpsertUserSettings()
 
   return (
     <Card>
@@ -64,7 +48,7 @@ export function FinancesSection() {
       </CardHeader>
       <CardContent>
         <form
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate({ savingsPercentage: v.savingsPercentage }))}
           className="flex flex-col gap-4"
         >
           <FieldGroup className="max-w-xs">

@@ -1,11 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -31,7 +29,7 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
-import { updateLoan } from "@/features/loans/lib/loans-api"
+import { useUpdateLoan } from "@/features/loans/hooks/mutations"
 import { type Loan } from "@/features/loans/types/loan-types"
 
 type EditLoanDialogProps = {
@@ -41,13 +39,10 @@ type EditLoanDialogProps = {
 }
 
 export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps) {
-  const queryClient = useQueryClient()
-
   const form = useForm<LoanValues>({
     resolver: zodResolver(loanSchema),
     defaultValues: {
       direction: loan.direction,
-      currency: loan.currency,
       personName: loan.personName,
       amount: loan.amount,
       expectedOn: loan.expectedOn ?? "",
@@ -62,7 +57,6 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
     if (open) {
       form.reset({
         direction: loan.direction,
-        currency: loan.currency,
         personName: loan.personName,
         amount: loan.amount,
         expectedOn: loan.expectedOn ?? "",
@@ -72,17 +66,7 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useMutation({
-    mutationFn: (values: LoanValues) => updateLoan(loan.id, values),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["loans"] })
-      onOpenChange(false)
-      toast.success("Préstamo actualizado")
-    },
-    onError: (error) => {
-      toast.error("No se pudo actualizar", { description: error.message })
-    },
-  })
+  const mutation = useUpdateLoan(loan.id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,9 +81,9 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
           id="edit-loan-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
         >
-          <div className="grid grid-cols-2 gap-3">
+          <FieldGroup>
             <Controller
               control={form.control}
               name="direction"
@@ -114,22 +98,6 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
               )}
             />
 
-            <Controller
-              control={form.control}
-              name="currency"
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel htmlFor="el-currency">Moneda</FieldLabel>
-                  <NativeSelect {...field} id="el-currency">
-                    <NativeSelectOption value="PEN">PEN</NativeSelectOption>
-                    <NativeSelectOption value="USD">USD</NativeSelectOption>
-                    <NativeSelectOption value="MXN">MXN</NativeSelectOption>
-                  </NativeSelect>
-                </Field>
-              )}
-            />
-          </div>
-          <FieldGroup>
             <Controller
               control={form.control}
               name="personName"
@@ -154,7 +122,7 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
               name="amount"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="el-amount">Monto prestado</FieldLabel>
+                  <FieldLabel htmlFor="el-amount">Monto prestado (PEN)</FieldLabel>
                   <NumberInput
                     {...field}
                     id="el-amount"
