@@ -9,9 +9,11 @@ import {
   DownloadIcon,
   MoreHorizontalIcon,
   PencilIcon,
+  RefreshCwIcon,
   ScaleIcon,
   Trash2Icon,
   WalletCardsIcon,
+  AlertTriangleIcon,
 } from "lucide-react"
 import { useMemo, useState } from "react"
 
@@ -25,6 +27,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -226,7 +234,7 @@ export function MovementsPanel() {
         },
       },
     ],
-    [] // eslint-disable-line react-hooks/exhaustive-deps
+    []
   )
 
   const addLabel =
@@ -271,6 +279,24 @@ export function MovementsPanel() {
           />
         </div>
       </section>
+
+      {query.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar las transacciones</AlertTitle>
+          <AlertDescription>
+            {query.error instanceof Error
+              ? query.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => query.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
 
       {rows.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">

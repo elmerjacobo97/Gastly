@@ -2,10 +2,16 @@
 
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { PiggyBankIcon, TrendingUpIcon, WalletCardsIcon } from "lucide-react"
+import { AlertTriangleIcon, PiggyBankIcon, RefreshCwIcon, TrendingUpIcon, WalletCardsIcon } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -63,12 +69,49 @@ export function MonthlyPlanPanel() {
         </div>
       </section>
 
+      {planQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar el plan mensual</AlertTitle>
+          <AlertDescription>
+            {planQuery.error instanceof Error
+              ? planQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => planQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {transactionsQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar las transacciones</AlertTitle>
+          <AlertDescription>
+            {transactionsQuery.error instanceof Error
+              ? transactionsQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => transactionsQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index} className="p-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="mt-2 h-7 w-28" />
+            <Card key={index} className="p-3.5">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="mt-2 h-7 w-32" />
+              <Skeleton className="mt-2 h-3 w-36" />
             </Card>
           ))}
         </div>
@@ -135,7 +178,7 @@ export function MonthlyPlanPanel() {
             )}
           </Card>
         </>
-      ) : (
+      ) : !planQuery.isError && !transactionsQuery.isError ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
             <div className="grid size-12 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -150,7 +193,7 @@ export function MonthlyPlanPanel() {
             <CreateMonthlyPlanDialog month={month} triggerLabel="Crear plan mensual" />
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-3">

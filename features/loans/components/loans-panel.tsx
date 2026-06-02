@@ -10,13 +10,21 @@ import {
   HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
+  RefreshCwIcon,
   ScaleIcon,
   Trash2Icon,
+  AlertTriangleIcon,
 } from "lucide-react"
 import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -112,7 +120,9 @@ export function LoansPanel() {
   const [editLoan, setEditLoan] = useState<Loan | null>(null)
   const [historyLoan, setHistoryLoan] = useState<Loan | null>(null)
 
-  const { data: loans = [], isLoading } = useLoans()
+  const loansQuery = useLoans()
+  const loans = loansQuery.data ?? []
+  const isLoading = loansQuery.isLoading
   const deleteMutation = useDeleteLoan()
 
   const active = loans.filter((l) => !l.isSettled)
@@ -137,6 +147,24 @@ export function LoansPanel() {
         </div>
         <LoanDialog />
       </section>
+
+      {loansQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar la información</AlertTitle>
+          <AlertDescription>
+            {loansQuery.error instanceof Error
+              ? loansQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => loansQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
 
       {/* Summary cards */}
       {!isLoading && loans.length > 0 && (
@@ -185,18 +213,26 @@ export function LoansPanel() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 2 }).map((_, i) => (
             <Card key={i}>
-              <CardHeader className="pb-3">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="mt-1 h-4 w-24" />
+              <CardHeader className="flex flex-row items-start justify-between pb-3">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-5 w-24" />
+                </div>
+                <Skeleton className="size-8 rounded-md" />
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <Skeleton className="h-2 w-full" />
-                <Skeleton className="h-4 w-40" />
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-8 w-full" />
               </CardContent>
             </Card>
           ))}
         </section>
-      ) : loans.length === 0 ? (
+      ) : loans.length === 0 && !loansQuery.isError ? (
         /* Empty state */
         <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-muted">

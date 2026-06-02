@@ -4,10 +4,12 @@ import { useState } from "react"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  AlertTriangleIcon,
   CalendarClockIcon,
   DownloadIcon,
   PiggyBankIcon,
   PrinterIcon,
+  RefreshCwIcon,
   ScaleIcon,
   ShuffleIcon,
 } from "lucide-react"
@@ -40,6 +42,12 @@ import {
 } from "recharts"
 
 import { Button } from "@/components/ui/button"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -268,7 +276,7 @@ export function ReportsPanel() {
       : []),
   ]
 
-  const isLoading = transactionsQuery.isLoading
+  const isLoading = transactionsQuery.isLoading || planQuery.isLoading
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6 print:p-0">
@@ -306,16 +314,53 @@ export function ReportsPanel() {
         />
       </section>
 
+      {transactionsQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar los datos del reporte</AlertTitle>
+          <AlertDescription>
+            {transactionsQuery.error instanceof Error
+              ? transactionsQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => transactionsQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {planQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar el plan mensual</AlertTitle>
+          <AlertDescription>
+            {planQuery.error instanceof Error
+              ? planQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => planQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
       {/* Summary cards */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading
-          ? Array.from({ length: 3 }).map((_, i) => (
+          ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
                 <Skeleton className="size-8 shrink-0 rounded-lg" />
-                <div className="flex-1 flex flex-col gap-1.5">
+                <div className="min-w-0 flex-1 flex flex-col gap-1.5">
                   <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-5 w-28" />
+                  <Skeleton className="h-3 w-32" />
                 </div>
+                <Skeleton className="h-6 w-28" />
               </div>
             ))
           : summaryCards.map((card) => (

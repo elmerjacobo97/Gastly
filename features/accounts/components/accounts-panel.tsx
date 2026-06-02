@@ -1,18 +1,25 @@
 "use client"
 
 import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import {
   ArrowLeftRightIcon,
+  AlertTriangleIcon,
   DownloadIcon,
   MoreHorizontalIcon,
   PencilIcon,
+  RefreshCwIcon,
   Trash2Icon,
   WalletIcon,
 } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -53,7 +60,6 @@ import { useAccounts, useAccountTransfers } from "@/features/accounts/hooks/quer
 import { useDeleteAccount } from "@/features/accounts/hooks/mutations"
 import { type Account, type AccountTransfer } from "@/features/accounts/types/account-types"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { cn } from "@/lib/utils"
 
 function exportTransfersCSV(transfers: AccountTransfer[], filename: string) {
   const headers = ["Fecha", "Origen", "Destino", "Monto", "Notas"]
@@ -85,8 +91,11 @@ export function AccountsPanel() {
   const [transferOpen, setTransferOpen] = useState(false)
   const [csvConfirmOpen, setCsvConfirmOpen] = useState(false)
 
-  const { data: accounts = [], isLoading } = useAccounts()
-  const { data: transfers = [] } = useAccountTransfers(accounts.length > 0)
+  const accountsQuery = useAccounts()
+  const accounts = accountsQuery.data ?? []
+  const isLoading = accountsQuery.isLoading
+  const transfersQuery = useAccountTransfers(accounts.length > 0)
+  const transfers = transfersQuery.data ?? []
   const deleteMutation = useDeleteAccount()
 
   const handleDelete = (id: string) => {
@@ -107,6 +116,53 @@ export function AccountsPanel() {
         <CreateAccountDialog />
       </section>
 
+      {accountsQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar la información</AlertTitle>
+          <AlertDescription>
+            {accountsQuery.error instanceof Error
+              ? accountsQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => accountsQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {transfersQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar las transferencias</AlertTitle>
+          <AlertDescription>
+            {transfersQuery.error instanceof Error
+              ? transfersQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => transfersQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {isLoading && (
+        <div className="rounded-xl border bg-card p-3.5 flex items-center gap-3">
+          <Skeleton className="size-8 shrink-0 rounded-lg" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+          <Skeleton className="h-6 w-28" />
+        </div>
+      )}
+
       {!isLoading && accounts.length > 0 && (
         <div className="rounded-xl border bg-card p-3.5 flex items-center gap-3">
           <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -125,18 +181,23 @@ export function AccountsPanel() {
       {isLoading ? (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-3">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="mt-1 h-4 w-20" />
+            <Card key={i} className="overflow-hidden">
+              <Skeleton className="h-1.5 w-full rounded-none" />
+              <CardHeader className="flex flex-row items-start justify-between pb-2 pt-4">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-3 w-10" />
+                </div>
+                <Skeleton className="size-8 rounded-md" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-28" />
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="mt-2 h-3 w-24" />
               </CardContent>
             </Card>
           ))}
         </section>
-      ) : accounts.length === 0 ? (
+      ) : accounts.length === 0 && !accountsQuery.isError ? (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">

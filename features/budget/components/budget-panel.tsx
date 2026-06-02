@@ -6,6 +6,7 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   PiggyBankIcon,
+  RefreshCwIcon,
   ReceiptIcon,
   Trash2Icon,
   TrendingDownIcon,
@@ -16,6 +17,7 @@ import { useState } from "react"
 
 import {
   Alert,
+  AlertAction,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
@@ -47,13 +49,13 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
 import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { formatCurrency } from "@/lib/format"
 import { useBudgets } from "@/features/budget/hooks/queries"
 import { useDeleteBudget } from "@/features/budget/hooks/mutations"
 import { useMonthlyPlan } from "@/features/monthly-plan/hooks/queries"
-import { useFixedExpenses } from "@/features/fixed-expenses/hooks/queries"
+import { useRecurringPayments } from "@/features/recurring-payments/hooks/queries"
 import { useTransactions } from "@/features/transactions/hooks/queries"
 import { CreateBudgetDialog } from "@/features/budget/components/create-budget-dialog"
 import { EditBudgetDialog } from "@/features/budget/components/edit-budget-dialog"
@@ -72,10 +74,10 @@ function progressColor(usage: number) {
   return "[&>div]:bg-emerald-500"
 }
 
-function isRelevantRecurringPayment(expense: FixedExpense, monthKey: string) {
-  if (!expense.isActive) return false
-  if (expense.frequency === "monthly") return true
-  return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
+function isRelevantRecurringPayment(payment: RecurringPayment, monthKey: string) {
+  if (!payment.isActive) return false
+  if (payment.frequency === "monthly") return true
+  return payment.nextDueOn.startsWith(monthKey) || payment.paidOn?.startsWith(monthKey)
 }
 
 export function BudgetPanel() {
@@ -87,7 +89,7 @@ export function BudgetPanel() {
 
   const budgetsQuery = useBudgets(month)
   const planQuery = useMonthlyPlan(month)
-  const fixedExpensesQuery = useFixedExpenses(month)
+  const fixedExpensesQuery = useRecurringPayments(month, "expense")
   const transactionsQuery = useTransactions({ month })
 
   const deleteMutation = useDeleteBudget()
@@ -95,7 +97,6 @@ export function BudgetPanel() {
   const budgets = budgetsQuery.data ?? []
   const totalBudget = budgets.reduce((sum, b) => sum + b.amount, 0)
   const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0)
-  const overBudget = budgets.filter((b) => b.spent > b.amount).length
   const plan = planQuery.data ?? null
   const actualIncome = (transactionsQuery.data ?? [])
     .filter((t) => t.type === "income")
@@ -127,12 +128,87 @@ export function BudgetPanel() {
         </div>
       </section>
 
+      {budgetsQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar los presupuestos</AlertTitle>
+          <AlertDescription>
+            {budgetsQuery.error instanceof Error
+              ? budgetsQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => budgetsQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {planQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar el plan mensual</AlertTitle>
+          <AlertDescription>
+            {planQuery.error instanceof Error
+              ? planQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => planQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {fixedExpensesQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar los pagos recurrentes</AlertTitle>
+          <AlertDescription>
+            {fixedExpensesQuery.error instanceof Error
+              ? fixedExpensesQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => fixedExpensesQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {transactionsQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar las transacciones</AlertTitle>
+          <AlertDescription>
+            {transactionsQuery.error instanceof Error
+              ? transactionsQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => transactionsQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
       {planQuery.isLoading || fixedExpensesQuery.isLoading || transactionsQuery.isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border p-3">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="mt-2 h-6 w-28" />
+            <div key={i} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+              <Skeleton className="size-8 shrink-0 rounded-lg" />
+              <div className="min-w-0 flex-1">
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-6 w-28" />
             </div>
           ))}
         </div>
@@ -196,11 +272,11 @@ export function BudgetPanel() {
               : `Tus presupuestos superan tu disponible libre por ${formatCurrency(Math.abs(unassigned))}.`}
           </div>
         </>
-      ) : (
+      ) : !planQuery.isError && !fixedExpensesQuery.isError && !transactionsQuery.isError ? (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
           Crea tu plan mensual para saber cuánto puedes asignar a presupuestos.
         </div>
-      )}
+      ) : null}
 
       {!budgetsQuery.isLoading && (() => {
         const overList = budgets.filter((b) => b.spent > b.amount)
@@ -253,15 +329,27 @@ export function BudgetPanel() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {budgetsQuery.isLoading
           ? Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="pb-3">
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="mt-1 h-4 w-32" />
+            <Card key={i}>
+                <CardHeader className="flex flex-row items-start justify-between pb-3">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="size-7 rounded-md" />
+                      <Skeleton className="h-5 w-24" />
+                    </div>
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                  <Skeleton className="size-8 rounded-md" />
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                  <Skeleton className="h-7 w-20" />
+                  <div className="flex items-baseline justify-between gap-2">
+                    <Skeleton className="h-8 w-28" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
                   <Skeleton className="h-2 w-full" />
-                  <Skeleton className="h-4 w-40" />
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
                 </CardContent>
               </Card>
             ))
@@ -349,7 +437,7 @@ export function BudgetPanel() {
             })}
       </section>
 
-      {!budgetsQuery.isLoading && budgets.length === 0 && (
+      {!budgetsQuery.isLoading && !budgetsQuery.isError && budgets.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">

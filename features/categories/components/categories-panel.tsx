@@ -3,12 +3,20 @@
 import {
   MoreHorizontalIcon,
   PencilIcon,
+  RefreshCwIcon,
   TagsIcon,
   Trash2Icon,
+  AlertTriangleIcon,
 } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -79,6 +87,24 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
         </section>
       )}
 
+      {categoriesQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar la información</AlertTitle>
+          <AlertDescription>
+            {categoriesQuery.error instanceof Error
+              ? categoriesQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => categoriesQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
           <div>
@@ -95,14 +121,15 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
                   <Skeleton className="size-9 rounded-lg" />
-                  <div className="flex flex-col gap-1.5">
+                  <div className="min-w-0 flex-1 flex flex-col gap-1.5">
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-3 w-12" />
                   </div>
+                  <Skeleton className="size-8 rounded-md" />
                 </div>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : filtered.length === 0 && !categoriesQuery.isError ? (
             <Empty className="bg-muted/20">
               <EmptyHeader>
                 <EmptyMedia variant="icon">

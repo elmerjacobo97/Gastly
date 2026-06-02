@@ -7,14 +7,22 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   PiggyBankIcon,
+  RefreshCwIcon,
   TargetIcon,
   Trash2Icon,
   TrendingUpIcon,
+  AlertTriangleIcon,
 } from "lucide-react"
 import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -173,18 +181,29 @@ function GoalSkeleton() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2.5">
-          <Skeleton className="size-3 rounded-full" />
-          <Skeleton className="h-5 w-36" />
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Skeleton className="size-3 rounded-full" />
+            <Skeleton className="h-5 w-36" />
+          </div>
+          <Skeleton className="size-8 rounded-md" />
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between gap-2">
             <Skeleton className="h-8 w-28" />
             <Skeleton className="h-4 w-20" />
           </div>
           <Skeleton className="h-2 w-full rounded-full" />
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-3 w-52" />
         </div>
         <Skeleton className="h-8 w-32" />
       </CardContent>
@@ -220,6 +239,24 @@ export function SavingsPanel() {
         </div>
         <CreateGoalDialog />
       </section>
+
+      {query.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar la información</AlertTitle>
+          <AlertDescription>
+            {query.error instanceof Error
+              ? query.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => query.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
 
       {(query.isLoading || goals.length > 0) && (
         <div className="grid gap-3 sm:grid-cols-3">
@@ -268,7 +305,7 @@ export function SavingsPanel() {
             <GoalSkeleton key={i} />
           ))}
         </div>
-      ) : active.length === 0 && completed.length === 0 ? (
+      ) : active.length === 0 && completed.length === 0 && !query.isError ? (
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
