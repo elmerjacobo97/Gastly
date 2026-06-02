@@ -62,7 +62,7 @@ const navigationItems = [
   // },
   {
     title: "Pagos recurrentes",
-    href: "/dashboard/fixed-expenses",
+    href: "/dashboard/recurring-payments",
     icon: CalendarClockIcon,
     exact: false,
   },

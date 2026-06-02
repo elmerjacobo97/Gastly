@@ -1,6 +1,6 @@
 import { z } from "zod/v3"
 
-export const fixedExpenseSchema = z.object({
+export const recurringPaymentSchema = z.object({
   description: z.string().trim().min(2, "Ingresa un nombre."),
   amount: z.coerce.number().positive("El monto estimado debe ser mayor a 0."),
   categoryId: z.string().min(1, "Selecciona una categoria."),
@@ -14,13 +14,14 @@ export const fixedExpenseSchema = z.object({
   nextDueOn: z.string().min(1, "Selecciona la proxima fecha de pago."),
   accountId: z.string().optional(),
   notes: z.string().trim().optional(),
+  type: z.enum(["expense", "income"]),
 })
 
-export const fixedExpensePaymentSchema = z.object({
+export const recurringPaymentPaymentSchema = z.object({
   amount: z.coerce.number().positive("El monto real debe ser mayor a 0."),
   occurredOn: z.string().min(1, "Selecciona la fecha de pago."),
   notes: z.string().trim().optional(),
 })
 
-export type FixedExpenseValues = z.infer<typeof fixedExpenseSchema>
-export type FixedExpensePaymentValues = z.infer<typeof fixedExpensePaymentSchema>
+export type RecurringPaymentValues = z.infer<typeof recurringPaymentSchema>
+export type RecurringPaymentPaymentValues = z.infer<typeof recurringPaymentPaymentSchema>

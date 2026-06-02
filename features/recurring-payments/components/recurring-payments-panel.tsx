@@ -16,6 +16,7 @@ import {
   PauseCircleIcon,
   PencilIcon,
   PlayCircleIcon,
+  RefreshCwIcon,
   ReceiptTextIcon,
   XCircleIcon,
   Trash2Icon,
@@ -25,6 +26,7 @@ import { Controller, useForm } from "react-hook-form"
 
 import {
   Alert,
+  AlertAction,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
@@ -34,9 +36,6 @@ import { Calendar } from "@/components/ui/calendar"
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
@@ -79,22 +78,22 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { CreateFixedExpenseDialog } from "@/features/fixed-expenses/components/create-fixed-expense-dialog"
-import { EditFixedExpenseDialog } from "@/features/fixed-expenses/components/edit-fixed-expense-dialog"
+import { CreateRecurringPaymentDialog } from "@/features/recurring-payments/components/create-recurring-payment-dialog"
+import { EditRecurringPaymentDialog } from "@/features/recurring-payments/components/edit-recurring-payment-dialog"
 import {
   type PaymentHistoryEntry,
-} from "@/features/fixed-expenses/lib/fixed-expenses-api"
-import { useFixedExpenses, useFixedExpenseHistory } from "@/features/fixed-expenses/hooks/queries"
+} from "@/features/recurring-payments/lib/recurring-payments-api"
+import { useRecurringPayments, useRecurringPaymentHistory } from "@/features/recurring-payments/hooks/queries"
 import {
-  useDeleteFixedExpense,
-  useSetFixedExpenseActive,
-  useRegisterFixedExpensePayment,
-} from "@/features/fixed-expenses/hooks/mutations"
+  useDeleteRecurringPayment,
+  useSetRecurringPaymentActive,
+  useRegisterRecurringPaymentPayment,
+} from "@/features/recurring-payments/hooks/mutations"
 import {
-  fixedExpensePaymentSchema,
-  type FixedExpensePaymentValues,
-} from "@/features/fixed-expenses/schemas/fixed-expense-schemas"
-import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
+  recurringPaymentPaymentSchema,
+  type RecurringPaymentPaymentValues,
+} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
 import { MonthNav } from "@/components/month-nav"
 import {
   formatCurrency,
@@ -102,33 +101,33 @@ import {
 } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-function isRelevantForMonth(expense: FixedExpense, monthKey: string) {
-  if (expense.frequency === "monthly") return true
-  return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
+function isRelevantForMonth(payment: RecurringPayment, monthKey: string) {
+  if (payment.frequency === "monthly") return true
+  return payment.nextDueOn.startsWith(monthKey) || payment.paidOn?.startsWith(monthKey)
 }
 
-function formatFrequency(expense: FixedExpense) {
-  if (expense.frequency === "monthly") return "Mensual"
-  if (expense.frequency === "yearly") return "Anual"
-  return `Cada ${expense.intervalMonths} meses`
+function formatFrequency(payment: RecurringPayment) {
+  if (payment.frequency === "monthly") return "Mensual"
+  if (payment.frequency === "yearly") return "Anual"
+  return `Cada ${payment.intervalMonths} meses`
 }
 
-function getPaymentBadge(expense: FixedExpense, monthKey: string) {
-  if (!expense.isActive) {
+function getPaymentBadge(payment: RecurringPayment, monthKey: string) {
+  if (!payment.isActive) {
     return {
       label: "Pausado",
       variant: "secondary" as const,
       className: "bg-muted text-muted-foreground",
     }
   }
-  if (expense.paidOn) {
+  if (payment.paidOn) {
     return {
-      label: "Pagado",
+      label: payment.type === "income" ? "Cobrado" : "Pagado",
       variant: "secondary" as const,
       className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
     }
   }
-  if (!isRelevantForMonth(expense, monthKey)) {
+  if (!isRelevantForMonth(payment, monthKey)) {
     return {
       label: "Próximo",
       variant: "outline" as const,
@@ -138,20 +137,20 @@ function getPaymentBadge(expense: FixedExpense, monthKey: string) {
 
   const todayDateStr = format(new Date(), "yyyy-MM-dd")
   const daysUntilDue = Math.round(
-    (new Date(`${expense.nextDueOn}T12:00:00`).getTime() - new Date(`${todayDateStr}T12:00:00`).getTime()) /
+    (new Date(`${payment.nextDueOn}T12:00:00`).getTime() - new Date(`${todayDateStr}T12:00:00`).getTime()) /
       (1000 * 60 * 60 * 24)
   )
 
   if (daysUntilDue < 0) {
     return {
-      label: "Vencido",
+      label: payment.type === "income" ? "No cobrado" : "Vencido",
       variant: "destructive" as const,
       className: undefined,
     }
   }
   if (daysUntilDue <= 7) {
     return {
-      label: "Vence pronto",
+      label: payment.type === "income" ? "Próximo cobro" : "Vence pronto",
       variant: "secondary" as const,
       className: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
     }
@@ -164,50 +163,54 @@ function getPaymentBadge(expense: FixedExpense, monthKey: string) {
 }
 
 type PaymentDialogProps = {
-  expense: FixedExpense | null
+  payment: RecurringPayment | null
   open: boolean
   pending: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (values: FixedExpensePaymentValues) => void
+  onSubmit: (values: RecurringPaymentPaymentValues) => void
 }
 
 function PaymentDialog({
-  expense,
+  payment,
   open,
   pending,
   onOpenChange,
   onSubmit,
 }: PaymentDialogProps) {
   const todayStr = format(new Date(), "yyyy-MM-dd")
-  const isPayingEarly = !!expense && expense.nextDueOn > todayStr
+  const isPayingEarly = !!payment && payment.nextDueOn > todayStr
 
-  const form = useForm<FixedExpensePaymentValues>({
-    resolver: zodResolver(fixedExpensePaymentSchema),
+  const form = useForm<RecurringPaymentPaymentValues>({
+    resolver: zodResolver(recurringPaymentPaymentSchema),
     defaultValues: {
-      amount: expense?.amount ?? 0,
-      occurredOn: isPayingEarly ? todayStr : (expense?.nextDueOn ?? todayStr),
-      notes: expense?.notes ?? "",
+      amount: payment?.amount ?? 0,
+      occurredOn: isPayingEarly ? todayStr : (payment?.nextDueOn ?? todayStr),
+      notes: payment?.notes ?? "",
     },
   })
 
   useEffect(() => {
-    if (open && expense) {
+    if (open && payment) {
       const today = format(new Date(), "yyyy-MM-dd")
       form.reset({
-        amount: expense.amount,
-        occurredOn: expense.nextDueOn > today ? today : expense.nextDueOn,
-        notes: expense.notes ?? "",
+        amount: payment.amount,
+        occurredOn: payment.nextDueOn > today ? today : payment.nextDueOn,
+        notes: payment.notes ?? "",
       })
     }
-  }, [open, expense?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, payment?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isIncome = payment?.type === "income"
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Registrar pago</DialogTitle>
+          <DialogTitle>{isIncome ? "Registrar cobro" : "Registrar pago"}</DialogTitle>
           <DialogDescription>
-            Ingresa el monto real pagado. El pago quedará registrado como transacción.
+            {isIncome
+              ? "Ingresa el monto real cobrado. Quedará registrado como ingreso."
+              : "Ingresa el monto real pagado. El pago quedará registrado como transacción."}
           </DialogDescription>
         </DialogHeader>
         {isPayingEarly && (
@@ -215,13 +218,13 @@ function PaymentDialog({
             <InfoIcon />
             <AlertTitle>Pago anticipado</AlertTitle>
             <AlertDescription>
-              Vencimiento: {formatDate(expense.nextDueOn)}. La fecha de pago se pre-llenó con hoy, pero puedes cambiarla.
+              Vencimiento: {formatDate(payment.nextDueOn)}. La fecha de pago se pre-llenó con hoy, pero puedes cambiarla.
             </AlertDescription>
           </Alert>
         )}
         <form
           className="flex flex-col gap-5"
-          id="fixed-expense-payment-form"
+          id="recurring-payment-payment-form"
           noValidate
           onSubmit={form.handleSubmit(onSubmit)}
         >
@@ -231,11 +234,11 @@ function PaymentDialog({
               name="amount"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="fixed-expense-payment-amount">Monto real pagado</FieldLabel>
+                  <FieldLabel htmlFor="rpp-amount">{isIncome ? "Monto real cobrado" : "Monto real pagado"}</FieldLabel>
                   <NumberInput
                     {...field}
                     aria-invalid={fieldState.invalid}
-                    id="fixed-expense-payment-amount"
+                    id="rpp-amount"
                     inputMode="decimal"
                     min="0"
                     step="0.01"
@@ -249,7 +252,7 @@ function PaymentDialog({
               name="occurredOn"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Fecha real de pago</FieldLabel>
+                  <FieldLabel>{isIncome ? "Fecha real de cobro" : "Fecha real de pago"}</FieldLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -281,11 +284,11 @@ function PaymentDialog({
               name="notes"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="fixed-expense-payment-notes">Notas</FieldLabel>
+                  <FieldLabel htmlFor="rpp-notes">Notas</FieldLabel>
                   <Textarea
                     {...field}
                     aria-invalid={fieldState.invalid}
-                    id="fixed-expense-payment-notes"
+                    id="rpp-notes"
                     placeholder="Opcional"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -298,9 +301,9 @@ function PaymentDialog({
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={pending} form="fixed-expense-payment-form" type="submit">
+          <Button disabled={pending} form="recurring-payment-payment-form" type="submit">
             {pending && <Loader2Icon className="size-4 animate-spin" />}
-            Registrar pago
+            {isIncome ? "Registrar cobro" : "Registrar pago"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -309,15 +312,15 @@ function PaymentDialog({
 }
 
 function PaymentHistoryDialog({
-  expense,
+  payment,
   open,
   onOpenChange,
 }: {
-  expense: FixedExpense | null
+  payment: RecurringPayment | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const historyQuery = useFixedExpenseHistory(expense?.id, open && !!expense)
+  const historyQuery = useRecurringPaymentHistory(payment?.id, open && !!payment)
 
   const entries: PaymentHistoryEntry[] = historyQuery.data ?? []
   const total = entries.reduce((sum, e) => sum + e.amount, 0)
@@ -329,7 +332,7 @@ function PaymentHistoryDialog({
         <DialogHeader>
           <DialogTitle>Historial de pagos</DialogTitle>
           <DialogDescription>
-            {expense?.description} · {entries.length} pago{entries.length !== 1 ? "s" : ""} registrado{entries.length !== 1 ? "s" : ""}
+            {payment?.description} · {entries.length} pago{entries.length !== 1 ? "s" : ""} registrado{entries.length !== 1 ? "s" : ""}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
@@ -342,6 +345,22 @@ function PaymentHistoryDialog({
                 </div>
               ))}
             </div>
+          ) : historyQuery.isError ? (
+            <Alert variant="destructive">
+              <AlertTriangleIcon />
+              <AlertTitle>No se pudo cargar el historial</AlertTitle>
+              <AlertDescription>
+                {historyQuery.error instanceof Error
+                  ? historyQuery.error.message
+                  : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+              </AlertDescription>
+              <AlertAction>
+                <Button size="sm" variant="outline" onClick={() => historyQuery.refetch()}>
+                  <RefreshCwIcon className="size-3.5" />
+                  Reintentar
+                </Button>
+              </AlertAction>
+            </Alert>
           ) : entries.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
               Sin pagos registrados aún.
@@ -361,8 +380,8 @@ function PaymentHistoryDialog({
                         <p className="mt-0.5 text-xs text-muted-foreground italic">{entry.notes}</p>
                       )}
                     </div>
-                    <span className="shrink-0 text-sm font-semibold tabular-nums text-destructive">
-                      -{formatCurrency(entry.amount)}
+                    <span className={`shrink-0 text-sm font-semibold tabular-nums ${payment?.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                      {payment?.type === "income" ? "+" : "-"}{formatCurrency(entry.amount)}
                     </span>
                   </div>
                 ))}
@@ -380,36 +399,36 @@ function PaymentHistoryDialog({
   )
 }
 
-export function FixedExpensesPanel() {
+export function RecurringPaymentsPanel() {
   const [month, setMonth] = useState(() => new Date())
-  const [editExpense, setEditExpense] = useState<FixedExpense | null>(null)
-  const [payExpense, setPayExpense] = useState<FixedExpense | null>(null)
+  const [editPayment, setEditPayment] = useState<RecurringPayment | null>(null)
+  const [payPayment, setPayPayment] = useState<RecurringPayment | null>(null)
   const [payOpen, setPayOpen] = useState(false)
-  const [historyExpense, setHistoryExpense] = useState<FixedExpense | null>(null)
+  const [historyPayment, setHistoryPayment] = useState<RecurringPayment | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const query = useFixedExpenses(month)
-  const registerMutation = useRegisterFixedExpensePayment(payExpense)
-  const activeMutation = useSetFixedExpenseActive()
-  const deleteMutation = useDeleteFixedExpense()
+  const query = useRecurringPayments(month)
+  const registerMutation = useRegisterRecurringPaymentPayment(payPayment)
+  const activeMutation = useSetRecurringPaymentActive()
+  const deleteMutation = useDeleteRecurringPayment()
 
-  const expenses = query.data ?? []
+  const payments = query.data ?? []
   const monthKey = format(month, "yyyy-MM")
-  const activeExpenses = expenses.filter(
-    (expense) => expense.isActive && isRelevantForMonth(expense, monthKey)
+  const activeExpensePayments = payments.filter(
+    (p) => p.type === "expense" && p.isActive && isRelevantForMonth(p, monthKey)
   )
-  const totalCommitted = activeExpenses.reduce((sum, e) => sum + e.amount, 0)
-  const paidExpenses = activeExpenses.filter((e) => e.paidOn)
-  const totalPaid = paidExpenses.reduce((sum, e) => sum + (e.paidAmount ?? e.amount), 0)
+  const totalCommitted = activeExpensePayments.reduce((sum, p) => sum + p.amount, 0)
+  const paidPayments = activeExpensePayments.filter((p) => p.paidOn)
+  const totalPaid = paidPayments.reduce((sum, p) => sum + (p.paidAmount ?? p.amount), 0)
   const totalPending = Math.max(totalCommitted - totalPaid, 0)
   const allPaid = totalPending === 0
 
   const todayStr = format(new Date(), "yyyy-MM-dd")
-  const unpaidActive = activeExpenses.filter((e) => !e.paidOn)
-  const overdueExpenses = unpaidActive.filter((e) => e.nextDueOn < todayStr)
-  const soonExpenses = unpaidActive.filter((e) => {
+  const unpaidActive = activeExpensePayments.filter((p) => !p.paidOn)
+  const overduePayments = unpaidActive.filter((p) => p.nextDueOn < todayStr)
+  const soonPayments = unpaidActive.filter((p) => {
     const days = Math.round(
-      (new Date(`${e.nextDueOn}T12:00:00`).getTime() - new Date(`${todayStr}T12:00:00`).getTime()) /
+      (new Date(`${p.nextDueOn}T12:00:00`).getTime() - new Date(`${todayStr}T12:00:00`).getTime()) /
         (1000 * 60 * 60 * 24)
     )
     return days >= 0 && days <= 7
@@ -438,11 +457,29 @@ export function FixedExpensesPanel() {
         </div>
         <div className="flex items-center gap-3">
           <MonthNav value={month} onChange={setMonth} allowFuture />
-          <CreateFixedExpenseDialog />
+          <CreateRecurringPaymentDialog />
         </div>
       </section>
 
-      {!query.isLoading && expenses.length > 0 && (
+      {query.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar la información</AlertTitle>
+          <AlertDescription>
+            {query.error instanceof Error
+              ? query.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => query.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {!query.isLoading && payments.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
             <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${allPaid ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted/50 text-muted-foreground"}`}>
@@ -481,36 +518,36 @@ export function FixedExpensesPanel() {
         </div>
       )}
 
-      {!query.isLoading && (overdueExpenses.length > 0 || soonExpenses.length > 0) && (
+      {!query.isLoading && (overduePayments.length > 0 || soonPayments.length > 0) && (
         <div className="flex flex-col gap-2">
-          {overdueExpenses.length > 0 && (
+          {overduePayments.length > 0 && (
             <Alert variant="destructive">
               <XCircleIcon />
               <AlertTitle>
-                {overdueExpenses.length === 1
-                  ? `"${overdueExpenses[0].description}" está vencido`
-                  : `${overdueExpenses.length} pagos vencidos`}
+                {overduePayments.length === 1
+                  ? `"${overduePayments[0].description}" está vencido`
+                  : `${overduePayments.length} pagos vencidos`}
               </AlertTitle>
               <AlertDescription>
-                {overdueExpenses.length === 1
-                  ? `Vencía el ${formatDate(overdueExpenses[0].nextDueOn)}. Registra el pago para mantener el control.`
-                  : overdueExpenses.map((e) => e.description).join(", ")}
+                {overduePayments.length === 1
+                  ? `Vencía el ${formatDate(overduePayments[0].nextDueOn)}. Registra el pago para mantener el control.`
+                  : overduePayments.map((p) => p.description).join(", ")}
               </AlertDescription>
             </Alert>
           )}
-          {soonExpenses.length > 0 && (
+          {soonPayments.length > 0 && (
             <Alert variant="warning">
               <AlertTriangleIcon />
               <AlertTitle>
-                {soonExpenses.length === 1
-                  ? `"${soonExpenses[0].description}" ${daysLabel(soonExpenses[0].nextDueOn)}`
-                  : `${soonExpenses.length} pagos próximos a vencer`}
+                {soonPayments.length === 1
+                  ? `"${soonPayments[0].description}" ${daysLabel(soonPayments[0].nextDueOn)}`
+                  : `${soonPayments.length} pagos próximos a vencer`}
               </AlertTitle>
               <AlertDescription>
-                {soonExpenses.length === 1
-                  ? formatCurrency(soonExpenses[0].amount)
-                  : soonExpenses
-                      .map((e) => `${e.description} (${daysLabel(e.nextDueOn)})`)
+                {soonPayments.length === 1
+                  ? formatCurrency(soonPayments[0].amount)
+                  : soonPayments
+                      .map((p) => `${p.description} (${daysLabel(p.nextDueOn)})`)
                       .join(", ")}
               </AlertDescription>
             </Alert>
@@ -536,56 +573,64 @@ export function FixedExpensesPanel() {
             </div>
           ) : (
             <div className="flex flex-col divide-y">
-              {expenses.map((expense) => {
-                const isPaid = !!expense.paidOn
-                const badge = getPaymentBadge(expense, monthKey)
+              {payments.map((payment) => {
+                const isPaid = !!payment.paidOn
+                const badge = getPaymentBadge(payment, monthKey)
+                const isIncome = payment.type === "income"
                 return (
                   <div
-                    key={expense.id}
+                    key={payment.id}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3.5",
-                      !expense.isActive && "opacity-60"
+                      !payment.isActive && "opacity-60"
                     )}
                   >
-                    {expense.category && (
+                    {payment.category && (
                       <CategoryIconBadge
-                        icon={expense.category.icon}
-                        color={expense.category.color}
+                        icon={payment.category.icon}
+                        color={payment.category.color}
                         className="size-8 shrink-0 rounded-lg"
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium">{expense.description}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate text-sm font-medium">{payment.description}</p>
+                        {isIncome && (
+                          <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded px-1 py-0.5">
+                            Ingreso
+                          </span>
+                        )}
+                      </div>
                       <p className="truncate text-xs text-muted-foreground">
-                        {expense.paidOn
-                          ? `Pagado el ${formatDate(expense.paidOn)}`
-                          : `Vence el ${formatDate(expense.nextDueOn)}`}
-                        {expense.account && (
+                        {payment.paidOn
+                          ? `${isIncome ? "Cobrado" : "Pagado"} el ${formatDate(payment.paidOn)}`
+                          : `${isIncome ? "Cobro" : "Vence"} el ${formatDate(payment.nextDueOn)}`}
+                        {payment.account && (
                           <>
                             {" · "}
-                            <span style={{ color: expense.account.color }}>
-                              {expense.account.name}
+                            <span style={{ color: payment.account.color }}>
+                              {payment.account.name}
                             </span>
                           </>
                         )}
-                        {" · "}{formatFrequency(expense)}
+                        {" · "}{formatFrequency(payment)}
                       </p>
                     </div>
-                    <p className="shrink-0 text-sm font-semibold tabular-nums">
-                      {formatCurrency(expense.paidAmount ?? expense.amount)}
+                    <p className={`shrink-0 text-sm font-semibold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
+                      {isIncome ? "+" : ""}{formatCurrency(payment.paidAmount ?? payment.amount)}
                     </p>
                     <Badge variant={badge.variant} className={cn("shrink-0 hidden sm:inline-flex", badge.className)}>
                       {badge.label}
                     </Badge>
                     <Button
                       size="sm"
-                      disabled={!expense.isActive || isPaid || registerMutation.isPending}
-                      onClick={() => { setPayExpense(expense); setPayOpen(true) }}
+                      disabled={!payment.isActive || isPaid || registerMutation.isPending}
+                      onClick={() => { setPayPayment(payment); setPayOpen(true) }}
                       variant={isPaid ? "secondary" : "default"}
                       className="shrink-0 h-8"
                     >
                       {isPaid ? <CheckCircle2Icon className="size-3.5" /> : <ReceiptTextIcon className="size-3.5" />}
-                      {isPaid ? "Pagado" : "Pagar"}
+                      {isPaid ? (isIncome ? "Cobrado" : "Pagado") : (isIncome ? "Cobrar" : "Pagar")}
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -595,23 +640,23 @@ export function FixedExpensesPanel() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditExpense(expense)}>
+                        <DropdownMenuItem onSelect={() => setEditPayment(payment)}>
                           <PencilIcon />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setHistoryExpense(expense)}>
+                        <DropdownMenuItem onSelect={() => setHistoryPayment(payment)}>
                           <HistoryIcon />
                           Historial de pagos
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onSelect={() => activeMutation.mutate({ id: expense.id, active: !expense.isActive })}
+                          onSelect={() => activeMutation.mutate({ id: payment.id, active: !payment.isActive })}
                         >
-                          {expense.isActive ? <PauseCircleIcon /> : <PlayCircleIcon />}
-                          {expense.isActive ? "Pausar" : "Activar"}
+                          {payment.isActive ? <PauseCircleIcon /> : <PlayCircleIcon />}
+                          {payment.isActive ? "Pausar" : "Activar"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onSelect={() => setDeleteId(expense.id)}
+                          onSelect={() => setDeleteId(payment.id)}
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2Icon />
@@ -627,7 +672,7 @@ export function FixedExpensesPanel() {
         </CardContent>
       </Card>
 
-      {!query.isLoading && expenses.length === 0 && (
+      {!query.isLoading && !query.isError && payments.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">
@@ -635,28 +680,28 @@ export function FixedExpensesPanel() {
                 <EmptyMedia variant="icon">
                   <CalendarClockIcon />
                 </EmptyMedia>
-                <EmptyTitle>Sin gastos fijos aún</EmptyTitle>
+                <EmptyTitle>Sin pagos recurrentes aún</EmptyTitle>
                 <EmptyDescription>
                   Crea tus pagos recurrentes para saber cuánto tienes estimado y qué falta pagar.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <CreateFixedExpenseDialog />
+                <CreateRecurringPaymentDialog />
               </EmptyContent>
             </Empty>
           </CardContent>
         </Card>
       )}
 
-      {editExpense && (
-        <EditFixedExpenseDialog
-          expense={editExpense}
-          open={!!editExpense}
-          onOpenChange={(open) => !open && setEditExpense(null)}
+      {editPayment && (
+        <EditRecurringPaymentDialog
+          payment={editPayment}
+          open={!!editPayment}
+          onOpenChange={(open) => !open && setEditPayment(null)}
         />
       )}
       <PaymentDialog
-        expense={payExpense}
+        payment={payPayment}
         open={payOpen}
         pending={registerMutation.isPending}
         onOpenChange={(open) => setPayOpen(open)}
@@ -665,15 +710,15 @@ export function FixedExpensesPanel() {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Eliminar gasto fijo"
-        description="Esta acción no elimina transacciones ya registradas, solo el gasto fijo recurrente."
+        title="Eliminar pago recurrente"
+        description="Esta acción no elimina transacciones ya registradas, solo el pago recurrente."
         confirmLabel="Eliminar"
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
       <PaymentHistoryDialog
-        expense={historyExpense}
-        open={!!historyExpense}
-        onOpenChange={(open) => !open && setHistoryExpense(null)}
+        payment={historyPayment}
+        open={!!historyPayment}
+        onOpenChange={(open) => !open && setHistoryPayment(null)}
       />
     </main>
   )

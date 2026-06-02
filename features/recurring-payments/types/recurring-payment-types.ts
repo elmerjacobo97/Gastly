@@ -1,11 +1,11 @@
-export type FixedExpenseCategory = {
+export type RecurringPaymentCategory = {
   id: string
   name: string
   color: string
   icon: string
 }
 
-export type FixedExpense = {
+export type RecurringPayment = {
   id: string
   amount: number
   description: string
@@ -15,7 +15,8 @@ export type FixedExpense = {
   nextDueOn: string
   notes: string | null
   isActive: boolean
-  category: FixedExpenseCategory | null
+  type: "expense" | "income"
+  category: RecurringPaymentCategory | null
   accountId: string | null
   account: { id: string; name: string; color: string } | null
   paidOn: string | null

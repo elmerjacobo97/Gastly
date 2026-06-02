@@ -108,7 +108,7 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
                             <tbody>
                               <tr>
                                 <td style="background-color:#1d42d0;border-radius:8px;">
-                                  <a href="https://gastly.elmerjacobo.dev/dashboard/fixed-expenses"
+                                  <a href="https://gastly.elmerjacobo.dev/dashboard/recurring-payments"
                                      style="text-decoration:none;display:inline-block;font-size:14px;font-weight:600;color:rgb(255,255,255);padding:12px 24px;"
                                      target="_blank">
                                     Ver pagos recurrentes
@@ -206,7 +206,7 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
                             <tbody>
                               <tr>
                                 <td style="background-color:#dc2626;border-radius:8px;">
-                                  <a href="https://gastly.elmerjacobo.dev/dashboard/fixed-expenses"
+                                  <a href="https://gastly.elmerjacobo.dev/dashboard/recurring-payments"
                                      style="text-decoration:none;display:inline-block;font-size:14px;font-weight:600;color:rgb(255,255,255);padding:12px 24px;"
                                      target="_blank">
                                     Registrar pago

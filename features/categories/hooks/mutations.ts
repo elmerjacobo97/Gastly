@@ -13,7 +13,7 @@ export function useCreateCategory() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["categories"] }),
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] }),
+        queryClient.invalidateQueries({ queryKey: ["recurring-payments"] }),
         queryClient.invalidateQueries({ queryKey: ["budgets"] }),
         queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
       ])
@@ -33,7 +33,7 @@ export function useUpdateCategory(id: string) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["categories"] }),
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["fixed-expenses"] }),
+        queryClient.invalidateQueries({ queryKey: ["recurring-payments"] }),
         queryClient.invalidateQueries({ queryKey: ["budgets"] }),
         queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
       ])

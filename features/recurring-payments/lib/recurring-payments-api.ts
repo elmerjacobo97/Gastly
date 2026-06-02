@@ -2,12 +2,12 @@ import { addMonths, addYears, endOfMonth, format, startOfMonth } from "date-fns"
 
 import { createClient } from "@/lib/supabase/browser"
 import {
-  type FixedExpensePaymentValues,
-  type FixedExpenseValues,
-} from "@/features/fixed-expenses/schemas/fixed-expense-schemas"
-import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
+  type RecurringPaymentPaymentValues,
+  type RecurringPaymentValues,
+} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
 
-type FixedExpenseRow = {
+type RecurringPaymentRow = {
   id: string
   amount: number | string
   description: string
@@ -18,6 +18,7 @@ type FixedExpenseRow = {
   billing_day: number
   notes: string | null
   is_active: boolean
+  type: "expense" | "income"
   account_id: string | null
   accounts: { id: string; name: string; color: string } | null
   categories: {
@@ -34,11 +35,11 @@ type PaidTransactionRow = {
   amount: number | string
 }
 
-function mapFixedExpense(
-  row: FixedExpenseRow,
+function mapRecurringPayment(
+  row: RecurringPaymentRow,
   paidByExpense: Map<string, string>,
   paidAmountByExpense: Map<string, number>
-): FixedExpense {
+): RecurringPayment {
   return {
     id: row.id,
     amount: Number(row.amount),
@@ -49,6 +50,7 @@ function mapFixedExpense(
     nextDueOn: row.next_due_on,
     notes: row.notes,
     isActive: row.is_active,
+    type: row.type,
     category: row.categories,
     accountId: row.account_id,
     account: row.accounts ?? null,
@@ -59,7 +61,7 @@ function mapFixedExpense(
 
 function getNextDueDate(
   currentDate: string,
-  frequency: FixedExpense["frequency"],
+  frequency: RecurringPayment["frequency"],
   intervalMonths: number
 ) {
   const date = new Date(`${currentDate}T12:00:00`)
@@ -81,13 +83,13 @@ async function getCurrentUserId(errorMessage: string) {
   return user.id
 }
 
-export async function getFixedExpenses(month?: Date) {
+export async function getRecurringPayments(month?: Date, type?: "expense" | "income") {
   const supabase = createClient()
   const targetMonth = startOfMonth(month ?? new Date())
   const monthStart = format(targetMonth, "yyyy-MM-dd")
   const monthEnd = format(endOfMonth(targetMonth), "yyyy-MM-dd")
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("recurring_expenses")
     .select(
       `
@@ -101,6 +103,7 @@ export async function getFixedExpenses(month?: Date) {
       billing_day,
       notes,
       is_active,
+      type,
       account_id,
       accounts!account_id(id, name, color),
       categories(id, name, color, icon)
@@ -108,7 +111,12 @@ export async function getFixedExpenses(month?: Date) {
     )
     .order("is_active", { ascending: false })
     .order("next_due_on", { ascending: true })
-    .returns<FixedExpenseRow[]>()
+
+  if (type !== undefined) {
+    query = query.eq("type", type)
+  }
+
+  const { data, error } = await query.returns<RecurringPaymentRow[]>()
 
   if (error) {
     throw new Error(error.message)
@@ -139,10 +147,10 @@ export async function getFixedExpenses(month?: Date) {
     }
   }
 
-  return data.map((row) => mapFixedExpense(row, paidByExpense, paidAmountByExpense))
+  return data.map((row) => mapRecurringPayment(row, paidByExpense, paidAmountByExpense))
 }
 
-export async function createFixedExpense(values: FixedExpenseValues) {
+export async function createRecurringPayment(values: RecurringPaymentValues) {
   const supabase = createClient()
   const userId = await getCurrentUserId("Debes iniciar sesion para crear pagos recurrentes.")
 
@@ -159,6 +167,7 @@ export async function createFixedExpense(values: FixedExpenseValues) {
     notes: values.notes || null,
     is_active: true,
     account_id: values.accountId || null,
+    type: values.type ?? "expense",
   })
 
   if (error) {
@@ -166,7 +175,7 @@ export async function createFixedExpense(values: FixedExpenseValues) {
   }
 }
 
-export async function updateFixedExpense(id: string, values: FixedExpenseValues) {
+export async function updateRecurringPayment(id: string, values: RecurringPaymentValues) {
   const supabase = createClient()
   const { error } = await supabase
     .from("recurring_expenses")
@@ -181,6 +190,7 @@ export async function updateFixedExpense(id: string, values: FixedExpenseValues)
       billing_day: new Date(`${values.nextDueOn}T12:00:00`).getDate(),
       notes: values.notes || null,
       account_id: values.accountId || null,
+      type: values.type ?? "expense",
     })
     .eq("id", id)
 
@@ -189,7 +199,7 @@ export async function updateFixedExpense(id: string, values: FixedExpenseValues)
   }
 }
 
-export async function setFixedExpenseActive(id: string, isActive: boolean) {
+export async function setRecurringPaymentActive(id: string, isActive: boolean) {
   const supabase = createClient()
   const { error } = await supabase
     .from("recurring_expenses")
@@ -201,7 +211,7 @@ export async function setFixedExpenseActive(id: string, isActive: boolean) {
   }
 }
 
-export async function deleteFixedExpense(id: string) {
+export async function deleteRecurringPayment(id: string) {
   const supabase = createClient()
   const { error } = await supabase.from("recurring_expenses").delete().eq("id", id)
 
@@ -217,12 +227,12 @@ export type PaymentHistoryEntry = {
   notes: string | null
 }
 
-export async function getFixedExpenseHistory(expenseId: string): Promise<PaymentHistoryEntry[]> {
+export async function getRecurringPaymentHistory(paymentId: string): Promise<PaymentHistoryEntry[]> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from("transactions")
     .select("id, occurred_on, amount, notes")
-    .eq("recurring_expense_id", expenseId)
+    .eq("recurring_expense_id", paymentId)
     .order("occurred_on", { ascending: false })
 
   if (error) throw new Error(error.message)
@@ -235,11 +245,11 @@ export async function getFixedExpenseHistory(expenseId: string): Promise<Payment
   }))
 }
 
-export async function registerFixedExpensePayment(
-  expense: FixedExpense,
-  values: FixedExpensePaymentValues
+export async function registerRecurringPaymentPayment(
+  payment: RecurringPayment,
+  values: RecurringPaymentPaymentValues
 ) {
-  if (!expense.category) {
+  if (!payment.category) {
     throw new Error("El pago recurrente necesita una categoria para registrar el pago.")
   }
 
@@ -248,13 +258,13 @@ export async function registerFixedExpensePayment(
 
   const { error } = await supabase.from("transactions").insert({
     user_id: userId,
-    category_id: expense.category.id,
-    recurring_expense_id: expense.id,
-    type: "expense",
+    category_id: payment.category.id,
+    recurring_expense_id: payment.id,
+    type: payment.type === "income" ? "income" : "expense",
     amount: values.amount,
-    description: expense.description,
+    description: payment.description,
     occurred_on: values.occurredOn,
-    notes: values.notes || expense.notes,
+    notes: values.notes || payment.notes,
   })
 
   if (error) {
@@ -262,9 +272,9 @@ export async function registerFixedExpensePayment(
   }
 
   const nextDueOn = getNextDueDate(
-    expense.nextDueOn,
-    expense.frequency,
-    expense.intervalMonths
+    payment.nextDueOn,
+    payment.frequency,
+    payment.intervalMonths
   )
 
   const { error: updateError } = await supabase
@@ -273,15 +283,16 @@ export async function registerFixedExpensePayment(
       next_due_on: nextDueOn,
       billing_day: new Date(`${nextDueOn}T12:00:00`).getDate(),
     })
-    .eq("id", expense.id)
+    .eq("id", payment.id)
 
   if (updateError) {
     throw new Error(updateError.message)
   }
 
-  if (expense.accountId) {
-    const { error: balanceError } = await supabase.rpc("decrement_account_balance", {
-      p_account_id: expense.accountId,
+  if (payment.accountId) {
+    const rpcFn = payment.type === "income" ? "increment_account_balance" : "decrement_account_balance"
+    const { error: balanceError } = await supabase.rpc(rpcFn, {
+      p_account_id: payment.accountId,
       p_amount: values.amount,
     })
     if (balanceError) throw new Error(balanceError.message)
