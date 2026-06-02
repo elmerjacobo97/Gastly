@@ -2,11 +2,12 @@
 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CalendarIcon, CheckCircle2Icon, ClockIcon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { AlertTriangleIcon, CalendarIcon, CheckCircle2Icon, ClockIcon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, RefreshCwIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -50,7 +51,6 @@ export function InstallmentsPanel() {
 
   const activePurchases = purchases.filter((p) => p.pendingCount > 0);
   const completedPurchases = purchases.filter((p) => p.pendingCount === 0);
-  const totalFinanced = purchases.reduce((s, p) => s + p.totalPaid + p.totalPending, 0);
   const totalPending = activePurchases.reduce((s, p) => s + p.totalPending, 0);
 
   const monthLabel = format(month, 'MMMM yyyy', { locale: es });
@@ -70,8 +70,26 @@ export function InstallmentsPanel() {
         </div>
       </section>
 
+      {purchasesQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar la información</AlertTitle>
+          <AlertDescription>
+            {purchasesQuery.error instanceof Error
+              ? purchasesQuery.error.message
+              : 'Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde.'}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => purchasesQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
       {!purchasesQuery.isLoading && purchases.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
             <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${totalPendingThisMonth === 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted/50 text-muted-foreground'}`}>
               <CalendarIcon className="size-4" />
@@ -98,18 +116,6 @@ export function InstallmentsPanel() {
             </div>
             <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
               {formatCurrency(totalPaidThisMonth)}
-            </p>
-          </div>
-          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <ClockIcon className="size-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-muted-foreground">Falta pagar este mes</p>
-              <p className="truncate text-xs text-muted-foreground">{pendingThisMonth.length} pendiente{pendingThisMonth.length !== 1 ? 's' : ''}</p>
-            </div>
-            <p className="text-lg font-semibold tabular-nums text-amber-600 dark:text-amber-400">
-              {formatCurrency(totalPendingThisMonth)}
             </p>
           </div>
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
@@ -190,7 +196,7 @@ export function InstallmentsPanel() {
       )}
 
       {/* No payments this month */}
-      {!purchasesQuery.isLoading && purchases.length > 0 && monthPayments.length === 0 && (
+      {!purchasesQuery.isLoading && !purchasesQuery.isError && purchases.length > 0 && monthPayments.length === 0 && (
         <div className="rounded-lg border border-muted px-4 py-3 text-sm text-muted-foreground">
           Sin cuotas programadas para <span className="capitalize">{monthLabel}</span>.
         </div>
@@ -201,13 +207,24 @@ export function InstallmentsPanel() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
-              <CardHeader className="pb-3">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="mt-1 h-4 w-24" />
+              <CardHeader className="flex flex-row items-start justify-between pb-3">
+                <div className="flex min-w-0 items-start gap-2">
+                  <Skeleton className="mt-0.5 size-7 shrink-0 rounded-md" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Skeleton className="h-5 w-36" />
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                </div>
+                <Skeleton className="size-8 rounded-md" />
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <Skeleton className="h-2 w-full" />
-                <Skeleton className="h-4 w-40" />
+                <div className="flex items-center justify-between gap-2">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+                <Skeleton className="h-3 w-40" />
               </CardContent>
             </Card>
           ))}
@@ -373,7 +390,7 @@ export function InstallmentsPanel() {
       )}
 
       {/* Empty state */}
-      {!purchasesQuery.isLoading && purchases.length === 0 && (
+      {!purchasesQuery.isLoading && !purchasesQuery.isError && purchases.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">

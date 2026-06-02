@@ -2,11 +2,19 @@
 
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { AlertTriangleIcon, RefreshCwIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 import { useUserSettings } from "@/features/settings/hooks/queries"
-import { useFixedExpenses } from "@/features/fixed-expenses/hooks/queries"
-import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
+import { useRecurringPayments } from "@/features/recurring-payments/hooks/queries"
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
 import { DashboardCharts } from "@/features/transactions/components/dashboard-charts"
 import { DashboardSummaryCards } from "@/features/transactions/components/dashboard-summary-cards"
 import { UpcomingPaymentsCard } from "@/features/transactions/components/upcoming-payments-card"
@@ -16,21 +24,18 @@ import {
   useMonthlyTotals,
   useCategoryTotals,
 } from "@/features/transactions/hooks/queries"
+import { useInstallmentPurchases } from "@/features/installments/hooks/queries"
+import { getMonthInstallments } from "@/features/installments/lib/installments-api"
 
 type TransactionsPanelProps = {
   userEmail?: string
   userName?: string
 }
 
-function isRelevantRecurringPayment(expense: FixedExpense, monthKey: string) {
-  if (!expense.isActive) return false
-  if (expense.frequency === "monthly") return true
-  return expense.nextDueOn.startsWith(monthKey) || expense.paidOn?.startsWith(monthKey)
-}
-
-function getDaysRemainingInMonth(date: Date) {
-  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
-  return Math.max(lastDay - date.getDate() + 1, 1)
+function isRelevantForMonth(payment: RecurringPayment, monthKey: string) {
+  if (!payment.isActive) return false
+  if (payment.frequency === "monthly") return true
+  return payment.nextDueOn.startsWith(monthKey) || payment.paidOn?.startsWith(monthKey)
 }
 
 function getDaysUntil(date: string) {
@@ -47,42 +52,54 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
 
   const transactionsQuery = useTransactions({ month: today })
   const settingsQuery = useUserSettings()
-  const fixedExpensesQuery = useFixedExpenses(today)
+  const recurringPaymentsQuery = useRecurringPayments(today)
+  const installmentsQuery = useInstallmentPurchases()
   const monthlyQuery = useMonthlyTotals(6)
   const categoryQuery = useCategoryTotals(today)
 
   const transactions = transactionsQuery.data ?? []
   const summary = computeSummary(transactions)
-  const recurringPayments = (fixedExpensesQuery.data ?? []).filter((expense) =>
-    isRelevantRecurringPayment(expense, monthKey)
+  const allRecurring = recurringPaymentsQuery.data ?? []
+
+  const recurringPayments = allRecurring.filter(
+    (p) => p.type === "expense" && isRelevantForMonth(p, monthKey)
   )
+
   const savingsPct = settingsQuery.data?.savingsPercentage ?? 20
   const savings = Math.round((summary.income * savingsPct) / 100 * 100) / 100
-  const recurringEstimated = recurringPayments.reduce((sum, expense) => {
-    return sum + (expense.paidAmount ?? expense.amount)
+  const recurringEstimated = recurringPayments.reduce((sum, payment) => {
+    return sum + (payment.paidAmount ?? payment.amount)
   }, 0)
-  const recurringPaid = recurringPayments.reduce((sum, expense) => {
-    return sum + (expense.paidAmount ?? 0)
+  const recurringPaid = recurringPayments.reduce((sum, payment) => {
+    return sum + (payment.paidAmount ?? 0)
   }, 0)
   const availableAfterSavings = Math.max(summary.income - savings, 0)
   const availableForVariable = Math.max(availableAfterSavings - recurringEstimated, 0)
   const variableSpent = Math.max(summary.expenses - recurringPaid, 0)
   const remaining = availableForVariable - variableSpent
-  const daysRemaining = getDaysRemainingInMonth(today)
-  const dailyAvailable = Math.max(remaining, 0) / daysRemaining
   const usage = availableForVariable > 0
     ? Math.round((variableSpent / availableForVariable) * 100)
     : variableSpent > 0
       ? 100
       : 0
 
+  const monthInstallments = getMonthInstallments(installmentsQuery.data ?? [], today)
+  const recurringPendingTotal = recurringPayments
+    .filter((p) => p.paidOn === null)
+    .reduce((s, p) => s + p.amount, 0)
+  const installmentsPendingTotal = monthInstallments
+    .filter(({ payment }) => !payment.transactionId && !payment.paidExternally)
+    .reduce((s, { payment }) => s + payment.amount, 0)
+  const totalToPay = recurringPendingTotal + installmentsPendingTotal
+
   const upcomingPayments = recurringPayments
-    .map((expense) => ({ expense, days: getDaysUntil(expense.nextDueOn) }))
+    .map((payment) => ({ expense: payment, days: getDaysUntil(payment.nextDueOn) }))
     .sort((a, b) => a.days - b.days)
     .slice(0, 8)
 
   const summaryIsLoading =
-    transactionsQuery.isLoading || settingsQuery.isLoading || fixedExpensesQuery.isLoading
+    transactionsQuery.isLoading || settingsQuery.isLoading ||
+    recurringPaymentsQuery.isLoading || installmentsQuery.isLoading
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -100,23 +117,108 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
         </div>
       </section>
 
+      {transactionsQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar las transacciones</AlertTitle>
+          <AlertDescription>
+            {transactionsQuery.error instanceof Error
+              ? transactionsQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => transactionsQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {settingsQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar tu configuración</AlertTitle>
+          <AlertDescription>
+            {settingsQuery.error instanceof Error
+              ? settingsQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => settingsQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {recurringPaymentsQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar los pagos recurrentes</AlertTitle>
+          <AlertDescription>
+            {recurringPaymentsQuery.error instanceof Error
+              ? recurringPaymentsQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => recurringPaymentsQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {monthlyQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo cargar el histórico mensual</AlertTitle>
+          <AlertDescription>
+            {monthlyQuery.error instanceof Error
+              ? monthlyQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => monthlyQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      {categoryQuery.isError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudieron cargar los gastos por categoría</AlertTitle>
+          <AlertDescription>
+            {categoryQuery.error instanceof Error
+              ? categoryQuery.error.message
+              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+          </AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="outline" onClick={() => categoryQuery.refetch()}>
+              <RefreshCwIcon className="size-3.5" />
+              Reintentar
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
       <DashboardSummaryCards
         isLoading={summaryIsLoading}
-        hasPlan={true}
         availableForVariable={availableForVariable}
-        savings={savings}
-        recurringEstimated={recurringEstimated}
-        recurringPaymentCount={recurringPayments.length}
+        totalToPay={totalToPay}
         availableAfterSavings={availableAfterSavings}
         variableSpent={variableSpent}
         usage={usage}
-        dailyAvailable={dailyAvailable}
         remaining={remaining}
-        daysRemaining={daysRemaining}
       />
 
       <UpcomingPaymentsCard
-        isLoading={fixedExpensesQuery.isLoading}
+        isLoading={recurringPaymentsQuery.isLoading}
         payments={upcomingPayments}
       />
 

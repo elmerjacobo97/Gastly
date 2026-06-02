@@ -19,7 +19,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
 import { type CategoryTotal, type MonthlyTotal } from "@/features/transactions/lib/charts-api"
 import { CHART_COLORS, formatCompact } from "@/lib/chart-utils"
 import { formatCurrency } from "@/lib/format"
@@ -102,7 +101,7 @@ export function DashboardCharts({
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Gastos por categoría</CardTitle>
-          <CardDescription>Top categorías del mes seleccionado</CardDescription>
+          <CardDescription>Top 5 del mes actual</CardDescription>
         </CardHeader>
         <CardContent>
           {categoryIsLoading ? (
@@ -126,7 +125,10 @@ export function DashboardCharts({
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(val) => [formatCurrency(Number(val))]}
+                    formatter={(val, _name, props) => [
+                      formatCurrency(Number(val)),
+                      props.payload?.name ?? "",
+                    ]}
                     contentStyle={{
                       background: "var(--popover)",
                       border: "1px solid var(--border)",
@@ -138,17 +140,16 @@ export function DashboardCharts({
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-col gap-2">
-                {categoryData.map((cat) => (
+                {categoryData.map((cat, index) => (
                   <div key={cat.name} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <CategoryIconBadge
-                        icon={cat.icon}
-                        color={cat.categoryColor}
-                        className="size-6 rounded-md"
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="size-2.5 shrink-0 rounded-sm"
+                        style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
                       />
                       <span className="text-muted-foreground">{cat.name}</span>
                     </div>
-                    <span className="font-medium">{formatCurrency(cat.value)}</span>
+                    <span className="font-medium tabular-nums">{formatCurrency(cat.value)}</span>
                   </div>
                 ))}
               </div>

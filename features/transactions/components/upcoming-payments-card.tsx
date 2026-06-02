@@ -11,11 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { type FixedExpense } from "@/features/fixed-expenses/types/fixed-expense-types"
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 type UpcomingPayment = {
-  expense: FixedExpense
+  expense: RecurringPayment
   days: number
 }
 
@@ -35,7 +35,7 @@ export function UpcomingPaymentsCard({ isLoading, payments }: UpcomingPaymentsCa
           <CardDescription>Pagos recurrentes del mes ordenados por fecha</CardDescription>
         </div>
         <Button variant="ghost" size="sm" asChild className="text-xs text-muted-foreground">
-          <Link href="/dashboard/fixed-expenses">
+          <Link href="/dashboard/recurring-payments">
             Ver todos
             <ArrowRightIcon />
           </Link>

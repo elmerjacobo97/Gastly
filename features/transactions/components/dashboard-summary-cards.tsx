@@ -1,7 +1,5 @@
 import {
   ArrowDownIcon,
-  ArrowUpIcon,
-  CalendarDaysIcon,
   TrendingUpIcon,
   WalletCardsIcon,
 } from "lucide-react"
@@ -11,79 +9,58 @@ import { formatCurrency } from "@/lib/format"
 
 type DashboardSummaryCardsProps = {
   isLoading: boolean
-  hasPlan: boolean
   availableForVariable: number
-  savings: number
-  recurringEstimated: number
-  recurringPaymentCount: number
+  totalToPay: number
   availableAfterSavings: number
   variableSpent: number
   usage: number
-  dailyAvailable: number
   remaining: number
-  daysRemaining: number
 }
 
 export function DashboardSummaryCards({
   isLoading,
-  hasPlan,
   availableForVariable,
-  savings,
-  recurringEstimated,
-  recurringPaymentCount,
+  totalToPay,
   availableAfterSavings,
   variableSpent,
   usage,
-  dailyAvailable,
   remaining,
-  daysRemaining,
 }: DashboardSummaryCardsProps) {
   const summaryCards = [
     {
       title: "Disponible libre",
       value: formatCurrency(availableForVariable),
-      description: hasPlan ? "Tras ahorro y recurrentes" : "Sin plan configurado",
+      description: "Lo que queda después de obligaciones",
       icon: WalletCardsIcon,
       positive: remaining >= 0,
     },
     {
-      title: "Ahorro",
-      value: formatCurrency(savings),
-      description: hasPlan ? "No tocar" : "Sin plan mensual",
-      icon: ArrowUpIcon,
-      positive: true,
-    },
-    {
-      title: "Recurrentes",
-      value: formatCurrency(recurringEstimated),
-      description: `${recurringPaymentCount} pago${recurringPaymentCount !== 1 ? "s" : ""} este mes`,
+      title: "Por pagar este mes",
+      value: formatCurrency(totalToPay),
+      description: "Recurrentes + cuotas",
       icon: ArrowDownIcon,
-      positive: recurringEstimated <= availableAfterSavings,
+      positive: totalToPay <= availableAfterSavings,
     },
     {
-      title: "Variables",
+      title: "Gastos variables",
       value: formatCurrency(variableSpent),
       description: `${usage}% del disponible`,
       icon: TrendingUpIcon,
       positive: usage < 85,
     },
-    {
-      title: "Gasto diario",
-      value: formatCurrency(dailyAvailable),
-      description: `${daysRemaining} día${daysRemaining !== 1 ? "s" : ""} restantes`,
-      icon: CalendarDaysIcon,
-      positive: remaining >= 0,
-    },
   ]
 
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <section className="grid gap-3 sm:grid-cols-3">
       {isLoading
-        ? Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="rounded-lg border p-3">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="mt-2 h-7 w-28" />
-              <Skeleton className="mt-2 h-3 w-full max-w-40" />
+        ? Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+              <Skeleton className="size-8 shrink-0 rounded-lg" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-full max-w-36" />
+              </div>
+              <Skeleton className="h-6 w-24" />
             </div>
           ))
         : summaryCards.map((card) => {
