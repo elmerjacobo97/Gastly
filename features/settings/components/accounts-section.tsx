@@ -1,9 +1,15 @@
 "use client"
 
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { AlertTriangleIcon, MoreHorizontalIcon, PencilIcon, RefreshCwIcon, Trash2Icon } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
@@ -25,7 +31,9 @@ export function AccountsSection() {
   const [editAccount, setEditAccount] = useState<Account | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const { data: accounts = [], isLoading } = useAccounts()
+  const accountsQuery = useAccounts()
+  const accounts = accountsQuery.data ?? []
+  const isLoading = accountsQuery.isLoading
   const deleteMutation = useDeleteAccount()
 
   return (
@@ -41,16 +49,37 @@ export function AccountsSection() {
           <CreateAccountDialog />
         </CardHeader>
         <CardContent>
+          {accountsQuery.isError && (
+            <Alert variant="destructive">
+              <AlertTriangleIcon />
+              <AlertTitle>No se pudo cargar la información</AlertTitle>
+              <AlertDescription>
+                {accountsQuery.error instanceof Error
+                  ? accountsQuery.error.message
+                  : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
+              </AlertDescription>
+              <AlertAction>
+                <Button size="sm" variant="outline" onClick={() => accountsQuery.refetch()}>
+                  <RefreshCwIcon className="size-3.5" />
+                  Reintentar
+                </Button>
+              </AlertAction>
+            </Alert>
+          )}
           {isLoading ? (
             <div className="flex flex-col gap-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center justify-between py-2">
-                  <Skeleton className="h-4 w-32" />
+                <div key={i} className="flex items-center gap-3 py-3">
+                  <Skeleton className="size-2.5 shrink-0 rounded-full" />
+                  <div className="min-w-0 flex-1">
+                    <Skeleton className="h-4 w-32" />
+                  </div>
                   <Skeleton className="h-4 w-20" />
+                  <Skeleton className="size-7 rounded-md" />
                 </div>
               ))}
             </div>
-          ) : accounts.length === 0 ? (
+          ) : accounts.length === 0 && !accountsQuery.isError ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
               Sin cuentas registradas.
             </p>

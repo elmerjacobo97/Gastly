@@ -1,12 +1,13 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2Icon, CopyIcon, ExternalLinkIcon, Loader2Icon, RefreshCwIcon, SendIcon, UnlinkIcon } from 'lucide-react'
+import { AlertTriangleIcon, CheckCircle2Icon, CopyIcon, ExternalLinkIcon, Loader2Icon, RefreshCwIcon, SendIcon, UnlinkIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTelegramConnection } from '@/features/settings/hooks/queries'
 import {
@@ -33,6 +34,7 @@ function TelegramConnectionSkeleton() {
 
 export function TelegramConnect() {
   const [linkToken, setLinkToken] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const queryClient = useQueryClient()
@@ -40,21 +42,25 @@ export function TelegramConnect() {
   const connectionQuery = useTelegramConnection()
 
   async function handleGenerate() {
+    setActionError(null)
     setIsGenerating(true)
     const result = await generateTelegramLinkToken()
     setIsGenerating(false)
     if (!result || 'error' in result) {
-      toast.error('No se pudo generar el código', { description: 'error' in result! ? result.error : undefined })
+      setActionError(result && 'error' in result ? result.error : 'No se pudo generar el código de vinculación.')
+      toast.error('No se pudo generar el código')
       return
     }
     setLinkToken(result.token)
   }
 
   async function handleDisconnect() {
+    setActionError(null)
     setIsDisconnecting(true)
     const result = await disconnectTelegram()
     setIsDisconnecting(false)
     if (result && 'error' in result) {
+      setActionError(result.error)
       toast.error('No se pudo desconectar', { description: result.error })
       return
     }
@@ -73,38 +79,68 @@ export function TelegramConnect() {
     return <TelegramConnectionSkeleton />
   }
 
+  if (connectionQuery.isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangleIcon />
+        <AlertTitle>No se pudo verificar la conexión con Telegram</AlertTitle>
+        <AlertDescription>
+          {connectionQuery.error instanceof Error
+            ? connectionQuery.error.message
+            : 'Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde.'}
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
   const connection = connectionQuery.data
 
   if (connection) {
     return (
-      <div className="flex items-center justify-between rounded-xl border p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2Icon className="size-5" />
+      <div className="flex flex-col gap-3">
+        {actionError && (
+          <Alert variant="destructive">
+            <AlertTriangleIcon />
+            <AlertTitle>No se pudo completar la acción</AlertTitle>
+            <AlertDescription>{actionError}</AlertDescription>
+          </Alert>
+        )}
+        <div className="flex items-center justify-between rounded-xl border p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2Icon className="size-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Cuenta vinculada</p>
+              <p className="text-xs text-muted-foreground">
+                {connection.telegram_username ? `@${connection.telegram_username}` : 'Telegram conectado'}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium">Cuenta vinculada</p>
-            <p className="text-xs text-muted-foreground">
-              {connection.telegram_username ? `@${connection.telegram_username}` : 'Telegram conectado'}
-            </p>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isDisconnecting}
+            onClick={handleDisconnect}
+            className="text-destructive hover:text-destructive"
+          >
+            {isDisconnecting ? <Loader2Icon className="size-4 animate-spin" /> : <UnlinkIcon className="size-4" />}
+            Desconectar
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isDisconnecting}
-          onClick={handleDisconnect}
-          className="text-destructive hover:text-destructive"
-        >
-          {isDisconnecting ? <Loader2Icon className="size-4 animate-spin" /> : <UnlinkIcon className="size-4" />}
-          Desconectar
-        </Button>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-3">
+      {actionError && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>No se pudo completar la acción</AlertTitle>
+          <AlertDescription>{actionError}</AlertDescription>
+        </Alert>
+      )}
       {/* Step 1 */}
       <div className="rounded-xl border p-4">
         <div className="mb-3 flex items-center gap-2">
