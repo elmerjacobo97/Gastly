@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import { Providers } from '@/app/providers';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { sharedMetadata, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
 import './globals.css';
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-inter',
   subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
 });
 
 const jetBrainsMono = JetBrains_Mono({
@@ -41,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="es-PE"
-      className={`${inter.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
