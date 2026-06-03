@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { useUserSettings } from "@/features/settings/hooks/queries"
 import { useRecurringPayments } from "@/features/recurring-payments/hooks/queries"
 import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+import { CreditCardDebtCard } from "@/features/transactions/components/credit-card-debt-card"
 import { DashboardCharts } from "@/features/transactions/components/dashboard-charts"
 import { DashboardSummaryCards } from "@/features/transactions/components/dashboard-summary-cards"
 import { UpcomingPaymentsCard } from "@/features/transactions/components/upcoming-payments-card"
@@ -23,6 +24,7 @@ import {
   useTransactions,
   useMonthlyTotals,
   useCategoryTotals,
+  useUnpaidCreditCardTransactions,
 } from "@/features/transactions/hooks/queries"
 import { useInstallmentPurchases } from "@/features/installments/hooks/queries"
 import { getMonthInstallments } from "@/features/installments/lib/installments-api"
@@ -54,6 +56,7 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
   const settingsQuery = useUserSettings()
   const recurringPaymentsQuery = useRecurringPayments(today)
   const installmentsQuery = useInstallmentPurchases()
+  const unpaidCCQuery = useUnpaidCreditCardTransactions()
   const monthlyQuery = useMonthlyTotals(6)
   const categoryQuery = useCategoryTotals(today)
 
@@ -90,6 +93,7 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
   const installmentsPendingTotal = monthInstallments
     .filter(({ payment }) => !payment.transactionId && !payment.paidExternally)
     .reduce((s, { payment }) => s + payment.amount, 0)
+  const creditCardPendingTotal = (unpaidCCQuery.data ?? []).reduce((s, t) => s + t.amount, 0)
   const totalToPay = recurringPendingTotal + installmentsPendingTotal
 
   const upcomingPayments = recurringPayments
@@ -99,7 +103,8 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
 
   const summaryIsLoading =
     transactionsQuery.isLoading || settingsQuery.isLoading ||
-    recurringPaymentsQuery.isLoading || installmentsQuery.isLoading
+    recurringPaymentsQuery.isLoading || installmentsQuery.isLoading ||
+    unpaidCCQuery.isLoading
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -211,6 +216,7 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
         isLoading={summaryIsLoading}
         availableForVariable={availableForVariable}
         totalToPay={totalToPay}
+        creditCardDebt={creditCardPendingTotal}
         availableAfterSavings={availableAfterSavings}
         variableSpent={variableSpent}
         usage={usage}
@@ -220,6 +226,11 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
       <UpcomingPaymentsCard
         isLoading={recurringPaymentsQuery.isLoading}
         payments={upcomingPayments}
+      />
+
+      <CreditCardDebtCard
+        isLoading={unpaidCCQuery.isLoading}
+        transactions={unpaidCCQuery.data ?? []}
       />
 
       <DashboardCharts

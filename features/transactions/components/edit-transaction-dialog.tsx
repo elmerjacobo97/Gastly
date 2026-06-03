@@ -63,6 +63,9 @@ function buildValues(transaction: Transaction): TransactionValues {
     categoryName: transaction.category?.name ?? "",
     occurredOn: transaction.occurredOn,
     notes: transaction.notes ?? "",
+    paymentMethod: transaction.paymentMethod,
+    creditCardName: transaction.creditCardName ?? "",
+    creditCardDueOn: transaction.creditCardDueOn ?? "",
   }
 }
 
@@ -83,6 +86,7 @@ export function EditTransactionDialog({
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentType = useWatch({ control: form.control, name: "type" }) as TransactionType
+  const currentPaymentMethod = useWatch({ control: form.control, name: "paymentMethod" })
 
   const categoriesQuery = useCategories(currentType, open)
 
@@ -223,6 +227,61 @@ export function EditTransactionDialog({
                       </Field>
                     )}
                   />
+                  {transaction.type === "expense" && (
+                    <>
+                      <Controller
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                          <Field>
+                            <FieldLabel htmlFor="et-payment-method">Método de pago</FieldLabel>
+                            <NativeSelect {...field} className="w-full" id="et-payment-method">
+                              <NativeSelectOption value="cash">Efectivo / Débito</NativeSelectOption>
+                              <NativeSelectOption value="credit_card">Tarjeta de crédito</NativeSelectOption>
+                            </NativeSelect>
+                          </Field>
+                        )}
+                      />
+                      {currentPaymentMethod === "credit_card" && (
+                        <>
+                          <Controller
+                            control={form.control}
+                            name="creditCardName"
+                            render={({ field }) => (
+                              <Field>
+                                <FieldLabel htmlFor="et-card-name">
+                                  Nombre de tarjeta{" "}
+                                  <span className="text-muted-foreground">(opcional)</span>
+                                </FieldLabel>
+                                <Input
+                                  {...field}
+                                  id="et-card-name"
+                                  placeholder="Ej. Visa BCP, Mastercard BBVA"
+                                />
+                              </Field>
+                            )}
+                          />
+                          <Controller
+                            control={form.control}
+                            name="creditCardDueOn"
+                            render={({ field }) => (
+                              <Field>
+                                <FieldLabel htmlFor="et-due-on">
+                                  Fecha de vencimiento{" "}
+                                  <span className="text-muted-foreground">(opcional)</span>
+                                </FieldLabel>
+                                <DatePicker
+                                  id="et-due-on"
+                                  value={field.value ?? ""}
+                                  onChange={field.onChange}
+                                />
+                              </Field>
+                            )}
+                          />
+                        </>
+                      )}
+                    </>
+                  )}
                   <Controller
                     control={form.control}
                     name="notes"

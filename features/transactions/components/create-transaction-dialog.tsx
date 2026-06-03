@@ -69,6 +69,9 @@ function buildDefaultValues(defaultType: TransactionType): TransactionValues {
     categoryName: "",
     occurredOn: getToday(),
     notes: "",
+    paymentMethod: "cash",
+    creditCardName: "",
+    creditCardDueOn: "",
   }
 }
 
@@ -87,6 +90,7 @@ export function CreateTransactionDialog({
   })
 
   const currentType = useWatch({ control: form.control, name: "type" }) as TransactionType
+  const currentPaymentMethod = useWatch({ control: form.control, name: "paymentMethod" })
 
   const categoriesQuery = useCategories(currentType, open)
 
@@ -239,6 +243,61 @@ export function CreateTransactionDialog({
                       </Field>
                     )}
                   />
+                  {currentType === "expense" && (
+                    <>
+                      <Controller
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                          <Field>
+                            <FieldLabel htmlFor="ct-payment-method">Método de pago</FieldLabel>
+                            <NativeSelect {...field} className="w-full" id="ct-payment-method">
+                              <NativeSelectOption value="cash">Efectivo / Débito</NativeSelectOption>
+                              <NativeSelectOption value="credit_card">Tarjeta de crédito</NativeSelectOption>
+                            </NativeSelect>
+                          </Field>
+                        )}
+                      />
+                      {currentPaymentMethod === "credit_card" && (
+                        <>
+                          <Controller
+                            control={form.control}
+                            name="creditCardName"
+                            render={({ field }) => (
+                              <Field>
+                                <FieldLabel htmlFor="ct-card-name">
+                                  Nombre de tarjeta{" "}
+                                  <span className="text-muted-foreground">(opcional)</span>
+                                </FieldLabel>
+                                <Input
+                                  {...field}
+                                  id="ct-card-name"
+                                  placeholder="Ej. Visa BCP, Mastercard BBVA"
+                                />
+                              </Field>
+                            )}
+                          />
+                          <Controller
+                            control={form.control}
+                            name="creditCardDueOn"
+                            render={({ field }) => (
+                              <Field>
+                                <FieldLabel htmlFor="ct-due-on">
+                                  Fecha de vencimiento{" "}
+                                  <span className="text-muted-foreground">(opcional)</span>
+                                </FieldLabel>
+                                <DatePicker
+                                  id="ct-due-on"
+                                  value={field.value ?? ""}
+                                  onChange={field.onChange}
+                                />
+                              </Field>
+                            )}
+                          />
+                        </>
+                      )}
+                    </>
+                  )}
                   <Controller
                     control={form.control}
                     name="notes"

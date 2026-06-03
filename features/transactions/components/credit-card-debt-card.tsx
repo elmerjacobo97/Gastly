@@ -1,0 +1,172 @@
+"use client"
+
+import { CreditCardIcon } from "lucide-react"
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { CategoryIconBadge } from "@/features/categories/components/category-icon"
+import { usePayAllCreditCardTransactions } from "@/features/transactions/hooks/mutations"
+import { type Transaction } from "@/features/transactions/types/transaction-types"
+import { formatCurrency, formatDate } from "@/lib/format"
+
+type CreditCardDebtCardProps = {
+  isLoading: boolean
+  transactions: Transaction[]
+}
+
+type CardGroup = {
+  cardName: string | null
+  transactions: Transaction[]
+  total: number
+  earliestDueOn: string | null
+}
+
+function groupByCard(transactions: Transaction[]): CardGroup[] {
+  const map = new Map<string, CardGroup>()
+
+  for (const t of transactions) {
+    const key = t.creditCardName ?? "__none__"
+    const existing = map.get(key)
+    if (existing) {
+      existing.transactions.push(t)
+      existing.total += t.amount
+      if (t.creditCardDueOn) {
+        if (!existing.earliestDueOn || t.creditCardDueOn < existing.earliestDueOn) {
+          existing.earliestDueOn = t.creditCardDueOn
+        }
+      }
+    } else {
+      map.set(key, {
+        cardName: t.creditCardName,
+        transactions: [t],
+        total: t.amount,
+        earliestDueOn: t.creditCardDueOn,
+      })
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.earliestDueOn && b.earliestDueOn) return a.earliestDueOn.localeCompare(b.earliestDueOn)
+    if (a.earliestDueOn) return -1
+    if (b.earliestDueOn) return 1
+    return 0
+  })
+}
+
+export function CreditCardDebtCard({ isLoading, transactions }: CreditCardDebtCardProps) {
+  const payMutation = usePayAllCreditCardTransactions()
+
+  if (isLoading || transactions.length === 0) return null
+
+  const groups = groupByCard(transactions)
+  const today = new Date().toISOString().slice(0, 10)
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <div>
+          <CardTitle className="text-base">Deuda de tarjeta de crédito</CardTitle>
+          <CardDescription>
+            {transactions.length} compra{transactions.length !== 1 ? "s" : ""} pendientes de pagar
+          </CardDescription>
+        </div>
+        <span className="shrink-0 text-lg font-semibold tabular-nums text-destructive">
+          {formatCurrency(transactions.reduce((s, t) => s + t.amount, 0))}
+        </span>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <Accordion type="multiple" className="flex flex-col gap-2">
+          {groups.map((group) => {
+            const key = group.cardName ?? "__none__"
+            const displayName = group.cardName ?? "Tarjeta de crédito"
+            const isOverdue = group.earliestDueOn ? group.earliestDueOn < today : false
+
+            return (
+              <AccordionItem
+                key={key}
+                value={key}
+                className="rounded-xl border bg-muted/30 px-4"
+              >
+                <AccordionTrigger className="hover:no-underline py-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
+                    <div className="grid size-8 shrink-0 place-items-center rounded-lg border bg-background text-muted-foreground">
+                      <CreditCardIcon className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1 text-left">
+                      <p className="text-sm font-medium">{displayName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {group.transactions.length} compra{group.transactions.length !== 1 ? "s" : ""}
+                        {group.earliestDueOn && (
+                          <> · vence {formatDate(group.earliestDueOn)}</>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-sm font-semibold tabular-nums">
+                        {formatCurrency(group.total)}
+                      </span>
+                      <Badge
+                        variant={isOverdue ? "destructive" : "secondary"}
+                        className={isOverdue ? undefined : "bg-amber-500/10 text-amber-700 dark:text-amber-400"}
+                      >
+                        {isOverdue ? "Vencido" : "Por pagar"}
+                      </Badge>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+
+                <AccordionContent className="pb-3">
+                  <div className="flex flex-col divide-y divide-border/60 mb-3">
+                    {group.transactions.map((t) => (
+                      <div key={t.id} className="flex items-center gap-3 py-2.5 first:pt-0">
+                        {t.category && (
+                          <CategoryIconBadge
+                            icon={t.category.icon}
+                            color={t.category.color}
+                            className="size-7 shrink-0 rounded-md"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{t.description}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(t.occurredOn)}</p>
+                        </div>
+                        <span className="shrink-0 text-sm font-medium tabular-nums text-destructive">
+                          -{formatCurrency(t.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                    <span className="text-xs text-muted-foreground">
+                      Total a pagar: <span className="font-semibold text-foreground">{formatCurrency(group.total)}</span>
+                    </span>
+                    <Button
+                      size="sm"
+                      disabled={payMutation.isPending}
+                      onClick={() => payMutation.mutate(group.cardName)}
+                    >
+                      Marcar como pagado
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )
+          })}
+        </Accordion>
+      </CardContent>
+    </Card>
+  )
+}

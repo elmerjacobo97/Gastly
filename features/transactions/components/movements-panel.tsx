@@ -73,13 +73,16 @@ import { type Transaction } from "@/features/transactions/types/transaction-type
 import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
 
 function exportToCSV(transactions: Transaction[], filename: string) {
-  const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Notas"]
+  const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Método de pago", "Notas"]
   const rows = transactions.map((t) => [
     t.occurredOn,
     t.type === "expense" ? "Gasto" : "Ingreso",
     t.description,
     t.category?.name ?? "Sin categoría",
     t.amount.toString(),
+    t.paymentMethod === "credit_card"
+      ? `TC${t.creditCardName ? ` (${t.creditCardName})` : ""}`
+      : "Efectivo",
     t.notes ?? "",
   ])
   const csvContent = [headers, ...rows]
@@ -140,9 +143,17 @@ export function MovementsPanel() {
         header: "Descripción",
         cell: ({ row }) => {
           const t = row.original
+          const isCreditCard = t.paymentMethod === "credit_card"
+          const isPendingCC = isCreditCard && !t.creditCardPaidOn
           return (
             <div className="flex flex-col">
               <span className="font-medium">{t.description}</span>
+              {isCreditCard && (
+                <span className={`text-xs ${isPendingCC ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+                  TC{t.creditCardName ? ` · ${t.creditCardName}` : ""}
+                  {isPendingCC ? " · Por pagar" : " · Pagado"}
+                </span>
+              )}
               {t.notes && (
                 <span className="truncate text-xs text-muted-foreground">{t.notes}</span>
               )}

@@ -1,5 +1,6 @@
 import {
   ArrowDownIcon,
+  CreditCardIcon,
   TrendingUpIcon,
   WalletCardsIcon,
 } from "lucide-react"
@@ -11,6 +12,7 @@ type DashboardSummaryCardsProps = {
   isLoading: boolean
   availableForVariable: number
   totalToPay: number
+  creditCardDebt: number
   availableAfterSavings: number
   variableSpent: number
   usage: number
@@ -21,6 +23,7 @@ export function DashboardSummaryCards({
   isLoading,
   availableForVariable,
   totalToPay,
+  creditCardDebt,
   availableAfterSavings,
   variableSpent,
   usage,
@@ -42,6 +45,13 @@ export function DashboardSummaryCards({
       positive: totalToPay <= availableAfterSavings,
     },
     {
+      title: "Deuda de tarjeta",
+      value: formatCurrency(creditCardDebt),
+      description: creditCardDebt > 0 ? "Compras pendientes de pagar" : "Sin deuda pendiente",
+      icon: CreditCardIcon,
+      positive: creditCardDebt === 0,
+    },
+    {
       title: "Gastos variables",
       value: formatCurrency(variableSpent),
       description: `${usage}% del disponible`,
@@ -51,9 +61,9 @@ export function DashboardSummaryCards({
   ]
 
   return (
-    <section className="grid gap-3 sm:grid-cols-3">
+    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {isLoading
-        ? Array.from({ length: 3 }).map((_, index) => (
+        ? Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
               <Skeleton className="size-8 shrink-0 rounded-lg" />
               <div className="min-w-0 flex-1 space-y-1.5">
