@@ -2,7 +2,12 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { createTransaction, updateTransaction, deleteTransaction } from "@/features/transactions/lib/transactions-api"
+import {
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+  payAllCreditCardTransactions,
+} from "@/features/transactions/lib/transactions-api"
 import { type TransactionValues } from "@/features/transactions/schemas/transaction-schemas"
 
 function invalidateTransactionQueries(queryClient: ReturnType<typeof useQueryClient>) {
@@ -13,6 +18,7 @@ function invalidateTransactionQueries(queryClient: ReturnType<typeof useQueryCli
     queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
     queryClient.invalidateQueries({ queryKey: ["categories"] }),
     queryClient.invalidateQueries({ queryKey: ["budgets"] }),
+    queryClient.invalidateQueries({ queryKey: ["unpaid-credit-card"] }),
   ])
 }
 
@@ -55,11 +61,29 @@ export function useDeleteTransaction() {
         queryClient.invalidateQueries({ queryKey: ["category-totals"] }),
         queryClient.invalidateQueries({ queryKey: ["report-transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["budgets"] }),
+        queryClient.invalidateQueries({ queryKey: ["unpaid-credit-card"] }),
       ])
       toast.success("Transacción eliminada")
     },
     onError: (error) => {
       toast.error("No se pudo eliminar", { description: error.message })
+    },
+  })
+}
+
+export function usePayAllCreditCardTransactions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: payAllCreditCardTransactions,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["unpaid-credit-card"] }),
+        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+      ])
+      toast.success("Tarjeta pagada")
+    },
+    onError: (error) => {
+      toast.error("No se pudo registrar el pago", { description: error.message })
     },
   })
 }

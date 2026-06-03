@@ -1,4 +1,4 @@
-import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+import { type TransactionType, type PaymentMethod } from "@/features/transactions/schemas/transaction-schemas"
 
 export type Category = {
   id: string
@@ -17,6 +17,10 @@ export type Transaction = {
   notes: string | null
   category: Category | null
   recurringExpenseId: string | null
+  paymentMethod: PaymentMethod
+  creditCardName: string | null
+  creditCardDueOn: string | null
+  creditCardPaidOn: string | null
 }
 
 export type TransactionSummary = {

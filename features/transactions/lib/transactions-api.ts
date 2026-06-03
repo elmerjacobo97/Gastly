@@ -3,6 +3,7 @@ import { format, startOfMonth, endOfMonth } from "date-fns"
 import { createClient } from "@/lib/supabase/browser"
 import {
   type TransactionType,
+  type PaymentMethod,
   type TransactionValues,
 } from "@/features/transactions/schemas/transaction-schemas"
 import {
@@ -10,6 +11,9 @@ import {
   type Transaction,
   type TransactionSummary,
 } from "@/features/transactions/types/transaction-types"
+
+const TRANSACTION_SELECT =
+  "id, type, amount, description, occurred_on, notes, payment_method, credit_card_name, credit_card_due_on, credit_card_paid_on, categories(id, name, type, color, icon)"
 
 type TransactionRow = {
   id: string
@@ -19,6 +23,10 @@ type TransactionRow = {
   occurred_on: string
   notes: string | null
   categories: CategoryRow | null
+  payment_method: PaymentMethod
+  credit_card_name: string | null
+  credit_card_due_on: string | null
+  credit_card_paid_on: string | null
 }
 
 type CategoryRow = {
@@ -43,9 +51,12 @@ function mapTransaction(row: TransactionRow): Transaction {
     notes: row.notes,
     recurringExpenseId: null,
     category: row.categories ? mapCategory(row.categories) : null,
+    paymentMethod: row.payment_method,
+    creditCardName: row.credit_card_name,
+    creditCardDueOn: row.credit_card_due_on,
+    creditCardPaidOn: row.credit_card_paid_on,
   }
 }
-
 
 export async function getTransactions(opts?: {
   type?: TransactionType
@@ -54,9 +65,7 @@ export async function getTransactions(opts?: {
   const supabase = createClient()
   let query = supabase
     .from("transactions")
-    .select(
-      "id, type, amount, description, occurred_on, notes, categories(id, name, type, color, icon)"
-    )
+    .select(TRANSACTION_SELECT)
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(500)
@@ -72,6 +81,38 @@ export async function getTransactions(opts?: {
   const { data, error } = await query.returns<TransactionRow[]>()
   if (error) throw new Error(error.message)
   return data.map(mapTransaction)
+}
+
+export async function getUnpaidCreditCardTransactions(): Promise<Transaction[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("transactions")
+    .select(TRANSACTION_SELECT)
+    .eq("payment_method", "credit_card")
+    .is("credit_card_paid_on", null)
+    .order("occurred_on", { ascending: false })
+    .returns<TransactionRow[]>()
+  if (error) throw new Error(error.message)
+  return data.map(mapTransaction)
+}
+
+export async function payAllCreditCardTransactions(cardName: string | null): Promise<void> {
+  const supabase = createClient()
+  const today = format(new Date(), "yyyy-MM-dd")
+  let query = supabase
+    .from("transactions")
+    .update({ credit_card_paid_on: today })
+    .eq("payment_method", "credit_card")
+    .is("credit_card_paid_on", null)
+
+  if (cardName !== null) {
+    query = query.eq("credit_card_name", cardName)
+  } else {
+    query = query.is("credit_card_name", null)
+  }
+
+  const { error } = await query
+  if (error) throw new Error(error.message)
 }
 
 export function computeSummary(transactions: Transaction[]): TransactionSummary {
@@ -117,18 +158,25 @@ export async function updateTransaction(id: string, values: TransactionValues) {
 
   if (categoryError) throw new Error(categoryError.message)
 
-  const { error } = await supabase
-    .from("transactions")
-    .update({
-      category_id: category.id,
-      type: values.type,
-      amount: values.amount,
-      description: values.description,
-      occurred_on: values.occurredOn,
-      notes: values.notes || null,
-    })
-    .eq("id", id)
+  const isCreditCard = values.paymentMethod === "credit_card"
 
+  const updateData: Record<string, unknown> = {
+    category_id: category.id,
+    type: values.type,
+    amount: values.amount,
+    description: values.description,
+    occurred_on: values.occurredOn,
+    notes: values.notes || null,
+    payment_method: values.paymentMethod ?? "cash",
+    credit_card_name: isCreditCard ? (values.creditCardName || null) : null,
+    credit_card_due_on: isCreditCard ? (values.creditCardDueOn || null) : null,
+  }
+
+  if (!isCreditCard) {
+    updateData.credit_card_paid_on = null
+  }
+
+  const { error } = await supabase.from("transactions").update(updateData).eq("id", id)
   if (error) throw new Error(error.message)
 }
 
@@ -154,6 +202,8 @@ export async function createTransaction(values: TransactionValues) {
 
   if (categoryError) throw new Error(categoryError.message)
 
+  const isCreditCard = values.paymentMethod === "credit_card"
+
   const { error } = await supabase.from("transactions").insert({
     user_id: user.id,
     category_id: category.id,
@@ -162,6 +212,9 @@ export async function createTransaction(values: TransactionValues) {
     description: values.description,
     occurred_on: values.occurredOn,
     notes: values.notes || null,
+    payment_method: values.paymentMethod ?? "cash",
+    credit_card_name: isCreditCard ? (values.creditCardName || null) : null,
+    credit_card_due_on: isCreditCard ? (values.creditCardDueOn || null) : null,
   })
 
   if (error) throw new Error(error.message)

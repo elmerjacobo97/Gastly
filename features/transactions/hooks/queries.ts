@@ -2,7 +2,10 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { getTransactions } from "@/features/transactions/lib/transactions-api"
+import {
+  getTransactions,
+  getUnpaidCreditCardTransactions,
+} from "@/features/transactions/lib/transactions-api"
 import { getMonthlyTotals, getCategoryTotals } from "@/features/transactions/lib/charts-api"
 import { getAllTransactions } from "@/features/transactions/lib/charts-api"
 import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
@@ -13,6 +16,13 @@ export function useTransactions(opts?: { type?: TransactionType; month?: Date })
   return useQuery({
     queryKey: ["transactions", typeKey, monthKey],
     queryFn: () => getTransactions(opts),
+  })
+}
+
+export function useUnpaidCreditCardTransactions() {
+  return useQuery({
+    queryKey: ["unpaid-credit-card"],
+    queryFn: getUnpaidCreditCardTransactions,
   })
 }
 

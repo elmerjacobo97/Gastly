@@ -114,7 +114,7 @@ export async function getAllTransactions(opts?: {
   let query = supabase
     .from("transactions")
     .select(
-      "id, type, amount, description, occurred_on, notes, recurring_expense_id, categories(id, name, type, color, icon)"
+      "id, type, amount, description, occurred_on, notes, recurring_expense_id, payment_method, credit_card_name, credit_card_due_on, credit_card_paid_on, categories(id, name, type, color, icon)"
     )
     .order("occurred_on", { ascending: false })
     .limit(1000)
@@ -143,6 +143,10 @@ export async function getAllTransactions(opts?: {
       category: cat
         ? { ...cat, type: cat.type as "expense" | "income" }
         : null,
+      paymentMethod: (row.payment_method ?? "cash") as "cash" | "credit_card",
+      creditCardName: (row.credit_card_name as string | null) ?? null,
+      creditCardDueOn: (row.credit_card_due_on as string | null) ?? null,
+      creditCardPaidOn: (row.credit_card_paid_on as string | null) ?? null,
     }
   })
 }
