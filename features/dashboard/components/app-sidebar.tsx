@@ -10,6 +10,7 @@ import {
   HandCoinsIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  PackageIcon,
   Settings2Icon,
   TargetIcon,
 } from "lucide-react"
@@ -76,6 +77,12 @@ const navigationItems = [
     title: "Préstamos",
     href: "/dashboard/loans",
     icon: HandCoinsIcon,
+    exact: false,
+  },
+  {
+    title: "Encargos",
+    href: "/dashboard/custody",
+    icon: PackageIcon,
     exact: false,
   },
   // {

@@ -13,6 +13,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/recurring-payments": "Pagos recurrentes",
   "/dashboard/installments": "Cuotas",
   "/dashboard/loans": "Préstamos",
+  "/dashboard/custody": "Encargos",
   "/dashboard/reports": "Reportes",
   "/dashboard/settings": "Configuración",
   "/dashboard/categories": "Categorías",

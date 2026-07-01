@@ -16,6 +16,7 @@ import { useUserSettings } from "@/features/settings/hooks/queries"
 import { useRecurringPayments } from "@/features/recurring-payments/hooks/queries"
 import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
 import { CreditCardDebtCard } from "@/features/transactions/components/credit-card-debt-card"
+import { CustodySummaryCard } from "@/features/custody/components/custody-summary-card"
 import { DashboardCharts } from "@/features/transactions/components/dashboard-charts"
 import { DashboardSummaryCards } from "@/features/transactions/components/dashboard-summary-cards"
 import { UpcomingPaymentsCard } from "@/features/transactions/components/upcoming-payments-card"
@@ -222,6 +223,8 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
         usage={usage}
         remaining={remaining}
       />
+
+      <CustodySummaryCard />
 
       <UpcomingPaymentsCard
         isLoading={recurringPaymentsQuery.isLoading}
