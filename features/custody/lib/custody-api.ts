@@ -77,7 +77,7 @@ export async function getCustodyOrders(): Promise<CustodyOrder[]> {
     .from("custody_orders")
     .select("id, person_name, title, target_amount, expected_on, status, notes, created_at")
     .order("created_at", { ascending: false })
-    .returns<CustodyOrderRow[]>()
+    .overrideTypes<CustodyOrderRow[], { merge: false }>()
 
   if (error) throw new Error(error.message)
   if (!orders?.length) return []
@@ -87,7 +87,7 @@ export async function getCustodyOrders(): Promise<CustodyOrder[]> {
     .select("id, custody_order_id, type, amount, occurred_on, method, notes")
     .in("custody_order_id", orders.map((o) => o.id))
     .order("occurred_on", { ascending: true })
-    .returns<CustodyMovementRowDb[]>()
+    .overrideTypes<CustodyMovementRowDb[], { merge: false }>()
 
   if (mError) throw new Error(mError.message)
 
