@@ -1,32 +1,15 @@
-'use client';
-
 import { PackageIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useCustodyOrders } from '@/lib/finance/custody/hooks/queries';
 import { computeCustodySummary } from '@/lib/finance/custody/lib/custody-api';
+import { getCustodyOrders } from '@/lib/finance/custody/server/queries';
 import { formatCurrency } from '@/lib/format';
 
-export function CustodySummaryCard() {
-  const query = useCustodyOrders();
-  const orders = query.data ?? [];
+export async function CustodySummaryCard() {
+  const orders = await getCustodyOrders();
   const summary = computeCustodySummary(orders);
-
-  if (query.isLoading) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <Skeleton className="h-5 w-40" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-8 w-24" />
-        </CardContent>
-      </Card>
-    );
-  }
 
   if (summary.totalHeld <= 0 && summary.activeCount === 0) return null;
 

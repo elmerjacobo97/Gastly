@@ -103,9 +103,9 @@ export function TransactionsPanel({ userEmail, userName, custodySummary }: Trans
     .slice(0, 8)
 
   const summaryIsLoading =
-    transactionsQuery.isLoading || settingsQuery.isLoading ||
-    recurringPaymentsQuery.isLoading || installmentsQuery.isLoading ||
-    unpaidCCQuery.isLoading
+    transactionsQuery.isPending || settingsQuery.isPending ||
+    recurringPaymentsQuery.isPending || installmentsQuery.isPending ||
+    unpaidCCQuery.isPending
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -227,20 +227,20 @@ export function TransactionsPanel({ userEmail, userName, custodySummary }: Trans
       {custodySummary}
 
       <UpcomingPaymentsCard
-        isLoading={recurringPaymentsQuery.isLoading}
+        isLoading={recurringPaymentsQuery.isPending}
         payments={upcomingPayments}
       />
 
       <CreditCardDebtCard
-        isLoading={unpaidCCQuery.isLoading}
+        isLoading={unpaidCCQuery.isPending}
         transactions={unpaidCCQuery.data ?? []}
       />
 
       <DashboardCharts
         monthlyData={monthlyQuery.data}
-        monthlyIsLoading={monthlyQuery.isLoading}
+        monthlyIsLoading={monthlyQuery.isPending}
         categoryData={categoryQuery.data}
-        categoryIsLoading={categoryQuery.isLoading}
+        categoryIsLoading={categoryQuery.isPending}
       />
     </main>
   )

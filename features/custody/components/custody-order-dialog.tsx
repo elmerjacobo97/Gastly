@@ -2,7 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2Icon, PlusIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { type Resolver, Controller, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
 import { custodyOrderSchema, type CustodyOrderValues } from '@/lib/finance/custody/schemas/custody-schemas';
-import { useCreateCustodyOrder } from '@/lib/finance/custody/hooks/mutations';
+import { createCustodyOrder } from '@/lib/finance/custody/server/actions';
 
 const defaultValues: CustodyOrderValues = {
   personName: '',
@@ -37,13 +38,27 @@ type CustodyOrderDialogProps = {
 
 export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOrderDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<CustodyOrderValues>({
     resolver: zodResolver(custodyOrderSchema) as Resolver<CustodyOrderValues>,
     defaultValues,
   });
 
-  const mutation = useCreateCustodyOrder();
+  function onSubmit(values: CustodyOrderValues) {
+    startTransition(async () => {
+      try {
+        await createCustodyOrder(values);
+        toast.success('Encargo registrado');
+        form.reset(defaultValues);
+        setOpen(false);
+      } catch (error) {
+        toast.error('No se pudo registrar el encargo', {
+          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+        });
+      }
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -64,14 +79,7 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
           id="custody-order-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) =>
-            mutation.mutate(v, {
-              onSuccess: () => {
-                form.reset(defaultValues);
-                setOpen(false);
-              },
-            })
-          )}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
@@ -172,8 +180,8 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
               Cancelar
             </Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="custody-order-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="custody-order-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Registrar encargo
           </Button>
         </DialogFooter>

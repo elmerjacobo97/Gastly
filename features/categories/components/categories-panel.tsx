@@ -116,7 +116,7 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
           <SegmentedControl value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS} />
         </CardHeader>
         <CardContent>
-          {categoriesQuery.isLoading ? (
+          {categoriesQuery.isPending ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3">

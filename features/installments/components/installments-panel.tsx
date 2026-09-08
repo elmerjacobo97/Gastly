@@ -88,7 +88,7 @@ export function InstallmentsPanel() {
         </Alert>
       )}
 
-      {!purchasesQuery.isLoading && purchases.length > 0 && (
+      {!purchasesQuery.isPending && purchases.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
             <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${totalPendingThisMonth === 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted/50 text-muted-foreground'}`}>
@@ -134,7 +134,7 @@ export function InstallmentsPanel() {
       )}
 
       {/* This month's payments */}
-      {!purchasesQuery.isLoading && monthPayments.length > 0 && (
+      {!purchasesQuery.isPending && monthPayments.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
             <div>
@@ -196,14 +196,14 @@ export function InstallmentsPanel() {
       )}
 
       {/* No payments this month */}
-      {!purchasesQuery.isLoading && !purchasesQuery.isError && purchases.length > 0 && monthPayments.length === 0 && (
+      {!purchasesQuery.isPending && !purchasesQuery.isError && purchases.length > 0 && monthPayments.length === 0 && (
         <div className="rounded-lg border border-muted px-4 py-3 text-sm text-muted-foreground">
           Sin cuotas programadas para <span className="capitalize">{monthLabel}</span>.
         </div>
       )}
 
       {/* Active purchases grid */}
-      {purchasesQuery.isLoading ? (
+      {purchasesQuery.isPending ? (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
@@ -319,7 +319,7 @@ export function InstallmentsPanel() {
       ) : null}
 
       {/* Completed purchases */}
-      {!purchasesQuery.isLoading && completedPurchases.length > 0 && (
+      {!purchasesQuery.isPending && completedPurchases.length > 0 && (
         <>
           <h2 className="text-sm font-medium text-muted-foreground">Compras saldadas ({completedPurchases.length})</h2>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -390,7 +390,7 @@ export function InstallmentsPanel() {
       )}
 
       {/* Empty state */}
-      {!purchasesQuery.isLoading && !purchasesQuery.isError && purchases.length === 0 && (
+      {!purchasesQuery.isPending && !purchasesQuery.isError && purchases.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">

@@ -3,7 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ArrowDownIcon, ArrowUpIcon, Loader2Icon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { type Resolver, Controller, useForm, useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { custodyMovementSchema, type CustodyMovementValues } from '@/lib/finance/custody/schemas/custody-schemas';
-import { useRecordCustodyMovement, useUpdateCustodyMovement } from '@/lib/finance/custody/hooks/mutations';
+import { recordCustodyMovement, updateCustodyMovement } from '@/lib/finance/custody/server/actions';
 import {
   type CustodyMovement,
   type CustodyMovementType,
@@ -88,6 +89,7 @@ export function RecordMovementDialog({
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
   const isEdit = Boolean(movement);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<CustodyMovementValues>({
     resolver: zodResolver(custodyMovementSchema) as Resolver<CustodyMovementValues>,
@@ -95,9 +97,6 @@ export function RecordMovementDialog({
   });
 
   const movementType = useWatch({ control: form.control, name: 'type' });
-  const createMutation = useRecordCustodyMovement(order.id);
-  const updateMutation = useUpdateCustodyMovement(movement?.id ?? '');
-  const mutation = isEdit ? updateMutation : createMutation;
 
   useEffect(() => {
     if (open) {
@@ -114,7 +113,27 @@ export function RecordMovementDialog({
         ? 'Editar desembolso'
         : 'Registrar desembolso';
 
-  const dialog = (
+  function onSubmit(values: CustodyMovementValues) {
+    startTransition(async () => {
+      try {
+        if (isEdit && movement) {
+          await updateCustodyMovement(movement.id, values);
+          toast.success('Movimiento actualizado');
+        } else {
+          await recordCustodyMovement(order.id, values);
+          toast.success('Movimiento registrado');
+        }
+        form.reset(getDefaultValues(type, order));
+        setOpen(false);
+      } catch (error) {
+        toast.error(isEdit ? 'No se pudo actualizar el movimiento' : 'No se pudo registrar el movimiento', {
+          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+        });
+      }
+    });
+  }
+
+  return (
     <Dialog open={open} onOpenChange={setOpen}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-sm">
@@ -129,14 +148,7 @@ export function RecordMovementDialog({
           id="custody-movement-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) =>
-            mutation.mutate(v, {
-              onSuccess: () => {
-                form.reset(getDefaultValues(type, order));
-                setOpen(false);
-              },
-            })
-          )}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             {isEdit && (
@@ -239,16 +251,14 @@ export function RecordMovementDialog({
               Cancelar
             </Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="custody-movement-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="custody-movement-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             {isEdit ? 'Guardar cambios' : 'Confirmar'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-
-  return dialog;
 }
 
 export function DepositButton({ order }: { order: CustodyOrder }) {

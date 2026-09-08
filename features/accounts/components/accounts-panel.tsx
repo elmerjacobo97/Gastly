@@ -93,7 +93,7 @@ export function AccountsPanel() {
 
   const accountsQuery = useAccounts()
   const accounts = accountsQuery.data ?? []
-  const isLoading = accountsQuery.isLoading
+  const isLoading = accountsQuery.isPending
   const transfersQuery = useAccountTransfers(accounts.length > 0)
   const transfers = transfersQuery.data ?? []
   const deleteMutation = useDeleteAccount()

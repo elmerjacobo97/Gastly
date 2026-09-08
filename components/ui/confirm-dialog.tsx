@@ -20,6 +20,7 @@ type ConfirmDialogProps = {
   onConfirm: () => void
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  pending?: boolean
 }
 
 export function ConfirmDialog({
@@ -30,6 +31,7 @@ export function ConfirmDialog({
   onConfirm,
   open,
   onOpenChange,
+  pending = false,
 }: ConfirmDialogProps) {
   const isControlled = open !== undefined
   return (
@@ -49,6 +51,7 @@ export function ConfirmDialog({
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
+            disabled={pending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {confirmLabel}

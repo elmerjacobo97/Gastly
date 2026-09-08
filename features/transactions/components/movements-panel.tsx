@@ -343,7 +343,7 @@ export function MovementsPanel() {
           <DataTable
             columns={columns}
             data={rows}
-            isLoading={query.isLoading}
+            isLoading={query.isPending}
             searchPlaceholder="Buscar por descripción o categoría..."
             toolbar={
               <SegmentedControl value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS} />

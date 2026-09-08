@@ -109,7 +109,7 @@ export function BudgetPanel() {
     ? Math.max(actualIncome - savings - recurringEstimated, 0)
     : 0
   const unassigned = availableForBudget - totalBudget
-  const hasPlanningData = !!plan && !planQuery.isLoading && !fixedExpensesQuery.isLoading && !transactionsQuery.isLoading
+  const hasPlanningData = !!plan && !planQuery.isPending && !fixedExpensesQuery.isPending && !transactionsQuery.isPending
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -200,7 +200,7 @@ export function BudgetPanel() {
         </Alert>
       )}
 
-      {planQuery.isLoading || fixedExpensesQuery.isLoading || transactionsQuery.isLoading ? (
+      {planQuery.isPending || fixedExpensesQuery.isPending || transactionsQuery.isPending ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
@@ -278,7 +278,7 @@ export function BudgetPanel() {
         </div>
       ) : null}
 
-      {!budgetsQuery.isLoading && (() => {
+      {!budgetsQuery.isPending && (() => {
         const overList = budgets.filter((b) => b.spent > b.amount)
         const nearList = budgets.filter((b) => {
           const u = b.amount > 0 ? (b.spent / b.amount) * 100 : 0
@@ -327,7 +327,7 @@ export function BudgetPanel() {
       })()}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {budgetsQuery.isLoading
+        {budgetsQuery.isPending
           ? Array.from({ length: 6 }).map((_, i) => (
             <Card key={i}>
                 <CardHeader className="flex flex-row items-start justify-between pb-3">
@@ -437,7 +437,7 @@ export function BudgetPanel() {
             })}
       </section>
 
-      {!budgetsQuery.isLoading && !budgetsQuery.isError && budgets.length === 0 && (
+      {!budgetsQuery.isPending && !budgetsQuery.isError && budgets.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">

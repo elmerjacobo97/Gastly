@@ -336,7 +336,7 @@ function PaymentHistoryDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          {historyQuery.isLoading ? (
+          {historyQuery.isPending ? (
             <div className="flex flex-col gap-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex items-center justify-between py-2">
@@ -479,7 +479,7 @@ export function RecurringPaymentsPanel() {
         </Alert>
       )}
 
-      {!query.isLoading && payments.length > 0 && (
+      {!query.isPending && payments.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
             <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${allPaid ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted/50 text-muted-foreground"}`}>
@@ -518,7 +518,7 @@ export function RecurringPaymentsPanel() {
         </div>
       )}
 
-      {!query.isLoading && (overduePayments.length > 0 || soonPayments.length > 0) && (
+      {!query.isPending && (overduePayments.length > 0 || soonPayments.length > 0) && (
         <div className="flex flex-col gap-2">
           {overduePayments.length > 0 && (
             <Alert variant="destructive">
@@ -557,7 +557,7 @@ export function RecurringPaymentsPanel() {
 
       <Card>
         <CardContent className="p-0">
-          {query.isLoading ? (
+          {query.isPending ? (
             <div className="flex flex-col divide-y px-4">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 py-4">
@@ -672,7 +672,7 @@ export function RecurringPaymentsPanel() {
         </CardContent>
       </Card>
 
-      {!query.isLoading && !query.isError && payments.length === 0 && (
+      {!query.isPending && !query.isError && payments.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">

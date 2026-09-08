@@ -122,7 +122,7 @@ export function LoansPanel() {
 
   const loansQuery = useLoans()
   const loans = loansQuery.data ?? []
-  const isLoading = loansQuery.isLoading
+  const isPending = loansQuery.isPending
   const deleteMutation = useDeleteLoan()
 
   const active = loans.filter((l) => !l.isSettled)
@@ -167,7 +167,7 @@ export function LoansPanel() {
       )}
 
       {/* Summary cards */}
-      {!isLoading && loans.length > 0 && (
+      {!isPending && loans.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
             <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -209,7 +209,7 @@ export function LoansPanel() {
       )}
 
       {/* Loading skeletons */}
-      {isLoading ? (
+      {isPending ? (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 2 }).map((_, i) => (
             <Card key={i}>

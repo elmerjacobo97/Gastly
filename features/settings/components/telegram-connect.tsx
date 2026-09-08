@@ -75,7 +75,7 @@ export function TelegramConnect() {
     toast.success('Copiado al portapapeles')
   }
 
-  if (connectionQuery.isLoading) {
+  if (connectionQuery.isPending) {
     return <TelegramConnectionSkeleton />
   }
 

@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
  import { CheckIcon, PlusIcon, Loader2Icon } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -26,7 +27,7 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateSavingsGoal } from "@/lib/finance/savings/hooks/mutations"
+import { createSavingsGoal } from "@/lib/finance/savings/server/actions"
 import {
   GOAL_COLORS,
   savingsGoalSchema,
@@ -52,6 +53,7 @@ type CreateGoalDialogProps = {
 export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onOpenChange: controlledOnOpenChange }: CreateGoalDialogProps = {}) {
   const isControlled = controlledOpen !== undefined
   const [internalOpen, setInternalOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
 
@@ -60,7 +62,21 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
     defaultValues,
   })
 
-  const mutation = useCreateSavingsGoal()
+  function onSubmit(values: SavingsGoalValues) {
+    startTransition(async () => {
+      try {
+        const id = await createSavingsGoal(values)
+        toast.success("Meta de ahorro creada")
+        form.reset(defaultValues)
+        setOpen(false)
+        onSuccess?.(id)
+      } catch (error) {
+        toast.error("No se pudo crear la meta", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

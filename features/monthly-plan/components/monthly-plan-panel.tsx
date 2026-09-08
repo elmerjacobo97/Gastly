@@ -44,7 +44,7 @@ export function MonthlyPlanPanel() {
   const savings = calculateSavings(plan, actualIncome)
   const availableAfterSavings = Math.max(actualIncome - savings, 0)
 
-  const isLoading = planQuery.isLoading || transactionsQuery.isLoading
+  const isLoading = planQuery.isPending || transactionsQuery.isPending
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">

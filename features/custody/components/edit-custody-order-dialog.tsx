@@ -1,8 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
+import { Loader2Icon } from "lucide-react"
+import { useEffect, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,7 @@ import {
   custodyOrderSchema,
   type CustodyOrderValues,
 } from "@/lib/finance/custody/schemas/custody-schemas"
-import { useUpdateCustodyOrder } from "@/lib/finance/custody/hooks/mutations"
+import { updateCustodyOrder } from "@/lib/finance/custody/server/actions"
 import { type CustodyOrder } from "@/lib/finance/custody/types/custody-types"
 
 type EditCustodyOrderDialogProps = {
@@ -52,16 +53,32 @@ export function EditCustodyOrderDialog({
   open,
   onOpenChange,
 }: EditCustodyOrderDialogProps) {
+  const [isPending, startTransition] = useTransition()
+
   const form = useForm<CustodyOrderValues>({
     resolver: zodResolver(custodyOrderSchema) as Resolver<CustodyOrderValues>,
     defaultValues: toFormValues(order),
   })
 
   useEffect(() => {
-    if (open) form.reset(toFormValues(order))
+    if (open) {
+      form.reset(toFormValues(order))
+    }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useUpdateCustodyOrder(order.id)
+  function onSubmit(values: CustodyOrderValues) {
+    startTransition(async () => {
+      try {
+        await updateCustodyOrder(order.id, values)
+        toast.success("Encargo actualizado")
+        onOpenChange(false)
+      } catch (error) {
+        toast.error("No se pudo actualizar el encargo", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,9 +93,7 @@ export function EditCustodyOrderDialog({
           id="edit-custody-order-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) =>
-            mutation.mutate(v, { onSuccess: () => onOpenChange(false) })
-          )}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
@@ -187,8 +202,12 @@ export function EditCustodyOrderDialog({
               Cancelar
             </Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="edit-custody-order-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button
+            disabled={isPending}
+            form="edit-custody-order-form"
+            type="submit"
+          >
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar cambios
           </Button>
         </DialogFooter>
