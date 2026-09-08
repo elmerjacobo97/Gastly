@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/browser"
 import {
   type RecurringPaymentPaymentValues,
   type RecurringPaymentValues,
-} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+} from "@/lib/finance/recurring-payments/schemas/recurring-payment-schemas"
+import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
 
 type RecurringPaymentRow = {
   id: string

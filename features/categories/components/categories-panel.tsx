@@ -41,12 +41,12 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
 import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog"
 import { EditCategoryDialog } from "@/features/categories/components/edit-category-dialog"
-import { useCategories } from "@/features/categories/hooks/queries"
-import { useDeleteCategory } from "@/features/categories/hooks/mutations"
-import { type Category } from "@/features/categories/types/category-types"
+import { useCategories } from "@/lib/finance/categories/hooks/queries"
+import { useDeleteCategory } from "@/lib/finance/categories/hooks/mutations"
+import { type Category } from "@/lib/finance/categories/types/category-types"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 
 type TypeFilter = "all" | "expense" | "income"

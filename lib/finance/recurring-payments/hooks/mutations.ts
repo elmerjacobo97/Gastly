@@ -8,9 +8,9 @@ import {
   deleteRecurringPayment,
   setRecurringPaymentActive,
   registerRecurringPaymentPayment,
-} from "@/features/recurring-payments/lib/recurring-payments-api"
-import { type RecurringPaymentValues, type RecurringPaymentPaymentValues } from "@/features/recurring-payments/schemas/recurring-payment-schemas"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+} from "@/lib/finance/recurring-payments/lib/recurring-payments-api"
+import { type RecurringPaymentValues, type RecurringPaymentPaymentValues } from "@/lib/finance/recurring-payments/schemas/recurring-payment-schemas"
+import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
 
 export function useCreateRecurringPayment() {
   const queryClient = useQueryClient()

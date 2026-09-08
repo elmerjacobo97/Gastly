@@ -22,11 +22,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { CreateMonthlyPlanDialog } from "@/features/monthly-plan/components/create-monthly-plan-dialog"
 import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-monthly-plan-dialog"
-import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api"
-import { useMonthlyPlan } from "@/features/monthly-plan/hooks/queries"
+import { calculateSavings } from "@/lib/finance/monthly-plan/lib/monthly-plan-api"
+import { useMonthlyPlan } from "@/lib/finance/monthly-plan/hooks/queries"
 import { MonthNav } from "@/components/month-nav"
-import { CreateTransactionDialog } from "@/features/transactions/components/create-transaction-dialog"
-import { useTransactions } from "@/features/transactions/hooks/queries"
+import { CreateTransactionDialog } from "@/components/create-transaction-dialog"
+import { useTransactions } from "@/lib/finance/transactions/hooks/queries"
 import { formatCurrency } from "@/lib/format"
 
 export function MonthlyPlanPanel() {

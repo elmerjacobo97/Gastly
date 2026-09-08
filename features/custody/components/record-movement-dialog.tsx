@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ArrowDownIcon, ArrowUpIcon, Loader2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { type Resolver, Controller, useForm, useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -22,13 +22,13 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { custodyMovementSchema, type CustodyMovementValues } from '@/features/custody/schemas/custody-schemas';
-import { useRecordCustodyMovement, useUpdateCustodyMovement } from '@/features/custody/hooks/mutations';
+import { custodyMovementSchema, type CustodyMovementValues } from '@/lib/finance/custody/schemas/custody-schemas';
+import { useRecordCustodyMovement, useUpdateCustodyMovement } from '@/lib/finance/custody/hooks/mutations';
 import {
   type CustodyMovement,
   type CustodyMovementType,
   type CustodyOrder,
-} from '@/features/custody/types/custody-types';
+} from '@/lib/finance/custody/types/custody-types';
 import { formatCurrency } from '@/lib/format';
 
 const METHOD_LABELS: Record<string, string> = {
@@ -90,7 +90,7 @@ export function RecordMovementDialog({
   const isEdit = Boolean(movement);
 
   const form = useForm<CustodyMovementValues>({
-    resolver: zodResolver(custodyMovementSchema),
+    resolver: zodResolver(custodyMovementSchema) as Resolver<CustodyMovementValues>,
     defaultValues: getDefaultValues(type, order, movement),
   });
 

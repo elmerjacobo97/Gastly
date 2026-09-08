@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { forgotPassword } from '@/features/auth/server/actions';
-import { type ForgotPasswordValues, forgotPasswordSchema } from '@/features/auth/schemas/auth-schemas';
+import { forgotPassword } from '@/lib/finance/auth/server/actions';
+import { type ForgotPasswordValues, forgotPasswordSchema } from '@/lib/finance/auth/schemas/auth-schemas';
 
 export function ForgotPasswordForm() {
   const form = useForm<ForgotPasswordValues>({

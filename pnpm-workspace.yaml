@@ -6,3 +6,6 @@ allowBuilds:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+minimumReleaseAgeExclude:
+  - '@types/node@26.5.0'
+  - lucide-react@1.42.0

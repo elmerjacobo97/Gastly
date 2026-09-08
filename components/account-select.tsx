@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useAccounts } from "@/features/accounts/hooks/queries"
-import { QuickCreateAccountDialog } from "@/features/accounts/components/quick-create-account-dialog"
+import { useAccounts } from "@/lib/finance/accounts/hooks/queries"
+import { QuickCreateAccountDialog } from "@/components/quick-create-account-dialog"
 
 type AccountSelectProps = {
   value: string

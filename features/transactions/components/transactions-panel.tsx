@@ -12,27 +12,27 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { useUserSettings } from "@/features/settings/hooks/queries"
-import { useRecurringPayments } from "@/features/recurring-payments/hooks/queries"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+import { useUserSettings } from "@/lib/finance/settings/hooks/queries"
+import { useRecurringPayments } from "@/lib/finance/recurring-payments/hooks/queries"
+import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
 import { CreditCardDebtCard } from "@/features/transactions/components/credit-card-debt-card"
-import { CustodySummaryCard } from "@/features/custody/components/custody-summary-card"
 import { DashboardCharts } from "@/features/transactions/components/dashboard-charts"
 import { DashboardSummaryCards } from "@/features/transactions/components/dashboard-summary-cards"
 import { UpcomingPaymentsCard } from "@/features/transactions/components/upcoming-payments-card"
-import { computeSummary } from "@/features/transactions/lib/transactions-api"
+import { computeSummary } from "@/lib/finance/transactions/lib/transactions-api"
 import {
   useTransactions,
   useMonthlyTotals,
   useCategoryTotals,
   useUnpaidCreditCardTransactions,
-} from "@/features/transactions/hooks/queries"
-import { useInstallmentPurchases } from "@/features/installments/hooks/queries"
-import { getMonthInstallments } from "@/features/installments/lib/installments-api"
+} from "@/lib/finance/transactions/hooks/queries"
+import { useInstallmentPurchases } from "@/lib/finance/installments/hooks/queries"
+import { getMonthInstallments } from "@/lib/finance/installments/lib/installments-api"
 
 type TransactionsPanelProps = {
   userEmail?: string
   userName?: string
+  custodySummary?: React.ReactNode
 }
 
 function isRelevantForMonth(payment: RecurringPayment, monthKey: string) {
@@ -47,7 +47,7 @@ function getDaysUntil(date: string) {
   return Math.round(diffMs / (1000 * 60 * 60 * 24))
 }
 
-export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProps) {
+export function TransactionsPanel({ userEmail, userName, custodySummary }: TransactionsPanelProps) {
   const today = new Date()
   const monthKey = format(today, "yyyy-MM")
   const monthLabel = format(today, "MMMM yyyy", { locale: es })
@@ -224,7 +224,7 @@ export function TransactionsPanel({ userEmail, userName }: TransactionsPanelProp
         remaining={remaining}
       />
 
-      <CustodySummaryCard />
+      {custodySummary}
 
       <UpcomingPaymentsCard
         isLoading={recurringPaymentsQuery.isLoading}

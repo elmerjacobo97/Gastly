@@ -1,4 +1,4 @@
-import { z } from "zod/v3";
+import { z } from "zod";
 
 export const budgetSchema = z.object({
   categoryId: z.string().min(1, "Selecciona una categoria."),

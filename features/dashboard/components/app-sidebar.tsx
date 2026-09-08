@@ -40,7 +40,6 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut } from "@/features/auth/server/actions"
 
 const navigationItems = [
   {
@@ -108,9 +107,10 @@ const navigationItems = [
 type AppSidebarProps = {
   userEmail?: string
   userName?: string
+  signOutAction?: (formData: FormData) => void | Promise<void>
 }
 
-function UserFooter({ userEmail, userName }: AppSidebarProps) {
+function UserFooter({ userEmail, userName, signOutAction }: AppSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar()
 
   const displayName = userName || userEmail?.split("@")[0] || "Usuario"
@@ -177,7 +177,7 @@ function UserFooter({ userEmail, userName }: AppSidebarProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <form action={signOut} className="w-full">
+              <form action={signOutAction ?? (async () => {})} className="w-full">
                 <Button type="submit" variant="ghost" className="h-auto w-full justify-start gap-2 p-0 font-normal">
                   <LogOutIcon className="size-4" />
                   Cerrar sesión
@@ -191,7 +191,7 @@ function UserFooter({ userEmail, userName }: AppSidebarProps) {
   )
 }
 
-export function AppSidebar({ userEmail, userName }: AppSidebarProps) {
+export function AppSidebar({ userEmail, userName, signOutAction }: AppSidebarProps) {
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
 
@@ -246,7 +246,7 @@ export function AppSidebar({ userEmail, userName }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
-        <UserFooter userEmail={userEmail} userName={userName} />
+        <UserFooter userEmail={userEmail} userName={userName} signOutAction={signOutAction} />
         <p className="px-2 pb-1 text-center text-[10px] text-muted-foreground/50">v{version}</p>
       </SidebarFooter>
 

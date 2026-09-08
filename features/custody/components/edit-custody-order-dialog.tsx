@@ -1,9 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
+ import { Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -27,9 +27,9 @@ import { NumberInput } from "@/components/ui/number-input"
 import {
   custodyOrderSchema,
   type CustodyOrderValues,
-} from "@/features/custody/schemas/custody-schemas"
-import { useUpdateCustodyOrder } from "@/features/custody/hooks/mutations"
-import { type CustodyOrder } from "@/features/custody/types/custody-types"
+} from "@/lib/finance/custody/schemas/custody-schemas"
+import { useUpdateCustodyOrder } from "@/lib/finance/custody/hooks/mutations"
+import { type CustodyOrder } from "@/lib/finance/custody/types/custody-types"
 
 type EditCustodyOrderDialogProps = {
   order: CustodyOrder
@@ -53,7 +53,7 @@ export function EditCustodyOrderDialog({
   onOpenChange,
 }: EditCustodyOrderDialogProps) {
   const form = useForm<CustodyOrderValues>({
-    resolver: zodResolver(custodyOrderSchema),
+    resolver: zodResolver(custodyOrderSchema) as Resolver<CustodyOrderValues>,
     defaultValues: toFormValues(order),
   })
 

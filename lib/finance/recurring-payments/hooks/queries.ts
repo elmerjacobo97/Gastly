@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { getRecurringPayments, getRecurringPaymentHistory } from "@/features/recurring-payments/lib/recurring-payments-api"
+import { getRecurringPayments, getRecurringPaymentHistory } from "@/lib/finance/recurring-payments/lib/recurring-payments-api"
 
 export function useRecurringPayments(month: Date, type?: "expense" | "income") {
   const monthKey = format(month, "yyyy-MM")

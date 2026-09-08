@@ -2,9 +2,9 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { createSavingsGoal, updateSavingsGoal, deleteSavingsGoal, addContribution } from "@/features/savings/lib/savings-api"
-import { type SavingsGoalValues, type ContributionValues } from "@/features/savings/schemas/savings-schemas"
-import { type SavingsGoal } from "@/features/savings/types/savings-types"
+import { createSavingsGoal, updateSavingsGoal, deleteSavingsGoal, addContribution } from "@/lib/finance/savings/lib/savings-api"
+import { type SavingsGoalValues, type ContributionValues } from "@/lib/finance/savings/schemas/savings-schemas"
+import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
 
 export function useCreateSavingsGoal() {
   const queryClient = useQueryClient()

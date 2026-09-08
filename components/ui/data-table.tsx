@@ -3,14 +3,21 @@
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  type ColumnVisibilityState,
+  type RowData,
   type SortingState,
-  type VisibilityState,
+  columnFilteringFeature,
+  columnSizingFeature,
+  columnVisibilityFeature,
+  createFilteredRowModel,
+  createPaginatedRowModel,
+  createSortedRowModel,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  globalFilteringFeature,
+  rowPaginationFeature,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table"
 import {
   ArrowDownIcon,
@@ -49,8 +56,24 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
+const features = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+  columnFilteringFeature,
+  filteredRowModel: createFilteredRowModel(),
+  globalFilteringFeature,
+  columnVisibilityFeature,
+  columnSizingFeature,
+  rowPaginationFeature,
+  paginatedRowModel: createPaginatedRowModel(),
+})
+
+type Features = typeof features
+
+export type { Features as DataTableFeatures }
+
+interface DataTableProps<TData extends RowData> {
+  columns: ColumnDef<Features, TData>[]
   data: TData[]
   searchPlaceholder?: string
   toolbar?: React.ReactNode
@@ -66,7 +89,7 @@ function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
   return <ArrowUpDownIcon className="ml-1.5 inline size-3 opacity-40" />
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends RowData>({
   columns,
   data,
   searchPlaceholder = "Buscar...",
@@ -75,28 +98,32 @@ export function DataTable<TData, TValue>({
   isLoading = false,
   emptyState,
   showColumnToggle = false,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>({})
   const [globalFilter, setGlobalFilter] = useState("")
 
-  const table = useReactTable({
-    data,
-    columns,
-    state: { sorting, columnFilters, columnVisibility, globalFilter },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: defaultPageSize } },
-  })
+  const table = useTable(
+    {
+      features,
+      data,
+      columns,
+      state: { sorting, columnFilters, columnVisibility, globalFilter },
+      onSortingChange: setSorting,
+      onColumnFiltersChange: setColumnFilters,
+      onColumnVisibilityChange: setColumnVisibility,
+      onGlobalFilterChange: setGlobalFilter,
+      initialState: { pagination: { pageIndex: 0, pageSize: defaultPageSize } },
+    },
+    (state) => ({
+      pagination: state.pagination,
+      globalFilter: state.globalFilter,
+      columnVisibility: state.columnVisibility,
+    }),
+  )
 
-  const { pageIndex, pageSize } = table.getState().pagination
+  const { pageIndex, pageSize } = table.state.pagination
   const total = table.getFilteredRowModel().rows.length
   const from = total === 0 ? 0 : pageIndex * pageSize + 1
   const to = Math.min((pageIndex + 1) * pageSize, total)
@@ -184,7 +211,7 @@ export function DataTable<TData, TValue>({
               ))
             ) : table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

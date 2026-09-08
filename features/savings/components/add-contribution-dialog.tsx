@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
+ import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,12 +26,12 @@ import {
 import { DatePicker } from "@/components/ui/date-picker"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useAddContribution } from "@/features/savings/hooks/mutations"
+import { useAddContribution } from "@/lib/finance/savings/hooks/mutations"
 import {
   contributionSchema,
   type ContributionValues,
-} from "@/features/savings/schemas/savings-schemas"
-import { type SavingsGoal } from "@/features/savings/types/savings-types"
+} from "@/lib/finance/savings/schemas/savings-schemas"
+import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
 
 type AddContributionDialogProps = {
   goal: SavingsGoal
@@ -53,7 +53,7 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
   const [open, setOpen] = useState(false)
 
   const form = useForm<ContributionValues>({
-    resolver: zodResolver(contributionSchema),
+    resolver: zodResolver(contributionSchema) as Resolver<ContributionValues>,
     defaultValues: { ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() },
   })
 

@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { PasswordInput } from '@/features/auth/components/password-input';
-import { signUp } from '@/features/auth/server/actions';
-import { type SignUpValues, signUpSchema } from '@/features/auth/schemas/auth-schemas';
+import { PasswordInput } from '@/components/password-input';
+import { signUp } from '@/lib/finance/auth/server/actions';
+import { type SignUpValues, signUpSchema } from '@/lib/finance/auth/schemas/auth-schemas';
 
 type SignUpFormProps = {
   error?: string;

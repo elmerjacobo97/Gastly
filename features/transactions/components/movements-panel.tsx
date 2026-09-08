@@ -42,7 +42,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { DataTable } from "@/components/ui/data-table"
+import { DataTable, type DataTableFeatures } from "@/components/ui/data-table"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,17 +60,17 @@ import {
 } from "@/components/ui/empty"
 import { MonthNav } from "@/components/month-nav"
 import { SegmentedControl } from "@/components/ui/segmented-control"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { CreateTransactionDialog } from "@/features/transactions/components/create-transaction-dialog"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
+import { CreateTransactionDialog } from "@/components/create-transaction-dialog"
 import { EditTransactionDialog } from "@/features/transactions/components/edit-transaction-dialog"
-import { useTransactions } from "@/features/transactions/hooks/queries"
-import { useDeleteTransaction } from "@/features/transactions/hooks/mutations"
+import { useTransactions } from "@/lib/finance/transactions/hooks/queries"
+import { useDeleteTransaction } from "@/lib/finance/transactions/hooks/mutations"
 import {
   formatCurrency,
   formatDate,
 } from "@/lib/format"
-import { type Transaction } from "@/features/transactions/types/transaction-types"
-import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+import { type Transaction } from "@/lib/finance/transactions/types/transaction-types"
+import { type TransactionType } from "@/lib/finance/transactions/schemas/transaction-schemas"
 
 function exportToCSV(transactions: Transaction[], filename: string) {
   const headers = ["Fecha", "Tipo", "Descripción", "Categoría", "Monto", "Método de pago", "Notas"]
@@ -136,7 +136,7 @@ export function MovementsPanel() {
 
   const deleteMutation = useDeleteTransaction()
 
-  const columns = useMemo<ColumnDef<Transaction>[]>(
+  const columns = useMemo<ColumnDef<DataTableFeatures, Transaction>[]>(
     () => [
       {
         accessorKey: "description",

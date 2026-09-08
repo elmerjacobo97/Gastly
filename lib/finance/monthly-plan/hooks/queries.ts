@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { format, startOfMonth, subMonths } from "date-fns"
-import { getMonthlyPlan } from "@/features/monthly-plan/lib/monthly-plan-api"
+import { getMonthlyPlan } from "@/lib/finance/monthly-plan/lib/monthly-plan-api"
 
 export function useMonthlyPlan(month: Date) {
   const monthKey = format(month, "yyyy-MM")

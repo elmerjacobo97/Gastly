@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { type CategoryTotal, type MonthlyTotal } from "@/features/transactions/lib/charts-api"
+import { type CategoryTotal, type MonthlyTotal } from "@/lib/finance/transactions/lib/charts-api"
 import { CHART_COLORS, formatCompact } from "@/lib/chart-utils"
 import { formatCurrency } from "@/lib/format"
 

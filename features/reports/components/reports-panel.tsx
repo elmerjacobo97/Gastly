@@ -56,14 +56,14 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api"
-import { useMonthlyPlan } from "@/features/monthly-plan/hooks/queries"
-import { useAllTransactions } from "@/features/transactions/hooks/queries"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
+import { calculateSavings } from "@/lib/finance/monthly-plan/lib/monthly-plan-api"
+import { useMonthlyPlan } from "@/lib/finance/monthly-plan/hooks/queries"
+import { useAllTransactions } from "@/lib/finance/transactions/hooks/queries"
 import { formatCurrency } from "@/lib/format"
 import { CHART_COLORS, formatCompact } from "@/lib/chart-utils"
 import { SegmentedControl } from "@/components/ui/segmented-control"
-import { type Transaction } from "@/features/transactions/types/transaction-types"
+import { type Transaction } from "@/lib/finance/transactions/types/transaction-types"
 
 type Period = "1m" | "3m" | "6m" | "year" | "last-year"
 

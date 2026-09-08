@@ -2,8 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { upsertMonthlyPlan } from "@/features/monthly-plan/lib/monthly-plan-api"
-import { type MonthlyPlanValues } from "@/features/monthly-plan/schemas/monthly-plan-schemas"
+import { upsertMonthlyPlan } from "@/lib/finance/monthly-plan/lib/monthly-plan-api"
+import { type MonthlyPlanValues } from "@/lib/finance/monthly-plan/schemas/monthly-plan-schemas"
 
 export function useUpsertMonthlyPlan() {
   const queryClient = useQueryClient()

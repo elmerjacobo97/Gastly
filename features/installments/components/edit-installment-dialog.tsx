@@ -5,7 +5,7 @@ import { addMonths, format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Loader2Icon } from 'lucide-react';
 import { useEffect } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { type Resolver, Controller, useForm, useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,15 +22,15 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CategorySelect } from '@/features/categories/components/category-select';
+import { CategorySelect } from '@/components/category-select';
 import {
   installmentPurchaseSchema,
   type InstallmentPurchaseValues,
-} from '@/features/installments/schemas/installment-schemas';
-import { useUpdateInstallmentPurchase } from '@/features/installments/hooks/mutations';
-import { getNextPaymentDefault } from '@/features/installments/lib/installment-date-utils';
-import { type InstallmentPurchase } from '@/features/installments/types/installment-types';
-import { AccountSelect } from '@/features/accounts/components/account-select';
+} from '@/lib/finance/installments/schemas/installment-schemas';
+import { useUpdateInstallmentPurchase } from '@/lib/finance/installments/hooks/mutations';
+import { getNextPaymentDefault } from '@/lib/finance/installments/lib/installment-date-utils';
+import { type InstallmentPurchase } from '@/lib/finance/installments/types/installment-types';
+import { AccountSelect } from '@/components/account-select';
 
 function getLastPaymentDate(firstPaymentOn: string, totalInstallments: number): string | null {
   if (!firstPaymentOn || !totalInstallments || totalInstallments < 2) return null;
@@ -54,7 +54,7 @@ export function EditInstallmentDialog({ purchase, open, onOpenChange }: EditInst
   const externallyPaidCount = purchase.payments.filter((p) => p.paidExternally).length;
 
   const form = useForm<InstallmentPurchaseValues>({
-    resolver: zodResolver(installmentPurchaseSchema),
+    resolver: zodResolver(installmentPurchaseSchema) as Resolver<InstallmentPurchaseValues>,
     defaultValues: {
       description: purchase.description,
       categoryId: purchase.category?.id ?? '',

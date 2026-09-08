@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { startOfMonth } from "date-fns"
+ import { startOfMonth } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,9 +28,9 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import { budgetSchema, type BudgetValues } from "@/features/budget/schemas/budget-schemas"
-import { useCreateBudget } from "@/features/budget/hooks/mutations"
-import { CategorySelect } from "@/features/categories/components/category-select"
+import { budgetSchema, type BudgetValues } from "@/lib/finance/budget/schemas/budget-schemas"
+import { useCreateBudget } from "@/lib/finance/budget/hooks/mutations"
+import { CategorySelect } from "@/components/category-select"
 
 const MONTHS = [
   { value: 0, label: "Enero" }, { value: 1, label: "Febrero" },
@@ -55,7 +55,7 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
   const now = new Date()
 
   const form = useForm<BudgetValues>({
-    resolver: zodResolver(budgetSchema),
+    resolver: zodResolver(budgetSchema) as Resolver<BudgetValues>,
     defaultValues: {
       categoryId: "",
       amount: 0,

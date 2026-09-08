@@ -1,9 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
+ import { Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -28,9 +28,9 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
-import { useUpdateLoan } from "@/features/loans/hooks/mutations"
-import { type Loan } from "@/features/loans/types/loan-types"
+import { loanSchema, type LoanValues } from "@/lib/finance/loans/schemas/loan-schemas"
+import { useUpdateLoan } from "@/lib/finance/loans/hooks/mutations"
+import { type Loan } from "@/lib/finance/loans/types/loan-types"
 
 type EditLoanDialogProps = {
   loan: Loan
@@ -40,7 +40,7 @@ type EditLoanDialogProps = {
 
 export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps) {
   const form = useForm<LoanValues>({
-    resolver: zodResolver(loanSchema),
+    resolver: zodResolver(loanSchema) as Resolver<LoanValues>,
     defaultValues: {
       direction: loan.direction,
       personName: loan.personName,

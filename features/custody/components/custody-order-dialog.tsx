@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2Icon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { type Resolver, Controller, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -20,8 +20,8 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
-import { custodyOrderSchema, type CustodyOrderValues } from '@/features/custody/schemas/custody-schemas';
-import { useCreateCustodyOrder } from '@/features/custody/hooks/mutations';
+import { custodyOrderSchema, type CustodyOrderValues } from '@/lib/finance/custody/schemas/custody-schemas';
+import { useCreateCustodyOrder } from '@/lib/finance/custody/hooks/mutations';
 
 const defaultValues: CustodyOrderValues = {
   personName: '',
@@ -39,7 +39,7 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
   const [open, setOpen] = useState(false);
 
   const form = useForm<CustodyOrderValues>({
-    resolver: zodResolver(custodyOrderSchema),
+    resolver: zodResolver(custodyOrderSchema) as Resolver<CustodyOrderValues>,
     defaultValues,
   });
 

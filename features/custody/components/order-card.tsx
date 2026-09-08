@@ -15,7 +15,7 @@ import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { DepositButton, DisbursementButton } from '@/features/custody/components/record-movement-dialog';
-import { type CustodyOrder } from '@/features/custody/types/custody-types';
+import { type CustodyOrder } from '@/lib/finance/custody/types/custody-types';
 
 type OrderCardProps = {
   order: CustodyOrder;

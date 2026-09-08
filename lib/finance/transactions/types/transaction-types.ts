@@ -1,4 +1,4 @@
-import { type TransactionType, type PaymentMethod } from "@/features/transactions/schemas/transaction-schemas"
+import { type TransactionType, type PaymentMethod } from "@/lib/finance/transactions/schemas/transaction-schemas"
 
 export type Category = {
   id: string

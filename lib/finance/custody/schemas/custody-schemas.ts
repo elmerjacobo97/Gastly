@@ -1,4 +1,4 @@
-import { z } from "zod/v3"
+import { z } from "zod"
 
 export const custodyOrderSchema = z.object({
   personName: z.string().trim().min(2, "Ingresa el nombre de la persona."),

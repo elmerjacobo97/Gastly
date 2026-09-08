@@ -7,9 +7,9 @@ import {
   updateInstallmentPurchase,
   deleteInstallmentPurchase,
   payMonthInstallments,
-} from "@/features/installments/lib/installments-api"
-import { type InstallmentPurchaseValues, type PayInstallmentsValues } from "@/features/installments/schemas/installment-schemas"
-import { type InstallmentPayment, type InstallmentPurchase } from "@/features/installments/types/installment-types"
+} from "@/lib/finance/installments/lib/installments-api"
+import { type InstallmentPurchaseValues, type PayInstallmentsValues } from "@/lib/finance/installments/schemas/installment-schemas"
+import { type InstallmentPayment, type InstallmentPurchase } from "@/lib/finance/installments/types/installment-types"
 
 function invalidateInstallmentQueries(queryClient: ReturnType<typeof useQueryClient>) {
   return Promise.all([

@@ -1,6 +1,6 @@
-import { z } from "zod/v3"
+import { z } from "zod"
 
-import { transactionTypes } from "@/features/transactions/schemas/transaction-schemas"
+import { transactionTypes } from "@/lib/finance/transactions/schemas/transaction-schemas"
 
 export const categorySchema = z.object({
   name: z.string().trim().min(2, "Ingresa un nombre de categoria."),

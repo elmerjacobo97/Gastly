@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/browser"
-import { type SavingsGoal } from "@/features/savings/types/savings-types"
-import { type SavingsGoalValues, type ContributionValues } from "@/features/savings/schemas/savings-schemas"
+import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
+import { type SavingsGoalValues, type ContributionValues } from "@/lib/finance/savings/schemas/savings-schemas"
 
 type SavingsGoalRow = {
   id: string

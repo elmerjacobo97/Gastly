@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/browser"
-import { type CategoryValues } from "@/features/categories/schemas/category-schemas"
-import { type Category } from "@/features/categories/types/category-types"
-import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+import { type CategoryValues } from "@/lib/finance/categories/schemas/category-schemas"
+import { type Category } from "@/lib/finance/categories/types/category-types"
+import { type TransactionType } from "@/lib/finance/transactions/schemas/transaction-schemas"
 
 const suggestedCategories = [
   { name: "Sueldo", type: "income", color: "emerald", icon: "salary" },

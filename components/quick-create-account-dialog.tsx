@@ -1,9 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckIcon, Loader2Icon } from "lucide-react"
+ import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,8 +18,8 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
-import { useCreateAccount } from "@/features/accounts/hooks/mutations"
-import { ACCOUNT_COLORS, accountSchema, type AccountValues } from "@/features/accounts/schemas/account-schemas"
+import { useCreateAccount } from "@/lib/finance/accounts/hooks/mutations"
+import { ACCOUNT_COLORS, accountSchema, type AccountValues } from "@/lib/finance/accounts/schemas/account-schemas"
 import { cn } from "@/lib/utils"
 
 type QuickCreateAccountDialogProps = {
@@ -30,7 +30,7 @@ type QuickCreateAccountDialogProps = {
 
 export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: QuickCreateAccountDialogProps) {
   const form = useForm<AccountValues>({
-    resolver: zodResolver(accountSchema),
+    resolver: zodResolver(accountSchema) as Resolver<AccountValues>,
     defaultValues: { name: "", balance: 0, color: ACCOUNT_COLORS[0], notes: "" },
   })
 

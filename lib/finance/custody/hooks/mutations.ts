@@ -10,12 +10,12 @@ import {
   recordCustodyMovement,
   updateCustodyMovement,
   deleteCustodyMovement,
-} from "@/features/custody/lib/custody-api"
+} from "@/lib/finance/custody/lib/custody-api"
 import {
   type CustodyMovementValues,
   type CustodyOrderValues,
-} from "@/features/custody/schemas/custody-schemas"
-import { type CustodyOrderStatus } from "@/features/custody/types/custody-types"
+} from "@/lib/finance/custody/schemas/custody-schemas"
+import { type CustodyOrderStatus } from "@/lib/finance/custody/types/custody-types"
 
 export function useCreateCustodyOrder() {
   const queryClient = useQueryClient()

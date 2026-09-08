@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useTelegramConnection } from '@/features/settings/hooks/queries'
+import { useTelegramConnection } from '@/lib/finance/settings/hooks/queries'
 import {
   disconnectTelegram,
   generateTelegramLinkToken,

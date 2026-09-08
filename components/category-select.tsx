@@ -12,10 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { QuickCreateCategoryDialog } from "@/features/categories/components/quick-create-category-dialog"
-import { useCategories } from "@/features/categories/hooks/queries"
-import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
+import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog"
+import { useCategories } from "@/lib/finance/categories/hooks/queries"
+import { type TransactionType } from "@/lib/finance/transactions/schemas/transaction-schemas"
 
 type CategorySelectProps = {
   value: string

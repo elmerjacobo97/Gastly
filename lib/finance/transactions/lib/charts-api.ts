@@ -4,7 +4,7 @@ import { format, startOfMonth, subMonths } from "date-fns"
 import { es } from "date-fns/locale"
 
 import { createClient } from "@/lib/supabase/browser"
-import { CHART_COLORS } from "@/lib/chart-colors"
+import { CHART_COLORS } from "@/lib/chart-utils"
 
 export type MonthlyTotal = {
   month: string

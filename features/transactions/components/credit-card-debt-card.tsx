@@ -6,9 +6,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CategoryIconBadge } from '@/features/categories/components/category-icon';
-import { usePayAllCreditCardTransactions } from '@/features/transactions/hooks/mutations';
-import { type Transaction } from '@/features/transactions/types/transaction-types';
+import { CategoryIconBadge } from '@/components/category-icon-badge';
+import { usePayAllCreditCardTransactions } from '@/lib/finance/transactions/hooks/mutations';
+import { type Transaction } from '@/lib/finance/transactions/types/transaction-types';
 import { formatCurrency, formatDate } from '@/lib/format';
 
 type CreditCardDebtCardProps = {

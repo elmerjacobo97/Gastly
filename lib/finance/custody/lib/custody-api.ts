@@ -5,11 +5,11 @@ import {
   type CustodyOrder,
   type CustodyOrderStatus,
   type CustodyPaymentMethod,
-} from "@/features/custody/types/custody-types"
+} from "@/lib/finance/custody/types/custody-types"
 import {
   type CustodyMovementValues,
   type CustodyOrderValues,
-} from "@/features/custody/schemas/custody-schemas"
+} from "@/lib/finance/custody/schemas/custody-schemas"
 
 type CustodyOrderRow = {
   id: string

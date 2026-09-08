@@ -2,8 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { createLoan, updateLoan, deleteLoan, recordLoanPayment } from "@/features/loans/lib/loans-api"
-import { type LoanValues, type LoanPaymentValues } from "@/features/loans/schemas/loan-schemas"
+import { createLoan, updateLoan, deleteLoan, recordLoanPayment } from "@/lib/finance/loans/lib/loans-api"
+import { type LoanValues, type LoanPaymentValues } from "@/lib/finance/loans/schemas/loan-schemas"
 
 export function useCreateLoan() {
   const queryClient = useQueryClient()

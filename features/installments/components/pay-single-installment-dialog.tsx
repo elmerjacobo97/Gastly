@@ -16,9 +16,9 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { DatePicker } from '@/components/ui/date-picker';
-import { usePaySingleInstallment } from '@/features/installments/hooks/mutations';
-import { payInstallmentsSchema, type PayInstallmentsValues } from '@/features/installments/schemas/installment-schemas';
-import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
+import { usePaySingleInstallment } from '@/lib/finance/installments/hooks/mutations';
+import { payInstallmentsSchema, type PayInstallmentsValues } from '@/lib/finance/installments/schemas/installment-schemas';
+import { type InstallmentPayment, type InstallmentPurchase } from '@/lib/finance/installments/types/installment-types';
 import { formatCurrency } from '@/lib/format';
 
 type PaySingleInstallmentDialogProps = {

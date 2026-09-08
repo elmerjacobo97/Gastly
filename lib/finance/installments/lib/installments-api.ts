@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/browser"
 import {
   type InstallmentPayment,
   type InstallmentPurchase,
-} from "@/features/installments/types/installment-types"
-import { type InstallmentPurchaseValues } from "@/features/installments/schemas/installment-schemas"
+} from "@/lib/finance/installments/types/installment-types"
+import { type InstallmentPurchaseValues } from "@/lib/finance/installments/schemas/installment-schemas"
 
 type PurchaseRow = {
   id: string
@@ -298,7 +298,6 @@ export function getMonthInstallments(
   purchases: InstallmentPurchase[],
   month: Date
 ): Array<{ payment: InstallmentPayment; purchase: InstallmentPurchase }> {
-  const monthKey = format(startOfMonth(month), "yyyy-MM")
   const monthStart = format(startOfMonth(month), "yyyy-MM-dd")
   const monthEnd = format(endOfMonth(month), "yyyy-MM-dd")
 

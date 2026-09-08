@@ -27,13 +27,13 @@ import {
 import {
   CategoryIcon,
   categoryIconOptions,
-} from "@/features/categories/components/category-icon"
-import { useCreateCategory } from "@/features/categories/hooks/mutations"
+} from "@/components/category-icon-badge"
+import { useCreateCategory } from "@/lib/finance/categories/hooks/mutations"
 import {
   type CategoryValues,
   categorySchema,
-} from "@/features/categories/schemas/category-schemas"
-import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+} from "@/lib/finance/categories/schemas/category-schemas"
+import { type TransactionType } from "@/lib/finance/transactions/schemas/transaction-schemas"
 import { cn } from "@/lib/utils"
 
 const colorOptions = [

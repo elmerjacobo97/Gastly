@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCustodyOrders } from '@/features/custody/hooks/queries';
-import { computeCustodySummary } from '@/features/custody/lib/custody-api';
+import { useCustodyOrders } from '@/lib/finance/custody/hooks/queries';
+import { computeCustodySummary } from '@/lib/finance/custody/lib/custody-api';
 import { formatCurrency } from '@/lib/format';
 
 export function CustodySummaryCard() {

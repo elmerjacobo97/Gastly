@@ -1,7 +1,7 @@
 import { format, startOfMonth } from "date-fns"
 
-import { type MonthlyPlanValues } from "@/features/monthly-plan/schemas/monthly-plan-schemas"
-import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types"
+import { type MonthlyPlanValues } from "@/lib/finance/monthly-plan/schemas/monthly-plan-schemas"
+import { type MonthlyPlan } from "@/lib/finance/monthly-plan/types/monthly-plan-types"
 import { createClient } from "@/lib/supabase/browser"
 
 type MonthlyPlanRow = {

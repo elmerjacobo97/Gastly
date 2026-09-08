@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { startOfMonth } from "date-fns"
+ import { startOfMonth } from "date-fns"
 import { Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -23,9 +23,9 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { NumberInput } from "@/components/ui/number-input"
-import { budgetSchema, type BudgetValues } from "@/features/budget/schemas/budget-schemas"
-import { useUpdateBudget } from "@/features/budget/hooks/mutations"
-import { type Budget } from "@/features/budget/types/budget-types"
+import { budgetSchema, type BudgetValues } from "@/lib/finance/budget/schemas/budget-schemas"
+import { useUpdateBudget } from "@/lib/finance/budget/hooks/mutations"
+import { type Budget } from "@/lib/finance/budget/types/budget-types"
 
 type EditBudgetDialogProps = {
   budget: Budget
@@ -35,7 +35,7 @@ type EditBudgetDialogProps = {
 
 export function EditBudgetDialog({ budget, open, onOpenChange }: EditBudgetDialogProps) {
   const form = useForm<BudgetValues>({
-    resolver: zodResolver(budgetSchema),
+    resolver: zodResolver(budgetSchema) as Resolver<BudgetValues>,
     defaultValues: {
       categoryId: budget.category.id,
       amount: budget.amount,

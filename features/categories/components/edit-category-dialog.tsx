@@ -36,13 +36,13 @@ import {
 import {
   CategoryIcon,
   categoryIconOptions,
-} from "@/features/categories/components/category-icon"
-import { useUpdateCategory } from "@/features/categories/hooks/mutations"
+} from "@/components/category-icon-badge"
+import { useUpdateCategory } from "@/lib/finance/categories/hooks/mutations"
 import {
   type CategoryValues,
   categorySchema,
-} from "@/features/categories/schemas/category-schemas"
-import { type Category } from "@/features/categories/types/category-types"
+} from "@/lib/finance/categories/schemas/category-schemas"
+import { type Category } from "@/lib/finance/categories/types/category-types"
 import { cn } from "@/lib/utils"
 
 const colorOptions = [

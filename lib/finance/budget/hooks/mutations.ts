@@ -2,8 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { createBudget, updateBudget, deleteBudget } from "@/features/budget/lib/budget-api"
-import { type BudgetValues } from "@/features/budget/schemas/budget-schemas"
+import { createBudget, updateBudget, deleteBudget } from "@/lib/finance/budget/lib/budget-api"
 
 export function useCreateBudget() {
   const queryClient = useQueryClient()

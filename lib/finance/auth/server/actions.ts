@@ -14,7 +14,7 @@ import {
   loginSchema,
   resetPasswordSchema,
   signUpSchema,
-} from "@/features/auth/schemas/auth-schemas"
+} from "@/lib/finance/auth/schemas/auth-schemas"
 import { createClient } from "@/lib/supabase/server"
 
 type AuthActionResult = {

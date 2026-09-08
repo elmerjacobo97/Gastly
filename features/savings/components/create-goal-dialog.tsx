@@ -1,9 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckIcon, PlusIcon, Loader2Icon } from "lucide-react"
+ import { CheckIcon, PlusIcon, Loader2Icon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,12 +26,12 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateSavingsGoal } from "@/features/savings/hooks/mutations"
+import { useCreateSavingsGoal } from "@/lib/finance/savings/hooks/mutations"
 import {
   GOAL_COLORS,
   savingsGoalSchema,
   type SavingsGoalValues,
-} from "@/features/savings/schemas/savings-schemas"
+} from "@/lib/finance/savings/schemas/savings-schemas"
 import { cn } from "@/lib/utils"
 
 const defaultValues: SavingsGoalValues = {
@@ -56,7 +56,7 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
 
   const form = useForm<SavingsGoalValues>({
-    resolver: zodResolver(savingsGoalSchema),
+    resolver: zodResolver(savingsGoalSchema) as Resolver<SavingsGoalValues>,
     defaultValues,
   })
 

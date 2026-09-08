@@ -1,9 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckIcon, Loader2Icon } from "lucide-react"
+ import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,13 +19,13 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useUpdateAccount } from "@/features/accounts/hooks/mutations"
+import { useUpdateAccount } from "@/lib/finance/accounts/hooks/mutations"
 import {
   ACCOUNT_COLORS,
   accountSchema,
   type AccountValues,
-} from "@/features/accounts/schemas/account-schemas"
-import { type Account } from "@/features/accounts/types/account-types"
+} from "@/lib/finance/accounts/schemas/account-schemas"
+import { type Account } from "@/lib/finance/accounts/types/account-types"
 import { cn } from "@/lib/utils"
 
 type EditAccountDialogProps = {
@@ -45,7 +45,7 @@ function buildValues(account: Account): AccountValues {
 
 export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDialogProps) {
   const form = useForm<AccountValues>({
-    resolver: zodResolver(accountSchema),
+    resolver: zodResolver(accountSchema) as Resolver<AccountValues>,
     defaultValues: buildValues(account),
   })
 

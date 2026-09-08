@@ -1,7 +1,7 @@
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { createClient } from "@/lib/supabase/browser";
-import type { BudgetValues } from "@/features/budget/schemas/budget-schemas";
-import type { Budget } from "@/features/budget/types/budget-types";
+import type { BudgetValues } from "@/lib/finance/budget/schemas/budget-schemas";
+import type { Budget } from "@/lib/finance/budget/types/budget-types";
 
 type BudgetRow = {
   id: string;

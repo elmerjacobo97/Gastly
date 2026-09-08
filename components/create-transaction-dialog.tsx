@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
+ import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -40,15 +40,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { QuickCreateCategoryDialog } from "@/features/categories/components/quick-create-category-dialog"
-import { useCategories } from "@/features/categories/hooks/queries"
-import { useCreateTransaction } from "@/features/transactions/hooks/mutations"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
+import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog"
+import { useCategories } from "@/lib/finance/categories/hooks/queries"
+import { useCreateTransaction } from "@/lib/finance/transactions/hooks/mutations"
 import {
   type TransactionType,
   type TransactionValues,
   transactionSchema,
-} from "@/features/transactions/schemas/transaction-schemas"
+} from "@/lib/finance/transactions/schemas/transaction-schemas"
 
 type CreateTransactionDialogProps = {
   defaultType?: TransactionType
@@ -85,7 +85,7 @@ export function CreateTransactionDialog({
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
 
   const form = useForm<TransactionValues>({
-    resolver: zodResolver(transactionSchema),
+    resolver: zodResolver(transactionSchema) as Resolver<TransactionValues>,
     defaultValues: buildDefaultValues(defaultType),
   })
 

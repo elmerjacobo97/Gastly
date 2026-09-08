@@ -5,12 +5,12 @@ import {
   type TransactionType,
   type PaymentMethod,
   type TransactionValues,
-} from "@/features/transactions/schemas/transaction-schemas"
+} from "@/lib/finance/transactions/schemas/transaction-schemas"
 import {
   type Category,
   type Transaction,
   type TransactionSummary,
-} from "@/features/transactions/types/transaction-types"
+} from "@/lib/finance/transactions/types/transaction-types"
 
 const TRANSACTION_SELECT =
   "id, type, amount, description, occurred_on, notes, payment_method, credit_card_name, credit_card_due_on, credit_card_paid_on, categories(id, name, type, color, icon)"

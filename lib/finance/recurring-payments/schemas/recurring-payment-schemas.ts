@@ -1,4 +1,4 @@
-import { z } from "zod/v3"
+import { z } from "zod"
 
 export const recurringPaymentSchema = z.object({
   description: z.string().trim().min(2, "Ingresa un nombre."),

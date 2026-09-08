@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
+import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 type UpcomingPayment = {

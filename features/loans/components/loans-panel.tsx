@@ -53,9 +53,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { EditLoanDialog } from "@/features/loans/components/edit-loan-dialog"
 import { LoanDialog } from "@/features/loans/components/loan-dialog"
 import { RecordPaymentDialog } from "@/features/loans/components/record-payment-dialog"
-import { useLoans } from "@/features/loans/hooks/queries"
-import { useDeleteLoan } from "@/features/loans/hooks/mutations"
-import { type Loan } from "@/features/loans/types/loan-types"
+import { useLoans } from "@/lib/finance/loans/hooks/queries"
+import { useDeleteLoan } from "@/lib/finance/loans/hooks/mutations"
+import { type Loan } from "@/lib/finance/loans/types/loan-types"
 import { formatCurrency } from "@/lib/format"
 
 function LoanPaymentHistoryDialog({

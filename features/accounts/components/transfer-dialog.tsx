@@ -1,9 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowDownIcon, Loader2Icon } from "lucide-react"
+ import { ArrowDownIcon, Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -20,9 +20,9 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateTransfer } from "@/features/accounts/hooks/mutations"
-import { transferSchema, type TransferValues } from "@/features/accounts/schemas/account-schemas"
-import { type Account } from "@/features/accounts/types/account-types"
+import { useCreateTransfer } from "@/lib/finance/accounts/hooks/mutations"
+import { transferSchema, type TransferValues } from "@/lib/finance/accounts/schemas/account-schemas"
+import { type Account } from "@/lib/finance/accounts/types/account-types"
 import { formatCurrency } from "@/lib/format"
 import { format } from "date-fns"
 
@@ -37,7 +37,7 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
   const todayStr = format(new Date(), "yyyy-MM-dd")
 
   const form = useForm<TransferValues>({
-    resolver: zodResolver(transferSchema),
+    resolver: zodResolver(transferSchema) as Resolver<TransferValues>,
     defaultValues: {
       fromAccountId: "",
       toAccountId: "",

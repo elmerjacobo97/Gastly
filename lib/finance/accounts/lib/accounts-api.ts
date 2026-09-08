@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/browser"
-import { type Account, type AccountTransfer } from "@/features/accounts/types/account-types"
-import { type AccountValues, type TransferValues } from "@/features/accounts/schemas/account-schemas"
+import { type Account, type AccountTransfer } from "@/lib/finance/accounts/types/account-types"
+import { type AccountValues, type TransferValues } from "@/lib/finance/accounts/schemas/account-schemas"
 
 type AccountRow = {
   id: string

@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AlertTriangleIcon, CalendarIcon, CheckCircle2Icon, ClockIcon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, RefreshCwIcon, Trash2Icon } from 'lucide-react';
+import { AlertTriangleIcon, CalendarIcon, CheckCircle2Icon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, RefreshCwIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -20,11 +20,11 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MonthNav } from '@/components/month-nav';
-import { CategoryIconBadge } from '@/features/categories/components/category-icon';
-import { getMonthInstallments } from '@/features/installments/lib/installments-api';
-import { useInstallmentPurchases } from '@/features/installments/hooks/queries';
-import { useDeleteInstallmentPurchase } from '@/features/installments/hooks/mutations';
-import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
+import { CategoryIconBadge } from '@/components/category-icon-badge';
+import { getMonthInstallments } from '@/lib/finance/installments/lib/installments-api';
+import { useInstallmentPurchases } from '@/lib/finance/installments/hooks/queries';
+import { useDeleteInstallmentPurchase } from '@/lib/finance/installments/hooks/mutations';
+import { type InstallmentPayment, type InstallmentPurchase } from '@/lib/finance/installments/types/installment-types';
 import { EditInstallmentDialog } from '@/features/installments/components/edit-installment-dialog';
 import { InstallmentDialog } from '@/features/installments/components/installment-dialog';
 import { PayInstallmentsDialog } from '@/features/installments/components/pay-installments-dialog';

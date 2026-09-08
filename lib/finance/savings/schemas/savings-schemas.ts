@@ -1,4 +1,4 @@
-import { z } from "zod/v3"
+import { z } from "zod"
 
 export const GOAL_COLORS = [
   "#1d42d0",

@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
+ import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -32,13 +32,13 @@ import {
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateRecurringPayment } from "@/features/recurring-payments/hooks/mutations"
-import { AccountSelect } from "@/features/accounts/components/account-select"
-import { CategorySelect } from "@/features/categories/components/category-select"
+import { useCreateRecurringPayment } from "@/lib/finance/recurring-payments/hooks/mutations"
+import { AccountSelect } from "@/components/account-select"
+import { CategorySelect } from "@/components/category-select"
 import {
   recurringPaymentSchema,
   type RecurringPaymentValues,
-} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
+} from "@/lib/finance/recurring-payments/schemas/recurring-payment-schemas"
 
 function buildDefaultValues(): RecurringPaymentValues {
   return {
@@ -59,7 +59,7 @@ export function CreateRecurringPaymentDialog() {
   const [open, setOpen] = useState(false)
 
   const form = useForm<RecurringPaymentValues>({
-    resolver: zodResolver(recurringPaymentSchema),
+    resolver: zodResolver(recurringPaymentSchema) as Resolver<RecurringPaymentValues>,
     defaultValues: buildDefaultValues(),
   })
 

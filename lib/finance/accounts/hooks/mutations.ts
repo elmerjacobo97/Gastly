@@ -2,8 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { createAccount, updateAccount, deleteAccount, createTransfer } from "@/features/accounts/lib/accounts-api"
-import { type AccountValues, type TransferValues } from "@/features/accounts/schemas/account-schemas"
+import { createAccount, updateAccount, deleteAccount, createTransfer } from "@/lib/finance/accounts/lib/accounts-api"
+import { type AccountValues } from "@/lib/finance/accounts/schemas/account-schemas"
 
 export function useCreateAccount() {
   const queryClient = useQueryClient()

@@ -12,7 +12,10 @@
 - Main entrypoints are `app/layout.tsx`, `app/page.tsx`, and `app/globals.css`.
 - The TypeScript alias `@/*` maps to the repository root.
 - This project uses Next 16; use root `proxy.ts` with exported `proxy()` for request interception, not deprecated `middleware.ts`.
-- Structure domain code by feature under `features/*`; split internals into `components/`, `server/`, `lib/`, `schemas/`, and `types/` as needed. Do not add barrel files.
+- Feature UI lives under `features/<feature>/components/` (panels, dialogs, forms). Features do not import each other.
+- Domain data layers live under `lib/finance/<domain>/{lib,hooks,schemas,types,server}` (accounts, auth, budget, categories, custody, installments, loans, monthly-plan, recurring-payments, savings, settings, transactions). `lib/**` must never import from `features/**`.
+- When a component is needed by multiple features, move it to `components/` (e.g. `components/category-select.tsx`) or compose it as a slot prop from the route file (`app/**` may import any feature).
+- Do not add barrel files.
 
 ## UI And Styling
 - Tailwind is v4 via `@tailwindcss/postcss`; there is no `tailwind.config.*`. Theme tokens and Tailwind imports live in `app/globals.css`.
@@ -22,7 +25,10 @@
 
 ## Tooling Notes
 - ESLint uses `eslint-config-next/core-web-vitals` plus `eslint-config-next/typescript` from `eslint.config.mjs`; generated Next output, repo-local skills in `.agents/**`, and `next-env.d.ts` are ignored.
-- `next.config.ts` is intentionally empty right now; avoid inventing config unless a change needs it.
+- TypeScript is v6 (the JS-API line). Do not bump to 7 (`tsgo`): `typescript-eslint`/`@typescript-eslint/typescript-estree` do not support TS 7 yet, and the TS 7 npm package ships no `lib/typescript.js` JS API, which breaks `pnpm lint` through `eslint-config-next`.
+- TanStack Table is v9: configure tables with `tableFeatures({...})` + `useTable({ features, ... })` from `@tanstack/react-table`; column defs are `ColumnDef<Features, TData>`. See `components/ui/data-table.tsx` for the working setup (exports `DataTableFeatures`).
+- Zod is v4: import from `zod` (not `zod/v3`). Forms with `z.coerce` fields use `resolver: zodResolver(schema) as Resolver<XValues>` (see any `*-dialog.tsx`).
+- `next.config.ts` only sets `devIndicators: false`; avoid inventing config unless a change needs it.
 
 ## Supabase
 - Supabase project: `gastly` (`yadpullgqqehyusoonxs`) in `sa-east-1`; chosen because the user is in Peru.

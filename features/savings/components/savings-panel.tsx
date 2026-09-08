@@ -50,9 +50,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { AddContributionDialog } from "@/features/savings/components/add-contribution-dialog"
 import { CreateGoalDialog } from "@/features/savings/components/create-goal-dialog"
 import { EditGoalDialog } from "@/features/savings/components/edit-goal-dialog"
-import { useSavingsGoals } from "@/features/savings/hooks/queries"
-import { useDeleteSavingsGoal } from "@/features/savings/hooks/mutations"
-import { type SavingsGoal } from "@/features/savings/types/savings-types"
+import { useSavingsGoals } from "@/lib/finance/savings/hooks/queries"
+import { useDeleteSavingsGoal } from "@/lib/finance/savings/hooks/mutations"
+import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 function estimatedCompletion(goal: SavingsGoal): string | null {

@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { startOfMonth } from "date-fns"
+ import { startOfMonth } from "date-fns"
 import { CopyIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -30,12 +30,12 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
-import { usePrevMonthPlan } from "@/features/monthly-plan/hooks/queries"
-import { useUpsertMonthlyPlan } from "@/features/monthly-plan/hooks/mutations"
+import { usePrevMonthPlan } from "@/lib/finance/monthly-plan/hooks/queries"
+import { useUpsertMonthlyPlan } from "@/lib/finance/monthly-plan/hooks/mutations"
 import {
   monthlyPlanSchema,
   type MonthlyPlanValues,
-} from "@/features/monthly-plan/schemas/monthly-plan-schemas"
+} from "@/lib/finance/monthly-plan/schemas/monthly-plan-schemas"
 
 const MONTHS = [
   { value: 0, label: "Enero" }, { value: 1, label: "Febrero" },
@@ -74,7 +74,7 @@ export function CreateMonthlyPlanDialog({
   const [open, setOpen] = useState(false)
 
   const form = useForm<MonthlyPlanValues>({
-    resolver: zodResolver(monthlyPlanSchema),
+    resolver: zodResolver(monthlyPlanSchema) as Resolver<MonthlyPlanValues>,
     defaultValues: buildDefaultValues(month),
   })
 

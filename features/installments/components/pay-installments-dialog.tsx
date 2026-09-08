@@ -26,16 +26,16 @@ import {
 } from "@/components/ui/field"
 import { DatePicker } from "@/components/ui/date-picker"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
 import {
   payInstallmentsSchema,
   type PayInstallmentsValues,
-} from "@/features/installments/schemas/installment-schemas"
-import { usePayMonthInstallments } from "@/features/installments/hooks/mutations"
+} from "@/lib/finance/installments/schemas/installment-schemas"
+import { usePayMonthInstallments } from "@/lib/finance/installments/hooks/mutations"
 import {
   type InstallmentPayment,
   type InstallmentPurchase,
-} from "@/features/installments/types/installment-types"
+} from "@/lib/finance/installments/types/installment-types"
 import { formatCurrency } from "@/lib/format"
 
 type PendingItem = { payment: InstallmentPayment; purchase: InstallmentPurchase }

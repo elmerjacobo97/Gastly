@@ -18,10 +18,10 @@ import {
   useDeleteCustodyMovement,
   useDeleteCustodyOrder,
   useUpdateCustodyOrderStatus,
-} from '@/features/custody/hooks/mutations';
-import { useCustodyOrders } from '@/features/custody/hooks/queries';
-import { computeCustodySummary, flattenCustodyMovements } from '@/features/custody/lib/custody-api';
-import { type CustodyMovementRow, type CustodyOrder } from '@/features/custody/types/custody-types';
+} from '@/lib/finance/custody/hooks/mutations';
+import { useCustodyOrders } from '@/lib/finance/custody/hooks/queries';
+import { computeCustodySummary, flattenCustodyMovements } from '@/lib/finance/custody/lib/custody-api';
+import { type CustodyMovementRow, type CustodyOrder } from '@/lib/finance/custody/types/custody-types';
 import { formatCurrency } from '@/lib/format';
 import { OrderCard } from '@/features/custody/components/order-card';
 

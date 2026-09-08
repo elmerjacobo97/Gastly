@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/browser"
-import { type Loan, type LoanDirection, type LoanPayment } from "@/features/loans/types/loan-types"
-import { type LoanValues, type LoanPaymentValues } from "@/features/loans/schemas/loan-schemas"
+import { type Loan, type LoanDirection, type LoanPayment } from "@/lib/finance/loans/types/loan-types"
+import { type LoanValues, type LoanPaymentValues } from "@/lib/finance/loans/schemas/loan-schemas"
 
 type LoanRow = {
   id: string

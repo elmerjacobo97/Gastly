@@ -1,9 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
+ import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,12 +20,12 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateAccount } from "@/features/accounts/hooks/mutations"
+import { useCreateAccount } from "@/lib/finance/accounts/hooks/mutations"
 import {
   ACCOUNT_COLORS,
   accountSchema,
   type AccountValues,
-} from "@/features/accounts/schemas/account-schemas"
+} from "@/lib/finance/accounts/schemas/account-schemas"
 import { cn } from "@/lib/utils"
 
 const EMPTY_DEFAULTS: AccountValues = {
@@ -39,7 +39,7 @@ export function CreateAccountDialog() {
   const [open, setOpen] = useState(false)
 
   const form = useForm<AccountValues>({
-    resolver: zodResolver(accountSchema),
+    resolver: zodResolver(accountSchema) as Resolver<AccountValues>,
     defaultValues: EMPTY_DEFAULTS,
   })
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
+ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import {
   AlertTriangleIcon,
@@ -22,7 +22,7 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import {
   Alert,
@@ -77,23 +77,23 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import { CategoryIconBadge } from "@/features/categories/components/category-icon"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
 import { CreateRecurringPaymentDialog } from "@/features/recurring-payments/components/create-recurring-payment-dialog"
 import { EditRecurringPaymentDialog } from "@/features/recurring-payments/components/edit-recurring-payment-dialog"
 import {
   type PaymentHistoryEntry,
-} from "@/features/recurring-payments/lib/recurring-payments-api"
-import { useRecurringPayments, useRecurringPaymentHistory } from "@/features/recurring-payments/hooks/queries"
+} from "@/lib/finance/recurring-payments/lib/recurring-payments-api"
+import { useRecurringPayments, useRecurringPaymentHistory } from "@/lib/finance/recurring-payments/hooks/queries"
 import {
   useDeleteRecurringPayment,
   useSetRecurringPaymentActive,
   useRegisterRecurringPaymentPayment,
-} from "@/features/recurring-payments/hooks/mutations"
+} from "@/lib/finance/recurring-payments/hooks/mutations"
 import {
   recurringPaymentPaymentSchema,
   type RecurringPaymentPaymentValues,
-} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+} from "@/lib/finance/recurring-payments/schemas/recurring-payment-schemas"
+import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
 import { MonthNav } from "@/components/month-nav"
 import {
   formatCurrency,
@@ -181,7 +181,7 @@ function PaymentDialog({
   const isPayingEarly = !!payment && payment.nextDueOn > todayStr
 
   const form = useForm<RecurringPaymentPaymentValues>({
-    resolver: zodResolver(recurringPaymentPaymentSchema),
+    resolver: zodResolver(recurringPaymentPaymentSchema) as Resolver<RecurringPaymentPaymentValues>,
     defaultValues: {
       amount: payment?.amount ?? 0,
       occurredOn: isPayingEarly ? todayStr : (payment?.nextDueOn ?? todayStr),

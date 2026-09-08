@@ -56,9 +56,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CreateAccountDialog } from "@/features/accounts/components/create-account-dialog"
 import { EditAccountDialog } from "@/features/accounts/components/edit-account-dialog"
 import { TransferDialog } from "@/features/accounts/components/transfer-dialog"
-import { useAccounts, useAccountTransfers } from "@/features/accounts/hooks/queries"
-import { useDeleteAccount } from "@/features/accounts/hooks/mutations"
-import { type Account, type AccountTransfer } from "@/features/accounts/types/account-types"
+import { useAccounts, useAccountTransfers } from "@/lib/finance/accounts/hooks/queries"
+import { useDeleteAccount } from "@/lib/finance/accounts/hooks/mutations"
+import { type Account, type AccountTransfer } from "@/lib/finance/accounts/types/account-types"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 function exportTransfersCSV(transfers: AccountTransfer[], filename: string) {

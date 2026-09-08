@@ -1,7 +1,8 @@
-import { ColumnDef } from '@tanstack/react-table';
+import { type ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { CustodyMovementRow } from '../types/custody-types';
+import { type CustodyMovementRow } from '@/lib/finance/custody/types/custody-types';
 import { Badge } from '@/components/ui/badge';
+import { type DataTableFeatures } from '@/components/ui/data-table';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,7 @@ type UseCustodyMovementsColumnsProps = {
 };
 
 export function useCustodyMovementsColumns({ onEditMovement, onDeleteMovement }: UseCustodyMovementsColumnsProps) {
-  return useMemo<ColumnDef<CustodyMovementRow>[]>(() => [
+  return useMemo<ColumnDef<DataTableFeatures, CustodyMovementRow>[]>(() => [
     {
       accessorKey: 'occurredOn',
       header: 'Fecha',

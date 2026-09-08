@@ -7,8 +7,8 @@ import {
   updateTransaction,
   deleteTransaction,
   payAllCreditCardTransactions,
-} from "@/features/transactions/lib/transactions-api"
-import { type TransactionValues } from "@/features/transactions/schemas/transaction-schemas"
+} from "@/lib/finance/transactions/lib/transactions-api"
+import { type TransactionValues } from "@/lib/finance/transactions/schemas/transaction-schemas"
 
 function invalidateTransactionQueries(queryClient: ReturnType<typeof useQueryClient>) {
   return Promise.all([

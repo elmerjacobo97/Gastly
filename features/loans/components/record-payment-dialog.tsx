@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
+ import { format } from "date-fns"
 import { Loader2Icon, WalletIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -29,9 +29,9 @@ import { NumberInput } from "@/components/ui/number-input"
 import {
   loanPaymentSchema,
   type LoanPaymentValues,
-} from "@/features/loans/schemas/loan-schemas"
-import { useRecordLoanPayment } from "@/features/loans/hooks/mutations"
-import { type Loan } from "@/features/loans/types/loan-types"
+} from "@/lib/finance/loans/schemas/loan-schemas"
+import { useRecordLoanPayment } from "@/lib/finance/loans/hooks/mutations"
+import { type Loan } from "@/lib/finance/loans/types/loan-types"
 import { formatCurrency } from "@/lib/format"
 
 type RecordPaymentDialogProps = {
@@ -42,7 +42,7 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
   const [open, setOpen] = useState(false)
 
   const form = useForm<LoanPaymentValues>({
-    resolver: zodResolver(loanPaymentSchema),
+    resolver: zodResolver(loanPaymentSchema) as Resolver<LoanPaymentValues>,
     defaultValues: {
       amount: loan.pendingAmount,
       occurredOn: format(new Date(), "yyyy-MM-dd"),

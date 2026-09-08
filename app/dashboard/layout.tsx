@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 
+import { signOut } from '@/lib/finance/auth/server/actions';
 import { AppSidebar } from '@/features/dashboard/components/app-sidebar';
 import { PageHeader } from '@/features/dashboard/components/page-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -27,7 +28,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
 
   return (
     <SidebarProvider>
-      <AppSidebar userEmail={user.email} userName={userName} />
+      <AppSidebar userEmail={user.email} userName={userName} signOutAction={signOut} />
       <SidebarInset>
         <PageHeader />
         {children}

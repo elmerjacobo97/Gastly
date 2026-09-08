@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
+ import { format } from "date-fns"
 import { Loader2Icon } from "lucide-react"
-import { useEffect, useState } from "react"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { useEffect } from "react"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -31,14 +31,14 @@ import {
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { useUpdateRecurringPayment } from "@/features/recurring-payments/hooks/mutations"
-import { AccountSelect } from "@/features/accounts/components/account-select"
-import { CategorySelect } from "@/features/categories/components/category-select"
+import { useUpdateRecurringPayment } from "@/lib/finance/recurring-payments/hooks/mutations"
+import { AccountSelect } from "@/components/account-select"
+import { CategorySelect } from "@/components/category-select"
 import {
   recurringPaymentSchema,
   type RecurringPaymentValues,
-} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+} from "@/lib/finance/recurring-payments/schemas/recurring-payment-schemas"
+import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
 
 // suppress unused import warning — format is used implicitly via date-fns in DatePicker
 void format
@@ -70,7 +70,7 @@ export function EditRecurringPaymentDialog({
   onOpenChange,
 }: EditRecurringPaymentDialogProps) {
   const form = useForm<RecurringPaymentValues>({
-    resolver: zodResolver(recurringPaymentSchema),
+    resolver: zodResolver(recurringPaymentSchema) as Resolver<RecurringPaymentValues>,
     defaultValues: buildValues(payment),
   })
 

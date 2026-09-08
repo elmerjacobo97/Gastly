@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
+ import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -30,8 +30,8 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
-import { useCreateLoan } from "@/features/loans/hooks/mutations"
+import { loanSchema, type LoanValues } from "@/lib/finance/loans/schemas/loan-schemas"
+import { useCreateLoan } from "@/lib/finance/loans/hooks/mutations"
 
 function getTodayStr() {
   return format(new Date(), "yyyy-MM-dd")
@@ -45,7 +45,7 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
   const [open, setOpen] = useState(false)
 
   const form = useForm<LoanValues>({
-    resolver: zodResolver(loanSchema),
+    resolver: zodResolver(loanSchema) as Resolver<LoanValues>,
     defaultValues: { direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
   })
 

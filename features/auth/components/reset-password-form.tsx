@@ -8,9 +8,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { PasswordInput } from '@/features/auth/components/password-input';
-import { resetPassword } from '@/features/auth/server/actions';
-import { type ResetPasswordValues, resetPasswordSchema } from '@/features/auth/schemas/auth-schemas';
+import { PasswordInput } from '@/components/password-input';
+import { resetPassword } from '@/lib/finance/auth/server/actions';
+import { type ResetPasswordValues, resetPasswordSchema } from '@/lib/finance/auth/schemas/auth-schemas';
 
 export function ResetPasswordForm() {
   const form = useForm<ResetPasswordValues>({
