@@ -14,6 +14,15 @@ import {
 } from "../format.js"
 import type { TransactionRecord, TransactionType } from "../types.js"
 
+function joinField(
+  join: unknown,
+  field: string,
+): string | null {
+  if (!join) return null
+  if (Array.isArray(join)) return (join[0] as Record<string, unknown>)?.[field] as string ?? null
+  return (join as Record<string, unknown>)[field] as string ?? null
+}
+
 const TRANSACTIONS_HELP = `Usage:
   gastly-cli transactions <subcommand> [options]
 
@@ -200,7 +209,7 @@ async function runNew(args: string[]): Promise<void> {
     description: data.description,
     occurredOn: data.occurred_on,
     notes: data.notes,
-    categoryName: (data.categories as unknown as { name: string }[] | null)?.[0]?.name ?? null,
+    categoryName: joinField(data.categories, "name"),
     categoryType: null,
     paymentMethod: "cash",
     createdAt: "",
@@ -260,8 +269,8 @@ async function runList(args: string[]): Promise<void> {
     description: row.description,
     occurredOn: row.occurred_on,
     notes: row.notes,
-    categoryName: (row.categories as unknown as { name: string }[] | null)?.[0]?.name ?? null,
-    categoryType: (row.categories as unknown as { type: string }[] | null)?.[0]?.type as TransactionType | null,
+    categoryName: joinField(row.categories, "name"),
+    categoryType: joinField(row.categories, "type") as TransactionType | null,
     paymentMethod: row.payment_method ?? "cash",
     createdAt: row.created_at,
   }))
@@ -311,8 +320,8 @@ async function runSearch(args: string[]): Promise<void> {
     description: row.description,
     occurredOn: row.occurred_on,
     notes: row.notes,
-    categoryName: (row.categories as unknown as { name: string }[] | null)?.[0]?.name ?? null,
-    categoryType: (row.categories as unknown as { type: string }[] | null)?.[0]?.type as TransactionType | null,
+    categoryName: joinField(row.categories, "name"),
+    categoryType: joinField(row.categories, "type") as TransactionType | null,
     paymentMethod: "cash",
     createdAt: "",
   }))

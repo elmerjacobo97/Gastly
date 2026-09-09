@@ -44,7 +44,9 @@ export async function runBudget(args: string[]): Promise<void> {
   }
 
   const records: BudgetRecord[] = (budgets ?? []).map((row) => {
-    const cat = (row.categories as unknown as { id: string; name: string }[] | null)?.[0]
+    const cat = Array.isArray(row.categories)
+      ? row.categories[0] as { id: string; name: string }
+      : row.categories as { id: string; name: string } | null
     return {
       id: row.id,
       categoryName: cat?.name ?? "Unknown",
