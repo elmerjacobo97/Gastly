@@ -1,6 +1,6 @@
 "use client"
 
-import { lazy, Suspense, type ComponentType } from "react"
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 
 import {
   Card,
@@ -15,14 +15,6 @@ import { type CategoryTotal, type MonthlyTotal } from "@/features/transactions/s
 import { CHART_COLORS } from "@/lib/chart-utils"
 import { formatCurrency } from "@/lib/format"
 
-type ChartProps = Record<string, unknown>
-
-const Cell = lazy(() => import("recharts").then(({ Cell }) => ({ default: Cell as unknown as ComponentType<ChartProps> })))
-const Pie = lazy(() => import("recharts").then(({ Pie }) => ({ default: Pie as unknown as ComponentType<ChartProps> })))
-const PieChart = lazy(() => import("recharts").then(({ PieChart }) => ({ default: PieChart as unknown as ComponentType<ChartProps> })))
-const ResponsiveContainer = lazy(() => import("recharts").then(({ ResponsiveContainer }) => ({ default: ResponsiveContainer as unknown as ComponentType<ChartProps> })))
-const Tooltip = lazy(() => import("recharts").then(({ Tooltip }) => ({ default: Tooltip as unknown as ComponentType<ChartProps> })))
-
 type DashboardChartsProps = {
   monthlyData?: MonthlyTotal[]
   categoryData?: CategoryTotal[]
@@ -33,8 +25,8 @@ export function DashboardChartsView({
   categoryData,
 }: DashboardChartsProps) {
   return (
-    <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-      <Card>
+    <section className="grid min-w-0 gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <Card className="min-w-0">
         <CardHeader>
           <CardTitle className="text-base">Últimos 6 meses</CardTitle>
           <CardDescription>Ingresos vs gastos por mes</CardDescription>
@@ -48,7 +40,7 @@ export function DashboardChartsView({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="min-w-0">
         <CardHeader>
           <CardTitle className="text-base">Gastos por categoría</CardTitle>
           <CardDescription>Top 5 del mes actual</CardDescription>
@@ -56,8 +48,8 @@ export function DashboardChartsView({
         <CardContent>
           {categoryData && categoryData.length > 0 ? (
             <div className="flex flex-col gap-4">
-              <Suspense fallback={<Skeleton className="h-40 w-full rounded-lg" />}>
-                <ResponsiveContainer width="100%" height={160}>
+              <div className="h-40 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3}>
                       {categoryData.map((entry, index) => (
@@ -70,7 +62,7 @@ export function DashboardChartsView({
                     />
                   </PieChart>
                 </ResponsiveContainer>
-              </Suspense>
+              </div>
               <div className="flex flex-col gap-2">
                 {categoryData.map((cat, index) => (
                   <div key={cat.name} className="flex items-center justify-between text-xs">

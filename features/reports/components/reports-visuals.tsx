@@ -1,6 +1,5 @@
 "use client"
 
-import { lazy, Suspense, type ComponentType } from "react"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -10,6 +9,15 @@ import {
   ShuffleIcon,
   type LucideIcon,
 } from "lucide-react"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 
 import { CategoryIconBadge } from "@/components/category-icon-badge"
 import { MonthlyIncomeExpenseChart } from "@/components/monthly-income-expense-chart"
@@ -21,21 +29,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/format"
 import { CHART_COLORS, formatCompact } from "@/lib/chart-utils"
 
 export type ReportTypeFilter = "all" | "expense" | "income"
-
-type ChartProps = Record<string, unknown>
-
-const Bar = lazy(() => import("recharts").then(({ Bar }) => ({ default: Bar as unknown as ComponentType<ChartProps> })))
-const BarChart = lazy(() => import("recharts").then(({ BarChart }) => ({ default: BarChart as unknown as ComponentType<ChartProps> })))
-const CartesianGrid = lazy(() => import("recharts").then(({ CartesianGrid }) => ({ default: CartesianGrid as unknown as ComponentType<ChartProps> })))
-const ResponsiveContainer = lazy(() => import("recharts").then(({ ResponsiveContainer }) => ({ default: ResponsiveContainer as unknown as ComponentType<ChartProps> })))
-const Tooltip = lazy(() => import("recharts").then(({ Tooltip }) => ({ default: Tooltip as unknown as ComponentType<ChartProps> })))
-const XAxis = lazy(() => import("recharts").then(({ XAxis }) => ({ default: XAxis as unknown as ComponentType<ChartProps> })))
-const YAxis = lazy(() => import("recharts").then(({ YAxis }) => ({ default: YAxis as unknown as ComponentType<ChartProps> })))
 
 type MonthlyDatum = { month: string; income: number; expenses: number }
 type RecurringDatum = { month: string; recurring: number; variable: number }
@@ -46,10 +43,6 @@ const PERIOD_OPTIONS = [
   { value: "expense" as const, label: "Gastos" },
   { value: "income" as const, label: "Ingresos" },
 ]
-
-function ChartFallback() {
-  return <Skeleton className="h-52 w-full rounded-lg" />
-}
 
 function MonthlyChartCard({ data }: { data: MonthlyDatum[] }) {
   return (
@@ -129,8 +122,8 @@ function RecurringChartCard({ data }: { data: RecurringDatum[] }) {
         {data.length === 0 ? (
           <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Sin gastos en el período</div>
         ) : (
-          <Suspense fallback={<ChartFallback />}>
-            <ResponsiveContainer width="100%" height={210}>
+          <div className="h-52.5 w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 0, right: 0, left: -10, bottom: 0 }} barCategoryGap="30%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="month" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
@@ -144,7 +137,7 @@ function RecurringChartCard({ data }: { data: RecurringDatum[] }) {
                 <Bar dataKey="variable" stackId="a" fill="var(--color-chart-4)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </Suspense>
+          </div>
         )}
         <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5"><div className="size-2.5 rounded-sm" style={{ background: "var(--color-chart-3)" }} />Recurrentes</div>
@@ -287,11 +280,11 @@ export function ReportsVisuals({
         monthlySavings={monthlySavings}
         plan={hasPlan}
       />
-      <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-[1.6fr_1fr]">
         <MonthlyChartCard data={monthlyData} />
         <CategoryBreakdownCard typeFilter={typeFilter} onTypeFilterChange={onTypeFilterChange} categories={categoryBreakdown} maxCategory={maxCategory} />
       </section>
-      <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-[1.6fr_1fr]">
         <RecurringChartCard data={recurringVsVariableData} />
         <ExpenseCompositionCard totalExpenses={totalExpenses} totalRecurring={totalRecurring} totalVariable={totalVariable} recurringCount={recurringCount} variableCount={variableCount} />
       </section>
