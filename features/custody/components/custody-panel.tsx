@@ -14,8 +14,8 @@ import {
   deleteCustodyMovement,
   deleteCustodyOrder,
   updateCustodyOrderStatus,
-} from '@/lib/finance/custody/server/actions';
-import { type CustodyMovementRow, type CustodyOrder } from '@/lib/finance/custody/types/custody-types';
+} from '@/features/custody/server/actions';
+import { type CustodyMovementRow, type CustodyOrder } from '@/features/custody/types/custody-types';
 
 type CustodyPanelProps = {
   orders: CustodyOrder[];

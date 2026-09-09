@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { signOut } from '@/lib/finance/auth/server/actions';
+import { signOut } from '@/features/auth/server/actions';
 import { AppSidebar } from '@/features/dashboard/components/app-sidebar';
 import { PageHeader } from '@/features/dashboard/components/page-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';

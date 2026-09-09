@@ -3,7 +3,7 @@
 import { PackageIcon } from 'lucide-react';
 
 import { OrderCard } from '@/features/custody/components/order-card';
-import { type CustodyOrder } from '@/lib/finance/custody/types/custody-types';
+import { type CustodyOrder } from '@/features/custody/types/custody-types';
 
 type OrdersSectionProps = {
   orders: CustodyOrder[];

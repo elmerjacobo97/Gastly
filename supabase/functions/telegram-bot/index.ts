@@ -189,22 +189,27 @@ async function handleIngreso(chatId: number, userId: string, args: string) {
 async function handleSaldo(chatId: number, userId: string) {
   const { monthKey } = currentMonthRange();
 
-  const { data: plan } = await supabase
-    .from('monthly_plans')
-    .select('savings_mode, savings_value')
-    .eq('user_id', userId)
-    .eq('month', `${monthKey}-01`)
-    .single();
+  const [{ data: plan }, { data: transactions }] = await Promise.all([
+    supabase
+      .from('monthly_plans')
+      .select('savings_mode, savings_value')
+      .eq('user_id', userId)
+      .eq('month', `${monthKey}-01`)
+      .single(),
+    supabase
+      .from('transactions')
+      .select('type, amount')
+      .eq('user_id', userId)
+      .gte('occurred_on', `${monthKey}-01`)
+      .lte('occurred_on', `${monthKey}-31`),
+  ]);
 
-  const { data: transactions } = await supabase
-    .from('transactions')
-    .select('type, amount')
-    .eq('user_id', userId)
-    .gte('occurred_on', `${monthKey}-01`)
-    .lte('occurred_on', `${monthKey}-31`);
-
-  const actualIncome = (transactions ?? []).filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpenses = (transactions ?? []).filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  let actualIncome = 0;
+  let totalExpenses = 0;
+  for (const transaction of transactions ?? []) {
+    if (transaction.type === 'income') actualIncome += transaction.amount;
+    if (transaction.type === 'expense') totalExpenses += transaction.amount;
+  }
 
   if (!plan) {
     await sendMessage(

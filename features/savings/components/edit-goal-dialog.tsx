@@ -1,10 +1,12 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { CheckIcon, Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
+import { Loader2Icon } from "lucide-react"
+import { useEffect, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 
+import { ColorPicker } from "@/components/color-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -25,14 +27,13 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useUpdateSavingsGoal } from "@/lib/finance/savings/hooks/mutations"
+import { updateSavingsGoal } from "@/features/savings/server/actions"
 import {
   GOAL_COLORS,
   savingsGoalSchema,
   type SavingsGoalValues,
-} from "@/lib/finance/savings/schemas/savings-schemas"
-import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
-import { cn } from "@/lib/utils"
+} from "@/features/savings/schemas/savings-schemas"
+import { type SavingsGoal } from "@/features/savings/types/savings-types"
 
 type EditGoalDialogProps = {
   goal: SavingsGoal
@@ -51,6 +52,8 @@ function buildValues(goal: SavingsGoal): SavingsGoalValues {
 }
 
 export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps) {
+  const [isPending, startTransition] = useTransition()
+
   const form = useForm<SavingsGoalValues>({
     resolver: zodResolver(savingsGoalSchema) as Resolver<SavingsGoalValues>,
     defaultValues: buildValues(goal),
@@ -60,7 +63,19 @@ export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps
     if (open) form.reset(buildValues(goal))
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useUpdateSavingsGoal(goal.id)
+  function onSubmit(values: SavingsGoalValues) {
+    startTransition(async () => {
+      try {
+        await updateSavingsGoal(goal.id, values)
+        toast.success("Meta actualizada")
+        onOpenChange(false)
+      } catch (error) {
+        toast.error("No se pudo actualizar la meta", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -73,7 +88,7 @@ export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps
           id="edit-goal-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
@@ -135,27 +150,11 @@ export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Color</FieldLabel>
-                  <div className="flex flex-wrap gap-2 rounded-lg border p-3">
-                    {GOAL_COLORS.map((c) => (
-                      <Button
-                        key={c}
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => field.onChange(c)}
-                        className={cn(
-                          "rounded-full hover:bg-transparent hover:scale-110",
-                          field.value === c && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                        )}
-                        style={{ backgroundColor: c }}
-                        aria-label={c}
-                      >
-                        {field.value === c && (
-                          <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
+                  <ColorPicker
+                    options={GOAL_COLORS}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </Field>
               )}
             />
@@ -177,8 +176,8 @@ export function EditGoalDialog({ goal, open, onOpenChange }: EditGoalDialogProps
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="edit-goal-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+          <Button disabled={isPending} form="edit-goal-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar cambios
           </Button>
         </DialogFooter>

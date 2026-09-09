@@ -3,10 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
  import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
+import { TransactionCategoryField } from "@/components/transaction-category-field"
 import {
   Dialog,
   DialogClose,
@@ -31,26 +33,18 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { CategoryIconBadge } from "@/components/category-icon-badge"
 import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog"
-import { useCategories } from "@/lib/finance/categories/hooks/queries"
-import { useCreateTransaction } from "@/lib/finance/transactions/hooks/mutations"
+import { type Category } from "@/features/categories/types/category-types"
+import { createTransaction } from "@/features/transactions/server/actions"
 import {
   type TransactionType,
   type TransactionValues,
   transactionSchema,
-} from "@/lib/finance/transactions/schemas/transaction-schemas"
+} from "@/features/transactions/schemas/transaction-schemas"
 
 type CreateTransactionDialogProps = {
+  categories: Category[]
   defaultType?: TransactionType
   lockType?: boolean
   triggerLabel?: string
@@ -76,6 +70,7 @@ function buildDefaultValues(defaultType: TransactionType): TransactionValues {
 }
 
 export function CreateTransactionDialog({
+  categories,
   defaultType = "expense",
   lockType = false,
   triggerLabel = "Nueva transacción",
@@ -83,6 +78,7 @@ export function CreateTransactionDialog({
 }: CreateTransactionDialogProps) {
   const [open, setOpen] = useState(false)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm<TransactionValues>({
     resolver: zodResolver(transactionSchema) as Resolver<TransactionValues>,
@@ -92,11 +88,22 @@ export function CreateTransactionDialog({
   const currentType = useWatch({ control: form.control, name: "type" }) as TransactionType
   const currentPaymentMethod = useWatch({ control: form.control, name: "paymentMethod" })
 
-  const categoriesQuery = useCategories(currentType, open)
+  const existingCategories = categories.filter((c) => c.type === currentType)
 
-  const mutation = useCreateTransaction()
-
-  const existingCategories = categoriesQuery.data ?? []
+  function onSubmit(values: TransactionValues) {
+    startTransition(async () => {
+      try {
+        await createTransaction(values)
+        toast.success("Transacción registrada")
+        form.reset(buildDefaultValues(defaultType))
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudo registrar la transacción", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   const defaultTrigger = (
     <Button>
@@ -128,9 +135,7 @@ export function CreateTransactionDialog({
                 className="flex flex-col gap-5"
                 id="create-transaction-form"
                 noValidate
-                onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-                  onSuccess: () => { form.reset(buildDefaultValues(defaultType)); setOpen(false) },
-                }))}
+                onSubmit={form.handleSubmit(onSubmit)}
               >
                 <FieldGroup>
                   <Controller
@@ -192,39 +197,14 @@ export function CreateTransactionDialog({
                     control={form.control}
                     name="categoryName"
                     render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Categoría</FieldLabel>
-                        <div className="flex gap-2">
-                          <Select value={field.value || undefined} onValueChange={field.onChange}>
-                            <SelectTrigger aria-invalid={fieldState.invalid} className="flex-1">
-                              <SelectValue placeholder="Selecciona una categoría" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                {existingCategories.map((cat) => (
-                                  <SelectItem key={cat.id} value={cat.name}>
-                                    <CategoryIconBadge
-                                      icon={cat.icon}
-                                      color={cat.color}
-                                      className="size-5 rounded-md"
-                                    />
-                                    {cat.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setQuickCreateOpen(true)}
-                          >
-                            <PlusIcon className="size-4" />
-                          </Button>
-                        </div>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
+                      <TransactionCategoryField
+                        categories={existingCategories}
+                        value={field.value}
+                        invalid={fieldState.invalid}
+                        error={fieldState.error}
+                        onChange={field.onChange}
+                        onCreate={() => setQuickCreateOpen(true)}
+                      />
                     )}
                   />
                   <Controller
@@ -318,8 +298,8 @@ export function CreateTransactionDialog({
             <DialogClose asChild>
               <Button variant="outline" type="button">Cancelar</Button>
             </DialogClose>
-            <Button disabled={mutation.isPending} form="create-transaction-form" type="submit">
-              {mutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+            <Button disabled={isPending} form="create-transaction-form" type="submit">
+              {isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
               Guardar
             </Button>
           </DialogFooter>

@@ -1,18 +1,19 @@
 'use client';
 
 import { CreditCardIcon } from 'lucide-react';
+import { useTransition } from 'react';
+import { toast } from 'sonner';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CategoryIconBadge } from '@/components/category-icon-badge';
-import { usePayAllCreditCardTransactions } from '@/lib/finance/transactions/hooks/mutations';
-import { type Transaction } from '@/lib/finance/transactions/types/transaction-types';
+import { payAllCreditCardTransactions } from '@/features/transactions/server/actions';
+import { type Transaction } from '@/features/transactions/types/transaction-types';
 import { formatCurrency, formatDate } from '@/lib/format';
 
 type CreditCardDebtCardProps = {
-  isLoading: boolean;
   transactions: Transaction[];
 };
 
@@ -49,10 +50,23 @@ function groupByCard(transactions: Transaction[]): CardGroup[] {
   });
 }
 
-export function CreditCardDebtCard({ isLoading, transactions }: CreditCardDebtCardProps) {
-  const payMutation = usePayAllCreditCardTransactions();
+export function CreditCardDebtCard({ transactions }: CreditCardDebtCardProps) {
+  const [isPending, startTransition] = useTransition();
 
-  if (isLoading || transactions.length === 0) return null;
+  if (transactions.length === 0) return null;
+
+  function handlePay(cardName: string | null) {
+    startTransition(async () => {
+      try {
+        await payAllCreditCardTransactions(cardName);
+        toast.success('Tarjeta marcada como pagada');
+      } catch (error) {
+        toast.error('No se pudo marcar como pagada', {
+          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+        });
+      }
+    });
+  }
 
   const groups = groupByCard(transactions);
   const today = new Date().toISOString().slice(0, 10);
@@ -143,8 +157,8 @@ export function CreditCardDebtCard({ isLoading, transactions }: CreditCardDebtCa
                       </p>
                       <Button
                         size="sm"
-                        disabled={payMutation.isPending}
-                        onClick={() => payMutation.mutate(group.cardName)}
+                        disabled={isPending}
+                        onClick={() => handlePay(group.cardName)}
                       >
                         Marcar como pagado
                       </Button>

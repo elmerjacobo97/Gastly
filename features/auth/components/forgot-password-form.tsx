@@ -10,21 +10,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { forgotPassword } from '@/lib/finance/auth/server/actions';
-import { type ForgotPasswordValues, forgotPasswordSchema } from '@/lib/finance/auth/schemas/auth-schemas';
+import { forgotPassword } from '@/features/auth/server/actions';
+import { type ForgotPasswordValues, forgotPasswordSchema } from '@/features/auth/schemas/auth-schemas';
+
+async function submitForgotPassword(values: ForgotPasswordValues) {
+  const result = await forgotPassword(values);
+  if (result?.error) {
+    toast.error('No se pudo enviar el correo', { description: result.error });
+  }
+}
 
 export function ForgotPasswordForm() {
   const form = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: '' },
   });
-
-  async function onSubmit(values: ForgotPasswordValues) {
-    const result = await forgotPassword(values);
-    if (result?.error) {
-      toast.error('No se pudo enviar el correo', { description: result.error });
-    }
-  }
 
   return (
     <Card className="w-full max-w-md border-foreground/10 shadow-xl shadow-foreground/5">
@@ -35,7 +35,7 @@ export function ForgotPasswordForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="flex flex-col gap-5" id="forgot-password-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="flex flex-col gap-5" id="forgot-password-form" noValidate onSubmit={form.handleSubmit(submitForgotPassword)}>
           <FieldGroup>
             <Controller
               control={form.control}

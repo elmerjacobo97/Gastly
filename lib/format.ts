@@ -1,14 +1,18 @@
+const currencyFormatter = new Intl.NumberFormat("es-PE", {
+  style: "currency",
+  currency: "PEN",
+})
+
+const dateFormatter = new Intl.DateTimeFormat("es-PE", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+})
+
 export function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-PE", {
-    style: "currency",
-    currency: "PEN",
-  }).format(value)
+  return currencyFormatter.format(value)
 }
 
 export function formatDate(value: string) {
-  return new Intl.DateTimeFormat("es-PE", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(`${value}T00:00:00`))
+  return dateFormatter.format(new Date(`${value}T00:00:00`))
 }

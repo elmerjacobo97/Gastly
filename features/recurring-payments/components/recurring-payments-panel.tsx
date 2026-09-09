@@ -16,17 +16,17 @@ import {
   PauseCircleIcon,
   PencilIcon,
   PlayCircleIcon,
-  RefreshCwIcon,
   ReceiptTextIcon,
   XCircleIcon,
   Trash2Icon,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useState, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import {
   Alert,
-  AlertAction,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
@@ -75,25 +75,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { CategoryIconBadge } from "@/components/category-icon-badge"
 import { CreateRecurringPaymentDialog } from "@/features/recurring-payments/components/create-recurring-payment-dialog"
 import { EditRecurringPaymentDialog } from "@/features/recurring-payments/components/edit-recurring-payment-dialog"
 import {
-  type PaymentHistoryEntry,
-} from "@/lib/finance/recurring-payments/lib/recurring-payments-api"
-import { useRecurringPayments, useRecurringPaymentHistory } from "@/lib/finance/recurring-payments/hooks/queries"
-import {
-  useDeleteRecurringPayment,
-  useSetRecurringPaymentActive,
-  useRegisterRecurringPaymentPayment,
-} from "@/lib/finance/recurring-payments/hooks/mutations"
+  deleteRecurringPayment,
+  registerRecurringPaymentPayment,
+  setRecurringPaymentActive,
+} from "@/features/recurring-payments/server/actions"
+import { type PaymentHistoryEntry } from "@/features/recurring-payments/server/queries"
 import {
   recurringPaymentPaymentSchema,
   type RecurringPaymentPaymentValues,
-} from "@/lib/finance/recurring-payments/schemas/recurring-payment-schemas"
-import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
+} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+import { type Account } from "@/features/accounts/types/account-types"
+import { type Category } from "@/features/categories/types/category-types"
 import { MonthNav } from "@/components/month-nav"
 import {
   formatCurrency,
@@ -313,16 +311,16 @@ function PaymentDialog({
 
 function PaymentHistoryDialog({
   payment,
+  history,
   open,
   onOpenChange,
 }: {
   payment: RecurringPayment | null
+  history: PaymentHistoryEntry[]
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const historyQuery = useRecurringPaymentHistory(payment?.id, open && !!payment)
-
-  const entries: PaymentHistoryEntry[] = historyQuery.data ?? []
+  const entries = history
   const total = entries.reduce((sum, e) => sum + e.amount, 0)
   const avg = entries.length > 0 ? total / entries.length : 0
 
@@ -336,32 +334,7 @@ function PaymentHistoryDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          {historyQuery.isPending ? (
-            <div className="flex flex-col gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center justify-between py-2">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              ))}
-            </div>
-          ) : historyQuery.isError ? (
-            <Alert variant="destructive">
-              <AlertTriangleIcon />
-              <AlertTitle>No se pudo cargar el historial</AlertTitle>
-              <AlertDescription>
-                {historyQuery.error instanceof Error
-                  ? historyQuery.error.message
-                  : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
-              </AlertDescription>
-              <AlertAction>
-                <Button size="sm" variant="outline" onClick={() => historyQuery.refetch()}>
-                  <RefreshCwIcon className="size-3.5" />
-                  Reintentar
-                </Button>
-              </AlertAction>
-            </Alert>
-          ) : entries.length === 0 ? (
+          {entries.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
               Sin pagos registrados aún.
             </p>
@@ -399,20 +372,261 @@ function PaymentHistoryDialog({
   )
 }
 
-export function RecurringPaymentsPanel() {
-  const [month, setMonth] = useState(() => new Date())
+function RecurringPaymentAlerts({
+  overduePayments,
+  soonPayments,
+  daysLabel,
+}: {
+  overduePayments: RecurringPayment[]
+  soonPayments: RecurringPayment[]
+  daysLabel: (date: string) => string
+}) {
+  if (overduePayments.length === 0 && soonPayments.length === 0) return null
+
+  return (
+    <div className="flex flex-col gap-2">
+      {overduePayments.length > 0 && (
+        <Alert variant="destructive">
+          <XCircleIcon />
+          <AlertTitle>
+            {overduePayments.length === 1
+              ? `"${overduePayments[0].description}" está vencido`
+              : `${overduePayments.length} pagos vencidos`}
+          </AlertTitle>
+          <AlertDescription>
+            {overduePayments.length === 1
+              ? `Vencía el ${formatDate(overduePayments[0].nextDueOn)}. Registra el pago para mantener el control.`
+              : overduePayments.map((payment) => payment.description).join(", ")}
+          </AlertDescription>
+        </Alert>
+      )}
+      {soonPayments.length > 0 && (
+        <Alert variant="warning">
+          <AlertTriangleIcon />
+          <AlertTitle>
+            {soonPayments.length === 1
+              ? `"${soonPayments[0].description}" ${daysLabel(soonPayments[0].nextDueOn)}`
+              : `${soonPayments.length} pagos próximos a vencer`}
+          </AlertTitle>
+          <AlertDescription>
+            {soonPayments.length === 1
+              ? formatCurrency(soonPayments[0].amount)
+              : soonPayments.map((payment) => `${payment.description} (${daysLabel(payment.nextDueOn)})`).join(", ")}
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  )
+}
+
+function RecurringPaymentMeta({ payment }: { payment: RecurringPayment }) {
+  const isIncome = payment.type === "income"
+
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-3">
+      {payment.category && (
+        <CategoryIconBadge icon={payment.category.icon} color={payment.category.color} className="size-8 shrink-0 rounded-lg" />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-sm font-medium">{payment.description}</p>
+          {isIncome && (
+            <span className="shrink-0 rounded bg-emerald-500/10 px-1 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+              Ingreso
+            </span>
+          )}
+        </div>
+        <RecurringPaymentSubtitle payment={payment} />
+      </div>
+    </div>
+  )
+}
+
+function RecurringPaymentSubtitle({ payment }: { payment: RecurringPayment }) {
+  const isIncome = payment.type === "income"
+
+  return (
+    <p className="truncate text-xs text-muted-foreground">
+      {payment.paidOn
+        ? `${isIncome ? "Cobrado" : "Pagado"} el ${formatDate(payment.paidOn)}`
+        : `${isIncome ? "Cobro" : "Vence"} el ${formatDate(payment.nextDueOn)}`}
+      {payment.account && (
+        <>
+          {" · "}
+          <span style={{ color: payment.account.color }}>{payment.account.name}</span>
+        </>
+      )}
+      {" · "}{formatFrequency(payment)}
+    </p>
+  )
+}
+
+function payButtonLabel(payment: RecurringPayment) {
+  const isPaid = !!payment.paidOn
+  const isIncome = payment.type === "income"
+  if (isPaid) return isIncome ? "Cobrado" : "Pagado"
+  return isIncome ? "Cobrar" : "Pagar"
+}
+
+function RecurringPaymentAmount({ payment }: { payment: RecurringPayment }) {
+  const isIncome = payment.type === "income"
+  return (
+    <p className={cn("shrink-0 text-sm font-semibold tabular-nums", isIncome && "text-emerald-600 dark:text-emerald-400")}>
+      {isIncome ? "+" : ""}{formatCurrency(payment.paidAmount ?? payment.amount)}
+    </p>
+  )
+}
+
+function RecurringPaymentPayButton({
+  payment,
+  pending,
+  onPay,
+}: {
+  payment: RecurringPayment
+  pending: boolean
+  onPay: (payment: RecurringPayment) => void
+}) {
+  const isPaid = !!payment.paidOn
+  return (
+    <Button
+      size="sm"
+      disabled={!payment.isActive || isPaid || pending}
+      onClick={() => onPay(payment)}
+      variant={isPaid ? "secondary" : "default"}
+      className="h-8 shrink-0"
+    >
+      {isPaid ? <CheckCircle2Icon className="size-3.5" /> : <ReceiptTextIcon className="size-3.5" />}
+      {payButtonLabel(payment)}
+    </Button>
+  )
+}
+
+function RecurringPaymentRow({
+  payment,
+  monthKey,
+  pending,
+  onPay,
+  onEdit,
+  onHistory,
+  onToggle,
+  onDelete,
+}: {
+  payment: RecurringPayment
+  monthKey: string
+  pending: boolean
+  onPay: (payment: RecurringPayment) => void
+  onEdit: (payment: RecurringPayment) => void
+  onHistory: (payment: RecurringPayment) => void
+  onToggle: (payment: RecurringPayment) => void
+  onDelete: (id: string) => void
+}) {
+  const badge = getPaymentBadge(payment, monthKey)
+
+  return (
+    <div className={cn("flex items-center gap-3 px-4 py-3.5", !payment.isActive && "opacity-60")}>
+      <RecurringPaymentMeta payment={payment} />
+      <RecurringPaymentAmount payment={payment} />
+      <Badge variant={badge.variant} className={cn("hidden shrink-0 sm:inline-flex", badge.className)}>
+        {badge.label}
+      </Badge>
+      <RecurringPaymentPayButton payment={payment} pending={pending} onPay={onPay} />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
+            <MoreHorizontalIcon />
+            <span className="sr-only">Acciones</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => onEdit(payment)}>
+            <PencilIcon />
+            Editar
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onHistory(payment)}>
+            <HistoryIcon />
+            Historial de pagos
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onToggle(payment)}>
+            {payment.isActive ? <PauseCircleIcon /> : <PlayCircleIcon />}
+            {payment.isActive ? "Pausar" : "Activar"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => onDelete(payment.id)} className="text-destructive focus:text-destructive">
+            <Trash2Icon />
+            Eliminar
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
+function RecurringPaymentList({
+  payments,
+  monthKey,
+  pending,
+  onPay,
+  onEdit,
+  onHistory,
+  onToggle,
+  onDelete,
+}: {
+  payments: RecurringPayment[]
+  monthKey: string
+  pending: boolean
+  onPay: (payment: RecurringPayment) => void
+  onEdit: (payment: RecurringPayment) => void
+  onHistory: (payment: RecurringPayment) => void
+  onToggle: (payment: RecurringPayment) => void
+  onDelete: (id: string) => void
+}) {
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <div className="flex flex-col divide-y">
+          {payments.map((payment) => (
+            <RecurringPaymentRow
+              key={payment.id}
+              payment={payment}
+              monthKey={monthKey}
+              pending={pending}
+              onPay={onPay}
+              onEdit={onEdit}
+              onHistory={onHistory}
+              onToggle={onToggle}
+              onDelete={onDelete}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+type RecurringPaymentsPanelProps = {
+  payments: RecurringPayment[]
+  historyByPaymentId: Record<string, PaymentHistoryEntry[]>
+  accounts: Account[]
+  categories: Category[]
+  month: string
+}
+
+export function RecurringPaymentsPanel({
+  payments,
+  historyByPaymentId,
+  accounts,
+  categories,
+  month: monthStr,
+}: RecurringPaymentsPanelProps) {
   const [editPayment, setEditPayment] = useState<RecurringPayment | null>(null)
   const [payPayment, setPayPayment] = useState<RecurringPayment | null>(null)
   const [payOpen, setPayOpen] = useState(false)
   const [historyPayment, setHistoryPayment] = useState<RecurringPayment | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+  const month = useMemo(() => new Date(`${monthStr}-01T12:00:00`), [monthStr])
 
-  const query = useRecurringPayments(month)
-  const registerMutation = useRegisterRecurringPaymentPayment(payPayment)
-  const activeMutation = useSetRecurringPaymentActive()
-  const deleteMutation = useDeleteRecurringPayment()
-
-  const payments = query.data ?? []
   const monthKey = format(month, "yyyy-MM")
   const activeExpensePayments = payments.filter(
     (p) => p.type === "expense" && p.isActive && isRelevantForMonth(p, monthKey)
@@ -444,6 +658,53 @@ export function RecurringPaymentsPanel() {
     return `vence en ${days} días`
   }
 
+  function handleRegister(values: RecurringPaymentPaymentValues) {
+    if (!payPayment) return
+    startTransition(async () => {
+      try {
+        await registerRecurringPaymentPayment(payPayment, values)
+        toast.success("Pago registrado como transacción")
+        setPayOpen(false)
+        setPayPayment(null)
+        router.refresh()
+      } catch (error) {
+        toast.error("No se pudo registrar el pago", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
+
+  function handleToggle(payment: RecurringPayment) {
+    startTransition(async () => {
+      try {
+        await setRecurringPaymentActive(payment.id, !payment.isActive)
+        toast.success(payment.isActive ? "Pago recurrente pausado" : "Pago recurrente activado")
+        router.refresh()
+      } catch (error) {
+        toast.error("No se pudo actualizar el estado", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
+
+  function handleDelete() {
+    if (!deleteId) return
+    startTransition(async () => {
+      try {
+        await deleteRecurringPayment(deleteId)
+        toast.success("Pago recurrente eliminado")
+        setDeleteId(null)
+        router.refresh()
+      } catch (error) {
+        toast.error("No se pudo eliminar el pago recurrente", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -456,30 +717,12 @@ export function RecurringPaymentsPanel() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <MonthNav value={month} onChange={setMonth} allowFuture />
-          <CreateRecurringPaymentDialog />
+          <MonthNav value={month} allowFuture />
+          <CreateRecurringPaymentDialog accounts={accounts} categories={categories} />
         </div>
       </section>
 
-      {query.isError && (
-        <Alert variant="destructive">
-          <AlertTriangleIcon />
-          <AlertTitle>No se pudo cargar la información</AlertTitle>
-          <AlertDescription>
-            {query.error instanceof Error
-              ? query.error.message
-              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
-          </AlertDescription>
-          <AlertAction>
-            <Button size="sm" variant="outline" onClick={() => query.refetch()}>
-              <RefreshCwIcon className="size-3.5" />
-              Reintentar
-            </Button>
-          </AlertAction>
-        </Alert>
-      )}
-
-      {!query.isPending && payments.length > 0 && (
+      {payments.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
             <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${allPaid ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted/50 text-muted-foreground"}`}>
@@ -518,161 +761,27 @@ export function RecurringPaymentsPanel() {
         </div>
       )}
 
-      {!query.isPending && (overduePayments.length > 0 || soonPayments.length > 0) && (
-        <div className="flex flex-col gap-2">
-          {overduePayments.length > 0 && (
-            <Alert variant="destructive">
-              <XCircleIcon />
-              <AlertTitle>
-                {overduePayments.length === 1
-                  ? `"${overduePayments[0].description}" está vencido`
-                  : `${overduePayments.length} pagos vencidos`}
-              </AlertTitle>
-              <AlertDescription>
-                {overduePayments.length === 1
-                  ? `Vencía el ${formatDate(overduePayments[0].nextDueOn)}. Registra el pago para mantener el control.`
-                  : overduePayments.map((p) => p.description).join(", ")}
-              </AlertDescription>
-            </Alert>
-          )}
-          {soonPayments.length > 0 && (
-            <Alert variant="warning">
-              <AlertTriangleIcon />
-              <AlertTitle>
-                {soonPayments.length === 1
-                  ? `"${soonPayments[0].description}" ${daysLabel(soonPayments[0].nextDueOn)}`
-                  : `${soonPayments.length} pagos próximos a vencer`}
-              </AlertTitle>
-              <AlertDescription>
-                {soonPayments.length === 1
-                  ? formatCurrency(soonPayments[0].amount)
-                  : soonPayments
-                      .map((p) => `${p.description} (${daysLabel(p.nextDueOn)})`)
-                      .join(", ")}
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      )}
+      <RecurringPaymentAlerts
+        overduePayments={overduePayments}
+        soonPayments={soonPayments}
+        daysLabel={daysLabel}
+      />
 
-      <Card>
-        <CardContent className="p-0">
-          {query.isPending ? (
-            <div className="flex flex-col divide-y px-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 py-4">
-                  <Skeleton className="size-8 rounded-lg shrink-0" />
-                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                    <Skeleton className="h-4 w-36" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-5 w-16 shrink-0" />
-                  <Skeleton className="h-8 w-28 shrink-0" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col divide-y">
-              {payments.map((payment) => {
-                const isPaid = !!payment.paidOn
-                const badge = getPaymentBadge(payment, monthKey)
-                const isIncome = payment.type === "income"
-                return (
-                  <div
-                    key={payment.id}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3.5",
-                      !payment.isActive && "opacity-60"
-                    )}
-                  >
-                    {payment.category && (
-                      <CategoryIconBadge
-                        icon={payment.category.icon}
-                        color={payment.category.color}
-                        className="size-8 shrink-0 rounded-lg"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate text-sm font-medium">{payment.description}</p>
-                        {isIncome && (
-                          <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded px-1 py-0.5">
-                            Ingreso
-                          </span>
-                        )}
-                      </div>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {payment.paidOn
-                          ? `${isIncome ? "Cobrado" : "Pagado"} el ${formatDate(payment.paidOn)}`
-                          : `${isIncome ? "Cobro" : "Vence"} el ${formatDate(payment.nextDueOn)}`}
-                        {payment.account && (
-                          <>
-                            {" · "}
-                            <span style={{ color: payment.account.color }}>
-                              {payment.account.name}
-                            </span>
-                          </>
-                        )}
-                        {" · "}{formatFrequency(payment)}
-                      </p>
-                    </div>
-                    <p className={`shrink-0 text-sm font-semibold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
-                      {isIncome ? "+" : ""}{formatCurrency(payment.paidAmount ?? payment.amount)}
-                    </p>
-                    <Badge variant={badge.variant} className={cn("shrink-0 hidden sm:inline-flex", badge.className)}>
-                      {badge.label}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      disabled={!payment.isActive || isPaid || registerMutation.isPending}
-                      onClick={() => { setPayPayment(payment); setPayOpen(true) }}
-                      variant={isPaid ? "secondary" : "default"}
-                      className="shrink-0 h-8"
-                    >
-                      {isPaid ? <CheckCircle2Icon className="size-3.5" /> : <ReceiptTextIcon className="size-3.5" />}
-                      {isPaid ? (isIncome ? "Cobrado" : "Pagado") : (isIncome ? "Cobrar" : "Pagar")}
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
-                          <MoreHorizontalIcon />
-                          <span className="sr-only">Acciones</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditPayment(payment)}>
-                          <PencilIcon />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setHistoryPayment(payment)}>
-                          <HistoryIcon />
-                          Historial de pagos
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => activeMutation.mutate({ id: payment.id, active: !payment.isActive })}
-                        >
-                          {payment.isActive ? <PauseCircleIcon /> : <PlayCircleIcon />}
-                          {payment.isActive ? "Pausar" : "Activar"}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onSelect={() => setDeleteId(payment.id)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2Icon />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <RecurringPaymentList
+        payments={payments}
+        monthKey={monthKey}
+        pending={isPending}
+        onPay={(payment) => {
+          setPayPayment(payment)
+          setPayOpen(true)
+        }}
+        onEdit={setEditPayment}
+        onHistory={setHistoryPayment}
+        onToggle={handleToggle}
+        onDelete={setDeleteId}
+      />
 
-      {!query.isPending && !query.isError && payments.length === 0 && (
+      {payments.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">
@@ -686,7 +795,7 @@ export function RecurringPaymentsPanel() {
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <CreateRecurringPaymentDialog />
+                   <CreateRecurringPaymentDialog accounts={accounts} categories={categories} />
               </EmptyContent>
             </Empty>
           </CardContent>
@@ -696,6 +805,8 @@ export function RecurringPaymentsPanel() {
       {editPayment && (
         <EditRecurringPaymentDialog
           payment={editPayment}
+          accounts={accounts}
+          categories={categories}
           open={!!editPayment}
           onOpenChange={(open) => !open && setEditPayment(null)}
         />
@@ -703,20 +814,22 @@ export function RecurringPaymentsPanel() {
       <PaymentDialog
         payment={payPayment}
         open={payOpen}
-        pending={registerMutation.isPending}
-        onOpenChange={(open) => setPayOpen(open)}
-        onSubmit={(values) => registerMutation.mutate(values, { onSuccess: () => setPayOpen(false) })}
+         pending={isPending}
+         onOpenChange={(open) => setPayOpen(open)}
+         onSubmit={handleRegister}
       />
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Eliminar pago recurrente"
-        description="Esta acción no elimina transacciones ya registradas, solo el pago recurrente."
-        confirmLabel="Eliminar"
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
+         title="Eliminar pago recurrente"
+         description="Esta acción no elimina transacciones ya registradas, solo el pago recurrente."
+         confirmLabel="Eliminar"
+         pending={isPending}
+         onConfirm={handleDelete}
       />
       <PaymentHistoryDialog
-        payment={historyPayment}
+         payment={historyPayment}
+         history={historyPayment ? historyByPaymentId[historyPayment.id] ?? [] : []}
         open={!!historyPayment}
         onOpenChange={(open) => !open && setHistoryPayment(null)}
       />

@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
  import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -30,8 +31,8 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import { loanSchema, type LoanValues } from "@/lib/finance/loans/schemas/loan-schemas"
-import { useCreateLoan } from "@/lib/finance/loans/hooks/mutations"
+import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
+import { createLoan } from "@/features/loans/server/actions"
 
 function getTodayStr() {
   return format(new Date(), "yyyy-MM-dd")
@@ -43,13 +44,27 @@ type LoanDialogProps = {
 
 export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps) {
   const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm<LoanValues>({
     resolver: zodResolver(loanSchema) as Resolver<LoanValues>,
     defaultValues: { direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
   })
 
-  const mutation = useCreateLoan()
+  function onSubmit(values: LoanValues) {
+    startTransition(async () => {
+      try {
+        await createLoan(values)
+        toast.success("Préstamo registrado")
+        form.reset({ direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudo registrar el préstamo", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   const direction = useWatch({ control: form.control, name: "direction" })
 
@@ -72,9 +87,7 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
           id="loan-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-            onSuccess: () => { form.reset({ direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" }); setOpen(false) },
-          }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
@@ -195,8 +208,8 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="loan-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="loan-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Registrar préstamo
           </Button>
         </DialogFooter>

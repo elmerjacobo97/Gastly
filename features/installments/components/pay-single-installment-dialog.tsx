@@ -2,6 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2Icon } from 'lucide-react';
+import { useTransition } from 'react';
+import { toast } from 'sonner';
 import { Controller, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -16,9 +18,9 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { DatePicker } from '@/components/ui/date-picker';
-import { usePaySingleInstallment } from '@/lib/finance/installments/hooks/mutations';
-import { payInstallmentsSchema, type PayInstallmentsValues } from '@/lib/finance/installments/schemas/installment-schemas';
-import { type InstallmentPayment, type InstallmentPurchase } from '@/lib/finance/installments/types/installment-types';
+import { payMonthInstallments } from '@/features/installments/server/actions';
+import { payInstallmentsSchema, type PayInstallmentsValues } from '@/features/installments/schemas/installment-schemas';
+import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
 import { formatCurrency } from '@/lib/format';
 
 type PaySingleInstallmentDialogProps = {
@@ -29,12 +31,27 @@ type PaySingleInstallmentDialogProps = {
 };
 
 export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChange }: PaySingleInstallmentDialogProps) {
+  const [isPending, startTransition] = useTransition();
+
   const form = useForm<PayInstallmentsValues>({
     resolver: zodResolver(payInstallmentsSchema),
     defaultValues: { occurredOn: payment.dueOn },
   });
 
-  const mutation = usePaySingleInstallment(payment, purchase);
+  function onSubmit(values: PayInstallmentsValues) {
+    startTransition(async () => {
+      try {
+        await payMonthInstallments([{ payment, purchase }], values.occurredOn);
+        toast.success('Cuota registrada');
+        form.reset({ occurredOn: payment.dueOn });
+        onOpenChange(false);
+      } catch (error) {
+        toast.error('No se pudo registrar la cuota', {
+          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+        });
+      }
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,7 +63,7 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
             {formatCurrency(payment.amount)}
           </DialogDescription>
         </DialogHeader>
-        <form id="pay-single-installment-form" noValidate onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => { form.reset({ occurredOn: payment.dueOn }); onOpenChange(false); } }))}>
+        <form id="pay-single-installment-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
               control={form.control}
@@ -72,8 +89,8 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
               Cancelar
             </Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="pay-single-installment-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="pay-single-installment-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Confirmar pago
           </Button>
         </DialogFooter>

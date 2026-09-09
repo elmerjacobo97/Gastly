@@ -1,12 +1,15 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { startOfMonth } from "date-fns"
+import { startOfMonth } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
 import { type Resolver, Controller, useForm } from "react-hook-form"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { MonthField } from "@/components/month-field"
 import {
   Dialog,
   DialogClose,
@@ -24,34 +27,23 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { NumberInput } from "@/components/ui/number-input"
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select"
-import { budgetSchema, type BudgetValues } from "@/lib/finance/budget/schemas/budget-schemas"
-import { useCreateBudget } from "@/lib/finance/budget/hooks/mutations"
+import { budgetSchema, type BudgetValues } from "@/features/budget/schemas/budget-schemas"
 import { CategorySelect } from "@/components/category-select"
-
-const MONTHS = [
-  { value: 0, label: "Enero" }, { value: 1, label: "Febrero" },
-  { value: 2, label: "Marzo" }, { value: 3, label: "Abril" },
-  { value: 4, label: "Mayo" }, { value: 5, label: "Junio" },
-  { value: 6, label: "Julio" }, { value: 7, label: "Agosto" },
-  { value: 8, label: "Septiembre" }, { value: 9, label: "Octubre" },
-  { value: 10, label: "Noviembre" }, { value: 11, label: "Diciembre" },
-]
-
-function getYearOptions() {
-  const y = new Date().getFullYear()
-  return [y - 1, y, y + 1]
-}
+import { createBudget } from "@/features/budget/server/actions"
+import { type Category } from "@/features/categories/types/category-types"
 
 type CreateBudgetDialogProps = {
   triggerLabel?: string
+  categories: Category[]
 }
 
-export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: CreateBudgetDialogProps) {
+export function CreateBudgetDialog({
+  triggerLabel = "Nuevo presupuesto",
+  categories,
+}: CreateBudgetDialogProps) {
   const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
   const now = new Date()
 
   const form = useForm<BudgetValues>({
@@ -63,7 +55,21 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
     },
   })
 
-  const mutation = useCreateBudget()
+  function onSubmit(values: BudgetValues) {
+    startTransition(async () => {
+      try {
+        await createBudget(values)
+        toast.success("Presupuesto guardado")
+        form.reset({ categoryId: "", amount: 0, month: startOfMonth(new Date()) })
+        setOpen(false)
+        router.refresh()
+      } catch (error) {
+        toast.error("No se pudo guardar el presupuesto", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -84,9 +90,7 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
             className="flex flex-col gap-5"
             id="create-budget-form"
             noValidate
-            onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-              onSuccess: () => { form.reset({ categoryId: "", amount: 0, month: startOfMonth(new Date()) }); setOpen(false) },
-            }))}
+            onSubmit={form.handleSubmit(onSubmit)}
           >
             <FieldGroup>
               <Controller
@@ -96,6 +100,7 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="cb-category">Categoría</FieldLabel>
                     <CategorySelect
+                      categories={categories}
                       id="cb-category"
                       value={field.value}
                       onChange={field.onChange}
@@ -129,38 +134,12 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
                 control={form.control}
                 name="month"
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Mes</FieldLabel>
-                    <div className="flex gap-2">
-                      <NativeSelect
-                        value={field.value.getMonth()}
-                        onChange={(e) => {
-                          const d = new Date(field.value)
-                          d.setMonth(Number(e.target.value))
-                          field.onChange(startOfMonth(d))
-                        }}
-                        className="flex-1"
-                      >
-                        {MONTHS.map((m) => (
-                          <NativeSelectOption key={m.value} value={m.value}>{m.label}</NativeSelectOption>
-                        ))}
-                      </NativeSelect>
-                      <NativeSelect
-                        value={field.value.getFullYear()}
-                        onChange={(e) => {
-                          const d = new Date(field.value)
-                          d.setFullYear(Number(e.target.value))
-                          field.onChange(startOfMonth(d))
-                        }}
-                        className="w-28"
-                      >
-                        {getYearOptions().map((y) => (
-                          <NativeSelectOption key={y} value={y}>{y}</NativeSelectOption>
-                        ))}
-                      </NativeSelect>
-                    </div>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
+                  <MonthField
+                    value={field.value}
+                    invalid={fieldState.invalid}
+                    error={fieldState.error}
+                    onChange={field.onChange}
+                  />
                 )}
               />
             </FieldGroup>
@@ -169,8 +148,8 @@ export function CreateBudgetDialog({ triggerLabel = "Nuevo presupuesto" }: Creat
             <DialogClose asChild>
               <Button variant="outline" type="button">Cancelar</Button>
             </DialogClose>
-            <Button disabled={mutation.isPending} form="create-budget-form" type="submit">
-              {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+            <Button disabled={isPending} form="create-budget-form" type="submit">
+              {isPending && <Loader2Icon className="size-4 animate-spin" />}
               Guardar presupuesto
             </Button>
           </DialogFooter>

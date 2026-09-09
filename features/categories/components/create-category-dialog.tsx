@@ -1,10 +1,13 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { Controller, useForm, useWatch } from "react-hook-form"
 
+import { CategoryIconPicker } from "@/components/category-icon-picker"
+import { ColorPicker } from "@/components/color-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -28,22 +31,11 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import {
-  CategoryIcon,
-  categoryIconOptions,
-} from "@/components/category-icon-badge"
-import { useCreateCategory } from "@/lib/finance/categories/hooks/mutations"
+import { createCategory } from "@/features/categories/server/actions"
 import {
   type CategoryValues,
   categorySchema,
-} from "@/lib/finance/categories/schemas/category-schemas"
-import { cn } from "@/lib/utils"
+} from "@/features/categories/schemas/category-schemas"
 
 const colorOptions = [
   { value: "red", hex: "#ef4444" },
@@ -79,7 +71,22 @@ export function CreateCategoryDialog() {
   const selectedColor = useWatch({ control: form.control, name: "color" })
   const selectedIcon = useWatch({ control: form.control, name: "icon" })
 
-  const mutation = useCreateCategory()
+  const [isPending, startTransition] = useTransition()
+
+  function onSubmit(values: CategoryValues) {
+    startTransition(async () => {
+      try {
+        await createCategory(values)
+        toast.success("Categoría creada")
+        form.reset(EMPTY_DEFAULTS)
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudo crear la categoría", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -102,9 +109,7 @@ export function CreateCategoryDialog() {
               className="flex flex-col gap-5"
               id="create-category-form"
               noValidate
-              onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-                onSuccess: () => { form.reset(EMPTY_DEFAULTS); setOpen(false) },
-              }))}
+              onSubmit={form.handleSubmit(onSubmit)}
             >
               <FieldGroup>
                 <Controller
@@ -148,28 +153,11 @@ export function CreateCategoryDialog() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Color</FieldLabel>
-                      <div className="flex flex-wrap gap-2 rounded-lg border p-3">
-                        {colorOptions.map((option) => (
-                          <Button
-                            key={option.value}
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => field.onChange(option.value)}
-                            className={cn(
-                              "rounded-full hover:bg-transparent hover:scale-110",
-                              selectedColor === option.value &&
-                                "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                            )}
-                            style={{ backgroundColor: option.hex }}
-                            title={option.value}
-                          >
-                            {selectedColor === option.value && (
-                              <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
-                            )}
-                          </Button>
-                        ))}
-                      </div>
+                       <ColorPicker
+                         options={colorOptions}
+                         value={selectedColor}
+                         onChange={field.onChange}
+                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -180,31 +168,10 @@ export function CreateCategoryDialog() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Icono</FieldLabel>
-                      <TooltipProvider>
-                        <div className="grid grid-cols-5 gap-2 rounded-lg border p-3 sm:grid-cols-6">
-                          {categoryIconOptions.map((option) => (
-                            <Tooltip key={option.value}>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-lg"
-                                  onClick={() => field.onChange(option.value)}
-                                  className={cn(
-                                    "border text-muted-foreground hover:bg-muted hover:text-foreground",
-                                    selectedIcon === option.value &&
-                                      "border-primary bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
-                                  )}
-                                >
-                                  <CategoryIcon name={option.value} className="size-4" />
-                                  <span className="sr-only">{option.label}</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>{option.label}</TooltipContent>
-                            </Tooltip>
-                          ))}
-                        </div>
-                      </TooltipProvider>
+                       <CategoryIconPicker
+                         value={selectedIcon}
+                         onChange={field.onChange}
+                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -217,8 +184,8 @@ export function CreateCategoryDialog() {
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="create-category-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="create-category-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar categoría
           </Button>
         </DialogFooter>

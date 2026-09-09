@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
  import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -26,12 +27,12 @@ import {
 import { DatePicker } from "@/components/ui/date-picker"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useAddContribution } from "@/lib/finance/savings/hooks/mutations"
+import { addContribution } from "@/features/savings/server/actions"
 import {
   contributionSchema,
   type ContributionValues,
-} from "@/lib/finance/savings/schemas/savings-schemas"
-import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
+} from "@/features/savings/schemas/savings-schemas"
+import { type SavingsGoal } from "@/features/savings/types/savings-types"
 
 type AddContributionDialogProps = {
   goal: SavingsGoal
@@ -51,13 +52,27 @@ const emptyValues: ContributionValues = {
 
 export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContributionDialogProps) {
   const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm<ContributionValues>({
     resolver: zodResolver(contributionSchema) as Resolver<ContributionValues>,
     defaultValues: { ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() },
   })
 
-  const mutation = useAddContribution(goal)
+  function onSubmit(values: ContributionValues) {
+    startTransition(async () => {
+      try {
+        await addContribution(goal.id, values)
+        toast.success("Aporte registrado")
+        form.reset({ ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() })
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudo registrar el aporte", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -80,9 +95,7 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
           id="contribution-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-            onSuccess: () => { form.reset({ ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() }); setOpen(false) },
-          }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
@@ -138,8 +151,8 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="contribution-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+          <Button disabled={isPending} form="contribution-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Registrar
           </Button>
         </DialogFooter>

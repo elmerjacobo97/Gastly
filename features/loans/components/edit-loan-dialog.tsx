@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
  import { Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -28,9 +29,9 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
-import { loanSchema, type LoanValues } from "@/lib/finance/loans/schemas/loan-schemas"
-import { useUpdateLoan } from "@/lib/finance/loans/hooks/mutations"
-import { type Loan } from "@/lib/finance/loans/types/loan-types"
+import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
+import { updateLoan } from "@/features/loans/server/actions"
+import { type Loan } from "@/features/loans/types/loan-types"
 
 type EditLoanDialogProps = {
   loan: Loan
@@ -66,7 +67,21 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useUpdateLoan(loan.id)
+  const [isPending, startTransition] = useTransition()
+
+  function onSubmit(values: LoanValues) {
+    startTransition(async () => {
+      try {
+        await updateLoan(loan.id, values)
+        toast.success("Préstamo actualizado")
+        onOpenChange(false)
+      } catch (error) {
+        toast.error("No se pudo actualizar el préstamo", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,7 +96,7 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
           id="edit-loan-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
@@ -202,8 +217,8 @@ export function EditLoanDialog({ loan, open, onOpenChange }: EditLoanDialogProps
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="edit-loan-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="edit-loan-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar cambios
           </Button>
         </DialogFooter>

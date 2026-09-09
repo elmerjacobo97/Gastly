@@ -2,8 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
  import { ArrowDownIcon, Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+import { useEffect, useTransition } from "react"
+import { toast } from "sonner"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -20,9 +21,9 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateTransfer } from "@/lib/finance/accounts/hooks/mutations"
-import { transferSchema, type TransferValues } from "@/lib/finance/accounts/schemas/account-schemas"
-import { type Account } from "@/lib/finance/accounts/types/account-types"
+import { createTransfer } from "@/features/accounts/server/actions"
+import { transferSchema, type TransferValues } from "@/features/accounts/schemas/account-schemas"
+import { type Account } from "@/features/accounts/types/account-types"
 import { formatCurrency } from "@/lib/format"
 import { format } from "date-fns"
 
@@ -60,17 +61,27 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fromId = form.watch("fromAccountId")
+  const fromId = useWatch({ control: form.control, name: "fromAccountId" })
   const fromAccount = accounts.find((a) => a.id === fromId)
 
-  const mutation = useCreateTransfer()
+  const [isPending, startTransition] = useTransition()
 
   function handleSubmit(values: TransferValues) {
     if (fromAccount && Number(values.amount) > fromAccount.balance) {
       form.setError("amount", { type: "manual", message: `Saldo insuficiente. Disponible: ${formatCurrency(fromAccount.balance)}` })
       return
     }
-    mutation.mutate(values, { onSuccess: () => onOpenChange(false) })
+    startTransition(async () => {
+      try {
+        await createTransfer(values)
+        toast.success("Transferencia registrada")
+        onOpenChange(false)
+      } catch (error) {
+        toast.error("No se pudo registrar la transferencia", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
   }
 
   return (
@@ -192,8 +203,8 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="transfer-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="transfer-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Registrar transferencia
           </Button>
         </DialogFooter>

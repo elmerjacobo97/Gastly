@@ -2,16 +2,10 @@
 
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { AlertTriangleIcon, PiggyBankIcon, RefreshCwIcon, TrendingUpIcon, WalletCardsIcon } from "lucide-react"
-import { useState } from "react"
+import { PiggyBankIcon, TrendingUpIcon, WalletCardsIcon } from "lucide-react"
+import { useMemo } from "react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -19,32 +13,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import { CreateMonthlyPlanDialog } from "@/features/monthly-plan/components/create-monthly-plan-dialog"
 import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-monthly-plan-dialog"
-import { calculateSavings } from "@/lib/finance/monthly-plan/lib/monthly-plan-api"
-import { useMonthlyPlan } from "@/lib/finance/monthly-plan/hooks/queries"
+import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api"
 import { MonthNav } from "@/components/month-nav"
 import { CreateTransactionDialog } from "@/components/create-transaction-dialog"
-import { useTransactions } from "@/lib/finance/transactions/hooks/queries"
+import { type Category } from "@/features/categories/types/category-types"
+import { type Transaction } from "@/features/transactions/types/transaction-types"
+import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types"
 import { formatCurrency } from "@/lib/format"
 
-export function MonthlyPlanPanel() {
-  const [month, setMonth] = useState(() => new Date())
+type MonthlyPlanPanelProps = {
+  plan: MonthlyPlan | null
+  transactions: Transaction[]
+  categories: Category[]
+  month: string
+}
+
+export function MonthlyPlanPanel({ plan, transactions, categories, month: monthStr }: MonthlyPlanPanelProps) {
+  const month = useMemo(() => new Date(`${monthStr}-01T12:00:00`), [monthStr])
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
 
-  const planQuery = useMonthlyPlan(month)
-  const transactionsQuery = useTransactions({ month })
-
-  const plan = planQuery.data ?? null
-  const transactions = transactionsQuery.data ?? []
   const actualIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0)
   const savings = calculateSavings(plan, actualIncome)
   const availableAfterSavings = Math.max(actualIncome - savings, 0)
-
-  const isLoading = planQuery.isPending || transactionsQuery.isPending
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -58,64 +52,16 @@ export function MonthlyPlanPanel() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <MonthNav value={month} onChange={setMonth} allowFuture />
-          {!isLoading && (
-            plan ? (
-              <EditMonthlyPlanDialog month={month} plan={plan} />
-            ) : (
-              <CreateMonthlyPlanDialog month={month} />
-            )
+          <MonthNav value={month} allowFuture />
+          {plan ? (
+            <EditMonthlyPlanDialog month={month} plan={plan} />
+          ) : (
+            <CreateMonthlyPlanDialog month={month} />
           )}
         </div>
       </section>
 
-      {planQuery.isError && (
-        <Alert variant="destructive">
-          <AlertTriangleIcon />
-          <AlertTitle>No se pudo cargar el plan mensual</AlertTitle>
-          <AlertDescription>
-            {planQuery.error instanceof Error
-              ? planQuery.error.message
-              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
-          </AlertDescription>
-          <AlertAction>
-            <Button size="sm" variant="outline" onClick={() => planQuery.refetch()}>
-              <RefreshCwIcon className="size-3.5" />
-              Reintentar
-            </Button>
-          </AlertAction>
-        </Alert>
-      )}
-
-      {transactionsQuery.isError && (
-        <Alert variant="destructive">
-          <AlertTriangleIcon />
-          <AlertTitle>No se pudieron cargar las transacciones</AlertTitle>
-          <AlertDescription>
-            {transactionsQuery.error instanceof Error
-              ? transactionsQuery.error.message
-              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
-          </AlertDescription>
-          <AlertAction>
-            <Button size="sm" variant="outline" onClick={() => transactionsQuery.refetch()}>
-              <RefreshCwIcon className="size-3.5" />
-              Reintentar
-            </Button>
-          </AlertAction>
-        </Alert>
-      )}
-
-      {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index} className="p-3.5">
-              <Skeleton className="h-3 w-28" />
-              <Skeleton className="mt-2 h-7 w-32" />
-              <Skeleton className="mt-2 h-3 w-36" />
-            </Card>
-          ))}
-        </div>
-      ) : plan ? (
+      {plan ? (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             <Card className="p-4">
@@ -158,6 +104,7 @@ export function MonthlyPlanPanel() {
                 </CardDescription>
               </div>
               <CreateTransactionDialog
+                categories={categories}
                 defaultType="income"
                 lockType
                 triggerLabel="Registrar ingreso"
@@ -178,7 +125,7 @@ export function MonthlyPlanPanel() {
             )}
           </Card>
         </>
-      ) : !planQuery.isError && !transactionsQuery.isError ? (
+      ) : (
         <Card>
           <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
             <div className="grid size-12 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -193,7 +140,7 @@ export function MonthlyPlanPanel() {
             <CreateMonthlyPlanDialog month={month} triggerLabel="Crear plan mensual" />
           </CardContent>
         </Card>
-      ) : null}
+      )}
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-3">

@@ -152,10 +152,8 @@ export function DataTable<TData extends RowData>({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {table
-                  .getAllColumns()
-                  .filter((col) => col.getCanHide())
-                  .map((col) => (
+                {table.getAllColumns().flatMap((col) =>
+                  col.getCanHide() ? [
                     <DropdownMenuCheckboxItem
                       key={col.id}
                       className="capitalize"
@@ -164,7 +162,8 @@ export function DataTable<TData extends RowData>({
                     >
                       {col.id}
                     </DropdownMenuCheckboxItem>
-                  ))}
+                  ] : []
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}

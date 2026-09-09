@@ -1,37 +1,15 @@
 "use client"
 
 import {
-  MoreHorizontalIcon,
-  PencilIcon,
-  RefreshCwIcon,
   TagsIcon,
-  Trash2Icon,
-  AlertTriangleIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CategoryIconBadge } from "@/components/category-icon-badge"
+import { RowActionsMenu } from "@/components/row-actions-menu"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Empty,
   EmptyContent,
@@ -40,14 +18,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { Skeleton } from "@/components/ui/skeleton"
-import { CategoryIconBadge } from "@/components/category-icon-badge"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog"
 import { EditCategoryDialog } from "@/features/categories/components/edit-category-dialog"
-import { useCategories } from "@/lib/finance/categories/hooks/queries"
-import { useDeleteCategory } from "@/lib/finance/categories/hooks/mutations"
-import { type Category } from "@/lib/finance/categories/types/category-types"
-import { SegmentedControl } from "@/components/ui/segmented-control"
+import { deleteCategory } from "@/features/categories/server/actions"
+import { type Category } from "@/features/categories/types/category-types"
 
 type TypeFilter = "all" | "expense" | "income"
 
@@ -57,19 +32,35 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "income", label: "Ingresos" },
 ]
 
-export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
+type CategoriesPanelProps = {
+  categories: Category[]
+  embedded?: boolean
+}
+
+export function CategoriesPanel({ categories, embedded = false }: CategoriesPanelProps) {
+  const [isPending, startTransition] = useTransition()
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
   const [editCategory, setEditCategory] = useState<Category | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const categoriesQuery = useCategories()
-  const deleteMutation = useDeleteCategory()
-
-  const categories = categoriesQuery.data ?? []
   const filtered =
     typeFilter === "all" ? categories : categories.filter((c) => c.type === typeFilter)
 
   const Wrapper = embedded ? "div" : "main"
+
+  function handleDelete(id: string) {
+    startTransition(async () => {
+      try {
+        await deleteCategory(id)
+        toast.success("Categoría eliminada")
+        setDeleteId(null)
+      } catch (error) {
+        toast.error("No se pudo eliminar la categoría", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Wrapper className={embedded ? "flex flex-col gap-6" : "flex flex-1 flex-col gap-6 p-4 md:p-6"}>
@@ -87,24 +78,6 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
         </section>
       )}
 
-      {categoriesQuery.isError && (
-        <Alert variant="destructive">
-          <AlertTriangleIcon />
-          <AlertTitle>No se pudo cargar la información</AlertTitle>
-          <AlertDescription>
-            {categoriesQuery.error instanceof Error
-              ? categoriesQuery.error.message
-              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
-          </AlertDescription>
-          <AlertAction>
-            <Button size="sm" variant="outline" onClick={() => categoriesQuery.refetch()}>
-              <RefreshCwIcon className="size-3.5" />
-              Reintentar
-            </Button>
-          </AlertAction>
-        </Alert>
-      )}
-
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
           <div>
@@ -116,20 +89,7 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
           <SegmentedControl value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS} />
         </CardHeader>
         <CardContent>
-          {categoriesQuery.isPending ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
-                  <Skeleton className="size-9 rounded-lg" />
-                  <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-3 w-12" />
-                  </div>
-                  <Skeleton className="size-8 rounded-md" />
-                </div>
-              ))}
-            </div>
-          ) : filtered.length === 0 && !categoriesQuery.isError ? (
+          {filtered.length === 0 ? (
             <Empty className="bg-muted/20">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -164,32 +124,11 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
                       {category.type === "expense" ? "Gasto" : "Ingreso"}
                     </p>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="shrink-0 text-muted-foreground"
-                      >
-                        <MoreHorizontalIcon />
-                        <span className="sr-only">Acciones</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => setEditCategory(category)}>
-                        <PencilIcon />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onSelect={() => setDeleteId(category.id)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2Icon />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <RowActionsMenu
+                    onEdit={() => setEditCategory(category)}
+                    onDelete={() => setDeleteId(category.id)}
+                    className="shrink-0 text-muted-foreground"
+                  />
                 </div>
               ))}
             </div>
@@ -200,15 +139,16 @@ export function CategoriesPanel({ embedded = false }: { embedded?: boolean }) {
       {editCategory && (
         <EditCategoryDialog
           category={editCategory}
-          open={!!editCategory}
+          open={Boolean(editCategory)}
           onOpenChange={(o) => !o && setEditCategory(null)}
         />
       )}
       <ConfirmDialog
-        open={!!deleteId}
+        open={Boolean(deleteId)}
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará esta categoría. Las transacciones asociadas quedarán sin categoría."
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
+        pending={isPending}
+        onConfirm={() => deleteId && handleDelete(deleteId)}
       />
     </Wrapper>
   )

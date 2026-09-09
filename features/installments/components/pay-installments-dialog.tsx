@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Loader2Icon, WalletCardsIcon } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -30,12 +31,12 @@ import { CategoryIconBadge } from "@/components/category-icon-badge"
 import {
   payInstallmentsSchema,
   type PayInstallmentsValues,
-} from "@/lib/finance/installments/schemas/installment-schemas"
-import { usePayMonthInstallments } from "@/lib/finance/installments/hooks/mutations"
+} from "@/features/installments/schemas/installment-schemas"
+import { payMonthInstallments } from "@/features/installments/server/actions"
 import {
   type InstallmentPayment,
   type InstallmentPurchase,
-} from "@/lib/finance/installments/types/installment-types"
+} from "@/features/installments/types/installment-types"
 import { formatCurrency } from "@/lib/format"
 
 type PendingItem = { payment: InstallmentPayment; purchase: InstallmentPurchase }
@@ -61,7 +62,22 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
   const monthLabel = format(month, "MMMM yyyy", { locale: es })
   const total = pending.reduce((s, { payment }) => s + payment.amount, 0)
 
-  const mutation = usePayMonthInstallments(pending)
+  const [isPending, startTransition] = useTransition()
+
+  function onSubmit(values: PayInstallmentsValues) {
+    startTransition(async () => {
+      try {
+        await payMonthInstallments(pending, values.occurredOn)
+        toast.success("Cuotas registradas")
+        form.reset({ occurredOn: getDefaultPaymentDate(month) })
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudieron registrar las cuotas", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   if (pending.length === 0) return null
 
@@ -114,9 +130,7 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
               id="pay-installments-form"
               className="mt-5"
               noValidate
-              onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-                onSuccess: () => { form.reset({ occurredOn: getDefaultPaymentDate(month) }); setOpen(false) },
-              }))}
+              onSubmit={form.handleSubmit(onSubmit)}
             >
               <FieldGroup>
                 <Controller
@@ -144,8 +158,8 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="pay-installments-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="pay-installments-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Confirmar pago
           </Button>
         </DialogFooter>

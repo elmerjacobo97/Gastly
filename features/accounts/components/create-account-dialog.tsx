@@ -1,10 +1,12 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+ import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
+import { ColorPicker } from "@/components/color-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,13 +22,12 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateAccount } from "@/lib/finance/accounts/hooks/mutations"
+import { createAccount } from "@/features/accounts/server/actions"
 import {
   ACCOUNT_COLORS,
   accountSchema,
   type AccountValues,
-} from "@/lib/finance/accounts/schemas/account-schemas"
-import { cn } from "@/lib/utils"
+} from "@/features/accounts/schemas/account-schemas"
 
 const EMPTY_DEFAULTS: AccountValues = {
   name: "",
@@ -37,6 +38,7 @@ const EMPTY_DEFAULTS: AccountValues = {
 
 export function CreateAccountDialog() {
   const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm<AccountValues>({
     resolver: zodResolver(accountSchema) as Resolver<AccountValues>,
@@ -45,7 +47,20 @@ export function CreateAccountDialog() {
 
   const selectedColor = useWatch({ control: form.control, name: "color" })
 
-  const mutation = useCreateAccount()
+  function onSubmit(values: AccountValues) {
+    startTransition(async () => {
+      try {
+        await createAccount(values)
+        toast.success("Cuenta creada")
+        form.reset(EMPTY_DEFAULTS)
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudo crear la cuenta", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -66,9 +81,7 @@ export function CreateAccountDialog() {
           id="create-account-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-            onSuccess: () => { form.reset(EMPTY_DEFAULTS); setOpen(false) },
-          }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
@@ -113,27 +126,11 @@ export function CreateAccountDialog() {
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Color</FieldLabel>
-                  <div className="flex flex-wrap gap-2 rounded-lg border p-3">
-                    {ACCOUNT_COLORS.map((c) => (
-                      <Button
-                        key={c}
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => field.onChange(c)}
-                        className={cn(
-                          "rounded-full hover:bg-transparent hover:scale-110",
-                          selectedColor === c && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                        )}
-                        style={{ backgroundColor: c }}
-                        aria-label={c}
-                      >
-                        {selectedColor === c && (
-                          <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
+                  <ColorPicker
+                    options={ACCOUNT_COLORS}
+                    value={selectedColor}
+                    onChange={field.onChange}
+                  />
                 </Field>
               )}
             />
@@ -160,8 +157,8 @@ export function CreateAccountDialog() {
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="create-account-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="create-account-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Crear cuenta
           </Button>
         </DialogFooter>

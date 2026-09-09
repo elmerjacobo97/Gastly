@@ -8,8 +8,8 @@ import { CreateGoalDialog } from "@/features/savings/components/create-goal-dial
 import { EditGoalDialog } from "@/features/savings/components/edit-goal-dialog"
 import { GoalsSection } from "@/features/savings/components/goals-section"
 import { SummaryCards } from "@/features/savings/components/summary-cards"
-import { deleteSavingsGoal } from "@/lib/finance/savings/server/actions"
-import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
+import { deleteSavingsGoal } from "@/features/savings/server/actions"
+import { type SavingsGoal } from "@/features/savings/types/savings-types"
 
 type SavingsPanelProps = {
   goals: SavingsGoal[]

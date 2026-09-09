@@ -9,21 +9,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { PasswordInput } from '@/components/password-input';
-import { resetPassword } from '@/lib/finance/auth/server/actions';
-import { type ResetPasswordValues, resetPasswordSchema } from '@/lib/finance/auth/schemas/auth-schemas';
+import { resetPassword } from '@/features/auth/server/actions';
+import { type ResetPasswordValues, resetPasswordSchema } from '@/features/auth/schemas/auth-schemas';
+
+async function submitResetPassword(values: ResetPasswordValues) {
+  const result = await resetPassword(values);
+  if (result?.error) {
+    toast.error('No se pudo restablecer la contraseña', { description: result.error });
+  }
+}
 
 export function ResetPasswordForm() {
   const form = useForm<ResetPasswordValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { password: '', confirmPassword: '' },
   });
-
-  async function onSubmit(values: ResetPasswordValues) {
-    const result = await resetPassword(values);
-    if (result?.error) {
-      toast.error('No se pudo restablecer la contraseña', { description: result.error });
-    }
-  }
 
   return (
     <Card className="w-full max-w-md border-foreground/10 shadow-xl shadow-foreground/5">
@@ -32,7 +32,7 @@ export function ResetPasswordForm() {
         <CardDescription>Ingresa y confirma tu nueva contraseña.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="flex flex-col gap-5" id="reset-password-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="flex flex-col gap-5" id="reset-password-form" noValidate onSubmit={form.handleSubmit(submitResetPassword)}>
           <FieldGroup>
             <Controller
               control={form.control}

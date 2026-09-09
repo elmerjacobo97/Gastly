@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DataTable } from '@/components/ui/data-table';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { useCustodyMovementsColumns } from '@/features/custody/components/columns';
-import { flattenCustodyMovements } from '@/lib/finance/custody/lib/custody-api';
-import { type CustodyMovementRow, type CustodyOrder } from '@/lib/finance/custody/types/custody-types';
+import { flattenCustodyMovements } from '@/features/custody/lib/custody-api';
+import { type CustodyMovementRow, type CustodyOrder } from '@/features/custody/types/custody-types';
 import { formatCurrency } from '@/lib/format';
 import { PackageIcon } from 'lucide-react';
 

@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
  import { format } from "date-fns"
 import { Loader2Icon, WalletIcon } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -29,9 +30,9 @@ import { NumberInput } from "@/components/ui/number-input"
 import {
   loanPaymentSchema,
   type LoanPaymentValues,
-} from "@/lib/finance/loans/schemas/loan-schemas"
-import { useRecordLoanPayment } from "@/lib/finance/loans/hooks/mutations"
-import { type Loan } from "@/lib/finance/loans/types/loan-types"
+} from "@/features/loans/schemas/loan-schemas"
+import { recordLoanPayment } from "@/features/loans/server/actions"
+import { type Loan } from "@/features/loans/types/loan-types"
 import { formatCurrency } from "@/lib/format"
 
 type RecordPaymentDialogProps = {
@@ -40,6 +41,7 @@ type RecordPaymentDialogProps = {
 
 export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
   const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm<LoanPaymentValues>({
     resolver: zodResolver(loanPaymentSchema) as Resolver<LoanPaymentValues>,
@@ -50,7 +52,20 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
     },
   })
 
-  const mutation = useRecordLoanPayment(loan.id)
+  function onSubmit(values: LoanPaymentValues) {
+    startTransition(async () => {
+      try {
+        await recordLoanPayment(loan.id, values)
+        toast.success("Abono registrado")
+        form.reset({ amount: loan.pendingAmount, occurredOn: format(new Date(), "yyyy-MM-dd"), notes: "" })
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudo registrar el abono", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -71,9 +86,7 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
           id="loan-payment-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-            onSuccess: () => { form.reset({ amount: loan.pendingAmount, occurredOn: format(new Date(), "yyyy-MM-dd"), notes: "" }); setOpen(false) },
-          }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <div className="grid grid-cols-2 gap-3">
@@ -140,8 +153,8 @@ export function RecordPaymentDialog({ loan }: RecordPaymentDialogProps) {
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="loan-payment-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="loan-payment-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Confirmar abono
           </Button>
         </DialogFooter>

@@ -10,21 +10,14 @@ import {
   HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
-  RefreshCwIcon,
   ScaleIcon,
   Trash2Icon,
-  AlertTriangleIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -49,13 +42,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
-import { Skeleton } from "@/components/ui/skeleton"
 import { EditLoanDialog } from "@/features/loans/components/edit-loan-dialog"
 import { LoanDialog } from "@/features/loans/components/loan-dialog"
 import { RecordPaymentDialog } from "@/features/loans/components/record-payment-dialog"
-import { useLoans } from "@/lib/finance/loans/hooks/queries"
-import { useDeleteLoan } from "@/lib/finance/loans/hooks/mutations"
-import { type Loan } from "@/lib/finance/loans/types/loan-types"
+import { deleteLoan } from "@/features/loans/server/actions"
+import { type Loan } from "@/features/loans/types/loan-types"
 import { formatCurrency } from "@/lib/format"
 
 function LoanPaymentHistoryDialog({
@@ -115,15 +106,158 @@ function LoanPaymentHistoryDialog({
   )
 }
 
-export function LoansPanel() {
+type LoansPanelProps = {
+  loans: Loan[]
+}
+
+function LoanCard({
+  loan,
+  settled,
+  onEdit,
+  onHistory,
+  onDelete,
+}: {
+  loan: Loan
+  settled: boolean
+  onEdit: (loan: Loan) => void
+  onHistory: (loan: Loan) => void
+  onDelete: (id: string) => void
+}) {
+  const pctPaid = loan.amount > 0 ? Math.min(100, Math.round((loan.paidAmount / loan.amount) * 100)) : 0
+
+  return (
+    <Card className={settled ? "opacity-60" : undefined}>
+      <CardHeader className="flex flex-row items-start justify-between pb-3">
+        <div className="min-w-0 flex-1">
+          <CardTitle className="truncate text-base">{loan.personName}</CardTitle>
+          <CardDescription>
+            {settled ? (loan.direction === "lent" ? "Presté · " : "Me prestaron · ") : loan.direction === "lent" ? "Prestado el " : "Recibido el "}
+            {format(new Date(`${loan.loanedOn}T12:00:00`), "d MMM yyyy", { locale: es })}
+          </CardDescription>
+          {!settled && <p className="mt-1 text-sm font-semibold tabular-nums">{formatCurrency(loan.amount)}</p>}
+          {!settled && loan.expectedOn && (
+            <Badge variant="secondary" className="mt-1.5 text-xs font-normal">
+              {loan.direction === "lent" ? "Devolución: " : "Pagar antes del "}
+              {format(new Date(`${loan.expectedOn}T12:00:00`), "d MMM yyyy", { locale: es })}
+            </Badge>
+          )}
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
+              <MoreHorizontalIcon />
+              <span className="sr-only">Acciones</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => onEdit(loan)}>
+              <PencilIcon />
+              Editar
+            </DropdownMenuItem>
+            {!settled && (
+              <DropdownMenuItem onSelect={() => onHistory(loan)}>
+                <HistoryIcon />
+                Historial de abonos
+              </DropdownMenuItem>
+            )}
+            {!settled && <DropdownMenuSeparator />}
+            <DropdownMenuItem onSelect={() => onDelete(loan.id)} className="text-destructive focus:text-destructive">
+              <Trash2Icon />
+              Eliminar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+      <CardContent>
+        {settled ? (
+          <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2Icon className="size-3.5" />
+            Saldado · {formatCurrency(loan.amount)}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <Progress value={pctPaid} className="[&>div]:bg-primary" />
+            <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+              <span>Abonado: {formatCurrency(loan.paidAmount)}</span>
+              <span className="font-medium text-destructive">Pendiente: {formatCurrency(loan.pendingAmount)}</span>
+            </div>
+            {loan.notes && <p className="truncate text-xs text-muted-foreground">{loan.notes}</p>}
+            <RecordPaymentDialog loan={loan} />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function LoanSections({
+  activeLent,
+  activeBorrowed,
+  settledLent,
+  settledBorrowed,
+  onEdit,
+  onHistory,
+  onDelete,
+}: {
+  activeLent: Loan[]
+  activeBorrowed: Loan[]
+  settledLent: Loan[]
+  settledBorrowed: Loan[]
+  onEdit: (loan: Loan) => void
+  onHistory: (loan: Loan) => void
+  onDelete: (id: string) => void
+}) {
+  const sections = [
+    { title: `Yo presté (${activeLent.length})`, loans: activeLent, settled: false },
+    { title: `Me prestaron (${activeBorrowed.length})`, loans: activeBorrowed, settled: false },
+    { title: `Saldados (${settledLent.length + settledBorrowed.length})`, loans: [...settledLent, ...settledBorrowed], settled: true },
+  ]
+
+  return (
+    <>
+      {sections.map(
+        (section) =>
+          section.loans.length > 0 && (
+            <section key={section.title} className="flex flex-col gap-3">
+              <h2 className="text-sm font-medium text-muted-foreground">{section.title}</h2>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {section.loans.map((loan) => (
+                  <LoanCard
+                    key={loan.id}
+                    loan={loan}
+                    settled={section.settled}
+                    onEdit={onEdit}
+                    onHistory={onHistory}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </div>
+            </section>
+          )
+      )}
+    </>
+  )
+}
+
+export function LoansPanel({ loans }: LoansPanelProps) {
+  const [isMutationPending, startTransition] = useTransition()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editLoan, setEditLoan] = useState<Loan | null>(null)
   const [historyLoan, setHistoryLoan] = useState<Loan | null>(null)
 
-  const loansQuery = useLoans()
-  const loans = loansQuery.data ?? []
-  const isPending = loansQuery.isPending
-  const deleteMutation = useDeleteLoan()
+  function handleDelete(id: string) {
+    startTransition(async () => {
+      try {
+        await deleteLoan(id)
+        toast.success("Préstamo eliminado")
+        setDeleteId(null)
+      } catch (error) {
+        toast.error("No se pudo eliminar el préstamo", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   const active = loans.filter((l) => !l.isSettled)
   const settled = loans.filter((l) => l.isSettled)
@@ -148,26 +282,8 @@ export function LoansPanel() {
         <LoanDialog />
       </section>
 
-      {loansQuery.isError && (
-        <Alert variant="destructive">
-          <AlertTriangleIcon />
-          <AlertTitle>No se pudo cargar la información</AlertTitle>
-          <AlertDescription>
-            {loansQuery.error instanceof Error
-              ? loansQuery.error.message
-              : "Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde."}
-          </AlertDescription>
-          <AlertAction>
-            <Button size="sm" variant="outline" onClick={() => loansQuery.refetch()}>
-              <RefreshCwIcon className="size-3.5" />
-              Reintentar
-            </Button>
-          </AlertAction>
-        </Alert>
-      )}
-
       {/* Summary cards */}
-      {!isPending && loans.length > 0 && (
+      {loans.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
             <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -208,31 +324,7 @@ export function LoansPanel() {
         </div>
       )}
 
-      {/* Loading skeletons */}
-      {isPending ? (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-start justify-between pb-3">
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <Skeleton className="h-5 w-32" />
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-5 w-24" />
-                </div>
-                <Skeleton className="size-8 rounded-md" />
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                <Skeleton className="h-2 w-full" />
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-3 w-28" />
-                  <Skeleton className="h-3 w-32" />
-                </div>
-                <Skeleton className="h-8 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </section>
-      ) : loans.length === 0 && !loansQuery.isError ? (
+      {loans.length === 0 ? (
         /* Empty state */
         <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-muted">
@@ -248,222 +340,15 @@ export function LoansPanel() {
         </div>
       ) : (
         <>
-          {/* Lent — active */}
-          {activeLent.length > 0 && (
-            <>
-              <h2 className="text-sm font-medium text-muted-foreground">
-                Yo presté ({activeLent.length})
-              </h2>
-              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {activeLent.map((loan) => {
-                  const pctPaid =
-                    loan.amount > 0
-                      ? Math.min(100, Math.round((loan.paidAmount / loan.amount) * 100))
-                      : 0
-
-                  return (
-                    <Card key={loan.id}>
-                      <CardHeader className="flex flex-row items-start justify-between pb-3">
-                        <div className="min-w-0 flex-1">
-                          <CardTitle className="truncate text-base">{loan.personName}</CardTitle>
-                          <CardDescription>
-                            Prestado el{" "}
-                            {format(new Date(`${loan.loanedOn}T12:00:00`), "d MMM yyyy", {
-                              locale: es,
-                            })}
-                          </CardDescription>
-                          <p className="mt-1 text-sm font-semibold tabular-nums">
-                            {formatCurrency(loan.amount)}
-                          </p>
-                          {loan.expectedOn && (
-                            <Badge variant="secondary" className="mt-1.5 text-xs font-normal">
-                              Devolución:{" "}
-                              {format(new Date(`${loan.expectedOn}T12:00:00`), "d MMM yyyy", {
-                                locale: es,
-                              })}
-                            </Badge>
-                          )}
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 shrink-0 text-muted-foreground"
-                            >
-                              <MoreHorizontalIcon />
-                              <span className="sr-only">Acciones</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => setEditLoan(loan)}>
-                              <PencilIcon />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setHistoryLoan(loan)}>
-                              <HistoryIcon />
-                              Historial de abonos
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onSelect={() => setDeleteId(loan.id)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2Icon />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </CardHeader>
-
-                      <CardContent className="flex flex-col gap-3">
-                        <Progress value={pctPaid} className="[&>div]:bg-primary" />
-                        <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-                          <span>Abonado: {formatCurrency(loan.paidAmount)}</span>
-                          <span className="text-destructive font-medium">
-                            Pendiente: {formatCurrency(loan.pendingAmount)}
-                          </span>
-                        </div>
-
-                        {loan.notes && (
-                          <p className="truncate text-xs text-muted-foreground">{loan.notes}</p>
-                        )}
-
-                        <RecordPaymentDialog loan={loan} />
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </section>
-            </>
-          )}
-
-          {/* Borrowed — active */}
-          {activeBorrowed.length > 0 && (
-            <>
-              <h2 className="text-sm font-medium text-muted-foreground">
-                Me prestaron ({activeBorrowed.length})
-              </h2>
-              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {activeBorrowed.map((loan) => {
-                  const pctPaid =
-                    loan.amount > 0
-                      ? Math.min(100, Math.round((loan.paidAmount / loan.amount) * 100))
-                      : 0
-                  return (
-                    <Card key={loan.id}>
-                      <CardHeader className="flex flex-row items-start justify-between pb-3">
-                        <div className="min-w-0 flex-1">
-                          <CardTitle className="truncate text-base">{loan.personName}</CardTitle>
-                          <CardDescription>
-                            Recibido el{" "}
-                            {format(new Date(`${loan.loanedOn}T12:00:00`), "d MMM yyyy", {
-                              locale: es,
-                            })}
-                          </CardDescription>
-                          <p className="mt-1 text-sm font-semibold tabular-nums">
-                            {formatCurrency(loan.amount)}
-                          </p>
-                          {loan.expectedOn && (
-                            <Badge variant="secondary" className="mt-1.5 text-xs font-normal">
-                              Pagar antes del{" "}
-                              {format(new Date(`${loan.expectedOn}T12:00:00`), "d MMM yyyy", {
-                                locale: es,
-                              })}
-                            </Badge>
-                          )}
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
-                              <MoreHorizontalIcon />
-                              <span className="sr-only">Acciones</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => setEditLoan(loan)}>
-                              <PencilIcon />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setHistoryLoan(loan)}>
-                              <HistoryIcon />
-                              Historial de abonos
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onSelect={() => setDeleteId(loan.id)} className="text-destructive focus:text-destructive">
-                              <Trash2Icon />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-3">
-                        <Progress value={pctPaid} className="[&>div]:bg-primary" />
-                        <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-                          <span>Pagado: {formatCurrency(loan.paidAmount)}</span>
-                          <span className="text-destructive font-medium">
-                            Pendiente: {formatCurrency(loan.pendingAmount)}
-                          </span>
-                        </div>
-                        {loan.notes && (
-                          <p className="truncate text-xs text-muted-foreground">{loan.notes}</p>
-                        )}
-                        <RecordPaymentDialog loan={loan} />
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </section>
-            </>
-          )}
-
-          {/* Settled */}
-          {(settledLent.length > 0 || settledBorrowed.length > 0) && (
-            <>
-              <h2 className="text-sm font-medium text-muted-foreground">
-                Saldados ({settledLent.length + settledBorrowed.length})
-              </h2>
-              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {[...settledLent, ...settledBorrowed].map((loan) => (
-                  <Card key={loan.id} className="opacity-60">
-                    <CardHeader className="flex flex-row items-start justify-between pb-3">
-                      <div className="min-w-0 flex-1">
-                        <CardTitle className="truncate text-base">{loan.personName}</CardTitle>
-                        <CardDescription>
-                          {loan.direction === "lent" ? "Presté · " : "Me prestaron · "}
-                          {format(new Date(`${loan.loanedOn}T12:00:00`), "d MMM yyyy", { locale: es })}
-                        </CardDescription>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
-                            <MoreHorizontalIcon />
-                            <span className="sr-only">Acciones</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => setEditLoan(loan)}>
-                            <PencilIcon />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => setDeleteId(loan.id)} className="text-destructive focus:text-destructive">
-                            <Trash2Icon />
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle2Icon className="size-3.5" />
-                        Saldado · {formatCurrency(loan.amount)}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </section>
-            </>
-          )}
+          <LoanSections
+            activeLent={activeLent}
+            activeBorrowed={activeBorrowed}
+            settledLent={settledLent}
+            settledBorrowed={settledBorrowed}
+            onEdit={setEditLoan}
+            onHistory={setHistoryLoan}
+            onDelete={setDeleteId}
+          />
         </>
       )}
 
@@ -476,10 +361,11 @@ export function LoansPanel() {
       )}
 
       <ConfirmDialog
-        open={!!deleteId}
+        open={Boolean(deleteId)}
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará este préstamo y todo su historial de abonos permanentemente."
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
+        pending={isMutationPending}
+        onConfirm={() => deleteId && handleDelete(deleteId)}
       />
 
       <LoanPaymentHistoryDialog

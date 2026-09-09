@@ -1,18 +1,10 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { type CustodyMovementRow } from '@/lib/finance/custody/types/custody-types';
+import { type CustodyMovementRow } from '@/features/custody/types/custody-types';
 import { Badge } from '@/components/ui/badge';
 import { type DataTableFeatures } from '@/components/ui/data-table';
+import { RowActionsMenu } from '@/components/row-actions-menu';
 import { formatCurrency, formatDate } from '@/lib/format';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react';
-import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { METHOD_LABELS } from './record-movement-dialog';
 
 type UseCustodyMovementsColumnsProps = {
@@ -97,28 +89,11 @@ export function useCustodyMovementsColumns({ onEditMovement, onDeleteMovement }:
         const m = row.original;
         return (
           <div className="flex justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" className="text-muted-foreground data-[state=open]:bg-muted">
-                  <MoreHorizontalIcon />
-                  <span className="sr-only">Acciones</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => onEditMovement(m)}>
-                  <PencilIcon />
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => onDeleteMovement(m.id)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2Icon />
-                  Eliminar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <RowActionsMenu
+              onEdit={() => onEditMovement(m)}
+              onDelete={() => onDeleteMovement(m.id)}
+              className="text-muted-foreground data-[state=open]:bg-muted"
+            />
           </div>
         );
       },

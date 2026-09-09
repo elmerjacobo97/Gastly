@@ -4,6 +4,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const FROM_EMAIL = 'Gastly <noreply@elmerjacobo.dev>';
+const dateFormatter = new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long' });
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -23,9 +24,7 @@ function formatCurrency(amount: number) {
 
 function formatDate(date: string) {
   const [year, month, day] = date.split('-').map(Number);
-  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long' }).format(
-    new Date(year, month - 1, day)
-  );
+  return dateFormatter.format(new Date(year, month - 1, day));
 }
 
 function buildEmail(displayName: string, payments: DuePayment[]) {

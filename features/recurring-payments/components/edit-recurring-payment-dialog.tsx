@@ -1,10 +1,11 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { format } from "date-fns"
 import { Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useTransition } from "react"
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -31,20 +32,21 @@ import {
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { useUpdateRecurringPayment } from "@/lib/finance/recurring-payments/hooks/mutations"
 import { AccountSelect } from "@/components/account-select"
 import { CategorySelect } from "@/components/category-select"
+import { updateRecurringPayment } from "@/features/recurring-payments/server/actions"
+import { type Account } from "@/features/accounts/types/account-types"
+import { type Category } from "@/features/categories/types/category-types"
 import {
   recurringPaymentSchema,
   type RecurringPaymentValues,
-} from "@/lib/finance/recurring-payments/schemas/recurring-payment-schemas"
-import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
-
-// suppress unused import warning — format is used implicitly via date-fns in DatePicker
-void format
+} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
 
 type EditRecurringPaymentDialogProps = {
   payment: RecurringPayment
+  accounts: Account[]
+  categories: Category[]
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -66,6 +68,8 @@ function buildValues(payment: RecurringPayment): RecurringPaymentValues {
 
 export function EditRecurringPaymentDialog({
   payment,
+  accounts,
+  categories,
   open,
   onOpenChange,
 }: EditRecurringPaymentDialogProps) {
@@ -80,8 +84,23 @@ export function EditRecurringPaymentDialog({
 
   const frequency = useWatch({ control: form.control, name: "frequency" })
   const type = useWatch({ control: form.control, name: "type" })
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
-  const mutation = useUpdateRecurringPayment(payment.id)
+  function onSubmit(values: RecurringPaymentValues) {
+    startTransition(async () => {
+      try {
+        await updateRecurringPayment(payment.id, values)
+        toast.success("Pago recurrente actualizado")
+        onOpenChange(false)
+        router.refresh()
+      } catch (error) {
+        toast.error("No se pudo actualizar el pago recurrente", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,7 +117,7 @@ export function EditRecurringPaymentDialog({
                 className="flex flex-col gap-5"
                 id="edit-recurring-payment-form"
                 noValidate
-                onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
+                onSubmit={form.handleSubmit(onSubmit)}
               >
                 <FieldGroup>
                   <Controller
@@ -156,7 +175,8 @@ export function EditRecurringPaymentDialog({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="erp-category">Categoría</FieldLabel>
-                        <CategorySelect
+                         <CategorySelect
+                           categories={categories}
                           id="erp-category"
                           value={field.value}
                           onChange={field.onChange}
@@ -255,7 +275,8 @@ export function EditRecurringPaymentDialog({
                         <FieldLabel htmlFor="erp-account">
                           Cuenta <span className="font-normal text-muted-foreground">(opcional)</span>
                         </FieldLabel>
-                        <AccountSelect
+                   <AccountSelect
+                     accounts={accounts}
                           id="erp-account"
                           value={field.value ?? ""}
                           onChange={field.onChange}
@@ -287,8 +308,8 @@ export function EditRecurringPaymentDialog({
             <DialogClose asChild>
               <Button variant="outline" type="button">Cancelar</Button>
             </DialogClose>
-            <Button disabled={mutation.isPending} form="edit-recurring-payment-form" type="submit">
-              {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+            <Button disabled={isPending} form="edit-recurring-payment-form" type="submit">
+              {isPending && <Loader2Icon className="size-4 animate-spin" />}
               Guardar cambios
             </Button>
           </DialogFooter>

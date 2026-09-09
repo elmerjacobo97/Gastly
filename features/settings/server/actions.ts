@@ -1,41 +1,72 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
+
 import { createClient } from "@/lib/supabase/server"
+import { type UserSettings } from "@/features/settings/server/queries"
 
-type ActionResult = { error: string } | { token: string } | undefined
-
-export async function generateTelegramLinkToken(): Promise<ActionResult> {
+async function requireUser() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: "Sesión expirada." }
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error("Debes iniciar sesión.")
 
-  // Expire previous unused tokens for this user
-  await supabase
-    .from("telegram_link_tokens")
-    .delete()
-    .eq("user_id", user.id)
-    .is("used_at", null)
-
-  const { data, error } = await supabase
-    .from("telegram_link_tokens")
-    .insert({ user_id: user.id })
-    .select("token")
-    .single()
-
-  if (error) return { error: error.message }
-
-  return { token: data.token }
+  return { supabase, userId: user.id }
 }
 
-export async function disconnectTelegram(): Promise<ActionResult> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: "Sesión expirada." }
+function revalidateSettings() {
+  revalidatePath("/dashboard/settings")
+  revalidatePath("/dashboard")
+}
 
-  const { error } = await supabase
-    .from("telegram_connections")
-    .delete()
-    .eq("user_id", user.id)
+export async function upsertUserSettings(values: Partial<UserSettings>): Promise<void> {
+  const { supabase, userId } = await requireUser()
 
-  if (error) return { error: error.message }
+  const { error } = await supabase.from("user_settings").upsert(
+    {
+      user_id: userId,
+      ...(values.savingsPercentage !== undefined && {
+        savings_percentage: values.savingsPercentage,
+      }),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  )
+  if (error) throw new Error(error.message)
+
+  revalidateSettings()
+}
+
+export async function generateTelegramLinkToken(): Promise<{ token: string } | { error: string }> {
+  try {
+    const { supabase, userId } = await requireUser()
+    const { data, error } = await supabase
+      .from("telegram_link_tokens")
+      .insert({ user_id: userId })
+      .select("token")
+      .single()
+
+    if (error) throw new Error(error.message)
+    return { token: String(data.token) }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo generar el código." }
+  }
+}
+
+export async function disconnectTelegram(): Promise<{ error: string } | null> {
+  try {
+    const { supabase, userId } = await requireUser()
+    const { error } = await supabase
+      .from("telegram_connections")
+      .delete()
+      .eq("user_id", userId)
+
+    if (error) throw new Error(error.message)
+    revalidateSettings()
+    return null
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo desconectar Telegram." }
+  }
 }

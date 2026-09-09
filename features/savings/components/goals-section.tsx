@@ -3,7 +3,7 @@ import { TargetIcon } from "lucide-react"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { GoalCard } from "@/features/savings/components/goal-card"
 import { CreateGoalDialog } from "@/features/savings/components/create-goal-dialog"
-import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
+import { type SavingsGoal } from "@/features/savings/types/savings-types"
 
 type GoalsSectionProps = {
   goals: SavingsGoal[]

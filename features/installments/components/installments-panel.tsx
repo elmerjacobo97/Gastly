@@ -2,12 +2,12 @@
 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AlertTriangleIcon, CalendarIcon, CheckCircle2Icon, CreditCardIcon, MoreHorizontalIcon, PencilIcon, RefreshCwIcon, Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
+import { CalendarIcon, CheckCircle2Icon, CreditCardIcon, MoreHorizontalIcon, Trash2Icon } from 'lucide-react';
+import { useMemo, useState, useTransition } from 'react';
+import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -18,35 +18,171 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
 import { MonthNav } from '@/components/month-nav';
 import { CategoryIconBadge } from '@/components/category-icon-badge';
-import { getMonthInstallments } from '@/lib/finance/installments/lib/installments-api';
-import { useInstallmentPurchases } from '@/lib/finance/installments/hooks/queries';
-import { useDeleteInstallmentPurchase } from '@/lib/finance/installments/hooks/mutations';
-import { type InstallmentPayment, type InstallmentPurchase } from '@/lib/finance/installments/types/installment-types';
+import { RowActionsMenu } from '@/components/row-actions-menu';
+import { getMonthInstallments } from '@/features/installments/lib/installments-api';
+import { deleteInstallmentPurchase } from '@/features/installments/server/actions';
+import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
 import { EditInstallmentDialog } from '@/features/installments/components/edit-installment-dialog';
 import { InstallmentDialog } from '@/features/installments/components/installment-dialog';
 import { PayInstallmentsDialog } from '@/features/installments/components/pay-installments-dialog';
 import { PaySingleInstallmentDialog } from '@/features/installments/components/pay-single-installment-dialog';
+import { type Account } from '@/features/accounts/types/account-types';
+import { type Category } from '@/features/categories/types/category-types';
 import { formatCurrency, formatDate } from '@/lib/format';
 
-export function InstallmentsPanel() {
-  const [month, setMonth] = useState(() => new Date());
+type InstallmentsPanelProps = {
+  purchases: InstallmentPurchase[];
+  accounts: Account[];
+  categories: Category[];
+  month: string;
+};
+
+function InstallmentPurchaseSections({
+  activePurchases,
+  completedPurchases,
+  onEdit,
+  onDelete,
+}: {
+  activePurchases: InstallmentPurchase[]
+  completedPurchases: InstallmentPurchase[]
+  onEdit: (purchase: InstallmentPurchase) => void
+  onDelete: (id: string) => void
+}) {
+  return (
+    <>
+      {activePurchases.length > 0 && (
+        <>
+          <h2 className="text-sm font-medium text-muted-foreground">Compras activas ({activePurchases.length})</h2>
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {activePurchases.map((purchase) => {
+              const pctPaid = purchase.totalInstallments > 0
+                ? Math.round((purchase.paidCount / purchase.totalInstallments) * 100)
+                : 0
+              const nextPayment = purchase.payments.find(
+                (payment) => !payment.transactionId && !payment.paidExternally
+              )
+
+              return (
+                <Card key={purchase.id}>
+                  <CardHeader className="flex flex-row items-start justify-between pb-3">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="truncate text-base">{purchase.description}</CardTitle>
+                      <CardDescription className="mt-0.5 flex items-center gap-1.5">
+                        {purchase.category && (
+                          <CategoryIconBadge
+                            icon={purchase.category.icon}
+                            color={purchase.category.color}
+                            className="size-4 rounded-sm"
+                          />
+                        )}
+                        {purchase.totalInstallments} cuotas
+                      </CardDescription>
+                      <p className="mt-1 text-sm font-semibold tabular-nums">
+                        {formatCurrency(purchase.installmentAmount)}/cuota
+                      </p>
+                    </div>
+                    <RowActionsMenu
+                      onEdit={() => onEdit(purchase)}
+                      onDelete={() => onDelete(purchase.id)}
+                      className="size-8 shrink-0 text-muted-foreground"
+                    />
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-3">
+                    <Progress value={pctPaid} className="[&>div]:bg-primary" />
+                    <div className="flex items-center justify-between text-xs tabular-nums">
+                      <span className="text-muted-foreground">Pagado: <span className="text-foreground">{formatCurrency(purchase.totalPaid)}</span></span>
+                      <span className="font-medium">Total: {formatCurrency(purchase.totalPaid + purchase.totalPending)}</span>
+                      <span className="text-muted-foreground">Pendiente: <span className="text-foreground">{formatCurrency(purchase.totalPending)}</span></span>
+                    </div>
+                    {nextPayment && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        Próxima cuota: <span className="font-medium text-foreground">{formatDate(nextPayment.dueOn)}</span>
+                      </p>
+                    )}
+                    {purchase.account && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: purchase.account.color }} />
+                        <span className="truncate text-xs text-muted-foreground">{purchase.account.name}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </section>
+        </>
+      )}
+      {completedPurchases.length > 0 && (
+        <>
+          <h2 className="text-sm font-medium text-muted-foreground">Compras saldadas ({completedPurchases.length})</h2>
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {completedPurchases.map((purchase) => (
+              <Card key={purchase.id} className="opacity-60">
+                <CardHeader className="flex flex-row items-start justify-between pb-3">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="truncate text-base">{purchase.description}</CardTitle>
+                    <CardDescription>{purchase.totalInstallments} cuotas · {formatCurrency(purchase.totalPaid + purchase.totalPending)}</CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
+                        <MoreHorizontalIcon />
+                        <span className="sr-only">Acciones</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => onDelete(purchase.id)} className="text-destructive focus:text-destructive">
+                        <Trash2Icon />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2Icon className="size-3.5" />
+                    Saldado
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </section>
+        </>
+      )}
+    </>
+  )
+}
+
+export function InstallmentsPanel({ purchases, accounts, categories, month: monthStr }: InstallmentsPanelProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editPurchase, setEditPurchase] = useState<InstallmentPurchase | null>(null);
   const [payingItem, setPayingItem] = useState<{ payment: InstallmentPayment; purchase: InstallmentPurchase } | null>(
     null
   );
-  const purchasesQuery = useInstallmentPurchases();
-  const deleteMutation = useDeleteInstallmentPurchase();
+  const [isPending, startTransition] = useTransition();
 
-  const purchases = purchasesQuery.data ?? [];
+  const month = useMemo(() => new Date(`${monthStr}-01T12:00:00`), [monthStr]);
+
+  function handleDelete(id: string) {
+    startTransition(async () => {
+      try {
+        await deleteInstallmentPurchase(id)
+        toast.success('Compra eliminada')
+        setDeleteId(null)
+      } catch (error) {
+        toast.error('No se pudo eliminar la compra', {
+          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+        })
+      }
+    })
+  }
+
   const monthPayments = getMonthInstallments(purchases, month);
   const pendingThisMonth = monthPayments.filter(({ payment }) => !payment.transactionId && !payment.paidExternally);
   const paidThisMonth = monthPayments.filter(({ payment }) => payment.transactionId || payment.paidExternally);
   const totalThisMonth = monthPayments.reduce((s, { payment }) => s + payment.amount, 0);
-  const totalPendingThisMonth = pendingThisMonth.reduce((s, { payment }) => s + payment.amount, 0);
   const totalPaidThisMonth = paidThisMonth.reduce((s, { payment }) => s + payment.amount, 0);
 
   const activePurchases = purchases.filter((p) => p.pendingCount > 0);
@@ -65,76 +201,48 @@ export function InstallmentsPanel() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <MonthNav value={month} onChange={setMonth} allowFuture />
-          <InstallmentDialog />
+          <MonthNav value={month} allowFuture />
+          <InstallmentDialog accounts={accounts} categories={categories} />
         </div>
       </section>
 
-      {purchasesQuery.isError && (
-        <Alert variant="destructive">
-          <AlertTriangleIcon />
-          <AlertTitle>No se pudo cargar la información</AlertTitle>
-          <AlertDescription>
-            {purchasesQuery.error instanceof Error
-              ? purchasesQuery.error.message
-              : 'Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde.'}
-          </AlertDescription>
-          <AlertAction>
-            <Button size="sm" variant="outline" onClick={() => purchasesQuery.refetch()}>
-              <RefreshCwIcon className="size-3.5" />
-              Reintentar
-            </Button>
-          </AlertAction>
-        </Alert>
-      )}
-
-      {!purchasesQuery.isPending && purchases.length > 0 && (
+      {purchases.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-            <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${totalPendingThisMonth === 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted/50 text-muted-foreground'}`}>
-              <CalendarIcon className="size-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-muted-foreground">Programado este mes</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {totalPendingThisMonth === 0
-                  ? `${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} · todo pagado`
-                  : `${monthPayments.length} cuota${monthPayments.length !== 1 ? 's' : ''} del mes`}
-              </p>
-            </div>
-            <p className={`text-lg font-semibold tabular-nums ${totalPendingThisMonth === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>
-              {formatCurrency(totalThisMonth)}
-            </p>
-          </div>
-          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2Icon className="size-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-muted-foreground">Pagado este mes</p>
-              <p className="truncate text-xs text-muted-foreground">{paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? 's' : ''} pagada{paidThisMonth.length !== 1 ? 's' : ''}</p>
-            </div>
-            <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(totalPaidThisMonth)}
-            </p>
-          </div>
-          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
               <CreditCardIcon className="size-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-muted-foreground">Restante total</p>
-              <p className="truncate text-xs text-muted-foreground">cuotas futuras pendientes</p>
+              <p className="truncate text-xs font-medium text-muted-foreground">Pendiente total</p>
+              <p className="truncate text-xs text-muted-foreground">{activePurchases.length} compra{activePurchases.length !== 1 ? 's' : ''} activa{activePurchases.length !== 1 ? 's' : ''}</p>
             </div>
-            <p className="text-lg font-semibold tabular-nums text-destructive">
-              {formatCurrency(totalPending)}
-            </p>
+            <p className="text-lg font-semibold tabular-nums">{formatCurrency(totalPending)}</p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <CalendarIcon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Cuotas de este mes</p>
+              <p className="truncate text-xs text-muted-foreground">{monthPayments.length} cuota{monthPayments.length !== 1 ? 's' : ''}</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums">{formatCurrency(totalThisMonth)}</p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+              <CheckCircle2Icon className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-muted-foreground">Pagado este mes</p>
+              <p className="truncate text-xs text-muted-foreground">{paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? 's' : ''}</p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{formatCurrency(totalPaidThisMonth)}</p>
           </div>
         </div>
       )}
 
       {/* This month's payments */}
-      {!purchasesQuery.isPending && monthPayments.length > 0 && (
+      {monthPayments.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
             <div>
@@ -196,201 +304,21 @@ export function InstallmentsPanel() {
       )}
 
       {/* No payments this month */}
-      {!purchasesQuery.isPending && !purchasesQuery.isError && purchases.length > 0 && monthPayments.length === 0 && (
+      {purchases.length > 0 && monthPayments.length === 0 && (
         <div className="rounded-lg border border-muted px-4 py-3 text-sm text-muted-foreground">
           Sin cuotas programadas para <span className="capitalize">{monthLabel}</span>.
         </div>
       )}
 
-      {/* Active purchases grid */}
-      {purchasesQuery.isPending ? (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-start justify-between pb-3">
-                <div className="flex min-w-0 items-start gap-2">
-                  <Skeleton className="mt-0.5 size-7 shrink-0 rounded-md" />
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <Skeleton className="h-5 w-36" />
-                    <Skeleton className="h-4 w-48" />
-                  </div>
-                </div>
-                <Skeleton className="size-8 rounded-md" />
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                <Skeleton className="h-2 w-full" />
-                <div className="flex items-center justify-between gap-2">
-                  <Skeleton className="h-3 w-28" />
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-3 w-28" />
-                </div>
-                <Skeleton className="h-3 w-40" />
-              </CardContent>
-            </Card>
-          ))}
-        </section>
-      ) : activePurchases.length > 0 ? (
-        <>
-          <h2 className="text-sm font-medium text-muted-foreground">Compras activas ({activePurchases.length})</h2>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {activePurchases.map((purchase) => {
-              const pctPaid =
-                purchase.totalInstallments > 0
-                  ? Math.round((purchase.paidCount / purchase.totalInstallments) * 100)
-                  : 0;
-
-              return (
-                <Card key={purchase.id}>
-                  <CardHeader className="flex flex-row items-start justify-between pb-3">
-                    <div className="flex items-start gap-2 min-w-0">
-                      {purchase.category && (
-                        <CategoryIconBadge
-                          icon={purchase.category.icon}
-                          color={purchase.category.color}
-                          className="mt-0.5 size-7 shrink-0 rounded-md"
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <CardTitle className="truncate text-base">{purchase.description}</CardTitle>
-                        <CardDescription>
-                          {purchase.paidCount}/{purchase.totalInstallments} cuotas ·{' '}
-                          {formatCurrency(purchase.installmentAmount)}/mes
-                          {purchase.interestAmount > 0 && (
-                            <>
-                              {' '}
-                              ·{' '}
-                              <span className="text-amber-600 dark:text-amber-400">
-                                {formatCurrency(purchase.interestAmount)} en intereses
-                              </span>
-                            </>
-                          )}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
-                          <MoreHorizontalIcon />
-                          <span className="sr-only">Acciones</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditPurchase(purchase)}>
-                          <PencilIcon />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => setDeleteId(purchase.id)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2Icon />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-3">
-                    <Progress value={pctPaid} className="[&>div]:bg-primary" />
-                    <div className="flex items-center justify-between text-xs tabular-nums">
-                      <span className="text-muted-foreground">Pagado: <span className="text-foreground">{formatCurrency(purchase.totalPaid)}</span></span>
-                      <span className="font-medium">Total: {formatCurrency(purchase.totalPaid + purchase.totalPending)}</span>
-                      <span className="text-muted-foreground">Pendiente: <span className="text-foreground">{formatCurrency(purchase.totalPending)}</span></span>
-                    </div>
-                    {purchase.payments.find((p) => !p.transactionId && !p.paidExternally) && (
-                      <p className="truncate text-xs text-muted-foreground">
-                        Próxima cuota:{' '}
-                        <span className="font-medium text-foreground">
-                          {formatDate(purchase.payments.find((p) => !p.transactionId && !p.paidExternally)!.dueOn)}
-                        </span>
-                      </p>
-                    )}
-                    {purchase.account && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: purchase.account.color }} />
-                        <span className="truncate text-xs text-muted-foreground">{purchase.account.name}</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </section>
-        </>
-      ) : null}
-
-      {/* Completed purchases */}
-      {!purchasesQuery.isPending && completedPurchases.length > 0 && (
-        <>
-          <h2 className="text-sm font-medium text-muted-foreground">Compras saldadas ({completedPurchases.length})</h2>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {completedPurchases.map((purchase) => (
-              <Card key={purchase.id} className="opacity-60">
-                <CardHeader className="flex flex-row items-start justify-between pb-3">
-                  <div className="flex items-start gap-2 min-w-0">
-                    {purchase.category && (
-                      <CategoryIconBadge
-                        icon={purchase.category.icon}
-                        color={purchase.category.color}
-                        className="mt-0.5 size-7 shrink-0 rounded-md"
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <CardTitle className="truncate text-base">{purchase.description}</CardTitle>
-                      <CardDescription>
-                        {purchase.totalInstallments} cuotas · {formatCurrency(purchase.installmentAmount)}/mes
-                        {purchase.interestAmount > 0 && (
-                          <>
-                            {' '}
-                            ·{' '}
-                            <span className="text-amber-600 dark:text-amber-400">
-                              {formatCurrency(purchase.interestAmount)} en intereses
-                            </span>
-                          </>
-                        )}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
-                        <MoreHorizontalIcon />
-                        <span className="sr-only">Acciones</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onSelect={() => setDeleteId(purchase.id)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2Icon />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                      <CheckCircle2Icon className="size-3.5" />
-                      Saldado
-                    </div>
-                    <span className="tabular-nums text-muted-foreground">Total: {formatCurrency(purchase.totalPaid)}</span>
-                  </div>
-                  {purchase.account && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: purchase.account.color }} />
-                      <span className="truncate text-xs text-muted-foreground">{purchase.account.name}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </section>
-        </>
-      )}
+      <InstallmentPurchaseSections
+        activePurchases={activePurchases}
+        completedPurchases={completedPurchases}
+        onEdit={setEditPurchase}
+        onDelete={setDeleteId}
+      />
 
       {/* Empty state */}
-      {!purchasesQuery.isPending && !purchasesQuery.isError && purchases.length === 0 && (
+      {purchases.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <Empty className="border bg-muted/20">
@@ -400,11 +328,11 @@ export function InstallmentsPanel() {
                 </EmptyMedia>
                 <EmptyTitle>Sin compras en cuotas</EmptyTitle>
                 <EmptyDescription>
-                  Registra una compra financiada y el sistema calculará cada cuota automáticamente.
+                  Registra una compra financiada para rastrear sus cuotas mensuales.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <InstallmentDialog />
+                <InstallmentDialog accounts={accounts} categories={categories} triggerLabel="Registrar primera compra" />
               </EmptyContent>
             </Empty>
           </CardContent>
@@ -414,7 +342,9 @@ export function InstallmentsPanel() {
       {editPurchase && (
         <EditInstallmentDialog
           purchase={editPurchase}
-          open={!!editPurchase}
+          accounts={accounts}
+          categories={categories}
+          open={Boolean(editPurchase)}
           onOpenChange={(o) => !o && setEditPurchase(null)}
         />
       )}
@@ -423,16 +353,17 @@ export function InstallmentsPanel() {
         <PaySingleInstallmentDialog
           payment={payingItem.payment}
           purchase={payingItem.purchase}
-          open={!!payingItem}
+          open={Boolean(payingItem)}
           onOpenChange={(o) => !o && setPayingItem(null)}
         />
       )}
 
       <ConfirmDialog
-        open={!!deleteId}
+        open={Boolean(deleteId)}
         onOpenChange={(o) => !o && setDeleteId(null)}
         description="Se eliminará esta compra y todas sus cuotas permanentemente."
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
+        pending={isPending}
+        onConfirm={() => deleteId && handleDelete(deleteId)}
       />
     </main>
   );

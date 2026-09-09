@@ -3,8 +3,8 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { computeCustodySummary } from '@/lib/finance/custody/lib/custody-api';
-import { getCustodyOrders } from '@/lib/finance/custody/server/queries';
+import { computeCustodySummary } from '@/features/custody/lib/custody-api';
+import { getCustodyOrders } from '@/features/custody/server/queries';
 import { formatCurrency } from '@/lib/format';
 
 export async function CustodySummaryCard() {

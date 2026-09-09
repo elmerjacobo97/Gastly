@@ -12,20 +12,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useAccounts } from "@/lib/finance/accounts/hooks/queries"
+import { type Account } from "@/features/accounts/types/account-types"
 import { QuickCreateAccountDialog } from "@/components/quick-create-account-dialog"
 
 type AccountSelectProps = {
+  accounts: Account[]
   value: string
   onChange: (id: string) => void
   "aria-invalid"?: boolean
   id?: string
 }
 
-export function AccountSelect({ value, onChange, "aria-invalid": ariaInvalid, id }: AccountSelectProps) {
+export function AccountSelect({
+  accounts,
+  value,
+  onChange,
+  "aria-invalid": ariaInvalid,
+  id,
+}: AccountSelectProps) {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
-
-  const { data: accounts = [] } = useAccounts()
 
   return (
     <>
@@ -51,7 +56,13 @@ export function AccountSelect({ value, onChange, "aria-invalid": ariaInvalid, id
           </SelectContent>
         </Select>
         {value && (
-          <Button type="button" variant="outline" size="icon" onClick={() => onChange("")}>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Quitar cuenta"
+            onClick={() => onChange("")}
+          >
             <XIcon className="size-4" />
           </Button>
         )}
@@ -59,6 +70,7 @@ export function AccountSelect({ value, onChange, "aria-invalid": ariaInvalid, id
           type="button"
           variant="outline"
           size="icon"
+          aria-label="Crear cuenta"
           onClick={() => setQuickCreateOpen(true)}
         >
           <PlusIcon className="size-4" />

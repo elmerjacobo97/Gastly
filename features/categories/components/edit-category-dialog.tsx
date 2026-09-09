@@ -1,10 +1,13 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckIcon, Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
+import { Loader2Icon } from "lucide-react"
+import { useEffect, useTransition } from "react"
+import { toast } from "sonner"
 import { Controller, useForm, useWatch } from "react-hook-form"
 
+import { CategoryIconPicker } from "@/components/category-icon-picker"
+import { ColorPicker } from "@/components/color-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,23 +30,12 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import {
-  CategoryIcon,
-  categoryIconOptions,
-} from "@/components/category-icon-badge"
-import { useUpdateCategory } from "@/lib/finance/categories/hooks/mutations"
+import { updateCategory } from "@/features/categories/server/actions"
 import {
   type CategoryValues,
   categorySchema,
-} from "@/lib/finance/categories/schemas/category-schemas"
-import { type Category } from "@/lib/finance/categories/types/category-types"
-import { cn } from "@/lib/utils"
+} from "@/features/categories/schemas/category-schemas"
+import { type Category } from "@/features/categories/types/category-types"
 
 const colorOptions = [
   { value: "red", hex: "#ef4444" },
@@ -97,7 +89,21 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
   const selectedColor = useWatch({ control: form.control, name: "color" })
   const selectedIcon = useWatch({ control: form.control, name: "icon" })
 
-  const mutation = useUpdateCategory(category.id)
+  const [isPending, startTransition] = useTransition()
+
+  function onSubmit(values: CategoryValues) {
+    startTransition(async () => {
+      try {
+        await updateCategory(category.id, values)
+        toast.success("Categoría actualizada")
+        onOpenChange(false)
+      } catch (error) {
+        toast.error("No se pudo actualizar la categoría", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -114,7 +120,7 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
               className="flex flex-col gap-5"
               id="edit-category-form"
               noValidate
-              onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
+              onSubmit={form.handleSubmit(onSubmit)}
             >
               <FieldGroup>
                 <Controller
@@ -159,28 +165,11 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Color</FieldLabel>
-                      <div className="flex flex-wrap gap-2 rounded-lg border p-3">
-                        {colorOptions.map((option) => (
-                          <Button
-                            key={option.value}
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => field.onChange(option.value)}
-                            className={cn(
-                              "rounded-full hover:bg-transparent hover:scale-110",
-                              selectedColor === option.value &&
-                                "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                            )}
-                            style={{ backgroundColor: option.hex }}
-                            title={option.value}
-                          >
-                            {selectedColor === option.value && (
-                              <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
-                            )}
-                          </Button>
-                        ))}
-                      </div>
+                     <ColorPicker
+                       options={colorOptions}
+                       value={selectedColor}
+                       onChange={field.onChange}
+                     />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -191,31 +180,10 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Icono</FieldLabel>
-                      <TooltipProvider>
-                        <div className="grid grid-cols-5 gap-2 rounded-lg border p-3 sm:grid-cols-6">
-                          {categoryIconOptions.map((option) => (
-                            <Tooltip key={option.value}>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-lg"
-                                  onClick={() => field.onChange(option.value)}
-                                  className={cn(
-                                    "border text-muted-foreground hover:bg-muted hover:text-foreground",
-                                    selectedIcon === option.value &&
-                                      "border-primary bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
-                                  )}
-                                >
-                                  <CategoryIcon name={option.value} className="size-4" />
-                                  <span className="sr-only">{option.label}</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>{option.label}</TooltipContent>
-                            </Tooltip>
-                          ))}
-                        </div>
-                      </TooltipProvider>
+                     <CategoryIconPicker
+                       value={selectedIcon}
+                       onChange={field.onChange}
+                     />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -228,8 +196,8 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="edit-category-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="edit-category-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar cambios
           </Button>
         </DialogFooter>

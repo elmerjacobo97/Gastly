@@ -3,9 +3,39 @@ allowBuilds:
   msw: true
   sharp: true
   unrs-resolver: true
+minimumReleaseAge: 10080
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
 minimumReleaseAgeExclude:
-  - '@types/node@26.5.0'
-  - lucide-react@1.42.0
+   - '@supabase/auth-js@2.115.0'
+   - '@supabase/functions-js@2.115.0'
+   - '@supabase/postgrest-js@2.115.0'
+   - '@supabase/realtime-js@2.115.0'
+   - '@supabase/ssr@0.12.6'
+   - '@supabase/storage-js@2.115.0'
+   - '@supabase/supabase-js@2.115.0'
+   - '@types/node@26.5.0'
+   - '@types/react-dom@19.2.7'
+   - 'baseline-browser-mapping@2.11.21'
+   - 'browserslist@4.28.9'
+   - 'cn@0.2.6'
+   - 'electron-to-chromium@1.5.422'
+   - 'fast-uri@3.1.7'
+   - 'hono@4.13.7'
+   - 'jose@6.2.12'
+   - lucide-react@1.42.0
+   - 'oxlint-plugin-react-doctor@0.9.13'
+   - 'playwright-core@1.63.0'
+   - 'postcss-selector-parser@7.1.6'
+   - 'postcss@8.5.28'
+   - 'react-doctor@0.9.13'
+   - 'shadcn@4.21.0'
+   - 'socks@2.8.10'
+   - 'systeminformation@5.33.8'
+   - 'undici@7.29.1'
+trustPolicyExclude:
+   - 'eslint-import-resolver-typescript@3.10.1'
+   - 'semver@6.3.1'

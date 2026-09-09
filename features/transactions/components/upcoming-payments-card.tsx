@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { CategoryIconBadge } from "@/components/category-icon-badge"
-import { type RecurringPayment } from "@/lib/finance/recurring-payments/types/recurring-payment-types"
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 type UpcomingPayment = {
@@ -20,12 +20,11 @@ type UpcomingPayment = {
 }
 
 type UpcomingPaymentsCardProps = {
-  isLoading: boolean
   payments: UpcomingPayment[]
 }
 
-export function UpcomingPaymentsCard({ isLoading, payments }: UpcomingPaymentsCardProps) {
-  if (isLoading || payments.length === 0) return null
+export function UpcomingPaymentsCard({ payments }: UpcomingPaymentsCardProps) {
+  if (payments.length === 0) return null
 
   return (
     <Card>

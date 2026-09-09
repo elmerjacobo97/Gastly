@@ -3,8 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
  import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -32,13 +34,15 @@ import {
 } from "@/components/ui/native-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateRecurringPayment } from "@/lib/finance/recurring-payments/hooks/mutations"
 import { AccountSelect } from "@/components/account-select"
 import { CategorySelect } from "@/components/category-select"
+import { createRecurringPayment } from "@/features/recurring-payments/server/actions"
+import { type Account } from "@/features/accounts/types/account-types"
+import { type Category } from "@/features/categories/types/category-types"
 import {
   recurringPaymentSchema,
   type RecurringPaymentValues,
-} from "@/lib/finance/recurring-payments/schemas/recurring-payment-schemas"
+} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
 
 function buildDefaultValues(): RecurringPaymentValues {
   return {
@@ -55,8 +59,18 @@ function buildDefaultValues(): RecurringPaymentValues {
   }
 }
 
-export function CreateRecurringPaymentDialog() {
+type CreateRecurringPaymentDialogProps = {
+  accounts: Account[]
+  categories: Category[]
+}
+
+export function CreateRecurringPaymentDialog({
+  accounts,
+  categories,
+}: CreateRecurringPaymentDialogProps) {
   const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const form = useForm<RecurringPaymentValues>({
     resolver: zodResolver(recurringPaymentSchema) as Resolver<RecurringPaymentValues>,
@@ -66,7 +80,21 @@ export function CreateRecurringPaymentDialog() {
   const frequency = useWatch({ control: form.control, name: "frequency" })
   const type = useWatch({ control: form.control, name: "type" })
 
-  const mutation = useCreateRecurringPayment()
+  function onSubmit(values: RecurringPaymentValues) {
+    startTransition(async () => {
+      try {
+        await createRecurringPayment(values)
+        toast.success("Pago recurrente creado")
+        form.reset(buildDefaultValues())
+        setOpen(false)
+        router.refresh()
+      } catch (error) {
+        toast.error("No se pudo crear el pago recurrente", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -89,9 +117,7 @@ export function CreateRecurringPaymentDialog() {
                 className="flex flex-col gap-5"
                 id="create-recurring-payment-form"
                 noValidate
-                onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-                  onSuccess: () => { form.reset(buildDefaultValues()); setOpen(false) },
-                }))}
+                onSubmit={form.handleSubmit(onSubmit)}
               >
                 <FieldGroup>
                   <Controller
@@ -149,7 +175,8 @@ export function CreateRecurringPaymentDialog() {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="crp-category">Categoría</FieldLabel>
-                        <CategorySelect
+                           <CategorySelect
+                             categories={categories}
                           id="crp-category"
                           value={field.value}
                           onChange={field.onChange}
@@ -248,7 +275,8 @@ export function CreateRecurringPaymentDialog() {
                         <FieldLabel htmlFor="crp-account">
                           Cuenta <span className="font-normal text-muted-foreground">(opcional)</span>
                         </FieldLabel>
-                        <AccountSelect
+                         <AccountSelect
+                           accounts={accounts}
                           id="crp-account"
                           value={field.value ?? ""}
                           onChange={field.onChange}
@@ -280,8 +308,8 @@ export function CreateRecurringPaymentDialog() {
             <DialogClose asChild>
               <Button variant="outline" type="button">Cancelar</Button>
             </DialogClose>
-            <Button disabled={mutation.isPending} form="create-recurring-payment-form" type="submit">
-              {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+            <Button disabled={isPending} form="create-recurring-payment-form" type="submit">
+              {isPending && <Loader2Icon className="size-4 animate-spin" />}
               Guardar pago recurrente
             </Button>
           </DialogFooter>

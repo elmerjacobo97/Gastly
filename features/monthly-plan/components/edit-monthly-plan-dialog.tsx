@@ -3,10 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
  import { startOfMonth } from "date-fns"
 import { Loader2Icon, PencilIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
+import { MonthField } from "@/components/month-field"
 import {
   Dialog,
   DialogClose,
@@ -29,26 +31,12 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
-import { useUpsertMonthlyPlan } from "@/lib/finance/monthly-plan/hooks/mutations"
+import { upsertMonthlyPlan } from "@/features/monthly-plan/server/actions"
 import {
   monthlyPlanSchema,
   type MonthlyPlanValues,
-} from "@/lib/finance/monthly-plan/schemas/monthly-plan-schemas"
-import { type MonthlyPlan } from "@/lib/finance/monthly-plan/types/monthly-plan-types"
-
-const MONTHS = [
-  { value: 0, label: "Enero" }, { value: 1, label: "Febrero" },
-  { value: 2, label: "Marzo" }, { value: 3, label: "Abril" },
-  { value: 4, label: "Mayo" }, { value: 5, label: "Junio" },
-  { value: 6, label: "Julio" }, { value: 7, label: "Agosto" },
-  { value: 8, label: "Septiembre" }, { value: 9, label: "Octubre" },
-  { value: 10, label: "Noviembre" }, { value: 11, label: "Diciembre" },
-]
-
-function getYearOptions() {
-  const year = new Date().getFullYear()
-  return [year - 1, year, year + 1]
-}
+} from "@/features/monthly-plan/schemas/monthly-plan-schemas"
+import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types"
 
 function buildDefaultValues(plan: MonthlyPlan): MonthlyPlanValues {
   return {
@@ -89,7 +77,21 @@ export function EditMonthlyPlanDialog({
     if (open) form.reset(buildDefaultValues(plan))
   }, [open, plan.month]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useUpsertMonthlyPlan()
+  const [isPending, startTransition] = useTransition()
+
+  function onSubmit(values: MonthlyPlanValues) {
+    startTransition(async () => {
+      try {
+        await upsertMonthlyPlan(values)
+        toast.success("Plan actualizado")
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudo actualizar el plan", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -114,46 +116,20 @@ export function EditMonthlyPlanDialog({
           className="flex flex-col gap-5"
           id="edit-monthly-plan-form"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => setOpen(false) }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
               control={form.control}
               name="month"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Mes</FieldLabel>
-                  <div className="flex gap-2">
-                    <NativeSelect
-                      value={field.value.getMonth()}
-                      onChange={(event) => {
-                        const date = new Date(field.value)
-                        date.setMonth(Number(event.target.value))
-                        field.onChange(startOfMonth(date))
-                      }}
-                      className="flex-1"
-                    >
-                      {MONTHS.map((m) => (
-                        <NativeSelectOption key={m.value} value={m.value}>{m.label}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    <NativeSelect
-                      value={field.value.getFullYear()}
-                      onChange={(event) => {
-                        const date = new Date(field.value)
-                        date.setFullYear(Number(event.target.value))
-                        field.onChange(startOfMonth(date))
-                      }}
-                      className="w-28"
-                    >
-                      {getYearOptions().map((year) => (
-                        <NativeSelectOption key={year} value={year}>{year}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                  </div>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
+                render={({ field, fieldState }) => (
+                  <MonthField
+                    value={field.value}
+                    invalid={fieldState.invalid}
+                    error={fieldState.error}
+                    onChange={field.onChange}
+                  />
+                )}
             />
             <div className="grid gap-3 sm:grid-cols-[1fr_1.2fr]">
               <Controller
@@ -211,8 +187,8 @@ export function EditMonthlyPlanDialog({
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="edit-monthly-plan-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="edit-monthly-plan-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar cambios
           </Button>
         </DialogFooter>

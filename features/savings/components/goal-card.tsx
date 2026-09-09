@@ -2,29 +2,19 @@ import { differenceInMonths, format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import {
   CheckCircle2Icon,
-  MoreHorizontalIcon,
-  PencilIcon,
-  Trash2Icon,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
+import { RowActionsMenu } from "@/components/row-actions-menu"
 import { AddContributionDialog } from "@/features/savings/components/add-contribution-dialog"
-import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
+import { type SavingsGoal } from "@/features/savings/types/savings-types"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 function estimatedCompletion(goal: SavingsGoal): string | null {
@@ -76,28 +66,11 @@ export function GoalCard({ goal, onEdit, onDelete }: GoalCardProps) {
                 Completada
               </Badge>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" className="text-muted-foreground">
-                  <MoreHorizontalIcon />
-                  <span className="sr-only">Acciones</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => onEdit(goal)}>
-                  <PencilIcon />
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => onDelete(goal.id)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2Icon />
-                  Eliminar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <RowActionsMenu
+              onEdit={() => onEdit(goal)}
+              onDelete={() => onDelete(goal.id)}
+              className="text-muted-foreground"
+            />
           </div>
         </div>
       </CardHeader>

@@ -1,10 +1,12 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { CheckIcon, Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
+ import { Loader2Icon } from "lucide-react"
+import { useEffect, useTransition } from "react"
+import { toast } from "sonner"
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
+import { ColorPicker } from "@/components/color-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,14 +21,13 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { useUpdateAccount } from "@/lib/finance/accounts/hooks/mutations"
+import { updateAccount } from "@/features/accounts/server/actions"
 import {
   ACCOUNT_COLORS,
   accountSchema,
   type AccountValues,
-} from "@/lib/finance/accounts/schemas/account-schemas"
-import { type Account } from "@/lib/finance/accounts/types/account-types"
-import { cn } from "@/lib/utils"
+} from "@/features/accounts/schemas/account-schemas"
+import { type Account } from "@/features/accounts/types/account-types"
 
 type EditAccountDialogProps = {
   account: Account
@@ -44,6 +45,8 @@ function buildValues(account: Account): AccountValues {
 }
 
 export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDialogProps) {
+  const [isPending, startTransition] = useTransition()
+
   const form = useForm<AccountValues>({
     resolver: zodResolver(accountSchema) as Resolver<AccountValues>,
     defaultValues: buildValues(account),
@@ -55,7 +58,19 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
 
   const selectedColor = useWatch({ control: form.control, name: "color" })
 
-  const mutation = useUpdateAccount(account.id)
+  function onSubmit(values: AccountValues) {
+    startTransition(async () => {
+      try {
+        await updateAccount(account.id, values)
+        toast.success("Cuenta actualizada")
+        onOpenChange(false)
+      } catch (error) {
+        toast.error("No se pudo actualizar la cuenta", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,7 +85,7 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
           id="edit-account-form"
           className="flex flex-col gap-5"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, { onSuccess: () => onOpenChange(false) }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
@@ -114,27 +129,11 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Color</FieldLabel>
-                  <div className="flex flex-wrap gap-2 rounded-lg border p-3">
-                    {ACCOUNT_COLORS.map((c) => (
-                      <Button
-                        key={c}
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => field.onChange(c)}
-                        className={cn(
-                          "rounded-full hover:bg-transparent hover:scale-110",
-                          selectedColor === c && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                        )}
-                        style={{ backgroundColor: c }}
-                        aria-label={c}
-                      >
-                        {selectedColor === c && (
-                          <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
+                  <ColorPicker
+                    options={ACCOUNT_COLORS}
+                    value={selectedColor}
+                    onChange={field.onChange}
+                  />
                 </Field>
               )}
             />
@@ -161,8 +160,8 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="edit-account-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="edit-account-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar cambios
           </Button>
         </DialogFooter>

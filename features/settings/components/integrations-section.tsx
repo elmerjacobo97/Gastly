@@ -3,13 +3,14 @@ import { CalendarDaysIcon, SendIcon } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { CalendarConnect } from "./calendar-connect"
-import { TelegramConnect } from "./telegram-connect"
+import { TelegramConnect, type TelegramConnection } from "./telegram-connect"
 
 type IntegrationsSectionProps = {
   calendarUrl: string
+  telegramConnection: TelegramConnection | null
 }
 
-export function IntegrationsSection({ calendarUrl }: IntegrationsSectionProps) {
+export function IntegrationsSection({ calendarUrl, telegramConnection }: IntegrationsSectionProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -32,7 +33,7 @@ export function IntegrationsSection({ calendarUrl }: IntegrationsSectionProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <TelegramConnect />
+            <TelegramConnect connection={telegramConnection} />
           </CardContent>
         </Card>
 

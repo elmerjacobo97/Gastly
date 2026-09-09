@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { PasswordInput } from '@/components/password-input';
-import { changePassword } from '@/lib/finance/auth/server/actions';
-import { type ChangePasswordValues, changePasswordSchema } from '@/lib/finance/auth/schemas/auth-schemas';
+import { changePassword } from '@/features/auth/server/actions';
+import { type ChangePasswordValues, changePasswordSchema } from '@/features/auth/schemas/auth-schemas';
 
 export function ChangePasswordForm() {
   const form = useForm<ChangePasswordValues>({

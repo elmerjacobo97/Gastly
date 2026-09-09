@@ -21,8 +21,8 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
-import { custodyOrderSchema, type CustodyOrderValues } from '@/lib/finance/custody/schemas/custody-schemas';
-import { createCustodyOrder } from '@/lib/finance/custody/server/actions';
+import { custodyOrderSchema, type CustodyOrderValues } from '@/features/custody/schemas/custody-schemas';
+import { createCustodyOrder } from '@/features/custody/server/actions';
 
 const defaultValues: CustodyOrderValues = {
   personName: '',

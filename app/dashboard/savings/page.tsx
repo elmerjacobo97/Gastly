@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { SavingsPanel } from "@/features/savings/components/savings-panel"
-import { getSavingsGoals } from "@/lib/finance/savings/server/queries"
+import { getSavingsGoals } from "@/features/savings/server/queries"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function SavingsPage() {

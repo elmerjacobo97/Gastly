@@ -1,11 +1,12 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { CheckIcon, PlusIcon, Loader2Icon } from "lucide-react"
+import { PlusIcon, Loader2Icon } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 
+import { ColorPicker } from "@/components/color-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,13 +28,12 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
-import { createSavingsGoal } from "@/lib/finance/savings/server/actions"
+import { createSavingsGoal } from "@/features/savings/server/actions"
 import {
   GOAL_COLORS,
   savingsGoalSchema,
   type SavingsGoalValues,
-} from "@/lib/finance/savings/schemas/savings-schemas"
-import { cn } from "@/lib/utils"
+} from "@/features/savings/schemas/savings-schemas"
 
 const defaultValues: SavingsGoalValues = {
   name: "",
@@ -103,9 +103,7 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
           noValidate
           onSubmit={(e) => {
             e.stopPropagation()
-            form.handleSubmit((v) => mutation.mutate(v, {
-              onSuccess: (id: string) => { form.reset(defaultValues); setOpen(false); onSuccess?.(id) },
-            }))(e)
+            form.handleSubmit(onSubmit)(e)
           }}
         >
           <FieldGroup>
@@ -168,27 +166,11 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Color</FieldLabel>
-                  <div className="flex flex-wrap gap-2 rounded-lg border p-3">
-                    {GOAL_COLORS.map((c) => (
-                      <Button
-                        key={c}
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => field.onChange(c)}
-                        className={cn(
-                          "rounded-full hover:bg-transparent hover:scale-110",
-                          field.value === c && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                        )}
-                        style={{ backgroundColor: c }}
-                        aria-label={c}
-                      >
-                        {field.value === c && (
-                          <CheckIcon className="size-3.5 text-white drop-shadow-sm" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
+                  <ColorPicker
+                    options={GOAL_COLORS}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </Field>
               )}
             />
@@ -210,8 +192,8 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="create-goal-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+          <Button disabled={isPending} form="create-goal-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Crear meta
           </Button>
         </DialogFooter>

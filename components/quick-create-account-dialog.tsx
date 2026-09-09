@@ -1,10 +1,12 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { CheckIcon, Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+ import { Loader2Icon } from "lucide-react"
+import { useEffect, useTransition } from "react"
+import { toast } from "sonner"
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
 
+import { ColorPicker } from "@/components/color-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,9 +20,8 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
-import { useCreateAccount } from "@/lib/finance/accounts/hooks/mutations"
-import { ACCOUNT_COLORS, accountSchema, type AccountValues } from "@/lib/finance/accounts/schemas/account-schemas"
-import { cn } from "@/lib/utils"
+import { createAccount } from "@/features/accounts/server/actions"
+import { ACCOUNT_COLORS, accountSchema, type AccountValues } from "@/features/accounts/schemas/account-schemas"
 
 type QuickCreateAccountDialogProps = {
   open: boolean
@@ -38,9 +39,24 @@ export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: Quic
     if (open) form.reset({ name: "", balance: 0, color: ACCOUNT_COLORS[0], notes: "" })
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectedColor = form.watch("color")
+  const selectedColor = useWatch({ control: form.control, name: "color" })
 
-  const mutation = useCreateAccount()
+  const [isPending, startTransition] = useTransition()
+
+  function onSubmit(values: AccountValues) {
+    startTransition(async () => {
+      try {
+        const id = await createAccount(values)
+        toast.success("Cuenta creada")
+        onCreated(id)
+        onOpenChange(false)
+      } catch (error) {
+        toast.error("No se pudo crear la cuenta", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,9 +71,7 @@ export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: Quic
           noValidate
           onSubmit={(e) => {
             e.stopPropagation()
-            form.handleSubmit((v) => mutation.mutate(v, {
-              onSuccess: (account) => { onCreated(account.id); onOpenChange(false) },
-            }))(e)
+            form.handleSubmit(onSubmit)(e)
           }}
         >
           <FieldGroup>
@@ -89,24 +103,11 @@ export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: Quic
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Color</FieldLabel>
-                  <div className="flex flex-wrap gap-2 rounded-lg border p-3">
-                    {ACCOUNT_COLORS.map((hex) => (
-                      <Button
-                        key={hex}
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => field.onChange(hex)}
-                        className={cn(
-                          "rounded-full hover:bg-transparent hover:scale-110",
-                          selectedColor === hex && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                        )}
-                        style={{ backgroundColor: hex }}
-                      >
-                        {selectedColor === hex && <CheckIcon className="size-3.5 text-white drop-shadow-sm" />}
-                      </Button>
-                    ))}
-                  </div>
+                   <ColorPicker
+                     options={ACCOUNT_COLORS}
+                     value={selectedColor}
+                     onChange={field.onChange}
+                   />
                 </Field>
               )}
             />
@@ -116,8 +117,8 @@ export function QuickCreateAccountDialog({ open, onOpenChange, onCreated }: Quic
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="quick-create-account-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="quick-create-account-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Crear cuenta
           </Button>
         </DialogFooter>

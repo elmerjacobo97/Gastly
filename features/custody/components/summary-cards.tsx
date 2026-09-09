@@ -1,7 +1,7 @@
 import { CheckCircle2Icon, PackageIcon, ShieldIcon } from 'lucide-react';
 
-import { computeCustodySummary } from '@/lib/finance/custody/lib/custody-api';
-import { type CustodyOrder } from '@/lib/finance/custody/types/custody-types';
+import { computeCustodySummary } from '@/features/custody/lib/custody-api';
+import { type CustodyOrder } from '@/features/custody/types/custody-types';
 import { formatCurrency } from '@/lib/format';
 
 export function SummaryCards({ orders }: { orders: CustodyOrder[] }) {

@@ -32,7 +32,7 @@ export default function GlobalError({
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => unstable_retry()}
-              className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-primary px-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/80"
+              className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-primary px-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
             >
               <RefreshCwIcon className="size-4" />
               Recargar página

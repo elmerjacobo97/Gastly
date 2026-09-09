@@ -4,6 +4,7 @@ import { KeyRoundIcon, TagIcon, UserIcon, ZapIcon } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { type TelegramConnection } from "./telegram-connect"
 
 import { AccountSection } from "./account-section"
 import { IntegrationsSection } from "./integrations-section"
@@ -24,10 +25,17 @@ type SettingsPanelProps = {
   userEmail: string
   userName: string
   calendarUrl: string
+  telegramConnection: TelegramConnection | null
   categoriesSection?: React.ReactNode
 }
 
-export function SettingsPanel({ userEmail, userName, calendarUrl, categoriesSection }: SettingsPanelProps) {
+export function SettingsPanel({
+  userEmail,
+  userName,
+  calendarUrl,
+  telegramConnection,
+  categoriesSection,
+}: SettingsPanelProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -67,7 +75,12 @@ export function SettingsPanel({ userEmail, userName, calendarUrl, categoriesSect
         {activeSection === "account" && <AccountSection userEmail={userEmail} userName={userName} />}
         {activeSection === "security" && <SecuritySection />}
         {activeSection === "categories" && categoriesSection}
-        {activeSection === "integrations" && <IntegrationsSection calendarUrl={calendarUrl} />}
+        {activeSection === "integrations" && (
+          <IntegrationsSection
+            calendarUrl={calendarUrl}
+            telegramConnection={telegramConnection}
+          />
+        )}
       </div>
     </main>
   )

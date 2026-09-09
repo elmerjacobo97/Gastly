@@ -23,13 +23,13 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { custodyMovementSchema, type CustodyMovementValues } from '@/lib/finance/custody/schemas/custody-schemas';
-import { recordCustodyMovement, updateCustodyMovement } from '@/lib/finance/custody/server/actions';
+import { custodyMovementSchema, type CustodyMovementValues } from '@/features/custody/schemas/custody-schemas';
+import { recordCustodyMovement, updateCustodyMovement } from '@/features/custody/server/actions';
 import {
   type CustodyMovement,
   type CustodyMovementType,
   type CustodyOrder,
-} from '@/lib/finance/custody/types/custody-types';
+} from '@/features/custody/types/custody-types';
 import { formatCurrency } from '@/lib/format';
 
 const METHOD_LABELS: Record<string, string> = {

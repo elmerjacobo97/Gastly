@@ -1,7 +1,7 @@
 import { PiggyBankIcon, TargetIcon, TrendingUpIcon } from "lucide-react"
 
 import { Progress } from "@/components/ui/progress"
-import { type SavingsGoal } from "@/lib/finance/savings/types/savings-types"
+import { type SavingsGoal } from "@/features/savings/types/savings-types"
 import { formatCurrency } from "@/lib/format"
 
 export function SummaryCards({ goals }: { goals: SavingsGoal[] }) {

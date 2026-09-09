@@ -3,11 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
  import { startOfMonth } from "date-fns"
 import { CopyIcon, Loader2Icon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { type Resolver, Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { MonthField } from "@/components/month-field"
 import {
   Dialog,
   DialogClose,
@@ -30,26 +31,11 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
-import { usePrevMonthPlan } from "@/lib/finance/monthly-plan/hooks/queries"
-import { useUpsertMonthlyPlan } from "@/lib/finance/monthly-plan/hooks/mutations"
+import { getPrevMonthPlan, upsertMonthlyPlan } from "@/features/monthly-plan/server/actions"
 import {
   monthlyPlanSchema,
   type MonthlyPlanValues,
-} from "@/lib/finance/monthly-plan/schemas/monthly-plan-schemas"
-
-const MONTHS = [
-  { value: 0, label: "Enero" }, { value: 1, label: "Febrero" },
-  { value: 2, label: "Marzo" }, { value: 3, label: "Abril" },
-  { value: 4, label: "Mayo" }, { value: 5, label: "Junio" },
-  { value: 6, label: "Julio" }, { value: 7, label: "Agosto" },
-  { value: 8, label: "Septiembre" }, { value: 9, label: "Octubre" },
-  { value: 10, label: "Noviembre" }, { value: 11, label: "Diciembre" },
-]
-
-function getYearOptions() {
-  const year = new Date().getFullYear()
-  return [year - 1, year, year + 1]
-}
+} from "@/features/monthly-plan/schemas/monthly-plan-schemas"
 
 function buildDefaultValues(month: Date): MonthlyPlanValues {
   return {
@@ -78,25 +64,44 @@ export function CreateMonthlyPlanDialog({
     defaultValues: buildDefaultValues(month),
   })
 
-  const prevMonthQuery = usePrevMonthPlan(month, open)
+  const [prevPlan, setPrevPlan] = useState<MonthlyPlanValues | null>(null)
+  const [, startPrevLoad] = useTransition()
 
   function handleOpenChange(nextOpen: boolean) {
-    if (nextOpen) form.reset(buildDefaultValues(month))
+    if (nextOpen) {
+      form.reset(buildDefaultValues(month))
+      startPrevLoad(async () => {
+        const prev = await getPrevMonthPlan(month)
+        setPrevPlan(prev)
+      })
+    }
     setOpen(nextOpen)
   }
 
   function copyFromPrevMonth() {
-    const prev = prevMonthQuery.data
-    if (!prev) return
-    form.setValue("savingsMode", prev.savingsMode)
-    form.setValue("savingsValue", prev.savingsValue)
-    if (prev.notes) form.setValue("notes", prev.notes)
+    if (!prevPlan) return
+    form.setValue("savingsMode", prevPlan.savingsMode)
+    form.setValue("savingsValue", prevPlan.savingsValue)
+    if (prevPlan.notes) form.setValue("notes", prevPlan.notes)
     toast.info("Valores copiados del mes anterior")
   }
 
-  const mutation = useUpsertMonthlyPlan()
+  const [isPending, startTransition] = useTransition()
 
-  const hasPrevMonth = !!prevMonthQuery.data
+  function onSubmit(values: MonthlyPlanValues) {
+    startTransition(async () => {
+      try {
+        await upsertMonthlyPlan(values)
+        toast.success("Plan mensual guardado")
+        form.reset(buildDefaultValues(month))
+        setOpen(false)
+      } catch (error) {
+        toast.error("No se pudo guardar el plan", {
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        })
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -119,48 +124,20 @@ export function CreateMonthlyPlanDialog({
           className="flex flex-col gap-5"
           id="create-monthly-plan-form"
           noValidate
-          onSubmit={form.handleSubmit((v) => mutation.mutate(v, {
-            onSuccess: () => { form.reset(buildDefaultValues(month)); setOpen(false) },
-          }))}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
             <Controller
               control={form.control}
               name="month"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Mes</FieldLabel>
-                  <div className="flex gap-2">
-                    <NativeSelect
-                      value={field.value.getMonth()}
-                      onChange={(event) => {
-                        const date = new Date(field.value)
-                        date.setMonth(Number(event.target.value))
-                        field.onChange(startOfMonth(date))
-                      }}
-                      className="flex-1"
-                    >
-                      {MONTHS.map((m) => (
-                        <NativeSelectOption key={m.value} value={m.value}>{m.label}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    <NativeSelect
-                      value={field.value.getFullYear()}
-                      onChange={(event) => {
-                        const date = new Date(field.value)
-                        date.setFullYear(Number(event.target.value))
-                        field.onChange(startOfMonth(date))
-                      }}
-                      className="w-28"
-                    >
-                      {getYearOptions().map((year) => (
-                        <NativeSelectOption key={year} value={year}>{year}</NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                  </div>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
+                render={({ field, fieldState }) => (
+                  <MonthField
+                    value={field.value}
+                    invalid={fieldState.invalid}
+                    error={fieldState.error}
+                    onChange={field.onChange}
+                  />
+                )}
             />
             <div className="grid gap-3 sm:grid-cols-[1fr_1.2fr]">
               <Controller
@@ -212,7 +189,7 @@ export function CreateMonthlyPlanDialog({
                 </Field>
               )}
             />
-            {hasPrevMonth && (
+            {prevPlan && (
               <Button
                 type="button"
                 variant="outline"
@@ -229,8 +206,8 @@ export function CreateMonthlyPlanDialog({
           <DialogClose asChild>
             <Button variant="outline" type="button">Cancelar</Button>
           </DialogClose>
-          <Button disabled={mutation.isPending} form="create-monthly-plan-form" type="submit">
-            {mutation.isPending && <Loader2Icon className="size-4 animate-spin" />}
+          <Button disabled={isPending} form="create-monthly-plan-form" type="submit">
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar plan
           </Button>
         </DialogFooter>

@@ -28,9 +28,9 @@ import { NumberInput } from "@/components/ui/number-input"
 import {
   custodyOrderSchema,
   type CustodyOrderValues,
-} from "@/lib/finance/custody/schemas/custody-schemas"
-import { updateCustodyOrder } from "@/lib/finance/custody/server/actions"
-import { type CustodyOrder } from "@/lib/finance/custody/types/custody-types"
+} from "@/features/custody/schemas/custody-schemas"
+import { updateCustodyOrder } from "@/features/custody/server/actions"
+import { type CustodyOrder } from "@/features/custody/types/custody-types"
 
 type EditCustodyOrderDialogProps = {
   order: CustodyOrder

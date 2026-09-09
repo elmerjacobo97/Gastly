@@ -12,12 +12,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { PasswordInput } from '@/components/password-input';
-import { signUp } from '@/lib/finance/auth/server/actions';
-import { type SignUpValues, signUpSchema } from '@/lib/finance/auth/schemas/auth-schemas';
+import { signUp } from '@/features/auth/server/actions';
+import { type SignUpValues, signUpSchema } from '@/features/auth/schemas/auth-schemas';
 
 type SignUpFormProps = {
   error?: string;
 };
+
+async function submitSignUp(values: SignUpValues) {
+  const result = await signUp(values);
+  if (result?.error) {
+    toast.error('No se pudo crear la cuenta', { description: result.error });
+  }
+}
 
 export function SignUpForm({ error }: SignUpFormProps) {
   const form = useForm<SignUpValues>({
@@ -35,13 +42,6 @@ export function SignUpForm({ error }: SignUpFormProps) {
     toast.error('No se pudo crear la cuenta', { description: error });
   }, [error]);
 
-  async function onSubmit(values: SignUpValues) {
-    const result = await signUp(values);
-    if (result?.error) {
-      toast.error('No se pudo crear la cuenta', { description: result.error });
-    }
-  }
-
   return (
     <Card className="w-full max-w-md border-foreground/10 shadow-xl shadow-foreground/5">
       <CardHeader className="text-center">
@@ -49,7 +49,7 @@ export function SignUpForm({ error }: SignUpFormProps) {
         <CardDescription>Configura tu espacio personal para organizar tus finanzas.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="flex flex-col gap-5" id="sign-up-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="flex flex-col gap-5" id="sign-up-form" noValidate onSubmit={form.handleSubmit(submitSignUp)}>
           <FieldGroup>
             <Controller
               control={form.control}

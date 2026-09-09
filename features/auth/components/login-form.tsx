@@ -12,8 +12,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { PasswordInput } from '@/components/password-input';
-import { signIn } from '@/lib/finance/auth/server/actions';
-import { type LoginValues, loginSchema } from '@/lib/finance/auth/schemas/auth-schemas';
+import { signIn } from '@/features/auth/server/actions';
+import { type LoginValues, loginSchema } from '@/features/auth/schemas/auth-schemas';
 
 type LoginFormProps = {
   error?: string;

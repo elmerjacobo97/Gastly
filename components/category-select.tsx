@@ -14,10 +14,11 @@ import {
 } from "@/components/ui/select"
 import { CategoryIconBadge } from "@/components/category-icon-badge"
 import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog"
-import { useCategories } from "@/lib/finance/categories/hooks/queries"
-import { type TransactionType } from "@/lib/finance/transactions/schemas/transaction-schemas"
+import { type Category } from "@/features/categories/types/category-types"
+import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
 
 type CategorySelectProps = {
+  categories: Category[]
   value: string
   onChange: (id: string) => void
   type?: TransactionType
@@ -26,6 +27,7 @@ type CategorySelectProps = {
 }
 
 export function CategorySelect({
+  categories,
   value,
   onChange,
   type = "expense",
@@ -34,9 +36,7 @@ export function CategorySelect({
 }: CategorySelectProps) {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
 
-  const categoriesQuery = useCategories(type)
-
-  const categories = categoriesQuery.data ?? []
+  const filtered = type ? categories.filter((c) => c.type === type) : categories
 
   return (
     <>
@@ -53,7 +53,7 @@ export function CategorySelect({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {categories.map((cat) => (
+              {filtered.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
                   <CategoryIconBadge icon={cat.icon} color={cat.color} className="size-5 rounded" />
                   {cat.name}
@@ -66,6 +66,7 @@ export function CategorySelect({
           type="button"
           variant="outline"
           size="icon"
+          aria-label="Crear categoría"
           onClick={() => setQuickCreateOpen(true)}
         >
           <PlusIcon className="size-4" />

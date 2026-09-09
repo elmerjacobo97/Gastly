@@ -1,7 +1,13 @@
 import { createHmac } from "crypto"
 
 function getSecret() {
-  return process.env.CALENDAR_SECRET ?? "dev-calendar-secret-change-in-prod"
+  const secret = process.env.CALENDAR_SECRET
+
+  if (!secret) {
+    throw new Error("CALENDAR_SECRET must be configured")
+  }
+
+  return secret
 }
 
 export function encodeCalendarToken(userId: string): string {

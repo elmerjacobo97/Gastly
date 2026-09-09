@@ -1,6 +1,6 @@
 'use client'
 
-import { useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import { AlertTriangleIcon, CheckCircle2Icon, CopyIcon, ExternalLinkIcon, Loader2Icon, RefreshCwIcon, SendIcon, UnlinkIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -8,38 +8,29 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useTelegramConnection } from '@/lib/finance/settings/hooks/queries'
 import {
   disconnectTelegram,
   generateTelegramLinkToken,
 } from '@/features/settings/server/actions'
 
-const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? ""
+const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? ''
 
-function TelegramConnectionSkeleton() {
-  return (
-    <div className="flex items-center justify-between rounded-xl border p-4">
-      <div className="flex items-center gap-3">
-        <Skeleton className="size-9 rounded-full" />
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-3 w-24" />
-        </div>
-      </div>
-      <Skeleton className="h-8 w-28" />
-    </div>
-  )
+export type TelegramConnection = {
+  telegram_user_id: string
+  telegram_username: string | null
+  created_at: string
 }
 
-export function TelegramConnect() {
+type TelegramConnectProps = {
+  connection: TelegramConnection | null
+}
+
+export function TelegramConnect({ connection }: TelegramConnectProps) {
+  const router = useRouter()
   const [linkToken, setLinkToken] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
-  const queryClient = useQueryClient()
-
-  const connectionQuery = useTelegramConnection()
 
   async function handleGenerate() {
     setActionError(null)
@@ -65,8 +56,8 @@ export function TelegramConnect() {
       return
     }
     setLinkToken(null)
-    await queryClient.invalidateQueries({ queryKey: ['telegram-connection'] })
     toast.success('Telegram desconectado')
+    router.refresh()
   }
 
   function handleCopy() {
@@ -74,26 +65,6 @@ export function TelegramConnect() {
     navigator.clipboard.writeText(`/start ${linkToken}`)
     toast.success('Copiado al portapapeles')
   }
-
-  if (connectionQuery.isPending) {
-    return <TelegramConnectionSkeleton />
-  }
-
-  if (connectionQuery.isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangleIcon />
-        <AlertTitle>No se pudo verificar la conexión con Telegram</AlertTitle>
-        <AlertDescription>
-          {connectionQuery.error instanceof Error
-            ? connectionQuery.error.message
-            : 'Intenta recargar la información. Si el problema continúa, vuelve a intentarlo más tarde.'}
-        </AlertDescription>
-      </Alert>
-    )
-  }
-
-  const connection = connectionQuery.data
 
   if (connection) {
     return (
@@ -217,7 +188,7 @@ export function TelegramConnect() {
             variant="ghost"
             size="sm"
             className="w-fit gap-2 text-xs text-muted-foreground"
-            onClick={() => connectionQuery.refetch()}
+            onClick={() => router.refresh()}
           >
             <RefreshCwIcon className="size-3.5" />
             Ya lo envié, verificar vinculación
