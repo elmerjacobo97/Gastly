@@ -11,10 +11,13 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-muted/30 px-6 py-12">
       <div className="absolute inset-x-0 top-0 h-72 bg-linear-to-b from-primary/15 via-primary/5 to-transparent" />
-      <div className="absolute left-1/2 top-16 size-72 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-      <div className="relative flex w-full max-w-md flex-col items-center gap-8">
+      <div className="relative flex w-full max-w-sm flex-col items-center gap-6">
         <header className="flex flex-col items-center gap-3 text-center">
-          <Logo showText={false} markClassName="size-14 rounded-2xl" />
+          <Logo
+            showText={false}
+            markClassName="size-12 rounded-lg"
+            markTextClassName="text-xl"
+          />
           <div className="flex flex-col gap-1.5">
             <h1 className="text-2xl font-semibold tracking-tight">Gastly</h1>
             <p className="max-w-sm text-pretty text-sm leading-6 text-muted-foreground">

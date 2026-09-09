@@ -7,7 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { PasswordInput } from '@/components/password-input';
@@ -41,20 +41,20 @@ export function LoginForm({ error, next }: LoginFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md border-foreground/10 shadow-xl shadow-foreground/5">
-      <CardHeader className="text-center">
-        <CardTitle>Inicia sesión</CardTitle>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-xl font-semibold">Inicia sesión</CardTitle>
         <CardDescription>Bienvenido de vuelta. Ingresa tus credenciales para continuar.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="flex flex-col gap-5" id="login-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="flex flex-col gap-5" noValidate onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
               control={form.control}
               name="email"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="login-email">Correo electrónico</FieldLabel>
+                  <FieldLabel className="text-xs font-semibold uppercase tracking-wider" htmlFor="login-email">Correo electrónico</FieldLabel>
                   <InputGroup>
                     <InputGroupInput
                       {...field}
@@ -77,7 +77,7 @@ export function LoginForm({ error, next }: LoginFormProps) {
               name="password"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="login-password">Contraseña</FieldLabel>
+                  <FieldLabel className="text-xs font-semibold uppercase tracking-wider" htmlFor="login-password">Contraseña</FieldLabel>
                   <PasswordInput
                     {...field}
                     aria-invalid={fieldState.invalid}
@@ -90,14 +90,12 @@ export function LoginForm({ error, next }: LoginFormProps) {
               )}
             />
           </FieldGroup>
+          <Button className="w-full" disabled={form.formState.isSubmitting} type="submit">
+            {form.formState.isSubmitting && <Loader2Icon className="size-4 animate-spin" />}
+            Entrar
+          </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex-col gap-3">
-        <Button className="w-full" disabled={form.formState.isSubmitting} form="login-form" type="submit">
-          {form.formState.isSubmitting && <Loader2Icon className="size-4 animate-spin" />}
-          Entrar
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
