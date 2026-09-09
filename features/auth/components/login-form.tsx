@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2Icon, MailIcon } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -78,16 +77,7 @@ export function LoginForm({ error, next }: LoginFormProps) {
               name="password"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <div className="flex items-center justify-between">
-                    <FieldLabel htmlFor="login-password">Contraseña</FieldLabel>
-                    <Link
-                      className="text-xs text-muted-foreground underline-offset-4 hover:underline"
-                      href="/forgot-password"
-                      tabIndex={-1}
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </Link>
-                  </div>
+                  <FieldLabel htmlFor="login-password">Contraseña</FieldLabel>
                   <PasswordInput
                     {...field}
                     aria-invalid={fieldState.invalid}
@@ -107,12 +97,6 @@ export function LoginForm({ error, next }: LoginFormProps) {
           {form.formState.isSubmitting && <Loader2Icon className="size-4 animate-spin" />}
           Entrar
         </Button>
-        <p className="text-sm text-muted-foreground">
-          ¿No tienes cuenta?{' '}
-          <Link className="font-medium text-foreground underline-offset-4 hover:underline" href="/sign-up">
-            Regístrate
-          </Link>
-        </p>
       </CardFooter>
     </Card>
   );
