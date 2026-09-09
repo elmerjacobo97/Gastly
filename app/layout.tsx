@@ -1,19 +1,21 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { Archivo, Space_Mono } from 'next/font/google';
 import { Providers } from '@/app/providers';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { sharedMetadata, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
 import './globals.css';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: '--font-inter',
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
+const archivo = Archivo({
+  variable: '--font-archivo',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
 });
 
-const jetBrainsMono = JetBrains_Mono({
-  variable: '--font-jetbrains-mono',
-  subsets: ['latin'],
+const spaceMono = Space_Mono({
+  variable: '--font-space-mono',
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '700'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = sharedMetadata;
@@ -42,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="es-PE"
-      className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${spaceMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

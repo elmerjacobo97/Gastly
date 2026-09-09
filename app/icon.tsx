@@ -8,7 +8,7 @@ export default function Icon() {
     (
       <div
         style={{
-          background: "#163300",
+          background: "#050505",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -19,7 +19,7 @@ export default function Icon() {
       >
         <span
           style={{
-            color: "#9fe870",
+            color: "#d4ff3f",
             fontSize: "18px",
             fontWeight: 700,
             fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
