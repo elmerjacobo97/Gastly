@@ -1,4 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/components/ui/card"
 
 export default function MonthlyPlanLoading() {
   return (
@@ -16,11 +21,15 @@ export default function MonthlyPlanLoading() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-xl border bg-card p-4">
-            <Skeleton className="h-3 w-28" />
-            <Skeleton className="mt-2 h-7 w-32" />
-            <Skeleton className="mt-2 h-3 w-36" />
-          </div>
+          <Card size="sm" key={i}>
+            <CardHeader>
+              <Skeleton className="h-3 w-28" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-7 w-32" />
+              <Skeleton className="mt-1 h-3 w-36" />
+            </CardContent>
+          </Card>
         ))}
       </div>
 

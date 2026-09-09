@@ -5,6 +5,14 @@ import {
   WalletCardsIcon,
 } from "lucide-react"
 
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { formatCurrency } from "@/lib/format"
 
 type DashboardSummaryCardsProps = {
@@ -63,18 +71,24 @@ export function DashboardSummaryCards({
         const Icon = card.icon
         const isPositive = card.positive
         return (
-          <div key={card.title} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-            <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${isPositive ? "bg-muted/50 text-muted-foreground" : "bg-destructive/10 text-destructive"}`}>
-              <Icon className="size-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-muted-foreground">{card.title}</p>
-              <p className="truncate text-xs text-muted-foreground">{card.description}</p>
-            </div>
-            <p className={`shrink-0 text-lg font-semibold tabular-nums ${isPositive ? "text-foreground" : "text-destructive"}`}>
-              {card.value}
-            </p>
-          </div>
+          <Card size="sm" key={card.title}>
+            <CardHeader>
+              <CardTitle className="text-xs font-medium text-muted-foreground">
+                {card.title}
+              </CardTitle>
+              <CardDescription className="text-xs">{card.description}</CardDescription>
+              <CardAction>
+                <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${isPositive ? "bg-muted/50 text-muted-foreground" : "bg-destructive/10 text-destructive"}`}>
+                  <Icon className="size-4" />
+                </div>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <p className={`text-lg font-semibold tabular-nums ${isPositive ? "text-foreground" : "text-destructive"}`}>
+                {card.value}
+              </p>
+            </CardContent>
+          </Card>
         )
       })}
     </section>

@@ -64,32 +64,44 @@ export function MonthlyPlanPanel({ plan, transactions, categories, month: monthS
       {plan ? (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Card className="p-4">
-              <p className="text-xs text-muted-foreground">Ingreso real del mes</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums">
-                {formatCurrency(actualIncome)}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {transactions.filter((t) => t.type === "income").length} transacción{transactions.filter((t) => t.type === "income").length !== 1 ? "es" : ""} de ingreso
-              </p>
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Ingreso real del mes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-semibold tabular-nums">
+                  {formatCurrency(actualIncome)}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {transactions.filter((t) => t.type === "income").length} transacción{transactions.filter((t) => t.type === "income").length !== 1 ? "es" : ""} de ingreso
+                </p>
+              </CardContent>
             </Card>
-            <Card className="p-4">
-              <p className="text-xs text-muted-foreground">Ahorro obligatorio</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(savings)}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {plan.savingsMode === "percent"
-                  ? `${plan.savingsValue}% del ingreso`
-                  : "Monto fijo"}
-              </p>
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Ahorro obligatorio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(savings)}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {plan.savingsMode === "percent"
+                    ? `${plan.savingsValue}% del ingreso`
+                    : "Monto fijo"}
+                </p>
+              </CardContent>
             </Card>
-            <Card className="p-4">
-              <p className="text-xs text-muted-foreground">Después de ahorrar</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums">
-                {formatCurrency(availableAfterSavings)}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground capitalize">{monthLabel}</p>
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Después de ahorrar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-semibold tabular-nums">
+                  {formatCurrency(availableAfterSavings)}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground capitalize">{monthLabel}</p>
+              </CardContent>
             </Card>
           </div>
 

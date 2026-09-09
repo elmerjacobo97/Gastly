@@ -1,12 +1,14 @@
 "use client"
 
-import {
-  PiggyBankIcon,
-  ReceiptIcon,
-  TrendingDownIcon,
-  WalletIcon,
-} from "lucide-react"
+import { WalletIcon, PiggyBankIcon, ReceiptIcon, TrendingDownIcon } from "lucide-react"
 
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { formatCurrency } from "@/lib/format"
 
 type BudgetPlanSummaryProps = {
@@ -37,50 +39,68 @@ export function BudgetPlanSummary({
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted/50 text-muted-foreground">
-            <WalletIcon className="size-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-muted-foreground">Disponible libre</p>
-          </div>
-          <p className="text-lg font-semibold tabular-nums text-foreground">
-            {formatCurrency(availableForBudget)}
-          </p>
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-          <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${unassigned >= 0 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
-            <PiggyBankIcon className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-muted-foreground">{unassigned >= 0 ? "Sin asignar" : "Sobreasignado"}</p>
-          </div>
-          <p className={`text-lg font-semibold tabular-nums ${unassigned >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
-            {formatCurrency(Math.abs(unassigned))}
-          </p>
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive">
-            <ReceiptIcon className="size-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-muted-foreground">Total gastado</p>
-          </div>
-          <p className="text-lg font-semibold tabular-nums text-destructive">
-            {formatCurrency(totalSpent)}
-          </p>
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-          <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${remaining >= 0 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
-            <TrendingDownIcon className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-muted-foreground">Restante</p>
-          </div>
-          <p className={`text-lg font-semibold tabular-nums ${remaining >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
-            {formatCurrency(Math.max(remaining, 0))}
-          </p>
-        </div>
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle className="text-xs font-medium text-muted-foreground">Disponible libre</CardTitle>
+            <CardAction>
+              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted/50 text-muted-foreground">
+                <WalletIcon className="size-4" />
+              </div>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg font-semibold tabular-nums text-foreground">
+              {formatCurrency(availableForBudget)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              {unassigned >= 0 ? "Sin asignar" : "Sobreasignado"}
+            </CardTitle>
+            <CardAction>
+              <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${unassigned >= 0 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
+                <PiggyBankIcon className="size-5" />
+              </div>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <p className={`text-lg font-semibold tabular-nums ${unassigned >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+              {formatCurrency(Math.abs(unassigned))}
+            </p>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle className="text-xs font-medium text-muted-foreground">Total gastado</CardTitle>
+            <CardAction>
+              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive">
+                <ReceiptIcon className="size-4" />
+              </div>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg font-semibold tabular-nums text-destructive">
+              {formatCurrency(totalSpent)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle className="text-xs font-medium text-muted-foreground">Restante</CardTitle>
+            <CardAction>
+              <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${remaining >= 0 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
+                <TrendingDownIcon className="size-5" />
+              </div>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <p className={`text-lg font-semibold tabular-nums ${remaining >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+              {formatCurrency(Math.max(remaining, 0))}
+            </p>
+          </CardContent>
+        </Card>
       </div>
       <div
         className={`rounded-lg border px-4 py-3 text-sm ${

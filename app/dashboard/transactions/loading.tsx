@@ -1,4 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/components/ui/card"
 
 export default function TransactionsLoading() {
   return (
@@ -16,14 +21,18 @@ export default function TransactionsLoading() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-            <Skeleton className="size-8 rounded-lg" />
-            <div className="flex-1 space-y-1.5">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-            <Skeleton className="h-6 w-20" />
-          </div>
+          <Card size="sm" key={i}>
+            <CardHeader>
+              <div className="flex items-start justify-between gap-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="size-8 rounded-lg" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="mt-2 h-5 w-28" />
+            </CardContent>
+          </Card>
         ))}
       </div>
 

@@ -18,20 +18,12 @@ type MovementsHistoryProps = {
   onDeleteMovement: (movementId: string) => void;
 };
 
-export function MovementsHistory({
-  orders,
-  selectedOrderId,
-  onEditMovement,
-  onDeleteMovement,
-}: MovementsHistoryProps) {
+export function MovementsHistory({ orders, selectedOrderId, onEditMovement, onDeleteMovement }: MovementsHistoryProps) {
   const allMovements = useMemo(() => flattenCustodyMovements(orders), [orders]);
   const filteredMovements = useMemo(() => {
-    const rows = selectedOrderId
-      ? allMovements.filter((m) => m.custodyOrderId === selectedOrderId)
-      : allMovements;
+    const rows = selectedOrderId ? allMovements.filter((m) => m.custodyOrderId === selectedOrderId) : allMovements;
     return rows.toSorted(
-      (a, b) =>
-        new Date(`${b.occurredOn}T12:00:00`).getTime() - new Date(`${a.occurredOn}T12:00:00`).getTime()
+      (a, b) => new Date(`${b.occurredOn}T12:00:00`).getTime() - new Date(`${a.occurredOn}T12:00:00`).getTime()
     );
   }, [allMovements, selectedOrderId]);
 
@@ -66,20 +58,34 @@ export function MovementsHistory({
       <CardContent>
         {filteredMovements.length > 0 && (
           <div className="mb-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
-              <p className="text-muted-foreground">Depositado</p>
-              <p className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(totals.deposited)}
-              </p>
-            </div>
-            <div className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
-              <p className="text-muted-foreground">Desembolsado</p>
-              <p className="font-semibold tabular-nums text-destructive">{formatCurrency(totals.disbursed)}</p>
-            </div>
-            <div className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
-              <p className="text-muted-foreground">En custodia</p>
-              <p className="font-semibold tabular-nums">{formatCurrency(balance)}</p>
-            </div>
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Depositado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(totals.deposited)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Desembolsado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold tabular-nums text-destructive">
+                  {formatCurrency(totals.disbursed)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">En custodia</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold tabular-nums">{formatCurrency(balance)}</p>
+              </CardContent>
+            </Card>
           </div>
         )}
 

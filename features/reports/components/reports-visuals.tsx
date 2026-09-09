@@ -24,6 +24,7 @@ import { MonthlyIncomeExpenseChart } from "@/components/monthly-income-expense-c
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -225,11 +226,18 @@ function SummaryCards({
   return (
     <section className="grid gap-3 sm:grid-cols-3">
       {cards.map((card) => (
-        <div key={card.title} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
-          <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${card.positive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}><card.icon className="size-4" /></div>
-          <div className="min-w-0 flex-1"><p className="truncate text-xs font-medium text-muted-foreground">{card.title}</p>{card.description && <p className="truncate text-xs text-muted-foreground">{card.description}</p>}</div>
-          <p className={`shrink-0 text-lg font-semibold tabular-nums ${card.positive ? "text-foreground" : "text-destructive"}`}>{card.value}</p>
-        </div>
+        <Card size="sm" key={card.title}>
+          <CardHeader>
+            <CardTitle className="text-xs font-medium text-muted-foreground">{card.title}</CardTitle>
+            {card.description && <CardDescription className="text-xs">{card.description}</CardDescription>}
+            <CardAction>
+              <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${card.positive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}><card.icon className="size-4" /></div>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <p className={`text-lg font-semibold tabular-nums ${card.positive ? "text-foreground" : "text-destructive"}`}>{card.value}</p>
+          </CardContent>
+        </Card>
       ))}
     </section>
   )
