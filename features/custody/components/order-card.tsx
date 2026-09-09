@@ -95,8 +95,8 @@ export function OrderCard({ order, onEdit, onDelete, onComplete }: OrderCardProp
       <CardContent className="flex flex-col gap-3">
         {pctProgress != null && <Progress value={pctProgress} className="[&>div]:bg-primary" />}
         <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-          <span>Depositado: {formatCurrency(order.totalDeposited)}</span>
-          <span>Desembolsado: {formatCurrency(order.totalDisbursed)}</span>
+          <span>Total entradas: {formatCurrency(order.totalDeposited)}</span>
+          <span>Total salidas: {formatCurrency(order.totalDisbursed)}</span>
         </div>
         <p className="text-sm font-semibold tabular-nums">En custodia: {formatCurrency(order.balanceHeld)}</p>
         {order.notes && <p className="truncate text-xs text-muted-foreground">{order.notes}</p>}

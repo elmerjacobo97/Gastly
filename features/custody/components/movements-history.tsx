@@ -53,7 +53,7 @@ export function MovementsHistory({ orders, onEditMovement, onDeleteMovement }: M
           <div className="mb-4 grid gap-3 sm:grid-cols-3">
             <Card size="sm">
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Depositado</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total entradas</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
@@ -63,7 +63,7 @@ export function MovementsHistory({ orders, onEditMovement, onDeleteMovement }: M
             </Card>
             <Card size="sm">
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Desembolsado</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total salidas</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-lg font-semibold tabular-nums text-destructive">
