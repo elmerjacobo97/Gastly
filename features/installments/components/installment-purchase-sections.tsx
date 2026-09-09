@@ -13,12 +13,14 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { CategoryIconBadge } from '@/components/category-icon-badge';
 import { RowActionsMenu } from '@/components/row-actions-menu';
+import { getDisplayInstallment } from '@/features/installments/lib/installments-api';
 import { type InstallmentPurchase } from '@/features/installments/types/installment-types';
 import { formatCurrency, formatDate } from '@/lib/format';
 
 type InstallmentPurchaseSectionsProps = {
   activePurchases: InstallmentPurchase[];
   completedPurchases: InstallmentPurchase[];
+  month: Date;
   onEdit: (purchase: InstallmentPurchase) => void;
   onDelete: (id: string) => void;
 };
@@ -26,6 +28,7 @@ type InstallmentPurchaseSectionsProps = {
 export function InstallmentPurchaseSections({
   activePurchases,
   completedPurchases,
+  month,
   onEdit,
   onDelete,
 }: InstallmentPurchaseSectionsProps) {
@@ -39,9 +42,7 @@ export function InstallmentPurchaseSections({
               const pctPaid = purchase.totalInstallments > 0
                 ? Math.round((purchase.paidCount / purchase.totalInstallments) * 100)
                 : 0
-              const nextPayment = purchase.payments.find(
-                (payment) => !payment.transactionId && !payment.paidExternally
-              )
+              const nextPayment = getDisplayInstallment(purchase, month)
 
               return (
                 <Card key={purchase.id}>
@@ -77,7 +78,10 @@ export function InstallmentPurchaseSections({
                     </div>
                     {nextPayment && (
                       <p className="truncate text-xs text-muted-foreground">
-                        Próxima cuota: <span className="font-medium text-foreground">{formatDate(nextPayment.dueOn)}</span>
+                        Próxima cuota:{' '}
+                        <span className="font-medium text-foreground">
+                          Cuota {nextPayment.paymentNumber}/{purchase.totalInstallments} · {formatDate(nextPayment.dueOn)}
+                        </span>
                       </p>
                     )}
                     {purchase.account && (

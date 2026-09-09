@@ -89,6 +89,7 @@ export function InstallmentsPanel({ purchases, accounts, categories, month: mont
       <InstallmentPurchaseSections
         activePurchases={activePurchases}
         completedPurchases={completedPurchases}
+        month={month}
         onEdit={setEditPurchase}
         onDelete={setDeleteId}
       />
