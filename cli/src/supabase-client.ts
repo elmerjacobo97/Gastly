@@ -29,15 +29,27 @@ function parseAuthSession(
   fallbackRefreshToken?: string,
 ): GastlySession {
   const record = asRecord(value, context)
-  const user = asRecord(record.user, context)
+
+  // Supabase JS v2: tokens live in data.session
+  const session = record.session ? asRecord(record.session, context) : record
+  const user = asRecord(session.user ?? record.user, context)
+
+  const accessToken =
+    (session.access_token as string) ?? (session.accessToken as string)
+  const refreshToken =
+    (session.refresh_token as string) ?? (session.refreshToken as string)
+
+  if (!accessToken || accessToken.length === 0) {
+    throw new Error(`${context} response is missing access token.`)
+  }
+
   return {
     userId: requiredString(user, "id", context),
-    accessToken: requiredString(record, "accessToken", context),
+    accessToken,
     refreshToken:
-      typeof record.refreshToken === "string" && record.refreshToken.length > 0
-        ? record.refreshToken
-        : fallbackRefreshToken ??
-          requiredString(record, "refreshToken", context),
+      (typeof refreshToken === "string" && refreshToken.length > 0
+        ? refreshToken
+        : fallbackRefreshToken) ?? "",
   }
 }
 

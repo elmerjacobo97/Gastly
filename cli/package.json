@@ -1,6 +1,6 @@
 {
   "name": "@codigoconelmer/gastly-cli",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "CLI for Gastly personal finance tracker — manage transactions, debts, and budgets from the terminal.",
   "license": "MIT",
   "type": "module",
