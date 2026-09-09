@@ -1,6 +1,6 @@
 "use client"
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
+import { Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 
 import {
   Card,
@@ -12,7 +12,6 @@ import {
 import { MonthlyIncomeExpenseChart } from "@/components/monthly-income-expense-chart"
 import { Skeleton } from "@/components/ui/skeleton"
 import { type CategoryTotal, type MonthlyTotal } from "@/features/transactions/server/charts-queries"
-import { CHART_COLORS } from "@/lib/chart-utils"
 import { formatCurrency } from "@/lib/format"
 
 type DashboardChartsProps = {
@@ -51,11 +50,7 @@ export function DashboardChartsView({
               <div className="h-40 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3}>
-                      {categoryData.map((entry, index) => (
-                        <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
+                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} />
                     <Tooltip
                       formatter={(value: unknown, _name: unknown, props: { payload?: { name?: string } }) => [formatCurrency(Number(value)), props.payload?.name ?? ""]}
                       contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", color: "var(--popover-foreground)", fontSize: 13 }}
@@ -64,12 +59,12 @@ export function DashboardChartsView({
                 </ResponsiveContainer>
               </div>
               <div className="flex flex-col gap-2">
-                {categoryData.map((cat, index) => (
+                {categoryData.map((cat) => (
                   <div key={cat.name} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                       <div
                         className="size-2.5 shrink-0 rounded-sm"
-                        style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
+                        style={{ background: cat.fill }}
                       />
                       <span className="text-muted-foreground">{cat.name}</span>
                     </div>
