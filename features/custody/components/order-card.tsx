@@ -13,20 +13,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import { DepositButton, DisbursementButton } from '@/features/custody/components/record-movement-dialog';
 import { type CustodyOrder } from '@/features/custody/types/custody-types';
 
 type OrderCardProps = {
   order: CustodyOrder;
-  selected: boolean;
-  onSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onComplete: () => void;
 };
 
-export function OrderCard({ order, selected, onSelect, onEdit, onDelete, onComplete }: OrderCardProps) {
+export function OrderCard({ order, onEdit, onDelete, onComplete }: OrderCardProps) {
   const pctProgress =
     order.targetAmount && order.targetAmount > 0
       ? Math.min(100, Math.round((order.totalDeposited / order.targetAmount) * 100))
@@ -35,7 +32,7 @@ export function OrderCard({ order, selected, onSelect, onEdit, onDelete, onCompl
   const isActive = order.status === 'active';
 
   return (
-    <Card className={cn('cursor-pointer transition-colors', selected && 'ring-2 ring-primary')} onClick={onSelect}>
+    <Card>
       <CardHeader className="flex flex-row items-start justify-between pb-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -70,13 +67,12 @@ export function OrderCard({ order, selected, onSelect, onEdit, onDelete, onCompl
               variant="ghost"
               size="icon"
               className="size-8 shrink-0 text-muted-foreground"
-              onClick={(e) => e.stopPropagation()}
             >
               <MoreHorizontalIcon />
               <span className="sr-only">Acciones</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={onEdit}>
               <PencilIcon />
               Editar
@@ -96,7 +92,7 @@ export function OrderCard({ order, selected, onSelect, onEdit, onDelete, onCompl
         </DropdownMenu>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+      <CardContent className="flex flex-col gap-3">
         {pctProgress != null && <Progress value={pctProgress} className="[&>div]:bg-primary" />}
         <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
           <span>Depositado: {formatCurrency(order.totalDeposited)}</span>

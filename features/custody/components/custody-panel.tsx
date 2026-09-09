@@ -24,7 +24,6 @@ type CustodyPanelProps = {
 export function CustodyPanel({ orders }: CustodyPanelProps) {
   const [isPending, startTransition] = useTransition();
 
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [editOrder, setEditOrder] = useState<CustodyOrder | null>(null);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
   const [editMovement, setEditMovement] = useState<CustodyMovementRow | null>(null);
@@ -73,8 +72,6 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
       ) : (
         <OrdersSection
           orders={orders}
-          selectedOrderId={selectedOrderId}
-          onSelect={setSelectedOrderId}
           onEdit={setEditOrder}
           onDelete={setDeleteOrderId}
           onComplete={setCompleteOrderId}
@@ -83,7 +80,6 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
 
       <MovementsHistory
         orders={orders}
-        selectedOrderId={selectedOrderId}
         onEditMovement={setEditMovement}
         onDeleteMovement={setDeleteMovementId}
       />
@@ -119,7 +115,6 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
             () => deleteCustodyOrder(id),
             'Encargo eliminado',
             () => {
-              if (selectedOrderId === id) setSelectedOrderId(null);
               setDeleteOrderId(null);
             }
           );

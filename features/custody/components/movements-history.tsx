@@ -13,23 +13,19 @@ import { PackageIcon } from 'lucide-react';
 
 type MovementsHistoryProps = {
   orders: CustodyOrder[];
-  selectedOrderId: string | null;
   onEditMovement: (movement: CustodyMovementRow) => void;
   onDeleteMovement: (movementId: string) => void;
 };
 
-export function MovementsHistory({ orders, selectedOrderId, onEditMovement, onDeleteMovement }: MovementsHistoryProps) {
-  const allMovements = useMemo(() => flattenCustodyMovements(orders), [orders]);
-  const filteredMovements = useMemo(() => {
-    const rows = selectedOrderId ? allMovements.filter((m) => m.custodyOrderId === selectedOrderId) : allMovements;
-    return rows.toSorted(
+export function MovementsHistory({ orders, onEditMovement, onDeleteMovement }: MovementsHistoryProps) {
+  const movements = useMemo(() => {
+    const all = flattenCustodyMovements(orders);
+    return all.toSorted(
       (a, b) => new Date(`${b.occurredOn}T12:00:00`).getTime() - new Date(`${a.occurredOn}T12:00:00`).getTime()
     );
-  }, [allMovements, selectedOrderId]);
+  }, [orders]);
 
-  const selectedOrder = orders.find((o) => o.id === selectedOrderId) ?? null;
-
-  const totals = filteredMovements.reduce(
+  const totals = movements.reduce(
     (acc, m) => {
       if (m.type === 'deposit') acc.deposited += m.amount;
       else acc.disbursed += m.amount;
@@ -49,14 +45,11 @@ export function MovementsHistory({ orders, selectedOrderId, onEditMovement, onDe
       <CardHeader>
         <CardTitle className="text-base">Historial de movimientos</CardTitle>
         <CardDescription>
-          {selectedOrder ? `${selectedOrder.personName} · ${selectedOrder.title}` : 'Todos los encargos'}
-          {' · '}
-          {filteredMovements.length} movimiento
-          {filteredMovements.length !== 1 ? 's' : ''}
+          Todos los encargos · {movements.length} movimiento{movements.length !== 1 ? 's' : ''}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {filteredMovements.length > 0 && (
+        {movements.length > 0 && (
           <div className="mb-4 grid gap-3 sm:grid-cols-3">
             <Card size="sm">
               <CardHeader>
@@ -91,7 +84,7 @@ export function MovementsHistory({ orders, selectedOrderId, onEditMovement, onDe
 
         <DataTable
           columns={columns}
-          data={filteredMovements}
+          data={movements}
           searchPlaceholder="Buscar por persona, propósito o notas..."
           emptyState={
             <Empty className="bg-muted/20">
@@ -101,9 +94,7 @@ export function MovementsHistory({ orders, selectedOrderId, onEditMovement, onDe
                 </EmptyMedia>
                 <EmptyTitle>Sin movimientos</EmptyTitle>
                 <EmptyDescription>
-                  {selectedOrder
-                    ? 'Registra un depósito o desembolso para este encargo.'
-                    : 'Los depósitos y desembolsos aparecerán aquí.'}
+                  Los depósitos y desembolsos aparecerán aquí.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
