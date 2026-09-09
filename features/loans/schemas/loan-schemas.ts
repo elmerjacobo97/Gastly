@@ -14,6 +14,15 @@ export const loanSchema = z.object({
 
 export type LoanValues = z.infer<typeof loanSchema>
 
+export const addLoanSchema = loanSchema.pick({
+  amount: true,
+  currency: true,
+  loanedOn: true,
+  notes: true,
+})
+
+export type AddLoanValues = z.infer<typeof addLoanSchema>
+
 export const editLoanPersonSchema = z.object({
   personName: z.string().trim().min(2, "Ingresa el nombre de la persona."),
   expectedOn: z.string().optional(),

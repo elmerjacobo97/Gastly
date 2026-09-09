@@ -109,7 +109,7 @@ export function LoanDialog({
         <DialogHeader>
           <DialogTitle>Nuevo préstamo</DialogTitle>
           <DialogDescription>
-            Registra dinero prestado para hacer seguimiento del cobro.
+            Para una persona nueva. Si ya está en la lista, usa Otro préstamo en su tarjeta.
           </DialogDescription>
         </DialogHeader>
         <form

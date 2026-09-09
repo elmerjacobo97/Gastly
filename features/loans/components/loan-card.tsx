@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
+import { AddLoanDialog } from "@/features/loans/components/add-loan-dialog"
 import { RecordPaymentDialog } from "@/features/loans/components/record-payment-dialog"
 import { earliestLoanedOn } from "@/features/loans/lib/group-loans"
 import { type LoanPersonGroup } from "@/features/loans/types/loan-types"
@@ -94,16 +95,19 @@ export function LoanCard({ group, settled, onEdit, onHistory, onDelete }: LoanCa
       </CardHeader>
       <CardContent>
         {settled ? (
-          <div className="flex flex-col gap-1.5">
-            {group.balances.map((loan) => (
-              <div
-                key={loan.id}
-                className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
-              >
-                <CheckCircle2Icon className="size-3.5" />
-                Saldado · {formatCurrency(loan.amount, loan.currency)}
-              </div>
-            ))}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              {group.balances.map((loan) => (
+                <div
+                  key={loan.id}
+                  className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
+                >
+                  <CheckCircle2Icon className="size-3.5" />
+                  Saldado · {formatCurrency(loan.amount, loan.currency)}
+                </div>
+              ))}
+            </div>
+            <AddLoanDialog group={group} />
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -142,9 +146,12 @@ export function LoanCard({ group, settled, onEdit, onHistory, onDelete }: LoanCa
                 )}
               </div>
             )}
-            {pendingBalances.length > 0 && (
-              <RecordPaymentDialog personName={group.personName} balances={pendingBalances} />
-            )}
+            <div className="flex flex-wrap gap-2">
+              <AddLoanDialog group={group} />
+              {pendingBalances.length > 0 ? (
+                <RecordPaymentDialog personName={group.personName} balances={pendingBalances} />
+              ) : null}
+            </div>
           </div>
         )}
       </CardContent>
