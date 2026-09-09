@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
 
-import { CustodySummaryCard } from "@/features/custody/components/custody-summary-card"
 import { TransactionsPanel } from "@/features/transactions/components/transactions-panel"
 import { getInstallmentPurchases } from "@/features/installments/server/queries"
 import { getRecurringPayments } from "@/features/recurring-payments/server/queries"
@@ -49,7 +48,6 @@ export default async function DashboardPage() {
     <TransactionsPanel
       userEmail={user.email}
       userName={user.user_metadata?.full_name as string | undefined}
-      custodySummary={<CustodySummaryCard />}
       transactions={transactions}
       unpaidCreditCard={unpaidCreditCard}
       recurringPayments={allRecurring}

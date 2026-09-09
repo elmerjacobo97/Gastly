@@ -19,7 +19,6 @@ import { type InstallmentPurchase } from "@/features/installments/types/installm
 type TransactionsPanelProps = {
   userEmail?: string
   userName?: string
-  custodySummary?: React.ReactNode
   transactions: Transaction[]
   unpaidCreditCard: Transaction[]
   recurringPayments: RecurringPayment[]
@@ -44,7 +43,6 @@ function getDaysUntil(date: string) {
 export function TransactionsPanel({
   userEmail,
   userName,
-  custodySummary,
   transactions,
   unpaidCreditCard,
   recurringPayments: allRecurring,
@@ -121,8 +119,6 @@ export function TransactionsPanel({
         usage={usage}
         remaining={remaining}
       />
-
-      {custodySummary}
 
       <UpcomingPaymentsCard payments={upcomingPayments} />
 
