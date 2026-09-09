@@ -223,7 +223,7 @@ function SummaryCards({
   ]
 
   return (
-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="grid gap-3 sm:grid-cols-3">
       {cards.map((card) => (
         <div key={card.title} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
           <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${card.positive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}><card.icon className="size-4" /></div>
