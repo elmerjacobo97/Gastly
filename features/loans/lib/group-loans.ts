@@ -68,7 +68,7 @@ export function historyEntriesForGroup(group: LoanPersonGroup): LoanHistoryEntry
   }
 
   return entries.toSorted((a, b) => {
-    const byDate = a.occurredOn.localeCompare(b.occurredOn)
+    const byDate = b.occurredOn.localeCompare(a.occurredOn)
     if (byDate !== 0) return byDate
     return a.kind.localeCompare(b.kind)
   })

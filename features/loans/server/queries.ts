@@ -98,13 +98,13 @@ export async function getLoans(): Promise<Loan[]> {
       .from("loan_payments")
       .select("id, loan_id, amount, occurred_on, notes")
       .in("loan_id", loanIds)
-      .order("occurred_on", { ascending: true })
+      .order("occurred_on", { ascending: false })
       .overrideTypes<LoanPaymentRow[], { merge: false }>(),
     supabase
       .from("loan_disbursements")
       .select("id, loan_id, amount, occurred_on, notes")
       .in("loan_id", loanIds)
-      .order("occurred_on", { ascending: true })
+      .order("occurred_on", { ascending: false })
       .overrideTypes<LoanDisbursementRow[], { merge: false }>(),
   ])
 
