@@ -7,11 +7,12 @@ import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { EditLoanDialog } from "@/features/loans/components/edit-loan-dialog"
 import { LoanDialog } from "@/features/loans/components/loan-dialog"
-import { LoanPaymentHistoryDialog } from "@/features/loans/components/loan-payment-history-dialog"
+import { LoanHistoryDialog } from "@/features/loans/components/loan-history-dialog"
 import { LoansSections } from "@/features/loans/components/loans-sections"
 import { LoansSummaryCards } from "@/features/loans/components/loans-summary-cards"
-import { deleteLoan } from "@/features/loans/server/actions"
-import { type Loan } from "@/features/loans/types/loan-types"
+import { uniquePersonNames, groupLoansByPerson } from "@/features/loans/lib/group-loans"
+import { deleteLoanBalances } from "@/features/loans/server/actions"
+import { type Loan, type LoanPersonGroup } from "@/features/loans/types/loan-types"
 
 type LoansPanelProps = {
   loans: Loan[]
@@ -19,16 +20,24 @@ type LoansPanelProps = {
 
 export function LoansPanel({ loans }: LoansPanelProps) {
   const [isMutationPending, startTransition] = useTransition()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [editLoan, setEditLoan] = useState<Loan | null>(null)
-  const [historyLoan, setHistoryLoan] = useState<Loan | null>(null)
+  const [deleteGroup, setDeleteGroup] = useState<LoanPersonGroup | null>(null)
+  const [editGroup, setEditGroup] = useState<LoanPersonGroup | null>(null)
+  const [historyGroup, setHistoryGroup] = useState<LoanPersonGroup | null>(null)
+  const personNames = uniquePersonNames(loans)
+  const groups = groupLoansByPerson(loans)
+  const liveEditGroup = editGroup
+    ? groups.find((group) => group.key === editGroup.key) ?? null
+    : null
+  const liveHistoryGroup = historyGroup
+    ? groups.find((group) => group.key === historyGroup.key) ?? null
+    : null
 
-  function handleDelete(id: string) {
+  function handleDelete(group: LoanPersonGroup) {
     startTransition(async () => {
       try {
-        await deleteLoan(id)
+        await deleteLoanBalances(group.balances.map((loan) => loan.id))
         toast.success("Préstamo eliminado")
-        setDeleteId(null)
+        setDeleteGroup(null)
       } catch (error) {
         toast.error("No se pudo eliminar el préstamo", {
           description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
@@ -46,7 +55,7 @@ export function LoansPanel({ loans }: LoansPanelProps) {
             Préstamos y deudas con terceros. Registra abonos para hacer seguimiento.
           </p>
         </div>
-        <LoanDialog />
+        <LoanDialog loans={loans} personNames={personNames} />
       </section>
 
       {loans.length > 0 && <LoansSummaryCards loans={loans} />}
@@ -62,39 +71,43 @@ export function LoansPanel({ loans }: LoansPanelProps) {
               Registra el dinero que prestas para hacerle seguimiento.
             </p>
           </div>
-          <LoanDialog triggerLabel="Registrar primer préstamo" />
+          <LoanDialog
+            triggerLabel="Registrar primer préstamo"
+            loans={loans}
+            personNames={personNames}
+          />
         </div>
       )}
 
       {loans.length > 0 && (
         <LoansSections
           loans={loans}
-          onEdit={setEditLoan}
-          onHistory={setHistoryLoan}
-          onDelete={setDeleteId}
+          onEdit={setEditGroup}
+          onHistory={setHistoryGroup}
+          onDelete={setDeleteGroup}
         />
       )}
 
-      {editLoan && (
+      {liveEditGroup && (
         <EditLoanDialog
-          loan={editLoan}
-          open={!!editLoan}
-          onOpenChange={(o) => !o && setEditLoan(null)}
+          group={liveEditGroup}
+          open={!!editGroup}
+          onOpenChange={(open) => !open && setEditGroup(null)}
         />
       )}
 
       <ConfirmDialog
-        open={Boolean(deleteId)}
-        onOpenChange={(o) => !o && setDeleteId(null)}
-        description="Se eliminará este préstamo y todo su historial de abonos permanentemente."
+        open={Boolean(deleteGroup)}
+        onOpenChange={(open) => !open && setDeleteGroup(null)}
+        description="Se eliminará esta persona y todo su historial de préstamos y abonos, en todas las monedas."
         pending={isMutationPending}
-        onConfirm={() => deleteId && handleDelete(deleteId)}
+        onConfirm={() => deleteGroup && handleDelete(deleteGroup)}
       />
 
-      <LoanPaymentHistoryDialog
-        loan={historyLoan}
-        open={!!historyLoan}
-        onOpenChange={(o) => !o && setHistoryLoan(null)}
+      <LoanHistoryDialog
+        group={liveHistoryGroup}
+        open={!!historyGroup}
+        onOpenChange={(open) => !open && setHistoryGroup(null)}
       />
     </main>
   )

@@ -1,7 +1,17 @@
-const currencyFormatter = new Intl.NumberFormat("es-PE", {
-  style: "currency",
-  currency: "PEN",
-})
+export type CurrencyCode = "PEN" | "USD" | "MXN"
+
+const currencyFormatters = new Map<string, Intl.NumberFormat>()
+
+function getCurrencyFormatter(currency: CurrencyCode) {
+  const cached = currencyFormatters.get(currency)
+  if (cached) return cached
+  const formatter = new Intl.NumberFormat("es-PE", {
+    style: "currency",
+    currency,
+  })
+  currencyFormatters.set(currency, formatter)
+  return formatter
+}
 
 const dateFormatter = new Intl.DateTimeFormat("es-PE", {
   day: "2-digit",
@@ -9,8 +19,8 @@ const dateFormatter = new Intl.DateTimeFormat("es-PE", {
   year: "numeric",
 })
 
-export function formatCurrency(value: number) {
-  return currencyFormatter.format(value)
+export function formatCurrency(value: number, currency: CurrencyCode = "PEN") {
+  return getCurrencyFormatter(currency).format(value)
 }
 
 export function formatDate(value: string) {

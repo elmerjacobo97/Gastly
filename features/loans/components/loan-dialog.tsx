@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
- import { format } from "date-fns"
+import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -31,32 +32,62 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select"
+import { LoanCurrencyOptions } from "@/features/loans/components/loan-currency-options"
+import { normalizePersonName } from "@/features/loans/lib/group-loans"
 import { loanSchema, type LoanValues } from "@/features/loans/schemas/loan-schemas"
 import { createLoan } from "@/features/loans/server/actions"
+import { type Loan, LOAN_CURRENCY_LABELS } from "@/features/loans/types/loan-types"
 
 function getTodayStr() {
   return format(new Date(), "yyyy-MM-dd")
 }
 
-type LoanDialogProps = {
-  triggerLabel?: string
+const EMPTY_DEFAULTS: LoanValues = {
+  direction: "lent",
+  personName: "",
+  amount: 0,
+  currency: "PEN",
+  expectedOn: "",
+  loanedOn: getTodayStr(),
+  notes: "",
 }
 
-export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps) {
+type LoanDialogProps = {
+  triggerLabel?: string
+  loans: Loan[]
+  personNames: string[]
+}
+
+export function LoanDialog({
+  triggerLabel = "Nuevo préstamo",
+  loans,
+  personNames,
+}: LoanDialogProps) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const form = useForm<LoanValues>({
     resolver: zodResolver(loanSchema) as Resolver<LoanValues>,
-    defaultValues: { direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" },
+    defaultValues: EMPTY_DEFAULTS,
   })
+
+  const direction = useWatch({ control: form.control, name: "direction" })
+  const personName = useWatch({ control: form.control, name: "personName" })
+  const currency = useWatch({ control: form.control, name: "currency" })
+
+  const matchingBalance = loans.find(
+    (loan) =>
+      loan.direction === direction &&
+      loan.currency === currency &&
+      normalizePersonName(loan.personName) === normalizePersonName(personName ?? "")
+  )
 
   function onSubmit(values: LoanValues) {
     startTransition(async () => {
       try {
         await createLoan(values)
-        toast.success("Préstamo registrado")
-        form.reset({ direction: "lent", personName: "", amount: 0, expectedOn: "", loanedOn: getTodayStr(), notes: "" })
+        toast.success(matchingBalance ? "Monto sumado al saldo existente" : "Préstamo registrado")
+        form.reset({ ...EMPTY_DEFAULTS, loanedOn: getTodayStr() })
         setOpen(false)
       } catch (error) {
         toast.error("No se pudo registrar el préstamo", {
@@ -65,8 +96,6 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
       }
     })
   }
-
-  const direction = useWatch({ control: form.control, name: "direction" })
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -115,33 +144,59 @@ export function LoanDialog({ triggerLabel = "Nuevo préstamo" }: LoanDialogProps
                   <Input
                     {...field}
                     id="loan-person"
+                    list="loan-person-names"
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Juan García"
                   />
+                  <datalist id="loan-person-names">
+                    {personNames.map((name) => (
+                      <option key={name} value={name} />
+                    ))}
+                  </datalist>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
 
-            <Controller
-              control={form.control}
-              name="amount"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="loan-amount">Monto prestado (PEN)</FieldLabel>
-                  <NumberInput
-                    {...field}
-                    id="loan-amount"
-                    aria-invalid={fieldState.invalid}
-                    inputMode="decimal"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <Controller
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <Field>
+                    <FieldLabel htmlFor="loan-currency">Moneda</FieldLabel>
+                    <NativeSelect {...field} id="loan-currency">
+                      <LoanCurrencyOptions />
+                    </NativeSelect>
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="amount"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="loan-amount">Monto</FieldLabel>
+                    <NumberInput
+                      {...field}
+                      id="loan-amount"
+                      aria-invalid={fieldState.invalid}
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+            {matchingBalance && (
+              <FieldDescription>
+                Se sumará al saldo en {LOAN_CURRENCY_LABELS[matchingBalance.currency]} de {matchingBalance.personName}.
+              </FieldDescription>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <Controller

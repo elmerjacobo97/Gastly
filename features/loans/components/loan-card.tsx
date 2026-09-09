@@ -28,35 +28,41 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
 import { RecordPaymentDialog } from "@/features/loans/components/record-payment-dialog"
-import { type Loan } from "@/features/loans/types/loan-types"
+import { earliestLoanedOn } from "@/features/loans/lib/group-loans"
+import { type LoanPersonGroup } from "@/features/loans/types/loan-types"
 import { formatCurrency } from "@/lib/format"
 
 type LoanCardProps = {
-  loan: Loan
+  group: LoanPersonGroup
   settled: boolean
-  onEdit: (loan: Loan) => void
-  onHistory: (loan: Loan) => void
-  onDelete: (id: string) => void
+  onEdit: (group: LoanPersonGroup) => void
+  onHistory: (group: LoanPersonGroup) => void
+  onDelete: (group: LoanPersonGroup) => void
 }
 
-export function LoanCard({ loan, settled, onEdit, onHistory, onDelete }: LoanCardProps) {
-  const pctPaid = loan.amount > 0 ? Math.min(100, Math.round((loan.paidAmount / loan.amount) * 100)) : 0
+export function LoanCard({ group, settled, onEdit, onHistory, onDelete }: LoanCardProps) {
+  const loanedOn = earliestLoanedOn(group)
+  const pendingBalances = group.balances.filter((loan) => !loan.isSettled)
 
   return (
     <Card className={settled ? "opacity-60" : undefined}>
       <CardHeader className="flex flex-row items-start justify-between pb-3">
         <div className="min-w-0 flex-1">
-          <CardTitle className="truncate text-base">{loan.personName}</CardTitle>
+          <CardTitle className="truncate text-base">{group.personName}</CardTitle>
           <CardDescription>
-            {settled ? (loan.direction === "lent" ? "Presté · " : "Me prestaron · ") : loan.direction === "lent" ? "Prestado el " : "Recibido el "}
-            {format(new Date(`${loan.loanedOn}T12:00:00`), "d MMM yyyy", { locale: es })}
+            {settled
+              ? group.direction === "lent"
+                ? "Presté · "
+                : "Me prestaron · "
+              : group.direction === "lent"
+                ? "Desde el "
+                : "Recibido el "}
+            {format(new Date(`${loanedOn}T12:00:00`), "d MMM yyyy", { locale: es })}
           </CardDescription>
-          {!settled && <p className="mt-1 text-sm font-semibold tabular-nums">{formatCurrency(loan.amount)}</p>}
-          {!settled && loan.expectedOn && (
-            <Badge variant="secondary" className="mt-1.5 text-xs font-normal">
-              {loan.direction === "lent" ? "Devolución: " : "Pagar antes del "}
-              {format(new Date(`${loan.expectedOn}T12:00:00`), "d MMM yyyy", { locale: es })}
-            </Badge>
+          {!settled && group.balances.length > 1 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {group.balances.length} monedas
+            </p>
           )}
         </div>
         <DropdownMenu>
@@ -67,18 +73,19 @@ export function LoanCard({ loan, settled, onEdit, onHistory, onDelete }: LoanCar
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => onEdit(loan)}>
+            <DropdownMenuItem onSelect={() => onEdit(group)}>
               <PencilIcon />
               Editar
             </DropdownMenuItem>
-            {!settled && (
-              <DropdownMenuItem onSelect={() => onHistory(loan)}>
-                <HistoryIcon />
-                Historial de abonos
-              </DropdownMenuItem>
-            )}
-            {!settled && <DropdownMenuSeparator />}
-            <DropdownMenuItem onSelect={() => onDelete(loan.id)} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem onSelect={() => onHistory(group)}>
+              <HistoryIcon />
+              Historial
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => onDelete(group)}
+              className="text-destructive focus:text-destructive"
+            >
               <Trash2Icon />
               Eliminar
             </DropdownMenuItem>
@@ -87,19 +94,57 @@ export function LoanCard({ loan, settled, onEdit, onHistory, onDelete }: LoanCar
       </CardHeader>
       <CardContent>
         {settled ? (
-          <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2Icon className="size-3.5" />
-            Saldado · {formatCurrency(loan.amount)}
+          <div className="flex flex-col gap-1.5">
+            {group.balances.map((loan) => (
+              <div
+                key={loan.id}
+                className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
+              >
+                <CheckCircle2Icon className="size-3.5" />
+                Saldado · {formatCurrency(loan.amount, loan.currency)}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            <Progress value={pctPaid} className="[&>div]:bg-primary" />
-            <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-              <span>Abonado: {formatCurrency(loan.paidAmount)}</span>
-              <span className="font-medium text-destructive">Pendiente: {formatCurrency(loan.pendingAmount)}</span>
-            </div>
-            {loan.notes && <p className="truncate text-xs text-muted-foreground">{loan.notes}</p>}
-            <RecordPaymentDialog loan={loan} />
+            {group.balances.map((loan) => {
+              const pctPaid =
+                loan.amount > 0
+                  ? Math.min(100, Math.round((loan.paidAmount / loan.amount) * 100))
+                  : 0
+              return (
+                <div key={loan.id} className="flex flex-col gap-1.5">
+                  <p className="text-sm font-semibold tabular-nums">
+                    {formatCurrency(loan.amount, loan.currency)}
+                  </p>
+                  <Progress value={pctPaid} className="[&>div]:bg-primary" />
+                  <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+                    <span>Abonado: {formatCurrency(loan.paidAmount, loan.currency)}</span>
+                    <span className="font-medium text-destructive">
+                      Pendiente: {formatCurrency(loan.pendingAmount, loan.currency)}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+            {group.balances.some((loan) => loan.expectedOn) && (
+              <div className="flex flex-wrap gap-1.5">
+                {group.balances.flatMap((loan) =>
+                  loan.expectedOn
+                    ? [
+                        <Badge key={loan.id} variant="secondary" className="text-xs font-normal">
+                          {group.direction === "lent" ? "Devolución: " : "Pagar antes del "}
+                          {format(new Date(`${loan.expectedOn}T12:00:00`), "d MMM yyyy", { locale: es })}
+                          {group.balances.length > 1 ? ` · ${loan.currency}` : ""}
+                        </Badge>,
+                      ]
+                    : []
+                )}
+              </div>
+            )}
+            {pendingBalances.length > 0 && (
+              <RecordPaymentDialog personName={group.personName} balances={pendingBalances} />
+            )}
           </div>
         )}
       </CardContent>
