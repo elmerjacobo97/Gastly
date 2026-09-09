@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "build/**",
     ".agents/**",
     "next-env.d.ts",
+    // CLI has its own build
+    "cli/**",
   ]),
 ]);
 

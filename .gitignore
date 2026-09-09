@@ -20,6 +20,10 @@
 # production
 /build
 
+# cli
+cli/dist
+cli/node_modules
+
 # misc
 .DS_Store
 *.pem

@@ -36,6 +36,12 @@
 - Local env uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`; keep real values out of git because `.env*` is ignored.
 - Supabase SSR clients live in `lib/supabase/*`; auth session refresh is wired through Next 16 `proxy.ts`.
 
+## gastly-cli
+- CLI lives in `cli/` (own `package.json`, independent from workspace). Published as `@codigoconelmer/gastly-cli`.
+- Build: `pnpm build` (tsc) in `cli/`. Test: `pnpm test` (vitest) in `cli/`.
+- Agent docs: `cli/SKILL.md`. Copy to `~/.claude/skills/gastly-cli/SKILL.md` for global discovery.
+- Quick reference: `gastly-cli transactions new --type expense --amount 100 -d "desc" --json`, `gastly-cli debts --json`.
+
 
 <!-- headroom:rtk-instructions -->
 # RTK (Rust Token Killer) - Token-Optimized Commands
