@@ -130,7 +130,7 @@ function UserFooter({ userEmail, userName, signOutAction }: AppSidebarProps) {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="size-8 rounded-lg shrink-0">
+              <Avatar className="size-8 rounded-lg shrink-0 after:hidden">
                 <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
                   {initials}
                 </AvatarFallback>
@@ -154,7 +154,7 @@ function UserFooter({ userEmail, userName, signOutAction }: AppSidebarProps) {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="size-8 rounded-lg shrink-0">
+                <Avatar className="size-8 rounded-lg shrink-0 after:hidden">
                   <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
                     {initials}
                   </AvatarFallback>
