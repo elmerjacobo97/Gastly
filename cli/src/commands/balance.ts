@@ -14,7 +14,7 @@ export async function runBalance(args: string[]): Promise<void> {
 
   const { data, error } = await supabase
     .from("accounts")
-    .select("id, name, currency, balance, color")
+    .select("id, name, balance, color")
     .order("created_at", { ascending: true })
 
   if (error) throw new Error(error.message)
@@ -22,7 +22,7 @@ export async function runBalance(args: string[]): Promise<void> {
   const accounts: BalanceRecord[] = (data ?? []).map((row) => ({
     accountId: row.id,
     accountName: row.name,
-    currency: row.currency,
+    currency: (row as Record<string, unknown>).currency as string ?? "PEN",
     balance: Number(row.balance),
     color: row.color,
   }))
