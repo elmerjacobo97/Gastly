@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { DownloadIcon, PrinterIcon } from "lucide-react"
 import {
+  endOfMonth,
   endOfYear,
   format,
   startOfMonth,
@@ -36,13 +37,13 @@ function getPeriodDates(period: Period): { from: string; to: string; label: stri
   const today = new Date()
   switch (period) {
     case "1m":
-      return { from: format(startOfMonth(today), "yyyy-MM-dd"), to: format(today, "yyyy-MM-dd"), label: format(today, "MMMM yyyy", { locale: es }) }
+      return { from: format(startOfMonth(today), "yyyy-MM-dd"), to: format(endOfMonth(today), "yyyy-MM-dd"), label: format(today, "MMMM yyyy", { locale: es }) }
     case "3m":
-      return { from: format(startOfMonth(subMonths(today, 2)), "yyyy-MM-dd"), to: format(today, "yyyy-MM-dd"), label: "Últimos 3 meses" }
+      return { from: format(startOfMonth(subMonths(today, 2)), "yyyy-MM-dd"), to: format(endOfMonth(today), "yyyy-MM-dd"), label: "Últimos 3 meses" }
     case "6m":
-      return { from: format(startOfMonth(subMonths(today, 5)), "yyyy-MM-dd"), to: format(today, "yyyy-MM-dd"), label: "Últimos 6 meses" }
+      return { from: format(startOfMonth(subMonths(today, 5)), "yyyy-MM-dd"), to: format(endOfMonth(today), "yyyy-MM-dd"), label: "Últimos 6 meses" }
     case "year":
-      return { from: format(startOfYear(today), "yyyy-MM-dd"), to: format(today, "yyyy-MM-dd"), label: `Año ${today.getFullYear()}` }
+      return { from: format(startOfYear(today), "yyyy-MM-dd"), to: format(endOfYear(today), "yyyy-MM-dd"), label: `Año ${today.getFullYear()}` }
     case "last-year": {
       const lastYear = new Date(today.getFullYear() - 1, 0, 1)
       return { from: format(startOfYear(lastYear), "yyyy-MM-dd"), to: format(endOfYear(lastYear), "yyyy-MM-dd"), label: `Año ${today.getFullYear() - 1}` }

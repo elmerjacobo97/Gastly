@@ -1,4 +1,4 @@
-import { format, startOfYear, subYears } from "date-fns"
+import { endOfYear, format, startOfYear, subYears } from "date-fns"
 import { redirect } from "next/navigation"
 
 import { ReportsPanel } from "@/features/reports/components/reports-panel"
@@ -22,7 +22,7 @@ export default async function ReportsPage() {
   const [transactions, plan] = await Promise.all([
     getTransactions({
       from: format(startOfYear(subYears(today, 1)), "yyyy-MM-dd"),
-      to: format(today, "yyyy-MM-dd"),
+      to: format(endOfYear(today), "yyyy-MM-dd"),
     }),
     getMonthlyPlan(today),
   ])
