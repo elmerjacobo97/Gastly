@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+build
+coverage
+cli
+pnpm-lock.yaml
+cli/pnpm-lock.yaml
+supabase/.temp
+graphify-out
+.agents
+.claude
+.codegraph
+.impeccable
+.playwright-cli
+.tgrep
