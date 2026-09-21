@@ -1,11 +1,8 @@
-"use client"
+"use client";
 
-import { PiggyBankIcon } from "lucide-react"
+import { PiggyBankIcon } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
   EmptyContent,
@@ -13,9 +10,9 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import { CreateBudgetDialog } from "@/features/budget/components/create-budget-dialog"
-import { type Category } from "@/features/categories/types/category-types"
+} from "@/components/ui/empty";
+import { CreateBudgetDialog } from "@/features/budget/components/create-budget-dialog";
+import { type Category } from "@/features/categories/types/category-types";
 
 export function BudgetEmptyState({ categories }: { categories: Category[] }) {
   return (
@@ -28,7 +25,8 @@ export function BudgetEmptyState({ categories }: { categories: Category[] }) {
             </EmptyMedia>
             <EmptyTitle>Sin presupuestos aún</EmptyTitle>
             <EmptyDescription>
-              Crea tu primer presupuesto para controlar cuánto puedes gastar por categoría.
+              Crea tu primer presupuesto para controlar cuánto puedes gastar por
+              categoría.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
@@ -37,5 +35,5 @@ export function BudgetEmptyState({ categories }: { categories: Category[] }) {
         </Empty>
       </CardContent>
     </Card>
-  )
+  );
 }

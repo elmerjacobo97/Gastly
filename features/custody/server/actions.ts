@@ -1,97 +1,105 @@
-"use server"
+"use server";
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server";
 import {
   type CustodyMovementValues,
   type CustodyOrderValues,
-} from "@/features/custody/schemas/custody-schemas"
-import { type CustodyOrderStatus } from "@/features/custody/types/custody-types"
+} from "@/features/custody/schemas/custody-schemas";
+import { type CustodyOrderStatus } from "@/features/custody/types/custody-types";
 
 async function requireUser() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
-  if (authError || !user) throw new Error("Debes iniciar sesión.")
+  if (authError || !user) throw new Error("Debes iniciar sesión.");
 
-  return { supabase, userId: user.id }
+  return { supabase, userId: user.id };
 }
 
 function revalidateCustody() {
-  revalidatePath("/dashboard/custody")
-  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/custody");
+  revalidatePath("/dashboard");
 }
 
-export async function createCustodyOrder(values: CustodyOrderValues): Promise<void> {
-  const { supabase, userId } = await requireUser()
+export async function createCustodyOrder(
+  values: CustodyOrderValues,
+): Promise<void> {
+  const { supabase, userId } = await requireUser();
 
   const { error } = await supabase.from("custody_orders").insert({
     user_id: userId,
     person_name: values.personName,
     title: values.title,
-    target_amount: values.targetAmount && values.targetAmount > 0 ? values.targetAmount : null,
+    target_amount:
+      values.targetAmount && values.targetAmount > 0
+        ? values.targetAmount
+        : null,
     expected_on: values.expectedOn || null,
     notes: values.notes || null,
-  })
+  });
 
-  if (error) throw new Error(error.message)
-  revalidateCustody()
+  if (error) throw new Error(error.message);
+  revalidateCustody();
 }
 
 export async function updateCustodyOrder(
   id: string,
-  values: CustodyOrderValues
+  values: CustodyOrderValues,
 ): Promise<void> {
-  const { supabase } = await requireUser()
+  const { supabase } = await requireUser();
 
   const { error } = await supabase
     .from("custody_orders")
     .update({
       person_name: values.personName,
       title: values.title,
-      target_amount: values.targetAmount && values.targetAmount > 0 ? values.targetAmount : null,
+      target_amount:
+        values.targetAmount && values.targetAmount > 0
+          ? values.targetAmount
+          : null,
       expected_on: values.expectedOn || null,
       notes: values.notes || null,
     })
-    .eq("id", id)
+    .eq("id", id);
 
-  if (error) throw new Error(error.message)
-  revalidateCustody()
+  if (error) throw new Error(error.message);
+  revalidateCustody();
 }
 
 export async function updateCustodyOrderStatus(
   id: string,
-  status: CustodyOrderStatus
+  status: CustodyOrderStatus,
 ): Promise<void> {
-  const { supabase } = await requireUser()
+  const { supabase } = await requireUser();
 
   const { error } = await supabase
     .from("custody_orders")
     .update({ status })
-    .eq("id", id)
+    .eq("id", id);
 
-  if (error) throw new Error(error.message)
-  revalidateCustody()
+  if (error) throw new Error(error.message);
+  revalidateCustody();
 }
 
 export async function deleteCustodyOrder(id: string): Promise<void> {
-  const { supabase } = await requireUser()
+  const { supabase } = await requireUser();
 
-  const { error } = await supabase.from("custody_orders").delete().eq("id", id)
+  const { error } = await supabase.from("custody_orders").delete().eq("id", id);
 
-  if (error) throw new Error(error.message)
-  revalidateCustody()
+  if (error) throw new Error(error.message);
+  revalidateCustody();
 }
 
 export async function recordCustodyMovement(
   custodyOrderId: string,
-  values: CustodyMovementValues
+  values: CustodyMovementValues,
 ): Promise<void> {
-  const { supabase } = await requireUser()
+  const { supabase } = await requireUser();
 
   const { error } = await supabase.from("custody_movements").insert({
     custody_order_id: custodyOrderId,
@@ -100,17 +108,17 @@ export async function recordCustodyMovement(
     occurred_on: values.occurredOn,
     method: values.type === "deposit" ? values.method || null : null,
     notes: values.notes || null,
-  })
+  });
 
-  if (error) throw new Error(error.message)
-  revalidateCustody()
+  if (error) throw new Error(error.message);
+  revalidateCustody();
 }
 
 export async function updateCustodyMovement(
   id: string,
-  values: CustodyMovementValues
+  values: CustodyMovementValues,
 ): Promise<void> {
-  const { supabase } = await requireUser()
+  const { supabase } = await requireUser();
 
   const { error } = await supabase
     .from("custody_movements")
@@ -121,17 +129,20 @@ export async function updateCustodyMovement(
       method: values.type === "deposit" ? values.method || null : null,
       notes: values.notes || null,
     })
-    .eq("id", id)
+    .eq("id", id);
 
-  if (error) throw new Error(error.message)
-  revalidateCustody()
+  if (error) throw new Error(error.message);
+  revalidateCustody();
 }
 
 export async function deleteCustodyMovement(id: string): Promise<void> {
-  const { supabase } = await requireUser()
+  const { supabase } = await requireUser();
 
-  const { error } = await supabase.from("custody_movements").delete().eq("id", id)
+  const { error } = await supabase
+    .from("custody_movements")
+    .delete()
+    .eq("id", id);
 
-  if (error) throw new Error(error.message)
-  revalidateCustody()
+  if (error) throw new Error(error.message);
+  revalidateCustody();
 }

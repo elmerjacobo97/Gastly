@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { Loader2Icon, WalletCardsIcon } from "lucide-react"
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
-import { Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { Loader2Icon, WalletCardsIcon } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { Controller, useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -18,68 +18,75 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { DatePicker } from "@/components/ui/date-picker"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { CategoryIconBadge } from "@/components/category-icon-badge"
+} from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CategoryIconBadge } from "@/components/category-icon-badge";
 import {
   payInstallmentsSchema,
   type PayInstallmentsValues,
-} from "@/features/installments/schemas/installment-schemas"
-import { payMonthInstallments } from "@/features/installments/server/actions"
+} from "@/features/installments/schemas/installment-schemas";
+import { payMonthInstallments } from "@/features/installments/server/actions";
 import {
   type InstallmentPayment,
   type InstallmentPurchase,
-} from "@/features/installments/types/installment-types"
-import { formatCurrency } from "@/lib/format"
+} from "@/features/installments/types/installment-types";
+import { formatCurrency } from "@/lib/format";
 
-type PendingItem = { payment: InstallmentPayment; purchase: InstallmentPurchase }
+type PendingItem = {
+  payment: InstallmentPayment;
+  purchase: InstallmentPurchase;
+};
 
 type PayInstallmentsDialogProps = {
-  pending: PendingItem[]
-  month: Date
-}
+  pending: PendingItem[];
+  month: Date;
+};
 
 function getDefaultPaymentDate(month: Date): string {
-  const d = new Date(month.getFullYear(), month.getMonth(), 20)
-  return format(d, "yyyy-MM-dd")
+  const d = new Date(month.getFullYear(), month.getMonth(), 20);
+  return format(d, "yyyy-MM-dd");
 }
 
-export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogProps) {
-  const [open, setOpen] = useState(false)
+export function PayInstallmentsDialog({
+  pending,
+  month,
+}: PayInstallmentsDialogProps) {
+  const [open, setOpen] = useState(false);
 
   const form = useForm<PayInstallmentsValues>({
     resolver: zodResolver(payInstallmentsSchema),
     defaultValues: { occurredOn: getDefaultPaymentDate(month) },
-  })
+  });
 
-  const monthLabel = format(month, "MMMM yyyy", { locale: es })
-  const total = pending.reduce((s, { payment }) => s + payment.amount, 0)
+  const monthLabel = format(month, "MMMM yyyy", { locale: es });
+  const total = pending.reduce((s, { payment }) => s + payment.amount, 0);
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   function onSubmit(values: PayInstallmentsValues) {
     startTransition(async () => {
       try {
-        await payMonthInstallments(pending, values.occurredOn)
-        toast.success("Cuotas registradas")
-        form.reset({ occurredOn: getDefaultPaymentDate(month) })
-        setOpen(false)
+        await payMonthInstallments(pending, values.occurredOn);
+        toast.success("Cuotas registradas");
+        form.reset({ occurredOn: getDefaultPaymentDate(month) });
+        setOpen(false);
       } catch (error) {
         toast.error("No se pudieron registrar las cuotas", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
-  if (pending.length === 0) return null
+  if (pending.length === 0) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -91,9 +98,12 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
       </DialogTrigger>
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="capitalize">Pago de tarjeta · {monthLabel}</DialogTitle>
+          <DialogTitle className="capitalize">
+            Pago de tarjeta · {monthLabel}
+          </DialogTitle>
           <DialogDescription>
-            Se registrarán {pending.length} cuota{pending.length !== 1 ? "s" : ""} como gasto en transacciones.
+            Se registrarán {pending.length} cuota
+            {pending.length !== 1 ? "s" : ""} como gasto en transacciones.
           </DialogDescription>
         </DialogHeader>
 
@@ -101,7 +111,10 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
           <div className="px-4 pb-1">
             <div className="flex flex-col divide-y rounded-lg border">
               {pending.map(({ payment, purchase }) => (
-                <div key={payment.id} className="flex items-center gap-3 px-3 py-2.5">
+                <div
+                  key={payment.id}
+                  className="flex items-center gap-3 px-3 py-2.5"
+                >
                   {purchase.category && (
                     <CategoryIconBadge
                       icon={purchase.category.icon}
@@ -110,7 +123,9 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{purchase.description}</p>
+                    <p className="truncate text-sm font-medium">
+                      {purchase.description}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       Cuota {payment.paymentNumber}/{purchase.totalInstallments}
                     </p>
@@ -145,7 +160,9 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
                         onChange={field.onChange}
                         aria-invalid={fieldState.invalid}
                       />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -156,14 +173,20 @@ export function PayInstallmentsDialog({ pending, month }: PayInstallmentsDialogP
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
-          <Button disabled={isPending} form="pay-installments-form" type="submit">
+          <Button
+            disabled={isPending}
+            form="pay-installments-form"
+            type="submit"
+          >
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Confirmar pago
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

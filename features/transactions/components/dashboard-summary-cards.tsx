@@ -3,7 +3,7 @@ import {
   CreditCardIcon,
   TrendingUpIcon,
   WalletCardsIcon,
-} from "lucide-react"
+} from "lucide-react";
 
 import {
   Card,
@@ -12,18 +12,18 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { formatCurrency } from "@/lib/format"
+} from "@/components/ui/card";
+import { formatCurrency } from "@/lib/format";
 
 type DashboardSummaryCardsProps = {
-  availableForVariable: number
-  totalToPay: number
-  creditCardDebt: number
-  availableAfterSavings: number
-  variableSpent: number
-  usage: number
-  remaining: number
-}
+  availableForVariable: number;
+  totalToPay: number;
+  creditCardDebt: number;
+  availableAfterSavings: number;
+  variableSpent: number;
+  usage: number;
+  remaining: number;
+};
 
 export function DashboardSummaryCards({
   availableForVariable,
@@ -52,7 +52,10 @@ export function DashboardSummaryCards({
     {
       title: "Deuda de tarjeta",
       value: formatCurrency(creditCardDebt),
-      description: creditCardDebt > 0 ? "Compras pendientes de pagar" : "Sin deuda pendiente",
+      description:
+        creditCardDebt > 0
+          ? "Compras pendientes de pagar"
+          : "Sin deuda pendiente",
       icon: CreditCardIcon,
       positive: creditCardDebt === 0,
     },
@@ -63,34 +66,40 @@ export function DashboardSummaryCards({
       icon: TrendingUpIcon,
       positive: usage < 85,
     },
-  ]
+  ];
 
   return (
     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {summaryCards.map((card) => {
-        const Icon = card.icon
-        const isPositive = card.positive
+        const Icon = card.icon;
+        const isPositive = card.positive;
         return (
           <Card size="sm" key={card.title}>
             <CardHeader>
               <CardTitle className="text-xs font-medium text-muted-foreground">
                 {card.title}
               </CardTitle>
-              <CardDescription className="text-xs">{card.description}</CardDescription>
+              <CardDescription className="text-xs">
+                {card.description}
+              </CardDescription>
               <CardAction>
-                <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${isPositive ? "bg-muted/50 text-muted-foreground" : "bg-destructive/10 text-destructive"}`}>
+                <div
+                  className={`grid size-8 shrink-0 place-items-center rounded-lg ${isPositive ? "bg-muted/50 text-muted-foreground" : "bg-destructive/10 text-destructive"}`}
+                >
                   <Icon className="size-4" />
                 </div>
               </CardAction>
             </CardHeader>
             <CardContent>
-              <p className={`text-lg font-semibold tabular-nums ${isPositive ? "text-foreground" : "text-destructive"}`}>
+              <p
+                className={`text-lg font-semibold tabular-nums ${isPositive ? "text-foreground" : "text-destructive"}`}
+              >
                 {card.value}
               </p>
             </CardContent>
           </Card>
-        )
+        );
       })}
     </section>
-  )
+  );
 }

@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
 type RowActionsMenuProps = {
-  onEdit: () => void
-  onDelete: () => void
-  editLabel?: string
-  className?: string
-}
+  onEdit: () => void;
+  onDelete: () => void;
+  editLabel?: string;
+  className?: string;
+};
 
 export function RowActionsMenu({
   onEdit,
@@ -47,5 +47,5 @@ export function RowActionsMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

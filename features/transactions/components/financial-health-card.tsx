@@ -1,12 +1,12 @@
-import { Progress } from "@/components/ui/progress"
+import { Progress } from "@/components/ui/progress";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { formatCurrency } from "@/lib/format"
+} from "@/components/ui/card";
+import { formatCurrency } from "@/lib/format";
 
 function getHealthState(usage: number, remaining: number) {
   if (remaining < 0 || usage >= 100) {
@@ -17,7 +17,7 @@ function getHealthState(usage: number, remaining: number) {
       cardClassName: "border-destructive/30 bg-destructive/5",
       badgeClassName: "bg-destructive/10 text-destructive",
       progressClassName: "[&>div]:bg-destructive",
-    }
+    };
   }
   if (usage >= 85) {
     return {
@@ -27,7 +27,7 @@ function getHealthState(usage: number, remaining: number) {
       cardClassName: "border-orange-500/30 bg-orange-500/5",
       badgeClassName: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
       progressClassName: "[&>div]:bg-orange-500",
-    }
+    };
   }
   if (usage >= 70) {
     return {
@@ -37,7 +37,7 @@ function getHealthState(usage: number, remaining: number) {
       cardClassName: "border-amber-500/30 bg-amber-500/5",
       badgeClassName: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
       progressClassName: "[&>div]:bg-amber-500",
-    }
+    };
   }
   return {
     label: "Verde",
@@ -46,16 +46,19 @@ function getHealthState(usage: number, remaining: number) {
     cardClassName: "border-emerald-500/30 bg-emerald-500/5",
     badgeClassName: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
     progressClassName: "[&>div]:bg-emerald-500",
-  }
+  };
 }
 
 type FinancialHealthCardProps = {
-  usage: number
-  remaining: number
-}
+  usage: number;
+  remaining: number;
+};
 
-export function FinancialHealthCard({ usage, remaining }: FinancialHealthCardProps) {
-  const health = getHealthState(usage, remaining)
+export function FinancialHealthCard({
+  usage,
+  remaining,
+}: FinancialHealthCardProps) {
+  const health = getHealthState(usage, remaining);
 
   return (
     <Card className={health.cardClassName}>
@@ -67,26 +70,33 @@ export function FinancialHealthCard({ usage, remaining }: FinancialHealthCardPro
               <CardTitle className={`text-3xl ${health.className}`}>
                 {health.label}
               </CardTitle>
-              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${health.badgeClassName}`}>
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-medium ${health.badgeClassName}`}
+              >
                 {usage}% usado
               </span>
             </div>
           </div>
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground">Restante libre</p>
-            <p className={`text-2xl font-semibold tabular-nums ${remaining < 0 ? "text-destructive" : "text-foreground"}`}>
+            <p
+              className={`text-2xl font-semibold tabular-nums ${remaining < 0 ? "text-destructive" : "text-foreground"}`}
+            >
               {formatCurrency(remaining)}
             </p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <Progress value={Math.min(usage, 100)} className={health.progressClassName} />
+        <Progress
+          value={Math.min(usage, 100)}
+          className={health.progressClassName}
+        />
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <span>{health.description}</span>
           <span>Basado en tu disponible libre</span>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

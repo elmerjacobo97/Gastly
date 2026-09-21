@@ -1,37 +1,38 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { CreateGoalDialog } from "@/features/savings/components/create-goal-dialog"
-import { EditGoalDialog } from "@/features/savings/components/edit-goal-dialog"
-import { GoalsSection } from "@/features/savings/components/goals-section"
-import { SummaryCards } from "@/features/savings/components/summary-cards"
-import { deleteSavingsGoal } from "@/features/savings/server/actions"
-import { type SavingsGoal } from "@/features/savings/types/savings-types"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { CreateGoalDialog } from "@/features/savings/components/create-goal-dialog";
+import { EditGoalDialog } from "@/features/savings/components/edit-goal-dialog";
+import { GoalsSection } from "@/features/savings/components/goals-section";
+import { SummaryCards } from "@/features/savings/components/summary-cards";
+import { deleteSavingsGoal } from "@/features/savings/server/actions";
+import { type SavingsGoal } from "@/features/savings/types/savings-types";
 
 type SavingsPanelProps = {
-  goals: SavingsGoal[]
-}
+  goals: SavingsGoal[];
+};
 
 export function SavingsPanel({ goals }: SavingsPanelProps) {
-  const [isPending, startTransition] = useTransition()
-  const [editGoal, setEditGoal] = useState<SavingsGoal | null>(null)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition();
+  const [editGoal, setEditGoal] = useState<SavingsGoal | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   function handleDelete(id: string) {
     startTransition(async () => {
       try {
-        await deleteSavingsGoal(id)
-        toast.success("Meta eliminada")
-        setDeleteId(null)
+        await deleteSavingsGoal(id);
+        toast.success("Meta eliminada");
+        setDeleteId(null);
       } catch (error) {
         toast.error("No se pudo eliminar la meta", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -68,5 +69,5 @@ export function SavingsPanel({ goals }: SavingsPanelProps) {
         onConfirm={() => deleteId && handleDelete(deleteId)}
       />
     </main>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const recurringPaymentSchema = z.object({
   description: z.string().trim().min(2, "Ingresa un nombre."),
@@ -15,13 +15,15 @@ export const recurringPaymentSchema = z.object({
   accountId: z.string().optional(),
   notes: z.string().trim().optional(),
   type: z.enum(["expense", "income"]),
-})
+});
 
 export const recurringPaymentPaymentSchema = z.object({
   amount: z.coerce.number().positive("El monto real debe ser mayor a 0."),
   occurredOn: z.string().min(1, "Selecciona la fecha de pago."),
   notes: z.string().trim().optional(),
-})
+});
 
-export type RecurringPaymentValues = z.infer<typeof recurringPaymentSchema>
-export type RecurringPaymentPaymentValues = z.infer<typeof recurringPaymentPaymentSchema>
+export type RecurringPaymentValues = z.infer<typeof recurringPaymentSchema>;
+export type RecurringPaymentPaymentValues = z.infer<
+  typeof recurringPaymentPaymentSchema
+>;

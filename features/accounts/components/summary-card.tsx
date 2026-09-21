@@ -1,4 +1,4 @@
-import { WalletIcon } from "lucide-react"
+import { WalletIcon } from "lucide-react";
 
 import {
   Card,
@@ -6,17 +6,19 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { type Account } from "@/features/accounts/types/account-types"
-import { formatCurrency } from "@/lib/format"
+} from "@/components/ui/card";
+import { type Account } from "@/features/accounts/types/account-types";
+import { formatCurrency } from "@/lib/format";
 
 export function SummaryCard({ accounts }: { accounts: Account[] }) {
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0)
+  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
 
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle className="text-xs font-medium text-muted-foreground">Total en cuentas</CardTitle>
+        <CardTitle className="text-xs font-medium text-muted-foreground">
+          Total en cuentas
+        </CardTitle>
         <CardAction>
           <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
             <WalletIcon className="size-4" />
@@ -32,5 +34,5 @@ export function SummaryCard({ accounts }: { accounts: Account[] }) {
         </p>
       </CardContent>
     </Card>
-  )
+  );
 }

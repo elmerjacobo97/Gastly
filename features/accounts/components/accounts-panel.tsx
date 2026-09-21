@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -12,7 +12,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import {
   Empty,
   EmptyContent,
@@ -20,55 +20,67 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import { Card, CardContent } from "@/components/ui/card"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { AccountsGrid } from "@/features/accounts/components/accounts-grid"
-import { CreateAccountDialog } from "@/features/accounts/components/create-account-dialog"
-import { EditAccountDialog } from "@/features/accounts/components/edit-account-dialog"
-import { SummaryCard } from "@/features/accounts/components/summary-card"
-import { TransferDialog } from "@/features/accounts/components/transfer-dialog"
-import { TransfersList } from "@/features/accounts/components/transfers-list"
-import { exportTransfersCSV, transfersCsvFilename } from "@/features/accounts/lib/transfers-export"
-import { deleteAccount } from "@/features/accounts/server/actions"
-import { type Account, type AccountTransfer } from "@/features/accounts/types/account-types"
-import { WalletIcon } from "lucide-react"
+} from "@/components/ui/empty";
+import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { AccountsGrid } from "@/features/accounts/components/accounts-grid";
+import { CreateAccountDialog } from "@/features/accounts/components/create-account-dialog";
+import { EditAccountDialog } from "@/features/accounts/components/edit-account-dialog";
+import { SummaryCard } from "@/features/accounts/components/summary-card";
+import { TransferDialog } from "@/features/accounts/components/transfer-dialog";
+import { TransfersList } from "@/features/accounts/components/transfers-list";
+import {
+  exportTransfersCSV,
+  transfersCsvFilename,
+} from "@/features/accounts/lib/transfers-export";
+import { deleteAccount } from "@/features/accounts/server/actions";
+import {
+  type Account,
+  type AccountTransfer,
+} from "@/features/accounts/types/account-types";
+import { WalletIcon } from "lucide-react";
 
 type AccountsPanelProps = {
-  accounts: Account[]
-  transfers: AccountTransfer[]
-}
+  accounts: Account[];
+  transfers: AccountTransfer[];
+};
 
 export function AccountsPanel({ accounts, transfers }: AccountsPanelProps) {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
-  const [editAccount, setEditAccount] = useState<Account | null>(null)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [transferFromId, setTransferFromId] = useState<string | undefined>(undefined)
-  const [transferOpen, setTransferOpen] = useState(false)
-  const [csvConfirmOpen, setCsvConfirmOpen] = useState(false)
+  const [editAccount, setEditAccount] = useState<Account | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [transferFromId, setTransferFromId] = useState<string | undefined>(
+    undefined,
+  );
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [csvConfirmOpen, setCsvConfirmOpen] = useState(false);
 
   function handleDelete(id: string) {
     startTransition(async () => {
       try {
-        await deleteAccount(id)
-        toast.success("Cuenta eliminada")
-        setDeleteId(null)
+        await deleteAccount(id);
+        toast.success("Cuenta eliminada");
+        setDeleteId(null);
       } catch (error) {
         toast.error("No se pudo eliminar la cuenta", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Cuentas</h1>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            Cuentas
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Registra tus cuentas bancarias y de ahorro para saber dónde está tu dinero.
+            Registra tus cuentas bancarias y de ahorro para saber dónde está tu
+            dinero.
           </p>
         </div>
         <CreateAccountDialog />
@@ -86,7 +98,8 @@ export function AccountsPanel({ accounts, transfers }: AccountsPanelProps) {
                 </EmptyMedia>
                 <EmptyTitle>Sin cuentas registradas</EmptyTitle>
                 <EmptyDescription>
-                  Agrega tus cuentas bancarias o de ahorro para ver tu patrimonio total.
+                  Agrega tus cuentas bancarias o de ahorro para ver tu
+                  patrimonio total.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -100,14 +113,17 @@ export function AccountsPanel({ accounts, transfers }: AccountsPanelProps) {
           accounts={accounts}
           onEdit={setEditAccount}
           onTransfer={(accountId) => {
-            setTransferFromId(accountId)
-            setTransferOpen(true)
+            setTransferFromId(accountId);
+            setTransferOpen(true);
           }}
           onDelete={setDeleteId}
         />
       )}
 
-      <TransfersList transfers={transfers} onExport={() => setCsvConfirmOpen(true)} />
+      <TransfersList
+        transfers={transfers}
+        onExport={() => setCsvConfirmOpen(true)}
+      />
 
       {editAccount && (
         <EditAccountDialog
@@ -121,8 +137,8 @@ export function AccountsPanel({ accounts, transfers }: AccountsPanelProps) {
         accounts={accounts}
         open={transferOpen}
         onOpenChange={(o) => {
-          setTransferOpen(o)
-          if (!o) setTransferFromId(undefined)
+          setTransferOpen(o);
+          if (!o) setTransferFromId(undefined);
         }}
         defaultFromAccountId={transferFromId}
       />
@@ -150,8 +166,8 @@ export function AccountsPanel({ accounts, transfers }: AccountsPanelProps) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                exportTransfersCSV(transfers, transfersCsvFilename())
-                setCsvConfirmOpen(false)
+                exportTransfersCSV(transfers, transfersCsvFilename());
+                setCsvConfirmOpen(false);
               }}
             >
               Descargar
@@ -160,5 +176,5 @@ export function AccountsPanel({ accounts, transfers }: AccountsPanelProps) {
         </AlertDialogContent>
       </AlertDialog>
     </main>
-  )
+  );
 }

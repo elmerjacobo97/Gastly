@@ -1,10 +1,10 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 
 export default function LoansLoading() {
   return (
@@ -62,5 +62,5 @@ export default function LoansLoading() {
         ))}
       </div>
     </main>
-  )
+  );
 }

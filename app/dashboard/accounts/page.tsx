@@ -1,20 +1,26 @@
-import { redirect } from "next/navigation"
+import { redirect } from "next/navigation";
 
-import { AccountsPanel } from "@/features/accounts/components/accounts-panel"
-import { getAccounts, getAccountTransfers } from "@/features/accounts/server/queries"
-import { createClient } from "@/lib/supabase/server"
+import { AccountsPanel } from "@/features/accounts/components/accounts-panel";
+import {
+  getAccounts,
+  getAccountTransfers,
+} from "@/features/accounts/server/queries";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AccountsPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login")
+    redirect("/login");
   }
 
-  const [accounts, transfers] = await Promise.all([getAccounts(), getAccountTransfers()])
+  const [accounts, transfers] = await Promise.all([
+    getAccounts(),
+    getAccountTransfers(),
+  ]);
 
-  return <AccountsPanel accounts={accounts} transfers={transfers} />
+  return <AccountsPanel accounts={accounts} transfers={transfers} />;
 }

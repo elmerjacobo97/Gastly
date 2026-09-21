@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon, PlusIcon } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
-import { CategoryIconPicker } from "@/components/category-icon-picker"
-import { ColorPicker } from "@/components/color-picker"
-import { Button } from "@/components/ui/button"
+import { CategoryIconPicker } from "@/components/category-icon-picker";
+import { ColorPicker } from "@/components/color-picker";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -18,24 +18,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
   NativeSelectOption,
-} from "@/components/ui/native-select"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { createCategory } from "@/features/categories/server/actions"
+} from "@/components/ui/native-select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { createCategory } from "@/features/categories/server/actions";
 import {
   type CategoryValues,
   categorySchema,
-} from "@/features/categories/schemas/category-schemas"
+} from "@/features/categories/schemas/category-schemas";
 
 const colorOptions = [
   { value: "red", hex: "#ef4444" },
@@ -56,36 +56,42 @@ const colorOptions = [
   { value: "rose", hex: "#f43f5e" },
   { value: "slate", hex: "#64748b" },
   { value: "zinc", hex: "#71717a" },
-]
+];
 
-const EMPTY_DEFAULTS: CategoryValues = { name: "", type: "expense", color: "blue", icon: "tag" }
+const EMPTY_DEFAULTS: CategoryValues = {
+  name: "",
+  type: "expense",
+  color: "blue",
+  icon: "tag",
+};
 
 export function CreateCategoryDialog() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   const form = useForm<CategoryValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: EMPTY_DEFAULTS,
-  })
+  });
 
-  const selectedColor = useWatch({ control: form.control, name: "color" })
-  const selectedIcon = useWatch({ control: form.control, name: "icon" })
+  const selectedColor = useWatch({ control: form.control, name: "color" });
+  const selectedIcon = useWatch({ control: form.control, name: "icon" });
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   function onSubmit(values: CategoryValues) {
     startTransition(async () => {
       try {
-        await createCategory(values)
-        toast.success("Categoría creada")
-        form.reset(EMPTY_DEFAULTS)
-        setOpen(false)
+        await createCategory(values);
+        toast.success("Categoría creada");
+        form.reset(EMPTY_DEFAULTS);
+        setOpen(false);
       } catch (error) {
         toast.error("No se pudo crear la categoría", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -124,7 +130,9 @@ export function CreateCategoryDialog() {
                         id="category-name"
                         placeholder="Ej. Comida, sueldo, transporte"
                       />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -140,10 +148,16 @@ export function CreateCategoryDialog() {
                         className="w-full"
                         id="category-type"
                       >
-                        <NativeSelectOption value="expense">Gasto</NativeSelectOption>
-                        <NativeSelectOption value="income">Ingreso</NativeSelectOption>
+                        <NativeSelectOption value="expense">
+                          Gasto
+                        </NativeSelectOption>
+                        <NativeSelectOption value="income">
+                          Ingreso
+                        </NativeSelectOption>
                       </NativeSelect>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -153,12 +167,14 @@ export function CreateCategoryDialog() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Color</FieldLabel>
-                       <ColorPicker
-                         options={colorOptions}
-                         value={selectedColor}
-                         onChange={field.onChange}
-                       />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      <ColorPicker
+                        options={colorOptions}
+                        value={selectedColor}
+                        onChange={field.onChange}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -168,11 +184,13 @@ export function CreateCategoryDialog() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Icono</FieldLabel>
-                       <CategoryIconPicker
-                         value={selectedIcon}
-                         onChange={field.onChange}
-                       />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      <CategoryIconPicker
+                        value={selectedIcon}
+                        onChange={field.onChange}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -182,14 +200,20 @@ export function CreateCategoryDialog() {
         </ScrollArea>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
-          <Button disabled={isPending} form="create-category-form" type="submit">
+          <Button
+            disabled={isPending}
+            form="create-category-form"
+            type="submit"
+          >
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar categoría
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

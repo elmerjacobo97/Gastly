@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { Card, CardContent } from "@/components/ui/card"
-import { RecurringPaymentRow } from "@/features/recurring-payments/components/recurring-payment-row"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+import { Card, CardContent } from "@/components/ui/card";
+import { RecurringPaymentRow } from "@/features/recurring-payments/components/recurring-payment-row";
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types";
 
 type RecurringPaymentListProps = {
-  payments: RecurringPayment[]
-  monthKey: string
-  pending: boolean
-  onPay: (payment: RecurringPayment) => void
-  onEdit: (payment: RecurringPayment) => void
-  onHistory: (payment: RecurringPayment) => void
-  onToggle: (payment: RecurringPayment) => void
-  onDelete: (id: string) => void
-}
+  payments: RecurringPayment[];
+  monthKey: string;
+  pending: boolean;
+  onPay: (payment: RecurringPayment) => void;
+  onEdit: (payment: RecurringPayment) => void;
+  onHistory: (payment: RecurringPayment) => void;
+  onToggle: (payment: RecurringPayment) => void;
+  onDelete: (id: string) => void;
+};
 
 export function RecurringPaymentList({
   payments,
@@ -45,5 +45,5 @@ export function RecurringPaymentList({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

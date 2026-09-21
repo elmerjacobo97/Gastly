@@ -1,22 +1,25 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { CategoryIcon } from "@/components/category-icon-badge"
-import { categoryIconOptions } from "@/components/category-icon-data"
+import { Button } from "@/components/ui/button";
+import { CategoryIcon } from "@/components/category-icon-badge";
+import { categoryIconOptions } from "@/components/category-icon-data";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 type CategoryIconPickerProps = {
-  value?: string
-  onChange: (value: string) => void
-}
+  value?: string;
+  onChange: (value: string) => void;
+};
 
-export function CategoryIconPicker({ value, onChange }: CategoryIconPickerProps) {
+export function CategoryIconPicker({
+  value,
+  onChange,
+}: CategoryIconPickerProps) {
   return (
     <TooltipProvider>
       <div className="grid grid-cols-5 gap-2 rounded-lg border p-3 sm:grid-cols-6">
@@ -31,7 +34,7 @@ export function CategoryIconPicker({ value, onChange }: CategoryIconPickerProps)
                 className={cn(
                   "border text-muted-foreground hover:bg-muted hover:text-foreground",
                   value === option.value &&
-                    "border-primary bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
+                    "border-primary bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary",
                 )}
               >
                 <CategoryIcon name={option.value} className="size-4" />
@@ -43,5 +46,5 @@ export function CategoryIconPicker({ value, onChange }: CategoryIconPickerProps)
         ))}
       </div>
     </TooltipProvider>
-  )
+  );
 }

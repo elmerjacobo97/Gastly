@@ -96,5 +96,6 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<prod anon key>
 ```
 
 Set Site URL and redirect URL in Supabase dashboard → Authentication:
+
 - Site URL: `https://gastly.elmerjacobo.dev`
 - Redirect URL: `https://gastly.elmerjacobo.dev/**`

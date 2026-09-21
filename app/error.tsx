@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
-import Link from 'next/link';
+import { useEffect } from "react";
+import { AlertTriangleIcon, RefreshCwIcon } from "lucide-react";
+import Link from "next/link";
 
-import { Logo } from '@/components/logo';
-import { Button } from '@/components/ui/button';
+import { Logo } from "@/components/logo";
+import { Button } from "@/components/ui/button";
 
 export default function Error({
   error,
@@ -31,9 +31,12 @@ export default function Error({
           </div>
 
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Algo salió mal</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Algo salió mal
+            </h1>
             <p className="max-w-sm text-pretty text-sm text-muted-foreground">
-              Ocurrió un error inesperado. Puedes intentar de nuevo o volver al inicio.
+              Ocurrió un error inesperado. Puedes intentar de nuevo o volver al
+              inicio.
             </p>
           </div>
         </div>

@@ -1,31 +1,36 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { addMonths, format, isSameMonth, subMonths } from "date-fns"
-import { es } from "date-fns/locale"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { useRouter } from "next/navigation";
+import { addMonths, format, isSameMonth, subMonths } from "date-fns";
+import { es } from "date-fns/locale";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
 type MonthNavProps = {
-  value: Date
-  basePath?: string
-  onChange?: (date: Date) => void
-  allowFuture?: boolean
-}
+  value: Date;
+  basePath?: string;
+  onChange?: (date: Date) => void;
+  allowFuture?: boolean;
+};
 
-export function MonthNav({ value, basePath, onChange, allowFuture = false }: MonthNavProps) {
-  const router = useRouter()
-  const isCurrentMonth = isSameMonth(value, new Date())
+export function MonthNav({
+  value,
+  basePath,
+  onChange,
+  allowFuture = false,
+}: MonthNavProps) {
+  const router = useRouter();
+  const isCurrentMonth = isSameMonth(value, new Date());
 
   function navigate(date: Date) {
     if (onChange) {
-      onChange(date)
-      return
+      onChange(date);
+      return;
     }
-    const month = format(date, "yyyy-MM")
-    const target = basePath ?? window.location.pathname
-    router.push(`${target}?month=${month}`)
+    const month = format(date, "yyyy-MM");
+    const target = basePath ?? window.location.pathname;
+    router.push(`${target}?month=${month}`);
   }
 
   return (
@@ -51,5 +56,5 @@ export function MonthNav({ value, basePath, onChange, allowFuture = false }: Mon
         <ChevronRightIcon className="size-4" />
       </Button>
     </div>
-  )
+  );
 }

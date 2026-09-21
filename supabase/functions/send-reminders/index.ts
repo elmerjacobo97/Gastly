@@ -1,10 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
-const FROM_EMAIL = 'Gastly <noreply@elmerjacobo.dev>';
-const dateFormatter = new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long' });
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
+const FROM_EMAIL = "Gastly <noreply@elmerjacobo.dev>";
+const dateFormatter = new Intl.DateTimeFormat("es-PE", {
+  day: "numeric",
+  month: "long",
+});
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -23,7 +26,7 @@ function formatCurrency(amount: number) {
 }
 
 function formatDate(date: string) {
-  const [year, month, day] = date.split('-').map(Number);
+  const [year, month, day] = date.split("-").map(Number);
   return dateFormatter.format(new Date(year, month - 1, day));
 }
 
@@ -43,7 +46,7 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
           <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;font-weight:600;text-align:right;color:#24292e">${formatCurrency(p.amount)}</td>
         </tr>`;
     })
-    .join('');
+    .join("");
 
   const total = payments.reduce((sum, p) => sum + p.amount, 0);
   const count = payments.length;
@@ -89,7 +92,7 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
                       <tr>
                         <td>
                           <p style="font-size:14px;line-height:24px;margin-bottom:16px;margin-top:0;">
-                            Hola, <strong>${displayName}</strong>. Tienes ${count === 1 ? 'un pago' : `${count} pagos`} próximo${count !== 1 ? 's' : ''} en los próximos días:
+                            Hola, <strong>${displayName}</strong>. Tienes ${count === 1 ? "un pago" : `${count} pagos`} próximo${count !== 1 ? "s" : ""} en los próximos días:
                           </p>
 
                           <!-- Payments table -->
@@ -144,13 +147,15 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
 
 function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
   const rows = payments
-    .map((p) => `
+    .map(
+      (p) => `
       <tr>
         <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;color:#24292e">${p.description}</td>
         <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;color:#dc2626"><strong>Venció ayer</strong> · ${formatDate(p.next_due_on)}</td>
         <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;font-weight:600;text-align:right;color:#24292e">${formatCurrency(p.amount)}</td>
-      </tr>`)
-    .join('');
+      </tr>`,
+    )
+    .join("");
 
   const total = payments.reduce((sum, p) => sum + p.amount, 0);
   const count = payments.length;
@@ -191,7 +196,7 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
                       <tr>
                         <td>
                           <p style="font-size:14px;line-height:24px;margin-bottom:16px;margin-top:0;">
-                            Hola, <strong>${displayName}</strong>. ${count === 1 ? 'Este pago venció' : `Estos ${count} pagos vencieron`} ayer y aún no se han registrado:
+                            Hola, <strong>${displayName}</strong>. ${count === 1 ? "Este pago venció" : `Estos ${count} pagos vencieron`} ayer y aún no se han registrado:
                           </p>
                           <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px;">
                             <tbody>${rows}
@@ -237,10 +242,10 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({ from: FROM_EMAIL, to, subject, html }),
@@ -252,7 +257,12 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
-type PaymentRow = { user_id: string; description: string; amount: number; next_due_on: string };
+type PaymentRow = {
+  user_id: string;
+  description: string;
+  amount: number;
+  next_due_on: string;
+};
 
 function groupByUser(rows: PaymentRow[]): Map<string, PaymentRow[]> {
   const map = new Map<string, PaymentRow[]>();
@@ -274,13 +284,18 @@ async function processAndSend(
   let sent = 0;
 
   for (const [userId, userPayments] of byUser) {
-    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.admin.getUserById(userId);
     if (userError || !user?.email) {
       console.error(`Could not fetch user ${userId}:`, userError?.message);
       continue;
     }
 
-    const displayName = (user.user_metadata?.full_name as string | undefined) || user.email.split('@')[0];
+    const displayName =
+      (user.user_metadata?.full_name as string | undefined) ||
+      user.email.split("@")[0];
     const duePayments: DuePayment[] = userPayments.map((p) => ({
       user_id: userId,
       email: user.email!,
@@ -307,37 +322,42 @@ async function processAndSend(
 
 Deno.serve(async () => {
   try {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split("T")[0];
     const in3Days = new Date();
     in3Days.setDate(in3Days.getDate() + 3);
-    const in3DaysStr = in3Days.toISOString().split('T')[0];
+    const in3DaysStr = in3Days.toISOString().split("T")[0];
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
 
     // Query upcoming (hoy + 3) and overdue (ayer) in parallel
     const [upcomingRes, overdueRes] = await Promise.all([
       supabase
-        .from('recurring_expenses')
-        .select('user_id, description, amount, next_due_on')
-        .eq('is_active', true)
-        .eq('next_due_on', in3DaysStr),
+        .from("recurring_expenses")
+        .select("user_id, description, amount, next_due_on")
+        .eq("is_active", true)
+        .eq("next_due_on", in3DaysStr),
       supabase
-        .from('recurring_expenses')
-        .select('user_id, description, amount, next_due_on')
-        .eq('is_active', true)
-        .eq('next_due_on', yesterdayStr),
+        .from("recurring_expenses")
+        .select("user_id, description, amount, next_due_on")
+        .eq("is_active", true)
+        .eq("next_due_on", yesterdayStr),
     ]);
 
-    if (upcomingRes.error) console.error('Upcoming query error:', upcomingRes.error.message);
-    if (overdueRes.error) console.error('Overdue query error:', overdueRes.error.message);
+    if (upcomingRes.error)
+      console.error("Upcoming query error:", upcomingRes.error.message);
+    if (overdueRes.error)
+      console.error("Overdue query error:", overdueRes.error.message);
 
     const [upcomingSent, overdueSent] = await Promise.all([
       upcomingRes.data?.length
         ? processAndSend(
             upcomingRes.data,
             3,
-            (n, first) => n === 1 ? `Recordatorio: ${first} vence en 3 días` : `Recordatorio: ${n} pagos próximos en 3 días`,
+            (n, first) =>
+              n === 1
+                ? `Recordatorio: ${first} vence en 3 días`
+                : `Recordatorio: ${n} pagos próximos en 3 días`,
             buildEmail,
           )
         : Promise.resolve(0),
@@ -345,16 +365,27 @@ Deno.serve(async () => {
         ? processAndSend(
             overdueRes.data,
             -1,
-            (n, first) => n === 1 ? `⚠️ ${first} venció ayer` : `⚠️ ${n} pagos vencieron ayer`,
+            (n, first) =>
+              n === 1
+                ? `⚠️ ${first} venció ayer`
+                : `⚠️ ${n} pagos vencieron ayer`,
             buildOverdueEmail,
           )
         : Promise.resolve(0),
     ]);
 
     console.log(`Done. Upcoming: ${upcomingSent}, Overdue: ${overdueSent}`);
-    return new Response(JSON.stringify({ upcoming: upcomingSent, overdue: overdueSent, date: todayStr }));
+    return new Response(
+      JSON.stringify({
+        upcoming: upcomingSent,
+        overdue: overdueSent,
+        date: todayStr,
+      }),
+    );
   } catch (err) {
-    console.error('Unexpected error:', err);
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
+    console.error("Unexpected error:", err);
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+    });
   }
 });

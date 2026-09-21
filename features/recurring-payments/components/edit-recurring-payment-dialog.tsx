@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect, useTransition } from "react"
-import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useTransition } from "react";
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogClose,
@@ -17,39 +17,39 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { NumberInput } from "@/components/ui/number-input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   NativeSelect,
   NativeSelectOption,
-} from "@/components/ui/native-select"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Textarea } from "@/components/ui/textarea"
-import { AccountSelect } from "@/components/account-select"
-import { CategorySelect } from "@/components/category-select"
-import { updateRecurringPayment } from "@/features/recurring-payments/server/actions"
-import { type Account } from "@/features/accounts/types/account-types"
-import { type Category } from "@/features/categories/types/category-types"
+} from "@/components/ui/native-select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { AccountSelect } from "@/components/account-select";
+import { CategorySelect } from "@/components/category-select";
+import { updateRecurringPayment } from "@/features/recurring-payments/server/actions";
+import { type Account } from "@/features/accounts/types/account-types";
+import { type Category } from "@/features/categories/types/category-types";
 import {
   recurringPaymentSchema,
   type RecurringPaymentValues,
-} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
+} from "@/features/recurring-payments/schemas/recurring-payment-schemas";
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types";
 
 type EditRecurringPaymentDialogProps = {
-  payment: RecurringPayment
-  accounts: Account[]
-  categories: Category[]
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+  payment: RecurringPayment;
+  accounts: Account[];
+  categories: Category[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
 function buildValues(payment: RecurringPayment): RecurringPaymentValues {
   return {
@@ -63,7 +63,7 @@ function buildValues(payment: RecurringPayment): RecurringPaymentValues {
     accountId: payment.accountId ?? "",
     notes: payment.notes ?? "",
     type: payment.type,
-  }
+  };
 }
 
 export function EditRecurringPaymentDialog({
@@ -74,246 +74,318 @@ export function EditRecurringPaymentDialog({
   onOpenChange,
 }: EditRecurringPaymentDialogProps) {
   const form = useForm<RecurringPaymentValues>({
-    resolver: zodResolver(recurringPaymentSchema) as Resolver<RecurringPaymentValues>,
+    resolver: zodResolver(
+      recurringPaymentSchema,
+    ) as Resolver<RecurringPaymentValues>,
     defaultValues: buildValues(payment),
-  })
+  });
 
   useEffect(() => {
-    if (open) form.reset(buildValues(payment))
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (open) form.reset(buildValues(payment));
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const frequency = useWatch({ control: form.control, name: "frequency" })
-  const type = useWatch({ control: form.control, name: "type" })
-  const [isPending, startTransition] = useTransition()
-  const router = useRouter()
+  const frequency = useWatch({ control: form.control, name: "frequency" });
+  const type = useWatch({ control: form.control, name: "type" });
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function onSubmit(values: RecurringPaymentValues) {
     startTransition(async () => {
       try {
-        await updateRecurringPayment(payment.id, values)
-        toast.success("Pago recurrente actualizado")
-        onOpenChange(false)
-        router.refresh()
+        await updateRecurringPayment(payment.id, values);
+        toast.success("Pago recurrente actualizado");
+        onOpenChange(false);
+        router.refresh();
       } catch (error) {
         toast.error("No se pudo actualizar el pago recurrente", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Editar pago recurrente</DialogTitle>
-            <DialogDescription>
-              Modifica los datos del pago recurrente.
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="-mx-4 min-h-0">
-            <div className="px-4 pb-1">
-              <form
-                className="flex flex-col gap-5"
-                id="edit-recurring-payment-form"
-                noValidate
-                onSubmit={form.handleSubmit(onSubmit)}
-              >
-                <FieldGroup>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Editar pago recurrente</DialogTitle>
+          <DialogDescription>
+            Modifica los datos del pago recurrente.
+          </DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="px-4 pb-1">
+            <form
+              className="flex flex-col gap-5"
+              id="edit-recurring-payment-form"
+              noValidate
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <FieldGroup>
+                <Controller
+                  control={form.control}
+                  name="type"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="erp-type">Tipo</FieldLabel>
+                      <NativeSelect
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="erp-type"
+                      >
+                        <NativeSelectOption value="expense">
+                          Gasto recurrente
+                        </NativeSelectOption>
+                        <NativeSelectOption value="income">
+                          Ingreso recurrente
+                        </NativeSelectOption>
+                      </NativeSelect>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="description"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="erp-description">Nombre</FieldLabel>
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="erp-description"
+                        placeholder={
+                          type === "income"
+                            ? "Sueldo, Freelance"
+                            : "Disney+, Luz, Claude Code"
+                        }
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="amount"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="erp-amount">
+                        Monto estimado (PEN)
+                      </FieldLabel>
+                      <NumberInput
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="erp-amount"
+                        inputMode="decimal"
+                        min="0"
+                        placeholder="0.00"
+                        step="0.01"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="categoryId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="erp-category">Categoría</FieldLabel>
+                      <CategorySelect
+                        categories={categories}
+                        id="erp-category"
+                        value={field.value}
+                        onChange={field.onChange}
+                        type={type === "income" ? "income" : "expense"}
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
                   <Controller
                     control={form.control}
-                    name="type"
+                    name="frequency"
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="erp-type">Tipo</FieldLabel>
-                        <NativeSelect {...field} aria-invalid={fieldState.invalid} id="erp-type">
-                          <NativeSelectOption value="expense">Gasto recurrente</NativeSelectOption>
-                          <NativeSelectOption value="income">Ingreso recurrente</NativeSelectOption>
+                        <FieldLabel htmlFor="erp-frequency">
+                          Frecuencia
+                        </FieldLabel>
+                        <NativeSelect
+                          {...field}
+                          aria-invalid={fieldState.invalid}
+                          id="erp-frequency"
+                        >
+                          <NativeSelectOption value="monthly">
+                            Mensual
+                          </NativeSelectOption>
+                          <NativeSelectOption value="custom_months">
+                            Cada X meses
+                          </NativeSelectOption>
+                          <NativeSelectOption value="yearly">
+                            Anual
+                          </NativeSelectOption>
                         </NativeSelect>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
-                  <Controller
-                    control={form.control}
-                    name="description"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="erp-description">Nombre</FieldLabel>
-                        <Input
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          id="erp-description"
-                          placeholder={type === "income" ? "Sueldo, Freelance" : "Disney+, Luz, Claude Code"}
-                        />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="amount"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="erp-amount">Monto estimado (PEN)</FieldLabel>
-                        <NumberInput
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          id="erp-amount"
-                          inputMode="decimal"
-                          min="0"
-                          placeholder="0.00"
-                          step="0.01"
-                        />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="erp-category">Categoría</FieldLabel>
-                         <CategorySelect
-                           categories={categories}
-                          id="erp-category"
-                          value={field.value}
-                          onChange={field.onChange}
-                          type={type === "income" ? "income" : "expense"}
-                          aria-invalid={fieldState.invalid}
-                        />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  {frequency === "custom_months" ? (
                     <Controller
                       control={form.control}
-                      name="frequency"
+                      name="intervalMonths"
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="erp-frequency">Frecuencia</FieldLabel>
-                          <NativeSelect {...field} aria-invalid={fieldState.invalid} id="erp-frequency">
-                            <NativeSelectOption value="monthly">Mensual</NativeSelectOption>
-                            <NativeSelectOption value="custom_months">Cada X meses</NativeSelectOption>
-                            <NativeSelectOption value="yearly">Anual</NativeSelectOption>
-                          </NativeSelect>
-                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                          <FieldLabel htmlFor="erp-interval">
+                            Intervalo
+                          </FieldLabel>
+                          <div className="relative">
+                            <NumberInput
+                              {...field}
+                              aria-invalid={fieldState.invalid}
+                              id="erp-interval"
+                              inputMode="numeric"
+                              min="1"
+                              max="120"
+                              className="w-full pr-16"
+                            />
+                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+                              meses
+                            </span>
+                          </div>
+                          {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                          )}
                         </Field>
                       )}
                     />
-                    {frequency === "custom_months" ? (
-                      <Controller
-                        control={form.control}
-                        name="intervalMonths"
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel htmlFor="erp-interval">Intervalo</FieldLabel>
-                            <div className="relative">
-                              <NumberInput
-                                {...field}
-                                aria-invalid={fieldState.invalid}
-                                id="erp-interval"
-                                inputMode="numeric"
-                                min="1"
-                                max="120"
-                                className="w-full pr-16"
-                              />
-                              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
-                                meses
-                              </span>
-                            </div>
-                            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                          </Field>
-                        )}
+                  ) : (
+                    <Field>
+                      <FieldLabel>Intervalo</FieldLabel>
+                      <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm text-muted-foreground">
+                        {frequency === "yearly"
+                          ? "Cada 12 meses"
+                          : "Cada 1 mes"}
+                      </div>
+                    </Field>
+                  )}
+                </div>
+                <Controller
+                  control={form.control}
+                  name="paymentKind"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="erp-kind">Tipo de monto</FieldLabel>
+                      <NativeSelect
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="erp-kind"
+                      >
+                        <NativeSelectOption value="fixed">
+                          Fijo
+                        </NativeSelectOption>
+                        <NativeSelectOption value="variable">
+                          Variable
+                        </NativeSelectOption>
+                      </NativeSelect>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="nextDueOn"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>
+                        {type === "income"
+                          ? "Próxima fecha de cobro"
+                          : "Próxima fecha de pago"}
+                      </FieldLabel>
+                      <DatePicker
+                        id="erp-next-due"
+                        value={field.value}
+                        onChange={field.onChange}
+                        aria-invalid={fieldState.invalid}
                       />
-                    ) : (
-                      <Field>
-                        <FieldLabel>Intervalo</FieldLabel>
-                        <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm text-muted-foreground">
-                          {frequency === "yearly" ? "Cada 12 meses" : "Cada 1 mes"}
-                        </div>
-                      </Field>
-                    )}
-                  </div>
-                  <Controller
-                    control={form.control}
-                    name="paymentKind"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="erp-kind">Tipo de monto</FieldLabel>
-                        <NativeSelect {...field} aria-invalid={fieldState.invalid} id="erp-kind">
-                          <NativeSelectOption value="fixed">Fijo</NativeSelectOption>
-                          <NativeSelectOption value="variable">Variable</NativeSelectOption>
-                        </NativeSelect>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="nextDueOn"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>{type === "income" ? "Próxima fecha de cobro" : "Próxima fecha de pago"}</FieldLabel>
-                        <DatePicker
-                          id="erp-next-due"
-                          value={field.value}
-                          onChange={field.onChange}
-                          aria-invalid={fieldState.invalid}
-                        />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="accountId"
-                    render={({ field }) => (
-                      <Field>
-                        <FieldLabel htmlFor="erp-account">
-                          Cuenta <span className="font-normal text-muted-foreground">(opcional)</span>
-                        </FieldLabel>
-                   <AccountSelect
-                     accounts={accounts}
-                          id="erp-account"
-                          value={field.value ?? ""}
-                          onChange={field.onChange}
-                        />
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="notes"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="erp-notes">Notas</FieldLabel>
-                        <Textarea
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          id="erp-notes"
-                          placeholder="Opcional"
-                        />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                </FieldGroup>
-              </form>
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline" type="button">Cancelar</Button>
-            </DialogClose>
-            <Button disabled={isPending} form="edit-recurring-payment-form" type="submit">
-              {isPending && <Loader2Icon className="size-4 animate-spin" />}
-              Guardar cambios
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="accountId"
+                  render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor="erp-account">
+                        Cuenta{" "}
+                        <span className="font-normal text-muted-foreground">
+                          (opcional)
+                        </span>
+                      </FieldLabel>
+                      <AccountSelect
+                        accounts={accounts}
+                        id="erp-account"
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                      />
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="notes"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="erp-notes">Notas</FieldLabel>
+                      <Textarea
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="erp-notes"
+                        placeholder="Opcional"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+              </FieldGroup>
+            </form>
+          </div>
+        </ScrollArea>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">
+              Cancelar
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-  )
+          </DialogClose>
+          <Button
+            disabled={isPending}
+            form="edit-recurring-payment-form"
+            type="submit"
+          >
+            {isPending && <Loader2Icon className="size-4 animate-spin" />}
+            Guardar cambios
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }

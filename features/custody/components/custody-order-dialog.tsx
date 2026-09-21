@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2Icon, PlusIcon } from 'lucide-react';
-import { useState, useTransition } from 'react';
-import { toast } from 'sonner';
-import { type Resolver, Controller, useForm } from 'react-hook-form';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon, PlusIcon } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm } from "react-hook-form";
 
-import { Button } from '@/components/ui/button';
-import { DatePicker } from '@/components/ui/date-picker';
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -17,26 +17,36 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { NumberInput } from '@/components/ui/number-input';
-import { custodyOrderSchema, type CustodyOrderValues } from '@/features/custody/schemas/custody-schemas';
-import { createCustodyOrder } from '@/features/custody/server/actions';
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
+import {
+  custodyOrderSchema,
+  type CustodyOrderValues,
+} from "@/features/custody/schemas/custody-schemas";
+import { createCustodyOrder } from "@/features/custody/server/actions";
 
 const defaultValues: CustodyOrderValues = {
-  personName: '',
-  title: '',
+  personName: "",
+  title: "",
   targetAmount: undefined,
-  expectedOn: '',
-  notes: '',
+  expectedOn: "",
+  notes: "",
 };
 
 type CustodyOrderDialogProps = {
   triggerLabel?: string;
 };
 
-export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOrderDialogProps) {
+export function CustodyOrderDialog({
+  triggerLabel = "Nuevo encargo",
+}: CustodyOrderDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -49,12 +59,13 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
     startTransition(async () => {
       try {
         await createCustodyOrder(values);
-        toast.success('Encargo registrado');
+        toast.success("Encargo registrado");
         form.reset(defaultValues);
         setOpen(false);
       } catch (error) {
-        toast.error('No se pudo registrar el encargo', {
-          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+        toast.error("No se pudo registrar el encargo", {
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
         });
       }
     });
@@ -72,7 +83,8 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
         <DialogHeader>
           <DialogTitle>Nuevo encargo</DialogTitle>
           <DialogDescription>
-            Registra dinero en custodia de otra persona para llevar un historial claro.
+            Registra dinero en custodia de otra persona para llevar un historial
+            claro.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -88,8 +100,15 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="co-person">Persona</FieldLabel>
-                  <Input {...field} id="co-person" aria-invalid={fieldState.invalid} placeholder="Ej: María López" />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  <Input
+                    {...field}
+                    id="co-person"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Ej: María López"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -106,7 +125,9 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Compra de laptop"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -117,11 +138,14 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="co-target">
-                    Monto objetivo (PEN) <span className="font-normal text-muted-foreground">(opcional)</span>
+                    Monto objetivo (PEN){" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <NumberInput
                     {...field}
-                    value={field.value ?? ''}
+                    value={field.value ?? ""}
                     id="co-target"
                     aria-invalid={fieldState.invalid}
                     inputMode="decimal"
@@ -129,7 +153,9 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
                     step="0.01"
                     placeholder="0.00"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -140,16 +166,21 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="co-expected">
-                    Fecha estimada <span className="font-normal text-muted-foreground">(opcional)</span>
+                    Fecha estimada{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <DatePicker
                     id="co-expected"
-                    value={field.value ?? ''}
+                    value={field.value ?? ""}
                     onChange={field.onChange}
                     placeholder="Sin fecha"
                     aria-invalid={fieldState.invalid}
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -160,7 +191,10 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="co-notes">
-                    Notas <span className="font-normal text-muted-foreground">(opcional)</span>
+                    Notas{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <Input
                     {...field}
@@ -168,7 +202,9 @@ export function CustodyOrderDialog({ triggerLabel = 'Nuevo encargo' }: CustodyOr
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Link del producto, acuerdos"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />

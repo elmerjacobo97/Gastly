@@ -1,31 +1,33 @@
-"use server"
+"use server";
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server";
 import {
   type ContributionValues,
   type SavingsGoalValues,
-} from "@/features/savings/schemas/savings-schemas"
+} from "@/features/savings/schemas/savings-schemas";
 
 async function requireUser() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
-  if (authError || !user) throw new Error("Debes iniciar sesión.")
+  if (authError || !user) throw new Error("Debes iniciar sesión.");
 
-  return { supabase, userId: user.id }
+  return { supabase, userId: user.id };
 }
 
 function revalidateSavings() {
-  revalidatePath("/dashboard/savings")
+  revalidatePath("/dashboard/savings");
 }
 
-export async function createSavingsGoal(values: SavingsGoalValues): Promise<string> {
-  const { supabase, userId } = await requireUser()
+export async function createSavingsGoal(
+  values: SavingsGoalValues,
+): Promise<string> {
+  const { supabase, userId } = await requireUser();
 
   const { data, error } = await supabase
     .from("savings_goals")
@@ -38,14 +40,17 @@ export async function createSavingsGoal(values: SavingsGoalValues): Promise<stri
       notes: values.notes || null,
     })
     .select("id")
-    .single()
-  if (error) throw new Error(error.message)
-  revalidateSavings()
-  return data.id
+    .single();
+  if (error) throw new Error(error.message);
+  revalidateSavings();
+  return data.id;
 }
 
-export async function updateSavingsGoal(id: string, values: SavingsGoalValues): Promise<void> {
-  const { supabase } = await requireUser()
+export async function updateSavingsGoal(
+  id: string,
+  values: SavingsGoalValues,
+): Promise<void> {
+  const { supabase } = await requireUser();
 
   const { error } = await supabase
     .from("savings_goals")
@@ -56,36 +61,39 @@ export async function updateSavingsGoal(id: string, values: SavingsGoalValues): 
       color: values.color,
       notes: values.notes || null,
     })
-    .eq("id", id)
-  if (error) throw new Error(error.message)
-  revalidateSavings()
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidateSavings();
 }
 
 export async function deleteSavingsGoal(id: string): Promise<void> {
-  const { supabase } = await requireUser()
+  const { supabase } = await requireUser();
 
-  const { error } = await supabase.from("savings_goals").delete().eq("id", id)
-  if (error) throw new Error(error.message)
-  revalidateSavings()
+  const { error } = await supabase.from("savings_goals").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidateSavings();
 }
 
-export async function addContribution(goalId: string, values: ContributionValues): Promise<void> {
-  const { supabase } = await requireUser()
+export async function addContribution(
+  goalId: string,
+  values: ContributionValues,
+): Promise<void> {
+  const { supabase } = await requireUser();
 
   const { data: goal, error: fetchError } = await supabase
     .from("savings_goals")
     .select("current_amount")
     .eq("id", goalId)
-    .single()
+    .single();
 
-  if (fetchError) throw new Error(fetchError.message)
+  if (fetchError) throw new Error(fetchError.message);
 
-  const newTotal = Number(goal.current_amount) + values.amount
+  const newTotal = Number(goal.current_amount) + values.amount;
   const { error } = await supabase
     .from("savings_goals")
     .update({ current_amount: newTotal })
-    .eq("id", goalId)
+    .eq("id", goalId);
 
-  if (error) throw new Error(error.message)
-  revalidateSavings()
+  if (error) throw new Error(error.message);
+  revalidateSavings();
 }

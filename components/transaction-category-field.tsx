@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { PlusIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react";
 
-import { CategoryIconBadge } from "@/components/category-icon-badge"
-import { Button } from "@/components/ui/button"
-import { Field, FieldError, FieldLabel } from "@/components/ui/field"
+import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -12,17 +12,17 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { type Category } from "@/features/categories/types/category-types"
+} from "@/components/ui/select";
+import { type Category } from "@/features/categories/types/category-types";
 
 type TransactionCategoryFieldProps = {
-  categories: Category[]
-  value: string
-  invalid: boolean
-  error?: { message?: string }
-  onChange: (value: string) => void
-  onCreate: () => void
-}
+  categories: Category[];
+  value: string;
+  invalid: boolean;
+  error?: { message?: string };
+  onChange: (value: string) => void;
+  onCreate: () => void;
+};
 
 export function TransactionCategoryField({
   categories,
@@ -67,5 +67,5 @@ export function TransactionCategoryField({
       </div>
       {invalid && <FieldError errors={error ? [error] : []} />}
     </Field>
-  )
+  );
 }

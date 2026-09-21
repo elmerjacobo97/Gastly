@@ -1,28 +1,44 @@
-"use client"
+"use client";
 
-import { Fragment } from "react"
+import { Fragment } from "react";
 
-import { LoanCard } from "@/features/loans/components/loan-card"
-import { groupLoansByPerson } from "@/features/loans/lib/group-loans"
-import { type Loan, type LoanPersonGroup } from "@/features/loans/types/loan-types"
+import { LoanCard } from "@/features/loans/components/loan-card";
+import { groupLoansByPerson } from "@/features/loans/lib/group-loans";
+import {
+  type Loan,
+  type LoanPersonGroup,
+} from "@/features/loans/types/loan-types";
 
 type LoansSectionsProps = {
-  loans: Loan[]
-  onEdit: (group: LoanPersonGroup) => void
-  onDetails: (group: LoanPersonGroup) => void
-  onDelete: (group: LoanPersonGroup) => void
-}
+  loans: Loan[];
+  onEdit: (group: LoanPersonGroup) => void;
+  onDetails: (group: LoanPersonGroup) => void;
+  onDelete: (group: LoanPersonGroup) => void;
+};
 
-export function LoansSections({ loans, onEdit, onDetails, onDelete }: LoansSectionsProps) {
-  const groups = groupLoansByPerson(loans)
-  const active = groups.filter((group) => !group.isSettled)
-  const settled = groups.filter((group) => group.isSettled)
+export function LoansSections({
+  loans,
+  onEdit,
+  onDetails,
+  onDelete,
+}: LoansSectionsProps) {
+  const groups = groupLoansByPerson(loans);
+  const active = groups.filter((group) => !group.isSettled);
+  const settled = groups.filter((group) => group.isSettled);
 
   const sections = [
-    { title: "Yo presté", groups: active.filter((group) => group.direction === "lent"), settled: false },
-    { title: "Me prestaron", groups: active.filter((group) => group.direction === "borrowed"), settled: false },
+    {
+      title: "Yo presté",
+      groups: active.filter((group) => group.direction === "lent"),
+      settled: false,
+    },
+    {
+      title: "Me prestaron",
+      groups: active.filter((group) => group.direction === "borrowed"),
+      settled: false,
+    },
     { title: "Saldados", groups: settled, settled: true },
-  ]
+  ];
 
   return (
     <Fragment>
@@ -46,8 +62,8 @@ export function LoansSections({ loans, onEdit, onDetails, onDelete }: LoansSecti
                 ))}
               </div>
             </section>
-          )
+          ),
       )}
     </Fragment>
-  )
+  );
 }

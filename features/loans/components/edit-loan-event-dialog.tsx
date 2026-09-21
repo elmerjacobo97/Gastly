@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
-import { useEffect, useTransition } from "react"
-import { toast } from "sonner"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useEffect, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -16,33 +16,37 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { NumberInput } from "@/components/ui/number-input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   loanPaymentSchema,
   type LoanPaymentValues,
-} from "@/features/loans/schemas/loan-schemas"
+} from "@/features/loans/schemas/loan-schemas";
 import {
   updateLoanDisbursement,
   updateLoanPayment,
-} from "@/features/loans/server/actions"
-import { type LoanHistoryEntry } from "@/features/loans/types/loan-types"
+} from "@/features/loans/server/actions";
+import { type LoanHistoryEntry } from "@/features/loans/types/loan-types";
 
 type EditLoanEventDialogProps = {
-  entry: LoanHistoryEntry
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+  entry: LoanHistoryEntry;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
-export function EditLoanEventDialog({ entry, open, onOpenChange }: EditLoanEventDialogProps) {
-  const isPayment = entry.kind === "payment"
+export function EditLoanEventDialog({
+  entry,
+  open,
+  onOpenChange,
+}: EditLoanEventDialogProps) {
+  const isPayment = entry.kind === "payment";
   const form = useForm<LoanPaymentValues>({
     resolver: zodResolver(loanPaymentSchema) as Resolver<LoanPaymentValues>,
     defaultValues: {
@@ -50,7 +54,7 @@ export function EditLoanEventDialog({ entry, open, onOpenChange }: EditLoanEvent
       occurredOn: entry.occurredOn,
       notes: entry.notes ?? "",
     },
-  })
+  });
 
   useEffect(() => {
     if (open) {
@@ -58,36 +62,44 @@ export function EditLoanEventDialog({ entry, open, onOpenChange }: EditLoanEvent
         amount: entry.amount,
         occurredOn: entry.occurredOn,
         notes: entry.notes ?? "",
-      })
+      });
     }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   function onSubmit(values: LoanPaymentValues) {
     startTransition(async () => {
       try {
         if (isPayment) {
-          await updateLoanPayment(entry.id, values)
-          toast.success("Abono actualizado")
+          await updateLoanPayment(entry.id, values);
+          toast.success("Abono actualizado");
         } else {
-          await updateLoanDisbursement(entry.id, values)
-          toast.success("Préstamo actualizado")
+          await updateLoanDisbursement(entry.id, values);
+          toast.success("Préstamo actualizado");
         }
-        onOpenChange(false)
+        onOpenChange(false);
       } catch (error) {
-        toast.error(isPayment ? "No se pudo actualizar el abono" : "No se pudo actualizar el préstamo", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+        toast.error(
+          isPayment
+            ? "No se pudo actualizar el abono"
+            : "No se pudo actualizar el préstamo",
+          {
+            description:
+              error instanceof Error ? error.message : "Inténtalo de nuevo.",
+          },
+        );
       }
-    })
+    });
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>{isPayment ? "Editar abono" : "Editar préstamo"}</DialogTitle>
+          <DialogTitle>
+            {isPayment ? "Editar abono" : "Editar préstamo"}
+          </DialogTitle>
           <DialogDescription>
             Corrige el monto, la fecha o las notas de este movimiento.
           </DialogDescription>
@@ -115,7 +127,9 @@ export function EditLoanEventDialog({ entry, open, onOpenChange }: EditLoanEvent
                       step="0.01"
                       placeholder="0.00"
                     />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
                   </Field>
                 )}
               />
@@ -131,7 +145,9 @@ export function EditLoanEventDialog({ entry, open, onOpenChange }: EditLoanEvent
                       onChange={field.onChange}
                       aria-invalid={fieldState.invalid}
                     />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
                   </Field>
                 )}
               />
@@ -143,7 +159,9 @@ export function EditLoanEventDialog({ entry, open, onOpenChange }: EditLoanEvent
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="ee-notes">
                     Notas{" "}
-                    <span className="font-normal text-muted-foreground">(opcional)</span>
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <Input
                     {...field}
@@ -151,7 +169,9 @@ export function EditLoanEventDialog({ entry, open, onOpenChange }: EditLoanEvent
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Yape"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -159,14 +179,20 @@ export function EditLoanEventDialog({ entry, open, onOpenChange }: EditLoanEvent
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
-          <Button disabled={isPending} form="edit-loan-event-form" type="submit">
+          <Button
+            disabled={isPending}
+            form="edit-loan-event-form"
+            type="submit"
+          >
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Guardar cambios
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

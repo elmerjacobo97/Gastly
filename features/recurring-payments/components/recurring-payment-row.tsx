@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   CheckCircle2Icon,
@@ -9,35 +9,35 @@ import {
   PlayCircleIcon,
   ReceiptTextIcon,
   Trash2Icon,
-} from "lucide-react"
+} from "lucide-react";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { CategoryIconBadge } from "@/components/category-icon-badge"
+} from "@/components/ui/dropdown-menu";
+import { CategoryIconBadge } from "@/components/category-icon-badge";
 import {
   formatFrequency,
   getPaymentBadge,
-} from "@/features/recurring-payments/lib/recurring-payment-helpers"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
-import { formatCurrency, formatDate } from "@/lib/format"
-import { cn } from "@/lib/utils"
+} from "@/features/recurring-payments/lib/recurring-payment-helpers";
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types";
+import { formatCurrency, formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 function payButtonLabel(payment: RecurringPayment) {
-  const isPaid = !!payment.paidOn
-  const isIncome = payment.type === "income"
-  if (isPaid) return isIncome ? "Cobrado" : "Pagado"
-  return isIncome ? "Cobrar" : "Pagar"
+  const isPaid = !!payment.paidOn;
+  const isIncome = payment.type === "income";
+  if (isPaid) return isIncome ? "Cobrado" : "Pagado";
+  return isIncome ? "Cobrar" : "Pagar";
 }
 
 function RecurringPaymentSubtitle({ payment }: { payment: RecurringPayment }) {
-  const isIncome = payment.type === "income"
+  const isIncome = payment.type === "income";
 
   return (
     <p className="truncate text-xs text-muted-foreground">
@@ -47,21 +47,28 @@ function RecurringPaymentSubtitle({ payment }: { payment: RecurringPayment }) {
       {payment.account && (
         <>
           {" · "}
-          <span style={{ color: payment.account.color }}>{payment.account.name}</span>
+          <span style={{ color: payment.account.color }}>
+            {payment.account.name}
+          </span>
         </>
       )}
-      {" · "}{formatFrequency(payment)}
+      {" · "}
+      {formatFrequency(payment)}
     </p>
-  )
+  );
 }
 
 function RecurringPaymentMeta({ payment }: { payment: RecurringPayment }) {
-  const isIncome = payment.type === "income"
+  const isIncome = payment.type === "income";
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3">
       {payment.category && (
-        <CategoryIconBadge icon={payment.category.icon} color={payment.category.color} className="size-8 shrink-0 rounded-lg" />
+        <CategoryIconBadge
+          icon={payment.category.icon}
+          color={payment.category.color}
+          className="size-8 shrink-0 rounded-lg"
+        />
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
@@ -75,16 +82,22 @@ function RecurringPaymentMeta({ payment }: { payment: RecurringPayment }) {
         <RecurringPaymentSubtitle payment={payment} />
       </div>
     </div>
-  )
+  );
 }
 
 function RecurringPaymentAmount({ payment }: { payment: RecurringPayment }) {
-  const isIncome = payment.type === "income"
+  const isIncome = payment.type === "income";
   return (
-    <p className={cn("shrink-0 text-sm font-semibold tabular-nums", isIncome && "text-emerald-600 dark:text-emerald-400")}>
-      {isIncome ? "+" : ""}{formatCurrency(payment.paidAmount ?? payment.amount)}
+    <p
+      className={cn(
+        "shrink-0 text-sm font-semibold tabular-nums",
+        isIncome && "text-emerald-600 dark:text-emerald-400",
+      )}
+    >
+      {isIncome ? "+" : ""}
+      {formatCurrency(payment.paidAmount ?? payment.amount)}
     </p>
-  )
+  );
 }
 
 function RecurringPaymentPayButton({
@@ -92,11 +105,11 @@ function RecurringPaymentPayButton({
   pending,
   onPay,
 }: {
-  payment: RecurringPayment
-  pending: boolean
-  onPay: (payment: RecurringPayment) => void
+  payment: RecurringPayment;
+  pending: boolean;
+  onPay: (payment: RecurringPayment) => void;
 }) {
-  const isPaid = !!payment.paidOn
+  const isPaid = !!payment.paidOn;
   return (
     <Button
       size="sm"
@@ -105,22 +118,26 @@ function RecurringPaymentPayButton({
       variant={isPaid ? "secondary" : "default"}
       className="h-8 shrink-0"
     >
-      {isPaid ? <CheckCircle2Icon className="size-3.5" /> : <ReceiptTextIcon className="size-3.5" />}
+      {isPaid ? (
+        <CheckCircle2Icon className="size-3.5" />
+      ) : (
+        <ReceiptTextIcon className="size-3.5" />
+      )}
       {payButtonLabel(payment)}
     </Button>
-  )
+  );
 }
 
 type RecurringPaymentRowProps = {
-  payment: RecurringPayment
-  monthKey: string
-  pending: boolean
-  onPay: (payment: RecurringPayment) => void
-  onEdit: (payment: RecurringPayment) => void
-  onHistory: (payment: RecurringPayment) => void
-  onToggle: (payment: RecurringPayment) => void
-  onDelete: (id: string) => void
-}
+  payment: RecurringPayment;
+  monthKey: string;
+  pending: boolean;
+  onPay: (payment: RecurringPayment) => void;
+  onEdit: (payment: RecurringPayment) => void;
+  onHistory: (payment: RecurringPayment) => void;
+  onToggle: (payment: RecurringPayment) => void;
+  onDelete: (id: string) => void;
+};
 
 export function RecurringPaymentRow({
   payment,
@@ -132,19 +149,35 @@ export function RecurringPaymentRow({
   onToggle,
   onDelete,
 }: RecurringPaymentRowProps) {
-  const badge = getPaymentBadge(payment, monthKey)
+  const badge = getPaymentBadge(payment, monthKey);
 
   return (
-    <div className={cn("flex items-center gap-3 px-4 py-3.5", !payment.isActive && "opacity-60")}>
+    <div
+      className={cn(
+        "flex items-center gap-3 px-4 py-3.5",
+        !payment.isActive && "opacity-60",
+      )}
+    >
       <RecurringPaymentMeta payment={payment} />
       <RecurringPaymentAmount payment={payment} />
-      <Badge variant={badge.variant} className={cn("hidden shrink-0 sm:inline-flex", badge.className)}>
+      <Badge
+        variant={badge.variant}
+        className={cn("hidden shrink-0 sm:inline-flex", badge.className)}
+      >
         {badge.label}
       </Badge>
-      <RecurringPaymentPayButton payment={payment} pending={pending} onPay={onPay} />
+      <RecurringPaymentPayButton
+        payment={payment}
+        pending={pending}
+        onPay={onPay}
+      />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0 text-muted-foreground"
+          >
             <MoreHorizontalIcon />
             <span className="sr-only">Acciones</span>
           </Button>
@@ -163,12 +196,15 @@ export function RecurringPaymentRow({
             {payment.isActive ? "Pausar" : "Activar"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => onDelete(payment.id)} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem
+            onSelect={() => onDelete(payment.id)}
+            className="text-destructive focus:text-destructive"
+          >
             <Trash2Icon />
             Eliminar
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  )
+  );
 }

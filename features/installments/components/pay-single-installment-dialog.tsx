@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2Icon } from 'lucide-react';
-import { useTransition } from 'react';
-import { toast } from 'sonner';
-import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { Controller, useForm } from "react-hook-form";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -15,13 +15,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { DatePicker } from '@/components/ui/date-picker';
-import { payMonthInstallments } from '@/features/installments/server/actions';
-import { payInstallmentsSchema, type PayInstallmentsValues } from '@/features/installments/schemas/installment-schemas';
-import { type InstallmentPayment, type InstallmentPurchase } from '@/features/installments/types/installment-types';
-import { formatCurrency } from '@/lib/format';
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
+import { payMonthInstallments } from "@/features/installments/server/actions";
+import {
+  payInstallmentsSchema,
+  type PayInstallmentsValues,
+} from "@/features/installments/schemas/installment-schemas";
+import {
+  type InstallmentPayment,
+  type InstallmentPurchase,
+} from "@/features/installments/types/installment-types";
+import { formatCurrency } from "@/lib/format";
 
 type PaySingleInstallmentDialogProps = {
   payment: InstallmentPayment;
@@ -30,7 +41,12 @@ type PaySingleInstallmentDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChange }: PaySingleInstallmentDialogProps) {
+export function PaySingleInstallmentDialog({
+  payment,
+  purchase,
+  open,
+  onOpenChange,
+}: PaySingleInstallmentDialogProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<PayInstallmentsValues>({
@@ -42,12 +58,13 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
     startTransition(async () => {
       try {
         await payMonthInstallments([{ payment, purchase }], values.occurredOn);
-        toast.success('Cuota registrada');
+        toast.success("Cuota registrada");
         form.reset({ occurredOn: payment.dueOn });
         onOpenChange(false);
       } catch (error) {
-        toast.error('No se pudo registrar la cuota', {
-          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+        toast.error("No se pudo registrar la cuota", {
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
         });
       }
     });
@@ -59,11 +76,15 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
         <DialogHeader>
           <DialogTitle>Registrar pago de cuota</DialogTitle>
           <DialogDescription>
-            {purchase.description} · Cuota {payment.paymentNumber}/{purchase.totalInstallments} ·{' '}
-            {formatCurrency(payment.amount)}
+            {purchase.description} · Cuota {payment.paymentNumber}/
+            {purchase.totalInstallments} · {formatCurrency(payment.amount)}
           </DialogDescription>
         </DialogHeader>
-        <form id="pay-single-installment-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          id="pay-single-installment-form"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <FieldGroup>
             <Controller
               control={form.control}
@@ -77,7 +98,9 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
                     onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -89,7 +112,11 @@ export function PaySingleInstallmentDialog({ payment, purchase, open, onOpenChan
               Cancelar
             </Button>
           </DialogClose>
-          <Button disabled={isPending} form="pay-single-installment-form" type="submit">
+          <Button
+            disabled={isPending}
+            form="pay-single-installment-form"
+            type="submit"
+          >
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
             Confirmar pago
           </Button>

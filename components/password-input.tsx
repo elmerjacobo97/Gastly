@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { EyeIcon, EyeOffIcon, LockKeyholeIcon } from "lucide-react"
-import { useState } from "react"
+import { EyeIcon, EyeOffIcon, LockKeyholeIcon } from "lucide-react";
+import { useState } from "react";
 
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/components/ui/input-group"
+} from "@/components/ui/input-group";
 
 type PasswordInputProps = Omit<
   React.ComponentProps<typeof InputGroupInput>,
   "autoComplete" | "type"
 > & {
-  autoComplete: "current-password" | "new-password"
-}
+  autoComplete: "current-password" | "new-password";
+};
 
 export function PasswordInput({
   autoComplete,
@@ -23,7 +23,7 @@ export function PasswordInput({
   name = "password",
   ...props
 }: PasswordInputProps) {
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(false);
 
   return (
     <InputGroup>
@@ -49,5 +49,5 @@ export function PasswordInput({
         </InputGroupButton>
       </InputGroupAddon>
     </InputGroup>
-  )
+  );
 }

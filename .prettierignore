@@ -4,6 +4,7 @@ out
 build
 coverage
 cli
+components/ui
 pnpm-lock.yaml
 cli/pnpm-lock.yaml
 supabase/.temp

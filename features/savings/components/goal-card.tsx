@@ -1,52 +1,45 @@
-import { differenceInMonths, format, parseISO } from "date-fns"
-import { es } from "date-fns/locale"
-import {
-  CheckCircle2Icon,
-} from "lucide-react"
+import { differenceInMonths, format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
+import { CheckCircle2Icon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { RowActionsMenu } from "@/components/row-actions-menu"
-import { AddContributionDialog } from "@/features/savings/components/add-contribution-dialog"
-import { type SavingsGoal } from "@/features/savings/types/savings-types"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { RowActionsMenu } from "@/components/row-actions-menu";
+import { AddContributionDialog } from "@/features/savings/components/add-contribution-dialog";
+import { type SavingsGoal } from "@/features/savings/types/savings-types";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 function estimatedCompletion(goal: SavingsGoal): string | null {
-  if (goal.isCompleted || goal.currentAmount <= 0) return null
+  if (goal.isCompleted || goal.currentAmount <= 0) return null;
   const monthsElapsed = Math.max(
     1,
-    differenceInMonths(new Date(), parseISO(goal.createdAt))
-  )
-  const monthlyRate = goal.currentAmount / monthsElapsed
-  if (monthlyRate <= 0) return null
-  const monthsLeft = Math.ceil(goal.remaining / monthlyRate)
-  const estimatedDate = new Date()
-  estimatedDate.setMonth(estimatedDate.getMonth() + monthsLeft)
-  return format(estimatedDate, "MMM yyyy", { locale: es })
+    differenceInMonths(new Date(), parseISO(goal.createdAt)),
+  );
+  const monthlyRate = goal.currentAmount / monthsElapsed;
+  if (monthlyRate <= 0) return null;
+  const monthsLeft = Math.ceil(goal.remaining / monthlyRate);
+  const estimatedDate = new Date();
+  estimatedDate.setMonth(estimatedDate.getMonth() + monthsLeft);
+  return format(estimatedDate, "MMM yyyy", { locale: es });
 }
 
 function monthlyNeeded(goal: SavingsGoal): number | null {
-  if (goal.isCompleted || !goal.targetDate || goal.remaining <= 0) return null
-  const months = differenceInMonths(parseISO(goal.targetDate), new Date())
-  if (months <= 0) return null
-  return Math.ceil(goal.remaining / months)
+  if (goal.isCompleted || !goal.targetDate || goal.remaining <= 0) return null;
+  const months = differenceInMonths(parseISO(goal.targetDate), new Date());
+  if (months <= 0) return null;
+  return Math.ceil(goal.remaining / months);
 }
 
 type GoalCardProps = {
-  goal: SavingsGoal
-  onEdit: (goal: SavingsGoal) => void
-  onDelete: (id: string) => void
-}
+  goal: SavingsGoal;
+  onEdit: (goal: SavingsGoal) => void;
+  onDelete: (id: string) => void;
+};
 
 export function GoalCard({ goal, onEdit, onDelete }: GoalCardProps) {
-  const estimated = estimatedCompletion(goal)
-  const needed = monthlyNeeded(goal)
+  const estimated = estimatedCompletion(goal);
+  const needed = monthlyNeeded(goal);
 
   return (
     <Card className="flex flex-col">
@@ -61,7 +54,10 @@ export function GoalCard({ goal, onEdit, onDelete }: GoalCardProps) {
           </div>
           <div className="flex shrink-0 items-center gap-1">
             {goal.isCompleted && (
-              <Badge variant="secondary" className="gap-1 text-emerald-600 dark:text-emerald-400">
+              <Badge
+                variant="secondary"
+                className="gap-1 text-emerald-600 dark:text-emerald-400"
+              >
                 <CheckCircle2Icon className="size-3" />
                 Completada
               </Badge>
@@ -107,9 +103,7 @@ export function GoalCard({ goal, onEdit, onDelete }: GoalCardProps) {
               Ahorra {formatCurrency(needed)}/mes para llegar a tiempo
             </span>
           )}
-          {estimated && (
-            <span>Al ritmo actual llegarás en {estimated}</span>
-          )}
+          {estimated && <span>Al ritmo actual llegarás en {estimated}</span>}
         </div>
 
         <div className="mt-auto pt-1">
@@ -117,5 +111,5 @@ export function GoalCard({ goal, onEdit, onDelete }: GoalCardProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

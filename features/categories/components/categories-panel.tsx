@@ -1,15 +1,19 @@
-"use client"
+"use client";
+
+import { TagsIcon } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import {
-  TagsIcon,
-} from "lucide-react"
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CategoryIconBadge } from "@/components/category-icon-badge"
-import { RowActionsMenu } from "@/components/row-actions-menu"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { RowActionsMenu } from "@/components/row-actions-menu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Empty,
   EmptyContent,
@@ -17,53 +21,65 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import { SegmentedControl } from "@/components/ui/segmented-control"
-import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog"
-import { EditCategoryDialog } from "@/features/categories/components/edit-category-dialog"
-import { deleteCategory } from "@/features/categories/server/actions"
-import { type Category } from "@/features/categories/types/category-types"
+} from "@/components/ui/empty";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog";
+import { EditCategoryDialog } from "@/features/categories/components/edit-category-dialog";
+import { deleteCategory } from "@/features/categories/server/actions";
+import { type Category } from "@/features/categories/types/category-types";
 
-type TypeFilter = "all" | "expense" | "income"
+type TypeFilter = "all" | "expense" | "income";
 
 const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "expense", label: "Gastos" },
   { value: "income", label: "Ingresos" },
-]
+];
 
 type CategoriesPanelProps = {
-  categories: Category[]
-  embedded?: boolean
-}
+  categories: Category[];
+  embedded?: boolean;
+};
 
-export function CategoriesPanel({ categories, embedded = false }: CategoriesPanelProps) {
-  const [isPending, startTransition] = useTransition()
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
-  const [editCategory, setEditCategory] = useState<Category | null>(null)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+export function CategoriesPanel({
+  categories,
+  embedded = false,
+}: CategoriesPanelProps) {
+  const [isPending, startTransition] = useTransition();
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [editCategory, setEditCategory] = useState<Category | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filtered =
-    typeFilter === "all" ? categories : categories.filter((c) => c.type === typeFilter)
+    typeFilter === "all"
+      ? categories
+      : categories.filter((c) => c.type === typeFilter);
 
-  const Wrapper = embedded ? "div" : "main"
+  const Wrapper = embedded ? "div" : "main";
 
   function handleDelete(id: string) {
     startTransition(async () => {
       try {
-        await deleteCategory(id)
-        toast.success("Categoría eliminada")
-        setDeleteId(null)
+        await deleteCategory(id);
+        toast.success("Categoría eliminada");
+        setDeleteId(null);
       } catch (error) {
         toast.error("No se pudo eliminar la categoría", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
-    <Wrapper className={embedded ? "flex flex-col gap-6" : "flex flex-1 flex-col gap-6 p-4 md:p-6"}>
+    <Wrapper
+      className={
+        embedded
+          ? "flex flex-col gap-6"
+          : "flex flex-1 flex-col gap-6 p-4 md:p-6"
+      }
+    >
       {!embedded && (
         <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
           <div>
@@ -86,7 +102,11 @@ export function CategoriesPanel({ categories, embedded = false }: CategoriesPane
               {filtered.length} categoría{filtered.length !== 1 ? "s" : ""}
             </CardDescription>
           </div>
-          <SegmentedControl value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS} />
+          <SegmentedControl
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={TYPE_OPTIONS}
+          />
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
@@ -103,7 +123,8 @@ export function CategoriesPanel({ categories, embedded = false }: CategoriesPane
                       : "Sin categorías de ingresos"}
                 </EmptyTitle>
                 <EmptyDescription>
-                  Crea categorías para clasificar tus transacciones de forma consistente.
+                  Crea categorías para clasificar tus transacciones de forma
+                  consistente.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -117,9 +138,14 @@ export function CategoriesPanel({ categories, embedded = false }: CategoriesPane
                   key={category.id}
                   className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
                 >
-                  <CategoryIconBadge icon={category.icon} color={category.color} />
+                  <CategoryIconBadge
+                    icon={category.icon}
+                    color={category.color}
+                  />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{category.name}</p>
+                    <p className="truncate text-sm font-medium">
+                      {category.name}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {category.type === "expense" ? "Gasto" : "Ingreso"}
                     </p>
@@ -151,5 +177,5 @@ export function CategoriesPanel({ categories, embedded = false }: CategoriesPane
         onConfirm={() => deleteId && handleDelete(deleteId)}
       />
     </Wrapper>
-  )
+  );
 }

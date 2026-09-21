@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
-import { useEffect, useTransition } from "react"
-import { toast } from "sonner"
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useEffect, useTransition } from "react";
+import { toast } from "sonner";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
-import { CategoryIconPicker } from "@/components/category-icon-picker"
-import { ColorPicker } from "@/components/color-picker"
-import { Button } from "@/components/ui/button"
+import { CategoryIconPicker } from "@/components/category-icon-picker";
+import { ColorPicker } from "@/components/color-picker";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -17,25 +17,25 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
   NativeSelectOption,
-} from "@/components/ui/native-select"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { updateCategory } from "@/features/categories/server/actions"
+} from "@/components/ui/native-select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { updateCategory } from "@/features/categories/server/actions";
 import {
   type CategoryValues,
   categorySchema,
-} from "@/features/categories/schemas/category-schemas"
-import { type Category } from "@/features/categories/types/category-types"
+} from "@/features/categories/schemas/category-schemas";
+import { type Category } from "@/features/categories/types/category-types";
 
 const colorOptions = [
   { value: "red", hex: "#ef4444" },
@@ -56,15 +56,19 @@ const colorOptions = [
   { value: "rose", hex: "#f43f5e" },
   { value: "slate", hex: "#64748b" },
   { value: "zinc", hex: "#71717a" },
-]
+];
 
 type EditCategoryDialogProps = {
-  category: Category
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+  category: Category;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
-export function EditCategoryDialog({ category, open, onOpenChange }: EditCategoryDialogProps) {
+export function EditCategoryDialog({
+  category,
+  open,
+  onOpenChange,
+}: EditCategoryDialogProps) {
   const form = useForm<CategoryValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
@@ -73,7 +77,7 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
       color: category.color,
       icon: category.icon,
     },
-  })
+  });
 
   useEffect(() => {
     if (open) {
@@ -82,27 +86,28 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
         type: category.type,
         color: category.color,
         icon: category.icon,
-      })
+      });
     }
-  }, [open, category.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, category.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectedColor = useWatch({ control: form.control, name: "color" })
-  const selectedIcon = useWatch({ control: form.control, name: "icon" })
+  const selectedColor = useWatch({ control: form.control, name: "color" });
+  const selectedIcon = useWatch({ control: form.control, name: "icon" });
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   function onSubmit(values: CategoryValues) {
     startTransition(async () => {
       try {
-        await updateCategory(category.id, values)
-        toast.success("Categoría actualizada")
-        onOpenChange(false)
+        await updateCategory(category.id, values);
+        toast.success("Categoría actualizada");
+        onOpenChange(false);
       } catch (error) {
         toast.error("No se pudo actualizar la categoría", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -128,14 +133,18 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
                   name="name"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="edit-category-name">Nombre</FieldLabel>
+                      <FieldLabel htmlFor="edit-category-name">
+                        Nombre
+                      </FieldLabel>
                       <Input
                         {...field}
                         aria-invalid={fieldState.invalid}
                         id="edit-category-name"
                         placeholder="Ej. Comida, sueldo, transporte"
                       />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -152,10 +161,16 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
                         disabled
                         id="edit-category-type"
                       >
-                        <NativeSelectOption value="expense">Gasto</NativeSelectOption>
-                        <NativeSelectOption value="income">Ingreso</NativeSelectOption>
+                        <NativeSelectOption value="expense">
+                          Gasto
+                        </NativeSelectOption>
+                        <NativeSelectOption value="income">
+                          Ingreso
+                        </NativeSelectOption>
                       </NativeSelect>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -165,12 +180,14 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Color</FieldLabel>
-                     <ColorPicker
-                       options={colorOptions}
-                       value={selectedColor}
-                       onChange={field.onChange}
-                     />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      <ColorPicker
+                        options={colorOptions}
+                        value={selectedColor}
+                        onChange={field.onChange}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -180,11 +197,13 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Icono</FieldLabel>
-                     <CategoryIconPicker
-                       value={selectedIcon}
-                       onChange={field.onChange}
-                     />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      <CategoryIconPicker
+                        value={selectedIcon}
+                        onChange={field.onChange}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -194,7 +213,9 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
         </ScrollArea>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
           <Button disabled={isPending} form="edit-category-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
@@ -203,5 +224,5 @@ export function EditCategoryDialog({ category, open, onOpenChange }: EditCategor
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

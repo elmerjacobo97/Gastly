@@ -1,26 +1,19 @@
-"use client"
+"use client";
 
-import {
-  AlertTriangleIcon,
-  XCircleIcon,
-} from "lucide-react"
+import { AlertTriangleIcon, XCircleIcon } from "lucide-react";
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
-import { type Budget } from "@/features/budget/types/budget-types"
-import { formatCurrency } from "@/lib/format"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { type Budget } from "@/features/budget/types/budget-types";
+import { formatCurrency } from "@/lib/format";
 
 export function BudgetAlerts({ budgets }: { budgets: Budget[] }) {
-  const overList = budgets.filter((budget) => budget.spent > budget.amount)
+  const overList = budgets.filter((budget) => budget.spent > budget.amount);
   const nearList = budgets.filter((budget) => {
-    const usage = budget.amount > 0 ? (budget.spent / budget.amount) * 100 : 0
-    return usage >= 80 && usage < 100
-  })
+    const usage = budget.amount > 0 ? (budget.spent / budget.amount) * 100 : 0;
+    return usage >= 80 && usage < 100;
+  });
 
-  if (overList.length === 0 && nearList.length === 0) return null
+  if (overList.length === 0 && nearList.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -53,12 +46,12 @@ export function BudgetAlerts({ budgets }: { budgets: Budget[] }) {
               : nearList
                   .map(
                     (budget) =>
-                      `${budget.category.name} (${Math.round((budget.spent / budget.amount) * 100)}%)`
+                      `${budget.category.name} (${Math.round((budget.spent / budget.amount) * 100)}%)`,
                   )
                   .join(", ")}
           </AlertDescription>
         </Alert>
       )}
     </div>
-  )
+  );
 }

@@ -1,11 +1,11 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 type LogoProps = {
-  className?: string
-  markClassName?: string
-  markTextClassName?: string
-  showText?: boolean
-}
+  className?: string;
+  markClassName?: string;
+  markTextClassName?: string;
+  showText?: boolean;
+};
 
 export function Logo({
   className,
@@ -18,10 +18,12 @@ export function Logo({
       <div
         className={cn(
           "grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground",
-          markClassName
+          markClassName,
         )}
       >
-        <span className={cn("text-lg font-bold leading-none", markTextClassName)}>
+        <span
+          className={cn("text-lg font-bold leading-none", markTextClassName)}
+        >
           G
         </span>
       </div>
@@ -34,5 +36,5 @@ export function Logo({
         </div>
       )}
     </div>
-  )
+  );
 }

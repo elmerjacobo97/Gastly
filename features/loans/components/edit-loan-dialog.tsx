@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
-import { useEffect, useTransition } from "react"
-import { toast } from "sonner"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useEffect, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -16,64 +16,72 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   editLoanPersonSchema,
   type EditLoanPersonValues,
-} from "@/features/loans/schemas/loan-schemas"
-import { updateLoanPerson } from "@/features/loans/server/actions"
-import { type LoanPersonGroup } from "@/features/loans/types/loan-types"
+} from "@/features/loans/schemas/loan-schemas";
+import { updateLoanPerson } from "@/features/loans/server/actions";
+import { type LoanPersonGroup } from "@/features/loans/types/loan-types";
 
 type EditLoanDialogProps = {
-  group: LoanPersonGroup
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+  group: LoanPersonGroup;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
 function defaultsFromGroup(group: LoanPersonGroup): EditLoanPersonValues {
-  const expectedOn = group.balances.find((loan) => loan.expectedOn)?.expectedOn ?? ""
-  const notes = group.balances.find((loan) => loan.notes)?.notes ?? ""
+  const expectedOn =
+    group.balances.find((loan) => loan.expectedOn)?.expectedOn ?? "";
+  const notes = group.balances.find((loan) => loan.notes)?.notes ?? "";
   return {
     personName: group.personName,
     expectedOn,
     notes,
-  }
+  };
 }
 
-export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProps) {
+export function EditLoanDialog({
+  group,
+  open,
+  onOpenChange,
+}: EditLoanDialogProps) {
   const form = useForm<EditLoanPersonValues>({
-    resolver: zodResolver(editLoanPersonSchema) as Resolver<EditLoanPersonValues>,
+    resolver: zodResolver(
+      editLoanPersonSchema,
+    ) as Resolver<EditLoanPersonValues>,
     defaultValues: defaultsFromGroup(group),
-  })
+  });
 
   useEffect(() => {
-    if (open) form.reset(defaultsFromGroup(group))
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (open) form.reset(defaultsFromGroup(group));
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   function onSubmit(values: EditLoanPersonValues) {
     startTransition(async () => {
       try {
         await updateLoanPerson(
           group.balances.map((loan) => loan.id),
-          values
-        )
-        toast.success("Préstamo actualizado")
-        onOpenChange(false)
+          values,
+        );
+        toast.success("Préstamo actualizado");
+        onOpenChange(false);
       } catch (error) {
         toast.error("No se pudo actualizar el préstamo", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -98,7 +106,9 @@ export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProp
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="el-person">
-                    {group.direction === "lent" ? "A quién le presté" : "Quién me prestó"}
+                    {group.direction === "lent"
+                      ? "A quién le presté"
+                      : "Quién me prestó"}
                   </FieldLabel>
                   <Input
                     {...field}
@@ -106,7 +116,9 @@ export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProp
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Juan García"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -118,7 +130,9 @@ export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProp
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="el-expected-on">
                     Devolución esperada{" "}
-                    <span className="font-normal text-muted-foreground">(opc.)</span>
+                    <span className="font-normal text-muted-foreground">
+                      (opc.)
+                    </span>
                   </FieldLabel>
                   <DatePicker
                     id="el-expected-on"
@@ -127,7 +141,9 @@ export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProp
                     placeholder="Sin fecha"
                     aria-invalid={fieldState.invalid}
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -139,7 +155,9 @@ export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProp
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="el-notes">
                     Notas{" "}
-                    <span className="font-normal text-muted-foreground">(opcional)</span>
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <Input
                     {...field}
@@ -147,7 +165,9 @@ export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProp
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Para emergencia médica"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -155,7 +175,9 @@ export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProp
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
           <Button disabled={isPending} form="edit-loan-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
@@ -164,5 +186,5 @@ export function EditLoanDialog({ group, open, onOpenChange }: EditLoanDialogProp
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

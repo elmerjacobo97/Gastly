@@ -1,8 +1,8 @@
-import Link from 'next/link';
-import { ArrowLeftIcon, LayoutDashboardIcon } from 'lucide-react';
+import Link from "next/link";
+import { ArrowLeftIcon, LayoutDashboardIcon } from "lucide-react";
 
-import { Logo } from '@/components/logo';
-import { Button } from '@/components/ui/button';
+import { Logo } from "@/components/logo";
+import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
@@ -34,12 +34,15 @@ export default function NotFound() {
 
           <div className="flex flex-col items-start gap-7 text-left">
             <div className="flex flex-col gap-4">
-              <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary">Pagina perdida</p>
+              <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary">
+                Pagina perdida
+              </p>
               <h1 className="max-w-2xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
                 Esta ruta no existe o ya no esta disponible.
               </h1>
               <p className="max-w-xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-                Vuelve a tu panel para seguir revisando tus movimientos, presupuestos y metas sin perder el hilo.
+                Vuelve a tu panel para seguir revisando tus movimientos,
+                presupuestos y metas sin perder el hilo.
               </p>
             </div>
 
@@ -61,7 +64,8 @@ export default function NotFound() {
         </div>
 
         <footer className="text-sm text-muted-foreground">
-          Si llegaste aqui desde un enlace guardado, es posible que esa pagina haya cambiado de lugar.
+          Si llegaste aqui desde un enlace guardado, es posible que esa pagina
+          haya cambiado de lugar.
         </footer>
       </section>
     </main>

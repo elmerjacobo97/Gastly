@@ -1,9 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function CustodyLoading() {
   return (
@@ -75,5 +71,5 @@ export default function CustodyLoading() {
         </div>
       </div>
     </main>
-  )
+  );
 }

@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { startOfMonth } from "date-fns"
-import { type FieldError as FormFieldError } from "react-hook-form"
+import { startOfMonth } from "date-fns";
+import { type FieldError as FormFieldError } from "react-hook-form";
 
-import { Field, FieldError, FieldLabel } from "@/components/ui/field"
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   NativeSelect,
   NativeSelectOption,
-} from "@/components/ui/native-select"
+} from "@/components/ui/native-select";
 
 const MONTHS = [
   "Enero",
@@ -22,21 +22,26 @@ const MONTHS = [
   "Octubre",
   "Noviembre",
   "Diciembre",
-].map((label, value) => ({ label, value }))
+].map((label, value) => ({ label, value }));
 
 function getYearOptions() {
-  const year = new Date().getFullYear()
-  return [year - 1, year, year + 1]
+  const year = new Date().getFullYear();
+  return [year - 1, year, year + 1];
 }
 
 type MonthFieldProps = {
-  value: Date
-  invalid: boolean
-  error?: FormFieldError
-  onChange: (value: Date) => void
-}
+  value: Date;
+  invalid: boolean;
+  error?: FormFieldError;
+  onChange: (value: Date) => void;
+};
 
-export function MonthField({ value, invalid, error, onChange }: MonthFieldProps) {
+export function MonthField({
+  value,
+  invalid,
+  error,
+  onChange,
+}: MonthFieldProps) {
   return (
     <Field data-invalid={invalid}>
       <FieldLabel>Mes</FieldLabel>
@@ -44,9 +49,9 @@ export function MonthField({ value, invalid, error, onChange }: MonthFieldProps)
         <NativeSelect
           value={value.getMonth()}
           onChange={(event) => {
-            const date = new Date(value)
-            date.setMonth(Number(event.target.value))
-            onChange(startOfMonth(date))
+            const date = new Date(value);
+            date.setMonth(Number(event.target.value));
+            onChange(startOfMonth(date));
           }}
           className="flex-1"
         >
@@ -59,9 +64,9 @@ export function MonthField({ value, invalid, error, onChange }: MonthFieldProps)
         <NativeSelect
           value={value.getFullYear()}
           onChange={(event) => {
-            const date = new Date(value)
-            date.setFullYear(Number(event.target.value))
-            onChange(startOfMonth(date))
+            const date = new Date(value);
+            date.setFullYear(Number(event.target.value));
+            onChange(startOfMonth(date));
           }}
           className="w-28"
         >
@@ -74,5 +79,5 @@ export function MonthField({ value, invalid, error, onChange }: MonthFieldProps)
       </div>
       {invalid && <FieldError errors={error ? [error] : []} />}
     </Field>
-  )
+  );
 }

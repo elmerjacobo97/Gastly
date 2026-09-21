@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { WalletCardsIcon } from "lucide-react"
+import { WalletCardsIcon } from "lucide-react";
 
-import { CreateTransactionDialog } from "@/components/create-transaction-dialog"
+import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
 import {
   Empty,
   EmptyContent,
@@ -10,19 +10,22 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
-import { transactionAddLabel } from "@/features/transactions/lib/movements-labels"
-import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
-import { type Category } from "@/features/categories/types/category-types"
+} from "@/components/ui/empty";
+import { transactionAddLabel } from "@/features/transactions/lib/movements-labels";
+import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas";
+import { type Category } from "@/features/categories/types/category-types";
 
 type MovementsEmptyStateProps = {
-  typeFilter: "all" | TransactionType
-  categories: Category[]
-}
+  typeFilter: "all" | TransactionType;
+  categories: Category[];
+};
 
-export function MovementsEmptyState({ typeFilter, categories }: MovementsEmptyStateProps) {
-  const isIncome = typeFilter === "income"
-  const isExpense = typeFilter === "expense"
+export function MovementsEmptyState({
+  typeFilter,
+  categories,
+}: MovementsEmptyStateProps) {
+  const isIncome = typeFilter === "income";
+  const isExpense = typeFilter === "expense";
 
   return (
     <Empty className="bg-muted/20">
@@ -31,7 +34,11 @@ export function MovementsEmptyState({ typeFilter, categories }: MovementsEmptySt
           <WalletCardsIcon />
         </EmptyMedia>
         <EmptyTitle>
-          {isIncome ? "Sin ingresos este mes" : isExpense ? "Sin gastos este mes" : "Sin transacciones este mes"}
+          {isIncome
+            ? "Sin ingresos este mes"
+            : isExpense
+              ? "Sin gastos este mes"
+              : "Sin transacciones este mes"}
         </EmptyTitle>
         <EmptyDescription>
           {isIncome
@@ -50,5 +57,5 @@ export function MovementsEmptyState({ typeFilter, categories }: MovementsEmptySt
         />
       </EmptyContent>
     </Empty>
-  )
+  );
 }

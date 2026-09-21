@@ -1,11 +1,11 @@
-import { Logo } from "@/components/logo"
-import { privateMetadata } from "@/lib/seo"
+import { Logo } from "@/components/logo";
+import { privateMetadata } from "@/lib/seo";
 
-export const metadata = privateMetadata
+export const metadata = privateMetadata;
 
 type AuthLayoutProps = {
-  children: React.ReactNode
-}
+  children: React.ReactNode;
+};
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
@@ -28,5 +28,5 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         {children}
       </div>
     </main>
-  )
+  );
 }

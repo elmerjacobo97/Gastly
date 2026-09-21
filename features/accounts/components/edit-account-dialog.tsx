@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
- import { Loader2Icon } from "lucide-react"
-import { useEffect, useTransition } from "react"
-import { toast } from "sonner"
-import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useEffect, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
-import { ColorPicker } from "@/components/color-picker"
-import { Button } from "@/components/ui/button"
+import { ColorPicker } from "@/components/color-picker";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -16,24 +16,29 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { NumberInput } from "@/components/ui/number-input"
-import { Textarea } from "@/components/ui/textarea"
-import { updateAccount } from "@/features/accounts/server/actions"
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
+import { Textarea } from "@/components/ui/textarea";
+import { updateAccount } from "@/features/accounts/server/actions";
 import {
   ACCOUNT_COLORS,
   accountSchema,
   type AccountValues,
-} from "@/features/accounts/schemas/account-schemas"
-import { type Account } from "@/features/accounts/types/account-types"
+} from "@/features/accounts/schemas/account-schemas";
+import { type Account } from "@/features/accounts/types/account-types";
 
 type EditAccountDialogProps = {
-  account: Account
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+  account: Account;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
 function buildValues(account: Account): AccountValues {
   return {
@@ -41,35 +46,40 @@ function buildValues(account: Account): AccountValues {
     balance: account.balance,
     color: account.color,
     notes: account.notes ?? "",
-  }
+  };
 }
 
-export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDialogProps) {
-  const [isPending, startTransition] = useTransition()
+export function EditAccountDialog({
+  account,
+  open,
+  onOpenChange,
+}: EditAccountDialogProps) {
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<AccountValues>({
     resolver: zodResolver(accountSchema) as Resolver<AccountValues>,
     defaultValues: buildValues(account),
-  })
+  });
 
   useEffect(() => {
-    if (open) form.reset(buildValues(account))
-  }, [open, account.id]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (open) form.reset(buildValues(account));
+  }, [open, account.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectedColor = useWatch({ control: form.control, name: "color" })
+  const selectedColor = useWatch({ control: form.control, name: "color" });
 
   function onSubmit(values: AccountValues) {
     startTransition(async () => {
       try {
-        await updateAccount(account.id, values)
-        toast.success("Cuenta actualizada")
-        onOpenChange(false)
+        await updateAccount(account.id, values);
+        toast.success("Cuenta actualizada");
+        onOpenChange(false);
       } catch (error) {
         toast.error("No se pudo actualizar la cuenta", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -100,7 +110,9 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej. Global66, Interbank, BCP"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -109,7 +121,9 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
               name="balance"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="ea-balance">Saldo actual (PEN)</FieldLabel>
+                  <FieldLabel htmlFor="ea-balance">
+                    Saldo actual (PEN)
+                  </FieldLabel>
                   <NumberInput
                     {...field}
                     id="ea-balance"
@@ -119,7 +133,9 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
                     step="0.01"
                     placeholder="0.00"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -143,7 +159,8 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
               render={({ field }) => (
                 <Field>
                   <FieldLabel htmlFor="ea-notes">
-                    Notas <span className="text-muted-foreground">(opcional)</span>
+                    Notas{" "}
+                    <span className="text-muted-foreground">(opcional)</span>
                   </FieldLabel>
                   <Textarea
                     {...field}
@@ -158,7 +175,9 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
           <Button disabled={isPending} form="edit-account-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
@@ -167,5 +186,5 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

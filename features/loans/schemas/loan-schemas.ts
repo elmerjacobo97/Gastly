@@ -1,6 +1,6 @@
-import { z } from "zod"
+import { z } from "zod";
 
-import { LOAN_CURRENCIES } from "@/features/loans/types/loan-types"
+import { LOAN_CURRENCIES } from "@/features/loans/types/loan-types";
 
 export const loanSchema = z.object({
   direction: z.enum(["lent", "borrowed"]),
@@ -10,31 +10,31 @@ export const loanSchema = z.object({
   expectedOn: z.string().optional(),
   loanedOn: z.string().min(1, "Selecciona la fecha del préstamo."),
   notes: z.string().trim().optional(),
-})
+});
 
-export type LoanValues = z.infer<typeof loanSchema>
+export type LoanValues = z.infer<typeof loanSchema>;
 
 export const addLoanSchema = loanSchema.pick({
   amount: true,
   currency: true,
   loanedOn: true,
   notes: true,
-})
+});
 
-export type AddLoanValues = z.infer<typeof addLoanSchema>
+export type AddLoanValues = z.infer<typeof addLoanSchema>;
 
 export const editLoanPersonSchema = z.object({
   personName: z.string().trim().min(2, "Ingresa el nombre de la persona."),
   expectedOn: z.string().optional(),
   notes: z.string().trim().optional(),
-})
+});
 
-export type EditLoanPersonValues = z.infer<typeof editLoanPersonSchema>
+export type EditLoanPersonValues = z.infer<typeof editLoanPersonSchema>;
 
 export const loanPaymentSchema = z.object({
   amount: z.coerce.number().positive("El monto debe ser mayor a 0."),
   occurredOn: z.string().min(1, "Selecciona la fecha del pago."),
   notes: z.string().trim().optional(),
-})
+});
 
-export type LoanPaymentValues = z.infer<typeof loanPaymentSchema>
+export type LoanPaymentValues = z.infer<typeof loanPaymentSchema>;

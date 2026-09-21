@@ -1,15 +1,30 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DataTable } from '@/components/ui/data-table';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { useCustodyMovementsColumns } from '@/features/custody/components/columns';
-import { flattenCustodyMovements } from '@/features/custody/lib/custody-api';
-import { type CustodyMovementRow, type CustodyOrder } from '@/features/custody/types/custody-types';
-import { formatCurrency } from '@/lib/format';
-import { PackageIcon } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { useCustodyMovementsColumns } from "@/features/custody/components/columns";
+import { flattenCustodyMovements } from "@/features/custody/lib/custody-api";
+import {
+  type CustodyMovementRow,
+  type CustodyOrder,
+} from "@/features/custody/types/custody-types";
+import { formatCurrency } from "@/lib/format";
+import { PackageIcon } from "lucide-react";
 
 type MovementsHistoryProps = {
   orders: CustodyOrder[];
@@ -17,21 +32,27 @@ type MovementsHistoryProps = {
   onDeleteMovement: (movementId: string) => void;
 };
 
-export function MovementsHistory({ orders, onEditMovement, onDeleteMovement }: MovementsHistoryProps) {
+export function MovementsHistory({
+  orders,
+  onEditMovement,
+  onDeleteMovement,
+}: MovementsHistoryProps) {
   const movements = useMemo(() => {
     const all = flattenCustodyMovements(orders);
     return all.toSorted(
-      (a, b) => new Date(`${b.occurredOn}T12:00:00`).getTime() - new Date(`${a.occurredOn}T12:00:00`).getTime()
+      (a, b) =>
+        new Date(`${b.occurredOn}T12:00:00`).getTime() -
+        new Date(`${a.occurredOn}T12:00:00`).getTime(),
     );
   }, [orders]);
 
   const totals = movements.reduce(
     (acc, m) => {
-      if (m.type === 'deposit') acc.deposited += m.amount;
+      if (m.type === "deposit") acc.deposited += m.amount;
       else acc.disbursed += m.amount;
       return acc;
     },
-    { deposited: 0, disbursed: 0 }
+    { deposited: 0, disbursed: 0 },
   );
   const balance = totals.deposited - totals.disbursed;
 
@@ -45,7 +66,8 @@ export function MovementsHistory({ orders, onEditMovement, onDeleteMovement }: M
       <CardHeader>
         <CardTitle className="text-base">Historial de movimientos</CardTitle>
         <CardDescription>
-          Todos los encargos · {movements.length} movimiento{movements.length !== 1 ? 's' : ''}
+          Todos los encargos · {movements.length} movimiento
+          {movements.length !== 1 ? "s" : ""}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -53,7 +75,9 @@ export function MovementsHistory({ orders, onEditMovement, onDeleteMovement }: M
           <div className="mb-4 grid gap-3 sm:grid-cols-3">
             <Card size="sm">
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total entradas</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total entradas
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
@@ -63,7 +87,9 @@ export function MovementsHistory({ orders, onEditMovement, onDeleteMovement }: M
             </Card>
             <Card size="sm">
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total salidas</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total salidas
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-lg font-semibold tabular-nums text-destructive">
@@ -73,10 +99,14 @@ export function MovementsHistory({ orders, onEditMovement, onDeleteMovement }: M
             </Card>
             <Card size="sm">
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">En custodia</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  En custodia
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-semibold tabular-nums">{formatCurrency(balance)}</p>
+                <p className="text-lg font-semibold tabular-nums">
+                  {formatCurrency(balance)}
+                </p>
               </CardContent>
             </Card>
           </div>

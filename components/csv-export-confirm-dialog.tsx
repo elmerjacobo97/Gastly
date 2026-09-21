@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   AlertDialog,
@@ -9,15 +9,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 
 type CsvExportConfirmDialogProps = {
-  open: boolean
-  title: string
-  description: string
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => void
-}
+  open: boolean;
+  title: string;
+  description: string;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+};
 
 export function CsvExportConfirmDialog({
   open,
@@ -39,5 +39,5 @@ export function CsvExportConfirmDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

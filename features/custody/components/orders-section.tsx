@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { PackageIcon } from 'lucide-react';
+import { PackageIcon } from "lucide-react";
 
-import { OrderCard } from '@/features/custody/components/order-card';
-import { type CustodyOrder } from '@/features/custody/types/custody-types';
+import { OrderCard } from "@/features/custody/components/order-card";
+import { type CustodyOrder } from "@/features/custody/types/custody-types";
 
 type OrdersSectionProps = {
   orders: CustodyOrder[];
@@ -18,14 +18,16 @@ export function OrdersSection({
   onDelete,
   onComplete,
 }: OrdersSectionProps) {
-  const activeOrders = orders.filter((o) => o.status === 'active');
-  const completedOrders = orders.filter((o) => o.status !== 'active');
+  const activeOrders = orders.filter((o) => o.status === "active");
+  const completedOrders = orders.filter((o) => o.status !== "active");
 
   return (
     <>
       {activeOrders.length > 0 && (
         <>
-          <h2 className="text-sm font-medium text-muted-foreground">Activos ({activeOrders.length})</h2>
+          <h2 className="text-sm font-medium text-muted-foreground">
+            Activos ({activeOrders.length})
+          </h2>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {activeOrders.map((order) => (
               <OrderCard
@@ -71,7 +73,8 @@ export function EmptyOrders() {
       <div>
         <p className="font-medium">No hay encargos registrados</p>
         <p className="text-sm text-muted-foreground">
-          Registra dinero en custodia para llevar un historial de depósitos y desembolsos.
+          Registra dinero en custodia para llevar un historial de depósitos y
+          desembolsos.
         </p>
       </div>
     </div>

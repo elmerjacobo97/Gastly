@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { PlusIcon } from "lucide-react";
+import { useState } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -11,20 +11,20 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { CategoryIconBadge } from "@/components/category-icon-badge"
-import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog"
-import { type Category } from "@/features/categories/types/category-types"
-import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas"
+} from "@/components/ui/select";
+import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog";
+import { type Category } from "@/features/categories/types/category-types";
+import { type TransactionType } from "@/features/transactions/schemas/transaction-schemas";
 
 type CategorySelectProps = {
-  categories: Category[]
-  value: string
-  onChange: (id: string) => void
-  type?: TransactionType
-  "aria-invalid"?: boolean
-  id?: string
-}
+  categories: Category[];
+  value: string;
+  onChange: (id: string) => void;
+  type?: TransactionType;
+  "aria-invalid"?: boolean;
+  id?: string;
+};
 
 export function CategorySelect({
   categories,
@@ -34,9 +34,11 @@ export function CategorySelect({
   "aria-invalid": ariaInvalid,
   id,
 }: CategorySelectProps) {
-  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
 
-  const filtered = type ? categories.filter((c) => c.type === type) : categories
+  const filtered = type
+    ? categories.filter((c) => c.type === type)
+    : categories;
 
   return (
     <>
@@ -55,7 +57,11 @@ export function CategorySelect({
             <SelectGroup>
               {filtered.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
-                  <CategoryIconBadge icon={cat.icon} color={cat.color} className="size-5 rounded" />
+                  <CategoryIconBadge
+                    icon={cat.icon}
+                    color={cat.color}
+                    className="size-5 rounded"
+                  />
                   {cat.name}
                 </SelectItem>
               ))}
@@ -73,5 +79,5 @@ export function CategorySelect({
         </Button>
       </div>
     </>
-  )
+  );
 }

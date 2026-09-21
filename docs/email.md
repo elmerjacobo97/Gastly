@@ -2,10 +2,10 @@
 
 ## Local vs Producción
 
-| Entorno | Proveedor | Dónde ver los emails |
-|---|---|---|
+| Entorno        | Proveedor                           | Dónde ver los emails   |
+| -------------- | ----------------------------------- | ---------------------- |
 | Local (Docker) | Supabase Inbucket/Mailpit integrado | http://127.0.0.1:54324 |
-| Producción | Resend via SMTP personalizado | Dashboard de Resend |
+| Producción     | Resend via SMTP personalizado       | Dashboard de Resend    |
 
 En local **no llegan emails reales**. Mailpit los captura todos. No hace falta configurar nada de SMTP para desarrollar.
 
@@ -25,14 +25,14 @@ Supabase free tier permite solo **2 emails/hora** con su SMTP por defecto. Resen
 
 Supabase dashboard → **Authentication → Settings → SMTP Settings**:
 
-| Campo | Valor |
-|---|---|
-| Host | `smtp.resend.com` |
-| Port | `465` |
-| Username | `resend` |
-| Password | `<API key de Resend>` |
+| Campo        | Valor                                                                    |
+| ------------ | ------------------------------------------------------------------------ |
+| Host         | `smtp.resend.com`                                                        |
+| Port         | `465`                                                                    |
+| Username     | `resend`                                                                 |
+| Password     | `<API key de Resend>`                                                    |
 | Sender email | `noreply@elmerjacobo.dev` (o cualquier dirección del dominio verificado) |
-| Sender name | `Gastly` |
+| Sender name  | `Gastly`                                                                 |
 
 Activar el toggle **"Enable Custom SMTP"** y guardar.
 

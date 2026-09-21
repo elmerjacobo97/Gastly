@@ -1,21 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { toast } from 'sonner';
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { CustodyOrderDialog } from '@/features/custody/components/custody-order-dialog';
-import { EditCustodyOrderDialog } from '@/features/custody/components/edit-custody-order-dialog';
-import { EmptyOrders, OrdersSection } from '@/features/custody/components/orders-section';
-import { MovementsHistory } from '@/features/custody/components/movements-history';
-import { SummaryCards } from '@/features/custody/components/summary-cards';
-import { RecordMovementDialog } from '@/features/custody/components/record-movement-dialog';
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { CustodyOrderDialog } from "@/features/custody/components/custody-order-dialog";
+import { EditCustodyOrderDialog } from "@/features/custody/components/edit-custody-order-dialog";
+import {
+  EmptyOrders,
+  OrdersSection,
+} from "@/features/custody/components/orders-section";
+import { MovementsHistory } from "@/features/custody/components/movements-history";
+import { SummaryCards } from "@/features/custody/components/summary-cards";
+import { RecordMovementDialog } from "@/features/custody/components/record-movement-dialog";
 import {
   deleteCustodyMovement,
   deleteCustodyOrder,
   updateCustodyOrderStatus,
-} from '@/features/custody/server/actions';
-import { type CustodyMovementRow, type CustodyOrder } from '@/features/custody/types/custody-types';
+} from "@/features/custody/server/actions";
+import {
+  type CustodyMovementRow,
+  type CustodyOrder,
+} from "@/features/custody/types/custody-types";
 
 type CustodyPanelProps = {
   orders: CustodyOrder[];
@@ -26,7 +32,9 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
 
   const [editOrder, setEditOrder] = useState<CustodyOrder | null>(null);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
-  const [editMovement, setEditMovement] = useState<CustodyMovementRow | null>(null);
+  const [editMovement, setEditMovement] = useState<CustodyMovementRow | null>(
+    null,
+  );
   const [deleteMovementId, setDeleteMovementId] = useState<string | null>(null);
   const [completeOrderId, setCompleteOrderId] = useState<string | null>(null);
 
@@ -34,15 +42,20 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
     ? orders.find((o) => o.id === editMovement.custodyOrderId)
     : null;
 
-  function runAction(action: () => Promise<void>, successMessage: string, onDone?: () => void) {
+  function runAction(
+    action: () => Promise<void>,
+    successMessage: string,
+    onDone?: () => void,
+  ) {
     startTransition(async () => {
       try {
         await action();
         toast.success(successMessage);
         onDone?.();
       } catch (error) {
-        toast.error('Ocurrió un error', {
-          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+        toast.error("Ocurrió un error", {
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
         });
       }
     });
@@ -52,9 +65,12 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Encargos</h1>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            Encargos
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Dinero en custodia de terceros. Lleva un historial claro de cada depósito y desembolso.
+            Dinero en custodia de terceros. Lleva un historial claro de cada
+            depósito y desembolso.
           </p>
         </div>
         <CustodyOrderDialog />
@@ -113,10 +129,10 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
           const id = deleteOrderId;
           runAction(
             () => deleteCustodyOrder(id),
-            'Encargo eliminado',
+            "Encargo eliminado",
             () => {
               setDeleteOrderId(null);
-            }
+            },
           );
         }}
       />
@@ -131,8 +147,10 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
         onConfirm={() => {
           if (!deleteMovementId) return;
           const id = deleteMovementId;
-          runAction(() => deleteCustodyMovement(id), 'Movimiento eliminado', () =>
-            setDeleteMovementId(null)
+          runAction(
+            () => deleteCustodyMovement(id),
+            "Movimiento eliminado",
+            () => setDeleteMovementId(null),
           );
         }}
       />
@@ -148,9 +166,9 @@ export function CustodyPanel({ orders }: CustodyPanelProps) {
           if (!completeOrderId) return;
           const id = completeOrderId;
           runAction(
-            () => updateCustodyOrderStatus(id, 'completed'),
-            'Estado del encargo actualizado',
-            () => setCompleteOrderId(null)
+            () => updateCustodyOrderStatus(id, "completed"),
+            "Estado del encargo actualizado",
+            () => setCompleteOrderId(null),
           );
         }}
       />

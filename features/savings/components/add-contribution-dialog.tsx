@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
- import { format } from "date-fns"
-import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { Loader2Icon, PlusIcon } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -17,61 +17,74 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { DatePicker } from "@/components/ui/date-picker"
-import { NumberInput } from "@/components/ui/number-input"
-import { Textarea } from "@/components/ui/textarea"
-import { addContribution } from "@/features/savings/server/actions"
+} from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
+import { NumberInput } from "@/components/ui/number-input";
+import { Textarea } from "@/components/ui/textarea";
+import { addContribution } from "@/features/savings/server/actions";
 import {
   contributionSchema,
   type ContributionValues,
-} from "@/features/savings/schemas/savings-schemas"
-import { type SavingsGoal } from "@/features/savings/types/savings-types"
+} from "@/features/savings/schemas/savings-schemas";
+import { type SavingsGoal } from "@/features/savings/types/savings-types";
 
 type AddContributionDialogProps = {
-  goal: SavingsGoal
-  trigger?: React.ReactNode
-  defaultAmount?: number
-}
+  goal: SavingsGoal;
+  trigger?: React.ReactNode;
+  defaultAmount?: number;
+};
 
 function getToday() {
-  return format(new Date(), "yyyy-MM-dd")
+  return format(new Date(), "yyyy-MM-dd");
 }
 
 const emptyValues: ContributionValues = {
   amount: 0,
   occurredOn: "",
   notes: "",
-}
+};
 
-export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContributionDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+export function AddContributionDialog({
+  goal,
+  trigger,
+  defaultAmount,
+}: AddContributionDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<ContributionValues>({
     resolver: zodResolver(contributionSchema) as Resolver<ContributionValues>,
-    defaultValues: { ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() },
-  })
+    defaultValues: {
+      ...emptyValues,
+      amount: defaultAmount ?? 0,
+      occurredOn: getToday(),
+    },
+  });
 
   function onSubmit(values: ContributionValues) {
     startTransition(async () => {
       try {
-        await addContribution(goal.id, values)
-        toast.success("Aporte registrado")
-        form.reset({ ...emptyValues, amount: defaultAmount ?? 0, occurredOn: getToday() })
-        setOpen(false)
+        await addContribution(goal.id, values);
+        toast.success("Aporte registrado");
+        form.reset({
+          ...emptyValues,
+          amount: defaultAmount ?? 0,
+          occurredOn: getToday(),
+        });
+        setOpen(false);
       } catch (error) {
         toast.error("No se pudo registrar el aporte", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -88,7 +101,8 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
         <DialogHeader>
           <DialogTitle>Añadir aporte</DialogTitle>
           <DialogDescription>
-            Registra cuánto ahorras para <span className="font-medium">{goal.name}</span>.
+            Registra cuánto ahorras para{" "}
+            <span className="font-medium">{goal.name}</span>.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -113,7 +127,9 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
                     placeholder="0.00"
                     step="0.01"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -129,7 +145,9 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
                     onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -139,9 +157,15 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
               render={({ field }) => (
                 <Field>
                   <FieldLabel htmlFor="ac-notes">
-                    Notas <span className="text-muted-foreground">(opcional)</span>
+                    Notas{" "}
+                    <span className="text-muted-foreground">(opcional)</span>
                   </FieldLabel>
-                  <Textarea {...field} id="ac-notes" placeholder="Detalle adicional" rows={2} />
+                  <Textarea
+                    {...field}
+                    id="ac-notes"
+                    placeholder="Detalle adicional"
+                    rows={2}
+                  />
                 </Field>
               )}
             />
@@ -149,7 +173,9 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
           <Button disabled={isPending} form="contribution-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
@@ -158,5 +184,5 @@ export function AddContributionDialog({ goal, trigger, defaultAmount }: AddContr
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

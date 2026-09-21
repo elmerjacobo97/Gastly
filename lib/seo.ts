@@ -1,17 +1,17 @@
-import type { Metadata } from "next"
+import type { Metadata } from "next";
 
-export const SITE_URL = "https://gastly.elmerjacobo.dev"
-export const SITE_NAME = "Gastly"
-export const SITE_TITLE = "Gastly | Finanzas personales sin friccion"
+export const SITE_URL = "https://gastly.elmerjacobo.dev";
+export const SITE_NAME = "Gastly";
+export const SITE_TITLE = "Gastly | Finanzas personales sin friccion";
 export const SITE_DESCRIPTION =
-  "Organiza ingresos, gastos, presupuestos, cuotas y metas de ahorro desde un panel privado hecho para tus finanzas personales."
+  "Organiza ingresos, gastos, presupuestos, cuotas y metas de ahorro desde un panel privado hecho para tus finanzas personales.";
 
 export const DEFAULT_OG_IMAGE = {
   url: "/opengraph-image",
   width: 1200,
   height: 630,
   alt: "Gastly, panel privado para organizar finanzas personales",
-}
+};
 
 export const sharedMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -62,7 +62,7 @@ export const sharedMetadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-}
+};
 
 export const privateMetadata: Metadata = {
   robots: {
@@ -73,4 +73,4 @@ export const privateMetadata: Metadata = {
       follow: false,
     },
   },
-}
+};

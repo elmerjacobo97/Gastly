@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
- import { ArrowDownIcon, Loader2Icon } from "lucide-react"
-import { useEffect, useTransition } from "react"
-import { toast } from "sonner"
-import { type Resolver, Controller, useForm, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowDownIcon, Loader2Icon } from "lucide-react";
+import { useEffect, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
-import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogClose,
@@ -16,26 +16,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { NumberInput } from "@/components/ui/number-input"
-import { Textarea } from "@/components/ui/textarea"
-import { createTransfer } from "@/features/accounts/server/actions"
-import { transferSchema, type TransferValues } from "@/features/accounts/schemas/account-schemas"
-import { type Account } from "@/features/accounts/types/account-types"
-import { formatCurrency } from "@/lib/format"
-import { format } from "date-fns"
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { NumberInput } from "@/components/ui/number-input";
+import { Textarea } from "@/components/ui/textarea";
+import { createTransfer } from "@/features/accounts/server/actions";
+import {
+  transferSchema,
+  type TransferValues,
+} from "@/features/accounts/schemas/account-schemas";
+import { type Account } from "@/features/accounts/types/account-types";
+import { formatCurrency } from "@/lib/format";
+import { format } from "date-fns";
 
 type TransferDialogProps = {
-  accounts: Account[]
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  defaultFromAccountId?: string
-}
+  accounts: Account[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  defaultFromAccountId?: string;
+};
 
-export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccountId }: TransferDialogProps) {
-  const todayStr = format(new Date(), "yyyy-MM-dd")
+export function TransferDialog({
+  accounts,
+  open,
+  onOpenChange,
+  defaultFromAccountId,
+}: TransferDialogProps) {
+  const todayStr = format(new Date(), "yyyy-MM-dd");
 
   const form = useForm<TransferValues>({
     resolver: zodResolver(transferSchema) as Resolver<TransferValues>,
@@ -46,42 +62,46 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
       occurredOn: todayStr,
       notes: "",
     },
-  })
+  });
 
   useEffect(() => {
     if (open) {
-      const firstOther = accounts.find((a) => a.id !== defaultFromAccountId)
+      const firstOther = accounts.find((a) => a.id !== defaultFromAccountId);
       form.reset({
         fromAccountId: defaultFromAccountId ?? accounts[0]?.id ?? "",
         toAccountId: firstOther?.id ?? accounts[1]?.id ?? "",
         amount: 0,
         occurredOn: todayStr,
         notes: "",
-      })
+      });
     }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fromId = useWatch({ control: form.control, name: "fromAccountId" })
-  const fromAccount = accounts.find((a) => a.id === fromId)
+  const fromId = useWatch({ control: form.control, name: "fromAccountId" });
+  const fromAccount = accounts.find((a) => a.id === fromId);
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   function handleSubmit(values: TransferValues) {
     if (fromAccount && Number(values.amount) > fromAccount.balance) {
-      form.setError("amount", { type: "manual", message: `Saldo insuficiente. Disponible: ${formatCurrency(fromAccount.balance)}` })
-      return
+      form.setError("amount", {
+        type: "manual",
+        message: `Saldo insuficiente. Disponible: ${formatCurrency(fromAccount.balance)}`,
+      });
+      return;
     }
     startTransition(async () => {
       try {
-        await createTransfer(values)
-        toast.success("Transferencia registrada")
-        onOpenChange(false)
+        await createTransfer(values);
+        toast.success("Transferencia registrada");
+        onOpenChange(false);
       } catch (error) {
         toast.error("No se pudo registrar la transferencia", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -107,14 +127,18 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="tf-from">Cuenta origen</FieldLabel>
                   <NativeSelect {...field} id="tf-from" className="w-full">
-                    <NativeSelectOption value="">Selecciona cuenta</NativeSelectOption>
+                    <NativeSelectOption value="">
+                      Selecciona cuenta
+                    </NativeSelectOption>
                     {accounts.map((a) => (
                       <NativeSelectOption key={a.id} value={a.id}>
                         {a.name} · {formatCurrency(a.balance)}
                       </NativeSelectOption>
                     ))}
                   </NativeSelect>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -132,14 +156,18 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="tf-to">Cuenta destino</FieldLabel>
                   <NativeSelect {...field} id="tf-to" className="w-full">
-                    <NativeSelectOption value="">Selecciona cuenta</NativeSelectOption>
+                    <NativeSelectOption value="">
+                      Selecciona cuenta
+                    </NativeSelectOption>
                     {accounts.map((a) => (
                       <NativeSelectOption key={a.id} value={a.id}>
                         {a.name} · {formatCurrency(a.balance)}
                       </NativeSelectOption>
                     ))}
                   </NativeSelect>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -159,7 +187,9 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
                     step="0.01"
                     placeholder="0.00"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -175,7 +205,9 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
                     onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -186,7 +218,8 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
               render={({ field }) => (
                 <Field>
                   <FieldLabel htmlFor="tf-notes">
-                    Notas <span className="text-muted-foreground">(opcional)</span>
+                    Notas{" "}
+                    <span className="text-muted-foreground">(opcional)</span>
                   </FieldLabel>
                   <Textarea
                     {...field}
@@ -201,7 +234,9 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
           <Button disabled={isPending} form="transfer-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
@@ -210,5 +245,5 @@ export function TransferDialog({ accounts, open, onOpenChange, defaultFromAccoun
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

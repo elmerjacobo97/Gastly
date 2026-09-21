@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
-import { useEffect, useTransition } from "react"
-import { toast } from "sonner"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useEffect, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -16,27 +16,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { NumberInput } from "@/components/ui/number-input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   custodyOrderSchema,
   type CustodyOrderValues,
-} from "@/features/custody/schemas/custody-schemas"
-import { updateCustodyOrder } from "@/features/custody/server/actions"
-import { type CustodyOrder } from "@/features/custody/types/custody-types"
+} from "@/features/custody/schemas/custody-schemas";
+import { updateCustodyOrder } from "@/features/custody/server/actions";
+import { type CustodyOrder } from "@/features/custody/types/custody-types";
 
 type EditCustodyOrderDialogProps = {
-  order: CustodyOrder
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+  order: CustodyOrder;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
 function toFormValues(order: CustodyOrder): CustodyOrderValues {
   return {
@@ -45,7 +45,7 @@ function toFormValues(order: CustodyOrder): CustodyOrderValues {
     targetAmount: order.targetAmount ?? undefined,
     expectedOn: order.expectedOn ?? "",
     notes: order.notes ?? "",
-  }
+  };
 }
 
 export function EditCustodyOrderDialog({
@@ -53,31 +53,32 @@ export function EditCustodyOrderDialog({
   open,
   onOpenChange,
 }: EditCustodyOrderDialogProps) {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<CustodyOrderValues>({
     resolver: zodResolver(custodyOrderSchema) as Resolver<CustodyOrderValues>,
     defaultValues: toFormValues(order),
-  })
+  });
 
   useEffect(() => {
     if (open) {
-      form.reset(toFormValues(order))
+      form.reset(toFormValues(order));
     }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function onSubmit(values: CustodyOrderValues) {
     startTransition(async () => {
       try {
-        await updateCustodyOrder(order.id, values)
-        toast.success("Encargo actualizado")
-        onOpenChange(false)
+        await updateCustodyOrder(order.id, values);
+        toast.success("Encargo actualizado");
+        onOpenChange(false);
       } catch (error) {
         toast.error("No se pudo actualizar el encargo", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -108,7 +109,9 @@ export function EditCustodyOrderDialog({
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: María López"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -125,7 +128,9 @@ export function EditCustodyOrderDialog({
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Compra de laptop"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -137,7 +142,9 @@ export function EditCustodyOrderDialog({
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="eco-target">
                     Monto objetivo (PEN){" "}
-                    <span className="font-normal text-muted-foreground">(opcional)</span>
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <NumberInput
                     {...field}
@@ -149,7 +156,9 @@ export function EditCustodyOrderDialog({
                     step="0.01"
                     placeholder="0.00"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -161,7 +170,9 @@ export function EditCustodyOrderDialog({
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="eco-expected">
                     Fecha estimada{" "}
-                    <span className="font-normal text-muted-foreground">(opcional)</span>
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <DatePicker
                     id="eco-expected"
@@ -170,7 +181,9 @@ export function EditCustodyOrderDialog({
                     placeholder="Sin fecha"
                     aria-invalid={fieldState.invalid}
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -182,7 +195,9 @@ export function EditCustodyOrderDialog({
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="eco-notes">
                     Notas{" "}
-                    <span className="font-normal text-muted-foreground">(opcional)</span>
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <Input
                     {...field}
@@ -190,7 +205,9 @@ export function EditCustodyOrderDialog({
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Link del producto"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -213,5 +230,5 @@ export function EditCustodyOrderDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

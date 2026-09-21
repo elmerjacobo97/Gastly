@@ -1,18 +1,14 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
-import { CalendarIcon, InfoIcon, Loader2Icon } from "lucide-react"
-import { useEffect } from "react"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { CalendarIcon, InfoIcon, Loader2Icon } from "lucide-react";
+import { useEffect } from "react";
+import { type Resolver, Controller, useForm } from "react-hook-form";
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogClose,
@@ -21,34 +17,34 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { NumberInput } from "@/components/ui/number-input"
+} from "@/components/ui/field";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 import {
   recurringPaymentPaymentSchema,
   type RecurringPaymentPaymentValues,
-} from "@/features/recurring-payments/schemas/recurring-payment-schemas"
-import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types"
-import { formatDate } from "@/lib/format"
+} from "@/features/recurring-payments/schemas/recurring-payment-schemas";
+import { type RecurringPayment } from "@/features/recurring-payments/types/recurring-payment-types";
+import { formatDate } from "@/lib/format";
 
 type RecurringPaymentPayDialogProps = {
-  payment: RecurringPayment | null
-  open: boolean
-  pending: boolean
-  onOpenChange: (open: boolean) => void
-  onSubmit: (values: RecurringPaymentPaymentValues) => void
-}
+  payment: RecurringPayment | null;
+  open: boolean;
+  pending: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (values: RecurringPaymentPaymentValues) => void;
+};
 
 export function RecurringPaymentPayDialog({
   payment,
@@ -57,36 +53,40 @@ export function RecurringPaymentPayDialog({
   onOpenChange,
   onSubmit,
 }: RecurringPaymentPayDialogProps) {
-  const todayStr = format(new Date(), "yyyy-MM-dd")
-  const isPayingEarly = !!payment && payment.nextDueOn > todayStr
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const isPayingEarly = !!payment && payment.nextDueOn > todayStr;
 
   const form = useForm<RecurringPaymentPaymentValues>({
-    resolver: zodResolver(recurringPaymentPaymentSchema) as Resolver<RecurringPaymentPaymentValues>,
+    resolver: zodResolver(
+      recurringPaymentPaymentSchema,
+    ) as Resolver<RecurringPaymentPaymentValues>,
     defaultValues: {
       amount: payment?.amount ?? 0,
       occurredOn: isPayingEarly ? todayStr : (payment?.nextDueOn ?? todayStr),
       notes: payment?.notes ?? "",
     },
-  })
+  });
 
   useEffect(() => {
     if (open && payment) {
-      const today = format(new Date(), "yyyy-MM-dd")
+      const today = format(new Date(), "yyyy-MM-dd");
       form.reset({
         amount: payment.amount,
         occurredOn: payment.nextDueOn > today ? today : payment.nextDueOn,
         notes: payment.notes ?? "",
-      })
+      });
     }
-  }, [open, payment?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, payment?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isIncome = payment?.type === "income"
+  const isIncome = payment?.type === "income";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isIncome ? "Registrar cobro" : "Registrar pago"}</DialogTitle>
+          <DialogTitle>
+            {isIncome ? "Registrar cobro" : "Registrar pago"}
+          </DialogTitle>
           <DialogDescription>
             {isIncome
               ? "Ingresa el monto real cobrado. Quedará registrado como ingreso."
@@ -98,7 +98,8 @@ export function RecurringPaymentPayDialog({
             <InfoIcon />
             <AlertTitle>Pago anticipado</AlertTitle>
             <AlertDescription>
-              Vencimiento: {formatDate(payment.nextDueOn)}. La fecha de pago se pre-llenó con hoy, pero puedes cambiarla.
+              Vencimiento: {formatDate(payment.nextDueOn)}. La fecha de pago se
+              pre-llenó con hoy, pero puedes cambiarla.
             </AlertDescription>
           </Alert>
         )}
@@ -114,7 +115,9 @@ export function RecurringPaymentPayDialog({
               name="amount"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="rpp-amount">{isIncome ? "Monto real cobrado" : "Monto real pagado"}</FieldLabel>
+                  <FieldLabel htmlFor="rpp-amount">
+                    {isIncome ? "Monto real cobrado" : "Monto real pagado"}
+                  </FieldLabel>
                   <NumberInput
                     {...field}
                     aria-invalid={fieldState.invalid}
@@ -123,7 +126,9 @@ export function RecurringPaymentPayDialog({
                     min="0"
                     step="0.01"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -132,7 +137,9 @@ export function RecurringPaymentPayDialog({
               name="occurredOn"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>{isIncome ? "Fecha real de cobro" : "Fecha real de pago"}</FieldLabel>
+                  <FieldLabel>
+                    {isIncome ? "Fecha real de cobro" : "Fecha real de pago"}
+                  </FieldLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -142,20 +149,28 @@ export function RecurringPaymentPayDialog({
                         className="justify-start text-left font-normal"
                       >
                         <CalendarIcon />
-                        {field.value ? formatDate(field.value) : "Selecciona una fecha"}
+                        {field.value
+                          ? formatDate(field.value)
+                          : "Selecciona una fecha"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
+                        selected={
+                          field.value
+                            ? new Date(`${field.value}T12:00:00`)
+                            : undefined
+                        }
                         onSelect={(date) => {
-                          if (date) field.onChange(format(date, "yyyy-MM-dd"))
+                          if (date) field.onChange(format(date, "yyyy-MM-dd"));
                         }}
                       />
                     </PopoverContent>
                   </Popover>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -171,7 +186,9 @@ export function RecurringPaymentPayDialog({
                     id="rpp-notes"
                     placeholder="Opcional"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -179,14 +196,20 @@ export function RecurringPaymentPayDialog({
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
-          <Button disabled={pending} form="recurring-payment-payment-form" type="submit">
+          <Button
+            disabled={pending}
+            form="recurring-payment-payment-form"
+            type="submit"
+          >
             {pending && <Loader2Icon className="size-4 animate-spin" />}
             {isIncome ? "Registrar cobro" : "Registrar pago"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

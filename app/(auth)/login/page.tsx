@@ -1,14 +1,14 @@
-import { LoginForm } from "@/features/auth/components/login-form"
+import { LoginForm } from "@/features/auth/components/login-form";
 
 type LoginPageProps = {
   searchParams: Promise<{
-    error?: string
-    next?: string
-  }>
-}
+    error?: string;
+    next?: string;
+  }>;
+};
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const params = await searchParams
+  const params = await searchParams;
 
-  return <LoginForm error={params.error} next={params.next} />
+  return <LoginForm error={params.error} next={params.next} />;
 }

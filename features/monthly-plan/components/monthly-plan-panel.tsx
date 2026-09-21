@@ -1,44 +1,49 @@
-"use client"
+"use client";
 
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { PiggyBankIcon, TrendingUpIcon, WalletCardsIcon } from "lucide-react"
-import { useMemo } from "react"
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { PiggyBankIcon, TrendingUpIcon, WalletCardsIcon } from "lucide-react";
+import { useMemo } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { CreateMonthlyPlanDialog } from "@/features/monthly-plan/components/create-monthly-plan-dialog"
-import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-monthly-plan-dialog"
-import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api"
-import { MonthNav } from "@/components/month-nav"
-import { CreateTransactionDialog } from "@/components/create-transaction-dialog"
-import { type Category } from "@/features/categories/types/category-types"
-import { type Transaction } from "@/features/transactions/types/transaction-types"
-import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types"
-import { formatCurrency } from "@/lib/format"
+} from "@/components/ui/card";
+import { CreateMonthlyPlanDialog } from "@/features/monthly-plan/components/create-monthly-plan-dialog";
+import { EditMonthlyPlanDialog } from "@/features/monthly-plan/components/edit-monthly-plan-dialog";
+import { calculateSavings } from "@/features/monthly-plan/lib/monthly-plan-api";
+import { MonthNav } from "@/components/month-nav";
+import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
+import { type Category } from "@/features/categories/types/category-types";
+import { type Transaction } from "@/features/transactions/types/transaction-types";
+import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types";
+import { formatCurrency } from "@/lib/format";
 
 type MonthlyPlanPanelProps = {
-  plan: MonthlyPlan | null
-  transactions: Transaction[]
-  categories: Category[]
-  month: string
-}
+  plan: MonthlyPlan | null;
+  transactions: Transaction[];
+  categories: Category[];
+  month: string;
+};
 
-export function MonthlyPlanPanel({ plan, transactions, categories, month: monthStr }: MonthlyPlanPanelProps) {
-  const month = useMemo(() => new Date(`${monthStr}-01T12:00:00`), [monthStr])
-  const monthLabel = format(month, "MMMM yyyy", { locale: es })
+export function MonthlyPlanPanel({
+  plan,
+  transactions,
+  categories,
+  month: monthStr,
+}: MonthlyPlanPanelProps) {
+  const month = useMemo(() => new Date(`${monthStr}-01T12:00:00`), [monthStr]);
+  const monthLabel = format(month, "MMMM yyyy", { locale: es });
 
   const actualIncome = transactions
     .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0)
-  const savings = calculateSavings(plan, actualIncome)
-  const availableAfterSavings = Math.max(actualIncome - savings, 0)
+    .reduce((sum, t) => sum + t.amount, 0);
+  const savings = calculateSavings(plan, actualIncome);
+  const availableAfterSavings = Math.max(actualIncome - savings, 0);
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -48,7 +53,8 @@ export function MonthlyPlanPanel({ plan, transactions, categories, month: monthS
             Plan mensual
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Define cuánto ahorrar. El ingreso y disponible se calculan desde tus transacciones reales.
+            Define cuánto ahorrar. El ingreso y disponible se calculan desde tus
+            transacciones reales.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -66,20 +72,29 @@ export function MonthlyPlanPanel({ plan, transactions, categories, month: monthS
           <div className="grid gap-4 sm:grid-cols-3">
             <Card size="sm">
               <CardHeader>
-                <CardTitle className="text-xs font-medium text-muted-foreground">Ingreso real del mes</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">
+                  Ingreso real del mes
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xl font-semibold tabular-nums">
                   {formatCurrency(actualIncome)}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {transactions.filter((t) => t.type === "income").length} transacción{transactions.filter((t) => t.type === "income").length !== 1 ? "es" : ""} de ingreso
+                  {transactions.filter((t) => t.type === "income").length}{" "}
+                  transacción
+                  {transactions.filter((t) => t.type === "income").length !== 1
+                    ? "es"
+                    : ""}{" "}
+                  de ingreso
                 </p>
               </CardContent>
             </Card>
             <Card size="sm">
               <CardHeader>
-                <CardTitle className="text-xs font-medium text-muted-foreground">Ahorro obligatorio</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">
+                  Ahorro obligatorio
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
@@ -94,13 +109,17 @@ export function MonthlyPlanPanel({ plan, transactions, categories, month: monthS
             </Card>
             <Card size="sm">
               <CardHeader>
-                <CardTitle className="text-xs font-medium text-muted-foreground">Después de ahorrar</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">
+                  Después de ahorrar
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xl font-semibold tabular-nums">
                   {formatCurrency(availableAfterSavings)}
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground capitalize">{monthLabel}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground capitalize">
+                  {monthLabel}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -108,7 +127,9 @@ export function MonthlyPlanPanel({ plan, transactions, categories, month: monthS
           <Card>
             <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <CardTitle className="text-base capitalize">{monthLabel}</CardTitle>
+                <CardTitle className="text-base capitalize">
+                  {monthLabel}
+                </CardTitle>
                 <CardDescription>
                   {plan.savingsMode === "percent"
                     ? `Separas ${plan.savingsValue}% de cada ingreso que registres.`
@@ -144,12 +165,18 @@ export function MonthlyPlanPanel({ plan, transactions, categories, month: monthS
               <PiggyBankIcon className="size-6" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Configura tu plan de este mes</h2>
+              <h2 className="text-lg font-semibold">
+                Configura tu plan de este mes
+              </h2>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Define tu meta de ahorro y el dashboard calculará tu disponible real automáticamente.
+                Define tu meta de ahorro y el dashboard calculará tu disponible
+                real automáticamente.
               </p>
             </div>
-            <CreateMonthlyPlanDialog month={month} triggerLabel="Crear plan mensual" />
+            <CreateMonthlyPlanDialog
+              month={month}
+              triggerLabel="Crear plan mensual"
+            />
           </CardContent>
         </Card>
       )}
@@ -162,11 +189,13 @@ export function MonthlyPlanPanel({ plan, transactions, categories, month: monthS
           <div className="min-w-0">
             <CardTitle className="text-base">Cómo funciona el plan</CardTitle>
             <CardDescription>
-              El ingreso disponible se calcula desde tus transacciones de ingreso reales. El plan define solo cuánto separas antes de gastar.
+              El ingreso disponible se calcula desde tus transacciones de
+              ingreso reales. El plan define solo cuánto separas antes de
+              gastar.
             </CardDescription>
           </div>
         </CardHeader>
       </Card>
     </main>
-  )
+  );
 }

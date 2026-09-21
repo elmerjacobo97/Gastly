@@ -1,15 +1,15 @@
-import { format, startOfMonth } from "date-fns"
+import { format, startOfMonth } from "date-fns";
 
-import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types"
-import { createClient } from "@/lib/supabase/server"
+import { type MonthlyPlan } from "@/features/monthly-plan/types/monthly-plan-types";
+import { createClient } from "@/lib/supabase/server";
 
 type MonthlyPlanRow = {
-  id: string
-  month: string
-  savings_mode: "percent" | "amount"
-  savings_value: number | string
-  notes: string | null
-}
+  id: string;
+  month: string;
+  savings_mode: "percent" | "amount";
+  savings_value: number | string;
+  notes: string | null;
+};
 
 function mapMonthlyPlan(row: MonthlyPlanRow): MonthlyPlan {
   return {
@@ -18,24 +18,24 @@ function mapMonthlyPlan(row: MonthlyPlanRow): MonthlyPlan {
     savingsMode: row.savings_mode,
     savingsValue: Number(row.savings_value),
     notes: row.notes,
-  }
+  };
 }
 
 function getMonthDate(month: Date) {
-  return format(startOfMonth(month), "yyyy-MM-dd")
+  return format(startOfMonth(month), "yyyy-MM-dd");
 }
 
 export async function getMonthlyPlan(month?: Date) {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("monthly_plans")
     .select("id, month, savings_mode, savings_value, notes")
     .eq("month", getMonthDate(month ?? new Date()))
-    .maybeSingle()
+    .maybeSingle();
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return data ? mapMonthlyPlan(data as MonthlyPlanRow) : null
+  return data ? mapMonthlyPlan(data as MonthlyPlanRow) : null;
 }

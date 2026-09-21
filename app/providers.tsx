@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { ThemeProvider } from "next-themes"
+import { ThemeProvider } from "next-themes";
 
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner";
 
 type ProvidersProps = {
-  children: React.ReactNode
-}
+  children: React.ReactNode;
+};
 
 export function Providers({ children }: ProvidersProps) {
   return (
@@ -19,5 +19,5 @@ export function Providers({ children }: ProvidersProps) {
       {children}
       <Toaster richColors />
     </ThemeProvider>
-  )
+  );
 }

@@ -1,21 +1,32 @@
-import { CalendarDaysIcon, SendIcon } from "lucide-react"
+import { CalendarDaysIcon, SendIcon } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-import { CalendarConnect } from "./calendar-connect"
-import { TelegramConnect, type TelegramConnection } from "./telegram-connect"
+import { CalendarConnect } from "./calendar-connect";
+import { TelegramConnect, type TelegramConnection } from "./telegram-connect";
 
 type IntegrationsSectionProps = {
-  calendarUrl: string
-  telegramConnection: TelegramConnection | null
-}
+  calendarUrl: string;
+  telegramConnection: TelegramConnection | null;
+};
 
-export function IntegrationsSection({ calendarUrl, telegramConnection }: IntegrationsSectionProps) {
+export function IntegrationsSection({
+  calendarUrl,
+  telegramConnection,
+}: IntegrationsSectionProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-base font-semibold">Integraciones</h2>
-        <p className="text-sm text-muted-foreground">Conecta Gastly con otras aplicaciones.</p>
+        <p className="text-sm text-muted-foreground">
+          Conecta Gastly con otras aplicaciones.
+        </p>
       </div>
       <div className="flex flex-col gap-4">
         <Card>
@@ -27,7 +38,8 @@ export function IntegrationsSection({ calendarUrl, telegramConnection }: Integra
               <div>
                 <CardTitle>Telegram</CardTitle>
                 <CardDescription>
-                  Registra gastos e ingresos y consulta tu saldo directamente desde Telegram.
+                  Registra gastos e ingresos y consulta tu saldo directamente
+                  desde Telegram.
                 </CardDescription>
               </div>
             </div>
@@ -46,7 +58,8 @@ export function IntegrationsSection({ calendarUrl, telegramConnection }: Integra
               <div>
                 <CardTitle>Calendario</CardTitle>
                 <CardDescription>
-                  Suscripción webcal con pagos recurrentes, cuotas y metas de ahorro.
+                  Suscripción webcal con pagos recurrentes, cuotas y metas de
+                  ahorro.
                 </CardDescription>
               </div>
             </div>
@@ -57,5 +70,5 @@ export function IntegrationsSection({ calendarUrl, telegramConnection }: Integra
         </Card>
       </div>
     </div>
-  )
+  );
 }

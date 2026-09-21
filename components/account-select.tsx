@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { PlusIcon, XIcon } from "lucide-react"
-import { useState } from "react"
+import { PlusIcon, XIcon } from "lucide-react";
+import { useState } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -11,17 +11,17 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { type Account } from "@/features/accounts/types/account-types"
-import { QuickCreateAccountDialog } from "@/components/quick-create-account-dialog"
+} from "@/components/ui/select";
+import { type Account } from "@/features/accounts/types/account-types";
+import { QuickCreateAccountDialog } from "@/components/quick-create-account-dialog";
 
 type AccountSelectProps = {
-  accounts: Account[]
-  value: string
-  onChange: (id: string) => void
-  "aria-invalid"?: boolean
-  id?: string
-}
+  accounts: Account[];
+  value: string;
+  onChange: (id: string) => void;
+  "aria-invalid"?: boolean;
+  id?: string;
+};
 
 export function AccountSelect({
   accounts,
@@ -30,7 +30,7 @@ export function AccountSelect({
   "aria-invalid": ariaInvalid,
   id,
 }: AccountSelectProps) {
-  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
 
   return (
     <>
@@ -48,7 +48,10 @@ export function AccountSelect({
             <SelectGroup>
               {accounts.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                  <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: a.color }} />
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: a.color }}
+                  />
                   {a.name}
                 </SelectItem>
               ))}
@@ -77,5 +80,5 @@ export function AccountSelect({
         </Button>
       </div>
     </>
-  )
+  );
 }

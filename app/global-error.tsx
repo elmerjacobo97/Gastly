@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react'
+import { useEffect } from "react";
+import { AlertTriangleIcon, RefreshCwIcon } from "lucide-react";
 
 export default function GlobalError({
   error,
   unstable_retry,
 }: {
-  error: Error & { digest?: string }
-  unstable_retry: () => void
+  error: Error & { digest?: string };
+  unstable_retry: () => void;
 }) {
   useEffect(() => {
-    console.error(error)
-  }, [error])
+    console.error(error);
+  }, [error]);
 
   return (
     <html lang="es-PE">
@@ -23,7 +23,9 @@ export default function GlobalError({
           </div>
 
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Error inesperado</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Error inesperado
+            </h1>
             <p className="max-w-sm text-pretty text-sm text-muted-foreground">
               La aplicación encontró un problema. Intenta recargar la página.
             </p>
@@ -41,5 +43,5 @@ export default function GlobalError({
         </div>
       </body>
     </html>
-  )
+  );
 }

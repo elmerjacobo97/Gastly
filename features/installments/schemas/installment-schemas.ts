@@ -1,10 +1,12 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const installmentPurchaseSchema = z
   .object({
     description: z.string().trim().min(2, "Ingresa una descripción."),
     categoryId: z.string().min(1, "Selecciona una categoría."),
-    totalAmount: z.coerce.number().positive("El monto total debe ser mayor a 0."),
+    totalAmount: z.coerce
+      .number()
+      .positive("El monto total debe ser mayor a 0."),
     interestAmount: z.coerce.number().min(0),
     totalInstallments: z.coerce
       .number()
@@ -19,12 +21,14 @@ export const installmentPurchaseSchema = z
   .refine((data) => data.alreadyPaid < data.totalInstallments, {
     message: "Las cuotas ya pagadas deben ser menos que el total.",
     path: ["alreadyPaid"],
-  })
+  });
 
-export type InstallmentPurchaseValues = z.infer<typeof installmentPurchaseSchema>
+export type InstallmentPurchaseValues = z.infer<
+  typeof installmentPurchaseSchema
+>;
 
 export const payInstallmentsSchema = z.object({
   occurredOn: z.string().min(1, "Selecciona la fecha de pago."),
-})
+});
 
-export type PayInstallmentsValues = z.infer<typeof payInstallmentsSchema>
+export type PayInstallmentsValues = z.infer<typeof payInstallmentsSchema>;

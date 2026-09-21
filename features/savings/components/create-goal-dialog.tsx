@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { PlusIcon, Loader2Icon } from "lucide-react"
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PlusIcon, Loader2Icon } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm } from "react-hook-form";
 
-import { ColorPicker } from "@/components/color-picker"
-import { Button } from "@/components/ui/button"
+import { ColorPicker } from "@/components/color-picker";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -17,23 +17,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { DatePicker } from "@/components/ui/date-picker"
-import { Input } from "@/components/ui/input"
-import { NumberInput } from "@/components/ui/number-input"
-import { Textarea } from "@/components/ui/textarea"
-import { createSavingsGoal } from "@/features/savings/server/actions"
+} from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
+import { Textarea } from "@/components/ui/textarea";
+import { createSavingsGoal } from "@/features/savings/server/actions";
 import {
   GOAL_COLORS,
   savingsGoalSchema,
   type SavingsGoalValues,
-} from "@/features/savings/schemas/savings-schemas"
+} from "@/features/savings/schemas/savings-schemas";
 
 const defaultValues: SavingsGoalValues = {
   name: "",
@@ -41,41 +41,47 @@ const defaultValues: SavingsGoalValues = {
   targetDate: "",
   color: "#1d42d0",
   notes: "",
-}
+};
 
 type CreateGoalDialogProps = {
-  trigger?: React.ReactNode
-  onSuccess?: (id: string) => void
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-}
+  trigger?: React.ReactNode;
+  onSuccess?: (id: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
 
-export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onOpenChange: controlledOnOpenChange }: CreateGoalDialogProps = {}) {
-  const isControlled = controlledOpen !== undefined
-  const [internalOpen, setInternalOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
-  const open = isControlled ? controlledOpen : internalOpen
-  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
+export function CreateGoalDialog({
+  trigger,
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: CreateGoalDialogProps = {}) {
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
 
   const form = useForm<SavingsGoalValues>({
     resolver: zodResolver(savingsGoalSchema) as Resolver<SavingsGoalValues>,
     defaultValues,
-  })
+  });
 
   function onSubmit(values: SavingsGoalValues) {
     startTransition(async () => {
       try {
-        const id = await createSavingsGoal(values)
-        toast.success("Meta de ahorro creada")
-        form.reset(defaultValues)
-        setOpen(false)
-        onSuccess?.(id)
+        const id = await createSavingsGoal(values);
+        toast.success("Meta de ahorro creada");
+        form.reset(defaultValues);
+        setOpen(false);
+        onSuccess?.(id);
       } catch (error) {
         toast.error("No se pudo crear la meta", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
   return (
@@ -102,8 +108,8 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
           className="flex flex-col gap-5"
           noValidate
           onSubmit={(e) => {
-            e.stopPropagation()
-            form.handleSubmit(onSubmit)(e)
+            e.stopPropagation();
+            form.handleSubmit(onSubmit)(e);
           }}
         >
           <FieldGroup>
@@ -119,7 +125,9 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej. Laptop nueva, Viaje a Europa"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -138,7 +146,9 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
                     placeholder="0.00"
                     step="0.01"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -148,7 +158,8 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="cg-date">
-                    Fecha objetivo <span className="text-muted-foreground">(opcional)</span>
+                    Fecha objetivo{" "}
+                    <span className="text-muted-foreground">(opcional)</span>
                   </FieldLabel>
                   <DatePicker
                     id="cg-date"
@@ -156,7 +167,9 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
                     onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -180,9 +193,15 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
               render={({ field }) => (
                 <Field>
                   <FieldLabel htmlFor="cg-notes">
-                    Notas <span className="text-muted-foreground">(opcional)</span>
+                    Notas{" "}
+                    <span className="text-muted-foreground">(opcional)</span>
                   </FieldLabel>
-                  <Textarea {...field} id="cg-notes" placeholder="¿Para qué es esta meta?" rows={2} />
+                  <Textarea
+                    {...field}
+                    id="cg-notes"
+                    placeholder="¿Para qué es esta meta?"
+                    rows={2}
+                  />
                 </Field>
               )}
             />
@@ -190,7 +209,9 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
           <Button disabled={isPending} form="create-goal-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
@@ -199,5 +220,5 @@ export function CreateGoalDialog({ trigger, onSuccess, open: controlledOpen, onO
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,28 +1,30 @@
-"use server"
+"use server";
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server"
-import { type UserSettings } from "@/features/settings/server/queries"
+import { createClient } from "@/lib/supabase/server";
+import { type UserSettings } from "@/features/settings/server/queries";
 
 async function requireUser() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser()
-  if (authError || !user) throw new Error("Debes iniciar sesión.")
+  } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("Debes iniciar sesión.");
 
-  return { supabase, userId: user.id }
+  return { supabase, userId: user.id };
 }
 
 function revalidateSettings() {
-  revalidatePath("/dashboard/settings")
-  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard");
 }
 
-export async function upsertUserSettings(values: Partial<UserSettings>): Promise<void> {
-  const { supabase, userId } = await requireUser()
+export async function upsertUserSettings(
+  values: Partial<UserSettings>,
+): Promise<void> {
+  const { supabase, userId } = await requireUser();
 
   const { error } = await supabase.from("user_settings").upsert(
     {
@@ -32,41 +34,53 @@ export async function upsertUserSettings(values: Partial<UserSettings>): Promise
       }),
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "user_id" }
-  )
-  if (error) throw new Error(error.message)
+    { onConflict: "user_id" },
+  );
+  if (error) throw new Error(error.message);
 
-  revalidateSettings()
+  revalidateSettings();
 }
 
-export async function generateTelegramLinkToken(): Promise<{ token: string } | { error: string }> {
+export async function generateTelegramLinkToken(): Promise<
+  { token: string } | { error: string }
+> {
   try {
-    const { supabase, userId } = await requireUser()
+    const { supabase, userId } = await requireUser();
     const { data, error } = await supabase
       .from("telegram_link_tokens")
       .insert({ user_id: userId })
       .select("token")
-      .single()
+      .single();
 
-    if (error) throw new Error(error.message)
-    return { token: String(data.token) }
+    if (error) throw new Error(error.message);
+    return { token: String(data.token) };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "No se pudo generar el código." }
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo generar el código.",
+    };
   }
 }
 
 export async function disconnectTelegram(): Promise<{ error: string } | null> {
   try {
-    const { supabase, userId } = await requireUser()
+    const { supabase, userId } = await requireUser();
     const { error } = await supabase
       .from("telegram_connections")
       .delete()
-      .eq("user_id", userId)
+      .eq("user_id", userId);
 
-    if (error) throw new Error(error.message)
-    revalidateSettings()
-    return null
+    if (error) throw new Error(error.message);
+    revalidateSettings();
+    return null;
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "No se pudo desconectar Telegram." }
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo desconectar Telegram.",
+    };
   }
 }

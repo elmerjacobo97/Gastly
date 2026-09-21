@@ -1,7 +1,7 @@
-import { z } from "zod"
+import { z } from "zod";
 
-export const transactionTypes = ["expense", "income"] as const
-export const paymentMethods = ["cash", "credit_card"] as const
+export const transactionTypes = ["expense", "income"] as const;
+export const paymentMethods = ["cash", "credit_card"] as const;
 
 export const transactionSchema = z.object({
   type: z.enum(transactionTypes),
@@ -13,8 +13,8 @@ export const transactionSchema = z.object({
   paymentMethod: z.enum(paymentMethods),
   creditCardName: z.string().trim().optional(),
   creditCardDueOn: z.string().optional(),
-})
+});
 
-export type TransactionType = (typeof transactionTypes)[number]
-export type PaymentMethod = (typeof paymentMethods)[number]
-export type TransactionValues = z.infer<typeof transactionSchema>
+export type TransactionType = (typeof transactionTypes)[number];
+export type PaymentMethod = (typeof paymentMethods)[number];
+export type TransactionValues = z.infer<typeof transactionSchema>;

@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
-import { Loader2Icon, WalletIcon } from "lucide-react"
-import { useEffect, useState, useTransition } from "react"
-import { toast } from "sonner"
-import { type Resolver, Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { Loader2Icon, WalletIcon } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -18,39 +18,49 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { NumberInput } from "@/components/ui/number-input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   NativeSelect,
   NativeSelectOption,
-} from "@/components/ui/native-select"
+} from "@/components/ui/native-select";
 import {
   loanPaymentSchema,
   type LoanPaymentValues,
-} from "@/features/loans/schemas/loan-schemas"
-import { recordLoanPayment } from "@/features/loans/server/actions"
-import { type Loan, type LoanCurrency, LOAN_CURRENCY_LABELS } from "@/features/loans/types/loan-types"
-import { formatCurrency } from "@/lib/format"
+} from "@/features/loans/schemas/loan-schemas";
+import { recordLoanPayment } from "@/features/loans/server/actions";
+import {
+  type Loan,
+  type LoanCurrency,
+  LOAN_CURRENCY_LABELS,
+} from "@/features/loans/types/loan-types";
+import { formatCurrency } from "@/lib/format";
 
 type RecordPaymentDialogProps = {
-  personName: string
-  balances: Loan[]
-}
+  personName: string;
+  balances: Loan[];
+};
 
-export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
-  const needsCurrency = balances.length > 1
-  const defaultLoan = balances[0]
-  const [currency, setCurrency] = useState<LoanCurrency>(defaultLoan?.currency ?? "PEN")
-  const selected = balances.find((loan) => loan.currency === currency) ?? defaultLoan
+export function RecordPaymentDialog({
+  personName,
+  balances,
+}: RecordPaymentDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const needsCurrency = balances.length > 1;
+  const defaultLoan = balances[0];
+  const [currency, setCurrency] = useState<LoanCurrency>(
+    defaultLoan?.currency ?? "PEN",
+  );
+  const selected =
+    balances.find((loan) => loan.currency === currency) ?? defaultLoan;
 
   const form = useForm<LoanPaymentValues>({
     resolver: zodResolver(loanPaymentSchema) as Resolver<LoanPaymentValues>,
@@ -59,35 +69,36 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
       occurredOn: format(new Date(), "yyyy-MM-dd"),
       notes: "",
     },
-  })
+  });
 
   useEffect(() => {
     if (open && selected) {
-      form.setValue("amount", selected.pendingAmount)
+      form.setValue("amount", selected.pendingAmount);
     }
-  }, [open, selected, form])
+  }, [open, selected, form]);
 
   function onSubmit(values: LoanPaymentValues) {
-    if (!selected) return
+    if (!selected) return;
     startTransition(async () => {
       try {
-        await recordLoanPayment(selected.id, values)
-        toast.success("Abono registrado")
+        await recordLoanPayment(selected.id, values);
+        toast.success("Abono registrado");
         form.reset({
           amount: selected.pendingAmount,
           occurredOn: format(new Date(), "yyyy-MM-dd"),
           notes: "",
-        })
-        setOpen(false)
+        });
+        setOpen(false);
       } catch (error) {
         toast.error("No se pudo registrar el abono", {
-          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        })
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
       }
-    })
+    });
   }
 
-  if (!selected) return null
+  if (!selected) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -101,7 +112,8 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
         <DialogHeader>
           <DialogTitle>Abono de {personName}</DialogTitle>
           <DialogDescription>
-            Pendiente: {formatCurrency(selected.pendingAmount, selected.currency)}
+            Pendiente:{" "}
+            {formatCurrency(selected.pendingAmount, selected.currency)}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -117,7 +129,9 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
                 <NativeSelect
                   id="lp-currency"
                   value={currency}
-                  onChange={(event) => setCurrency(event.target.value as LoanCurrency)}
+                  onChange={(event) =>
+                    setCurrency(event.target.value as LoanCurrency)
+                  }
                 >
                   {balances.map((loan) => (
                     <NativeSelectOption key={loan.id} value={loan.currency}>
@@ -143,7 +157,9 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
                       step="0.01"
                       placeholder="0.00"
                     />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
                   </Field>
                 )}
               />
@@ -160,7 +176,9 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
                       onChange={field.onChange}
                       aria-invalid={fieldState.invalid}
                     />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
                   </Field>
                 )}
               />
@@ -173,7 +191,9 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="lp-notes">
                     Notas{" "}
-                    <span className="font-normal text-muted-foreground">(opcional)</span>
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <Input
                     {...field}
@@ -181,7 +201,9 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Transferencia BCP"
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -189,7 +211,9 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancelar</Button>
+            <Button variant="outline" type="button">
+              Cancelar
+            </Button>
           </DialogClose>
           <Button disabled={isPending} form="loan-payment-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
@@ -198,5 +222,5 @@ export function RecordPaymentDialog({ personName, balances }: RecordPaymentDialo
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

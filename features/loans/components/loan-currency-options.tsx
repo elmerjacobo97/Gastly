@@ -1,12 +1,10 @@
-"use client"
+"use client";
 
-import {
-  NativeSelectOption,
-} from "@/components/ui/native-select"
+import { NativeSelectOption } from "@/components/ui/native-select";
 import {
   LOAN_CURRENCIES,
   LOAN_CURRENCY_LABELS,
-} from "@/features/loans/types/loan-types"
+} from "@/features/loans/types/loan-types";
 
 export function LoanCurrencyOptions() {
   return (
@@ -17,5 +15,5 @@ export function LoanCurrencyOptions() {
         </NativeSelectOption>
       ))}
     </>
-  )
+  );
 }

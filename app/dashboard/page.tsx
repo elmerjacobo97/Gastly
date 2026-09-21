@@ -1,30 +1,30 @@
-import { redirect } from "next/navigation"
+import { redirect } from "next/navigation";
 
-import { TransactionsPanel } from "@/features/transactions/components/transactions-panel"
-import { getInstallmentPurchases } from "@/features/installments/server/queries"
-import { getRecurringPayments } from "@/features/recurring-payments/server/queries"
+import { TransactionsPanel } from "@/features/transactions/components/transactions-panel";
+import { getInstallmentPurchases } from "@/features/installments/server/queries";
+import { getRecurringPayments } from "@/features/recurring-payments/server/queries";
 import {
   getCategoryTotals,
   getMonthlyTotals,
-} from "@/features/transactions/server/charts-queries"
+} from "@/features/transactions/server/charts-queries";
 import {
   getTransactions,
   getUnpaidCreditCardTransactions,
-} from "@/features/transactions/server/queries"
-import { getUserSettings } from "@/features/settings/server/queries"
-import { createClient } from "@/lib/supabase/server"
+} from "@/features/transactions/server/queries";
+import { getUserSettings } from "@/features/settings/server/queries";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login")
+    redirect("/login");
   }
 
-  const today = new Date()
+  const today = new Date();
 
   const [
     transactions,
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
     getUserSettings(),
     getMonthlyTotals(6),
     getCategoryTotals(today),
-  ])
+  ]);
 
   return (
     <TransactionsPanel
@@ -56,5 +56,5 @@ export default async function DashboardPage() {
       monthlyData={monthlyData}
       categoryData={categoryData}
     />
-  )
+  );
 }

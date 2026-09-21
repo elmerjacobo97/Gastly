@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const monthlyPlanSchema = z
   .object({
@@ -12,7 +12,7 @@ export const monthlyPlanSchema = z
     {
       message: "El porcentaje no puede ser mayor a 100.",
       path: ["savingsValue"],
-    }
-  )
+    },
+  );
 
-export type MonthlyPlanValues = z.infer<typeof monthlyPlanSchema>
+export type MonthlyPlanValues = z.infer<typeof monthlyPlanSchema>;

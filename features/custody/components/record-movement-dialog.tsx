@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
-import { ArrowDownIcon, ArrowUpIcon, Loader2Icon } from 'lucide-react';
-import { useEffect, useState, useTransition } from 'react';
-import { toast } from 'sonner';
-import { type Resolver, Controller, useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { ArrowDownIcon, ArrowUpIcon, Loader2Icon } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
-import { Button } from '@/components/ui/button';
-import { DatePicker } from '@/components/ui/date-picker';
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -18,35 +18,49 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { NumberInput } from '@/components/ui/number-input';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { custodyMovementSchema, type CustodyMovementValues } from '@/features/custody/schemas/custody-schemas';
-import { recordCustodyMovement, updateCustodyMovement } from '@/features/custody/server/actions';
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import {
+  custodyMovementSchema,
+  type CustodyMovementValues,
+} from "@/features/custody/schemas/custody-schemas";
+import {
+  recordCustodyMovement,
+  updateCustodyMovement,
+} from "@/features/custody/server/actions";
 import {
   type CustodyMovement,
   type CustodyMovementType,
   type CustodyOrder,
-} from '@/features/custody/types/custody-types';
-import { formatCurrency } from '@/lib/format';
+} from "@/features/custody/types/custody-types";
+import { formatCurrency } from "@/lib/format";
 
 const METHOD_LABELS: Record<string, string> = {
-  yape: 'YAPE',
-  plin: 'PLIN',
-  transfer: 'Transferencia',
-  cash: 'Efectivo',
+  yape: "YAPE",
+  plin: "PLIN",
+  transfer: "Transferencia",
+  cash: "Efectivo",
 };
 
 function getTodayStr() {
-  return format(new Date(), 'yyyy-MM-dd');
+  return format(new Date(), "yyyy-MM-dd");
 }
 
 function getDefaultValues(
   type: CustodyMovementType,
   order?: CustodyOrder,
-  movement?: CustodyMovement
+  movement?: CustodyMovement,
 ): CustodyMovementValues {
   if (movement) {
     return {
@@ -54,16 +68,16 @@ function getDefaultValues(
       amount: movement.amount,
       occurredOn: movement.occurredOn,
       method: movement.method ?? undefined,
-      notes: movement.notes ?? '',
+      notes: movement.notes ?? "",
     };
   }
 
   return {
     type,
-    amount: type === 'deposit' ? 0 : (order?.balanceHeld ?? 0),
+    amount: type === "deposit" ? 0 : (order?.balanceHeld ?? 0),
     occurredOn: getTodayStr(),
-    method: type === 'deposit' ? 'yape' : undefined,
-    notes: '',
+    method: type === "deposit" ? "yape" : undefined,
+    notes: "",
   };
 }
 
@@ -78,7 +92,7 @@ type RecordMovementDialogProps = {
 
 export function RecordMovementDialog({
   order,
-  type = 'deposit',
+  type = "deposit",
   movement,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
@@ -92,11 +106,13 @@ export function RecordMovementDialog({
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<CustodyMovementValues>({
-    resolver: zodResolver(custodyMovementSchema) as Resolver<CustodyMovementValues>,
+    resolver: zodResolver(
+      custodyMovementSchema,
+    ) as Resolver<CustodyMovementValues>,
     defaultValues: getDefaultValues(type, order, movement),
   });
 
-  const movementType = useWatch({ control: form.control, name: 'type' });
+  const movementType = useWatch({ control: form.control, name: "type" });
 
   useEffect(() => {
     if (open) {
@@ -105,30 +121,36 @@ export function RecordMovementDialog({
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const title =
-    movementType === 'deposit'
+    movementType === "deposit"
       ? isEdit
-        ? 'Editar depósito'
-        : 'Registrar depósito'
+        ? "Editar depósito"
+        : "Registrar depósito"
       : isEdit
-        ? 'Editar desembolso'
-        : 'Registrar desembolso';
+        ? "Editar desembolso"
+        : "Registrar desembolso";
 
   function onSubmit(values: CustodyMovementValues) {
     startTransition(async () => {
       try {
         if (isEdit && movement) {
           await updateCustodyMovement(movement.id, values);
-          toast.success('Movimiento actualizado');
+          toast.success("Movimiento actualizado");
         } else {
           await recordCustodyMovement(order.id, values);
-          toast.success('Movimiento registrado');
+          toast.success("Movimiento registrado");
         }
         form.reset(getDefaultValues(type, order));
         setOpen(false);
       } catch (error) {
-        toast.error(isEdit ? 'No se pudo actualizar el movimiento' : 'No se pudo registrar el movimiento', {
-          description: error instanceof Error ? error.message : 'Inténtalo de nuevo.',
-        });
+        toast.error(
+          isEdit
+            ? "No se pudo actualizar el movimiento"
+            : "No se pudo registrar el movimiento",
+          {
+            description:
+              error instanceof Error ? error.message : "Inténtalo de nuevo.",
+          },
+        );
       }
     });
   }
@@ -141,7 +163,9 @@ export function RecordMovementDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             {order.personName} · {order.title}
-            {!isEdit && <> · En custodia: {formatCurrency(order.balanceHeld)}</>}
+            {!isEdit && (
+              <> · En custodia: {formatCurrency(order.balanceHeld)}</>
+            )}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -159,8 +183,12 @@ export function RecordMovementDialog({
                   <Field>
                     <FieldLabel htmlFor="cm-type">Tipo</FieldLabel>
                     <NativeSelect {...field} id="cm-type">
-                      <NativeSelectOption value="deposit">Depósito</NativeSelectOption>
-                      <NativeSelectOption value="disbursement">Desembolso</NativeSelectOption>
+                      <NativeSelectOption value="deposit">
+                        Depósito
+                      </NativeSelectOption>
+                      <NativeSelectOption value="disbursement">
+                        Desembolso
+                      </NativeSelectOption>
                     </NativeSelect>
                   </Field>
                 )}
@@ -183,7 +211,9 @@ export function RecordMovementDialog({
                       step="0.01"
                       placeholder="0.00"
                     />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
                   </Field>
                 )}
               />
@@ -200,20 +230,26 @@ export function RecordMovementDialog({
                       onChange={field.onChange}
                       aria-invalid={fieldState.invalid}
                     />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
                   </Field>
                 )}
               />
             </div>
 
-            {movementType === 'deposit' && (
+            {movementType === "deposit" && (
               <Controller
                 control={form.control}
                 name="method"
                 render={({ field }) => (
                   <Field>
                     <FieldLabel htmlFor="cm-method">Método</FieldLabel>
-                    <NativeSelect {...field} id="cm-method" value={field.value ?? 'yape'}>
+                    <NativeSelect
+                      {...field}
+                      id="cm-method"
+                      value={field.value ?? "yape"}
+                    >
                       {Object.entries(METHOD_LABELS).map(([value, label]) => (
                         <NativeSelectOption key={value} value={value}>
                           {label}
@@ -231,15 +267,24 @@ export function RecordMovementDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="cm-notes">
-                    Notas <span className="font-normal text-muted-foreground">(opcional)</span>
+                    Notas{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
                   </FieldLabel>
                   <Input
                     {...field}
                     id="cm-notes"
                     aria-invalid={fieldState.invalid}
-                    placeholder={movementType === 'deposit' ? 'Ej: Operación YAPE #123' : 'Ej: Compra en tienda X'}
+                    placeholder={
+                      movementType === "deposit"
+                        ? "Ej: Operación YAPE #123"
+                        : "Ej: Compra en tienda X"
+                    }
                   />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -251,9 +296,13 @@ export function RecordMovementDialog({
               Cancelar
             </Button>
           </DialogClose>
-          <Button disabled={isPending} form="custody-movement-form" type="submit">
+          <Button
+            disabled={isPending}
+            form="custody-movement-form"
+            type="submit"
+          >
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
-            {isEdit ? 'Guardar cambios' : 'Confirmar'}
+            {isEdit ? "Guardar cambios" : "Confirmar"}
           </Button>
         </DialogFooter>
       </DialogContent>

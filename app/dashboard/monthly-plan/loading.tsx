@@ -1,9 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function MonthlyPlanLoading() {
   return (
@@ -53,5 +49,5 @@ export default function MonthlyPlanLoading() {
         </div>
       </div>
     </main>
-  )
+  );
 }
