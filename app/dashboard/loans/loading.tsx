@@ -2,6 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
 } from "@/components/ui/card"
 
@@ -35,24 +36,29 @@ export default function LoansLoading() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-xl border bg-card">
-            <div className="flex items-start justify-between gap-3 border-b p-6 pb-3">
-              <div className="flex-1 space-y-1.5">
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-start justify-between pb-3">
+              <div className="flex flex-1 flex-col gap-1.5">
                 <Skeleton className="h-5 w-32" />
                 <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-5 w-24" />
               </div>
               <Skeleton className="size-8 rounded-md" />
-            </div>
-            <div className="flex flex-col gap-3 p-6">
-              <Skeleton className="h-2 w-full" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2.5">
               <div className="flex justify-between">
-                <Skeleton className="h-3 w-28" />
-                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-4 w-28" />
               </div>
-              <Skeleton className="h-8 w-full" />
-            </div>
-          </div>
+              <div className="flex justify-between">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-5 w-20" />
+              </div>
+            </CardContent>
+            <CardFooter className="flex gap-2">
+              <Skeleton className="h-8 w-28" />
+              <Skeleton className="h-8 w-24" />
+            </CardFooter>
+          </Card>
         ))}
       </div>
     </main>

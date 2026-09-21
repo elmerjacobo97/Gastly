@@ -9,11 +9,11 @@ import { type Loan, type LoanPersonGroup } from "@/features/loans/types/loan-typ
 type LoansSectionsProps = {
   loans: Loan[]
   onEdit: (group: LoanPersonGroup) => void
-  onHistory: (group: LoanPersonGroup) => void
+  onDetails: (group: LoanPersonGroup) => void
   onDelete: (group: LoanPersonGroup) => void
 }
 
-export function LoansSections({ loans, onEdit, onHistory, onDelete }: LoansSectionsProps) {
+export function LoansSections({ loans, onEdit, onDetails, onDelete }: LoansSectionsProps) {
   const groups = groupLoansByPerson(loans)
   const active = groups.filter((group) => !group.isSettled)
   const settled = groups.filter((group) => group.isSettled)
@@ -40,7 +40,7 @@ export function LoansSections({ loans, onEdit, onHistory, onDelete }: LoansSecti
                     group={group}
                     settled={section.settled}
                     onEdit={onEdit}
-                    onHistory={onHistory}
+                    onDetails={onDetails}
                     onDelete={onDelete}
                   />
                 ))}

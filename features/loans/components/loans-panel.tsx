@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { EditLoanDialog } from "@/features/loans/components/edit-loan-dialog"
 import { LoanDialog } from "@/features/loans/components/loan-dialog"
-import { LoanHistoryDialog } from "@/features/loans/components/loan-history-dialog"
+import { LoanDetailSheet } from "@/features/loans/components/loan-detail-sheet"
 import { LoansSections } from "@/features/loans/components/loans-sections"
 import { LoansSummaryCards } from "@/features/loans/components/loans-summary-cards"
 import { uniquePersonNames, groupLoansByPerson } from "@/features/loans/lib/group-loans"
@@ -22,14 +22,14 @@ export function LoansPanel({ loans }: LoansPanelProps) {
   const [isMutationPending, startTransition] = useTransition()
   const [deleteGroup, setDeleteGroup] = useState<LoanPersonGroup | null>(null)
   const [editGroup, setEditGroup] = useState<LoanPersonGroup | null>(null)
-  const [historyGroup, setHistoryGroup] = useState<LoanPersonGroup | null>(null)
+  const [detailGroup, setDetailGroup] = useState<LoanPersonGroup | null>(null)
   const personNames = uniquePersonNames(loans)
   const groups = groupLoansByPerson(loans)
   const liveEditGroup = editGroup
     ? groups.find((group) => group.key === editGroup.key) ?? null
     : null
-  const liveHistoryGroup = historyGroup
-    ? groups.find((group) => group.key === historyGroup.key) ?? null
+  const liveDetailGroup = detailGroup
+    ? groups.find((group) => group.key === detailGroup.key) ?? null
     : null
 
   function handleDelete(group: LoanPersonGroup) {
@@ -83,7 +83,7 @@ export function LoansPanel({ loans }: LoansPanelProps) {
         <LoansSections
           loans={loans}
           onEdit={setEditGroup}
-          onHistory={setHistoryGroup}
+          onDetails={setDetailGroup}
           onDelete={setDeleteGroup}
         />
       )}
@@ -104,11 +104,13 @@ export function LoansPanel({ loans }: LoansPanelProps) {
         onConfirm={() => deleteGroup && handleDelete(deleteGroup)}
       />
 
-      <LoanHistoryDialog
-        group={liveHistoryGroup}
-        open={!!historyGroup}
-        onOpenChange={(open) => !open && setHistoryGroup(null)}
-      />
+      {liveDetailGroup && (
+        <LoanDetailSheet
+          group={liveDetailGroup}
+          open={!!detailGroup}
+          onOpenChange={(open) => !open && setDetailGroup(null)}
+        />
+      )}
     </main>
   )
 }
