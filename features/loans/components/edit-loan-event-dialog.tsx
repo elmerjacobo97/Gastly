@@ -26,8 +26,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import {
-  loanPaymentSchema,
-  type LoanPaymentValues,
+  loanDisbursementSchema,
+  type LoanDisbursementValues,
 } from "@/features/loans/schemas/loan-schemas";
 import {
   updateLoanDisbursement,
@@ -47,12 +47,16 @@ export function EditLoanEventDialog({
   onOpenChange,
 }: EditLoanEventDialogProps) {
   const isPayment = entry.kind === "payment";
-  const form = useForm<LoanPaymentValues>({
-    resolver: zodResolver(loanPaymentSchema) as Resolver<LoanPaymentValues>,
+  const form = useForm<LoanDisbursementValues>({
+    resolver: zodResolver(
+      loanDisbursementSchema,
+    ) as Resolver<LoanDisbursementValues>,
     defaultValues: {
       amount: entry.amount,
       occurredOn: entry.occurredOn,
+      description: entry.description ?? "",
       notes: entry.notes ?? "",
+      interestRate: entry.interestRate,
     },
   });
 
@@ -61,14 +65,16 @@ export function EditLoanEventDialog({
       form.reset({
         amount: entry.amount,
         occurredOn: entry.occurredOn,
+        description: entry.description ?? "",
         notes: entry.notes ?? "",
+        interestRate: entry.interestRate,
       });
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [isPending, startTransition] = useTransition();
 
-  function onSubmit(values: LoanPaymentValues) {
+  function onSubmit(values: LoanDisbursementValues) {
     startTransition(async () => {
       try {
         if (isPayment) {
@@ -101,7 +107,9 @@ export function EditLoanEventDialog({
             {isPayment ? "Editar abono" : "Editar préstamo"}
           </DialogTitle>
           <DialogDescription>
-            Corrige el monto, la fecha o las notas de este movimiento.
+            {isPayment
+              ? "Corrige el monto, la fecha o las notas de este abono."
+              : "Corrige el monto, la fecha, el motivo o las notas de este préstamo."}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -152,6 +160,60 @@ export function EditLoanEventDialog({
                 )}
               />
             </div>
+            {!isPayment && (
+              <Controller
+                control={form.control}
+                name="description"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="ee-description">
+                      Motivo{" "}
+                      <span className="font-normal text-muted-foreground">
+                        (opcional)
+                      </span>
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      id="ee-description"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Ej: Pollo de pico rico"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            )}
+            {!isPayment && (
+              <Controller
+                control={form.control}
+                name="interestRate"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="ee-interest">
+                      Interés mensual (%){" "}
+                      <span className="font-normal text-muted-foreground">
+                        (opc.)
+                      </span>
+                    </FieldLabel>
+                    <NumberInput
+                      {...field}
+                      id="ee-interest"
+                      aria-invalid={fieldState.invalid}
+                      inputMode="decimal"
+                      max="100"
+                      min="0"
+                      placeholder="0"
+                      step="0.1"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            )}
             <Controller
               control={form.control}
               name="notes"
@@ -167,7 +229,11 @@ export function EditLoanEventDialog({
                     {...field}
                     id="ee-notes"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Yape"
+                    placeholder={
+                      isPayment
+                        ? "Ej: Yape"
+                        : "Ej: Acordado devolver en 2 partes"
+                    }
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,11 @@ import {
 type RowActionsMenuProps = {
   onEdit: () => void;
   onDelete: () => void;
+  additionalActions?: {
+    icon: ReactNode;
+    label: string;
+    onSelect: () => void;
+  }[];
   editLabel?: string;
   className?: string;
 };
@@ -21,6 +27,7 @@ type RowActionsMenuProps = {
 export function RowActionsMenu({
   onEdit,
   onDelete,
+  additionalActions,
   editLabel = "Editar",
   className,
 }: RowActionsMenuProps) {
@@ -37,6 +44,12 @@ export function RowActionsMenu({
           <PencilIcon />
           {editLabel}
         </DropdownMenuItem>
+        {additionalActions?.map((action) => (
+          <DropdownMenuItem key={action.label} onSelect={action.onSelect}>
+            {action.icon}
+            {action.label}
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={onDelete}

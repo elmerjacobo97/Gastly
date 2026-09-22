@@ -2,22 +2,21 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Loader2Icon, WalletIcon } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { Loader2Icon } from "lucide-react";
+import { useEffect, useTransition } from "react";
 import { type Resolver, Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Field,
@@ -28,134 +27,98 @@ import {
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
-import {
   loanPaymentSchema,
   type LoanPaymentValues,
 } from "@/features/loans/schemas/loan-schemas";
 import { recordLoanPayment } from "@/features/loans/server/actions";
-import {
-  type Loan,
-  type LoanCurrency,
-  LOAN_CURRENCY_LABELS,
-} from "@/features/loans/types/loan-types";
+import { type LoanMovementRow } from "@/features/loans/types/loan-types";
 import { formatCurrency } from "@/lib/format";
 
 type RecordPaymentDialogProps = {
-  personName: string;
-  balances: Loan[];
+  movement: LoanMovementRow;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
 };
 
 export function RecordPaymentDialog({
-  personName,
-  balances,
+  movement,
+  onOpenChange,
+  open,
 }: RecordPaymentDialogProps) {
-  const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const needsCurrency = balances.length > 1;
-  const defaultLoan = balances[0];
-  const [currency, setCurrency] = useState<LoanCurrency>(
-    defaultLoan?.currency ?? "PEN",
-  );
-  const selected =
-    balances.find((loan) => loan.currency === currency) ?? defaultLoan;
-
+  const isLent = movement.direction === "lent";
   const form = useForm<LoanPaymentValues>({
     resolver: zodResolver(loanPaymentSchema) as Resolver<LoanPaymentValues>,
     defaultValues: {
-      amount: defaultLoan?.pendingAmount ?? 0,
+      amount: movement.pendingAmount,
       occurredOn: format(new Date(), "yyyy-MM-dd"),
       notes: "",
     },
   });
 
   useEffect(() => {
-    if (open && selected) {
-      form.setValue("amount", selected.pendingAmount);
-    }
-  }, [open, selected, form]);
+    if (open) form.setValue("amount", movement.pendingAmount);
+  }, [form, movement.pendingAmount, open]);
 
   function onSubmit(values: LoanPaymentValues) {
-    if (!selected) return;
     startTransition(async () => {
       try {
-        await recordLoanPayment(selected.id, values);
-        toast.success("Abono registrado");
-        form.reset({
-          amount: selected.pendingAmount,
-          occurredOn: format(new Date(), "yyyy-MM-dd"),
-          notes: "",
-        });
-        setOpen(false);
+        await recordLoanPayment(movement.loanId, movement.id, values);
+        toast.success(isLent ? "Devolución registrada" : "Pago registrado");
+        onOpenChange(false);
       } catch (error) {
-        toast.error("No se pudo registrar el abono", {
-          description:
-            error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        });
+        toast.error(
+          isLent
+            ? "No se pudo registrar la devolución"
+            : "No se pudo registrar el pago",
+          {
+            description:
+              error instanceof Error ? error.message : "Inténtalo de nuevo.",
+          },
+        );
       }
     });
   }
 
-  if (!selected) return null;
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <WalletIcon data-icon="inline-start" />
-          Registrar abono
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Abono de {personName}</DialogTitle>
+          <DialogTitle>
+            {isLent ? "Registrar devolución" : "Registrar pago"}
+          </DialogTitle>
           <DialogDescription>
-            Pendiente:{" "}
-            {formatCurrency(selected.pendingAmount, selected.currency)}
+            {movement.personName}
+            {movement.description ? ` · ${movement.description}` : ""} ·
+            Pendiente{" "}
+            {formatCurrency(movement.pendingAmount, movement.currency)}
           </DialogDescription>
         </DialogHeader>
         <form
-          id="loan-payment-form"
           className="flex flex-col gap-5"
+          id="loan-payment-form"
           noValidate
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
-            {needsCurrency && (
-              <Field>
-                <FieldLabel htmlFor="lp-currency">Moneda</FieldLabel>
-                <NativeSelect
-                  id="lp-currency"
-                  value={currency}
-                  onChange={(event) =>
-                    setCurrency(event.target.value as LoanCurrency)
-                  }
-                >
-                  {balances.map((loan) => (
-                    <NativeSelectOption key={loan.id} value={loan.currency}>
-                      {LOAN_CURRENCY_LABELS[loan.currency]}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </Field>
-            )}
             <div className="grid grid-cols-2 gap-3">
               <Controller
                 control={form.control}
                 name="amount"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="lp-amount">Monto abonado</FieldLabel>
+                    <FieldLabel htmlFor="lp-amount">
+                      {isLent ? "Monto recibido" : "Monto pagado"}
+                    </FieldLabel>
                     <NumberInput
                       {...field}
-                      id="lp-amount"
                       aria-invalid={fieldState.invalid}
+                      id="lp-amount"
                       inputMode="decimal"
+                      max={movement.pendingAmount}
                       min="0"
-                      step="0.01"
                       placeholder="0.00"
+                      step="0.01"
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -171,10 +134,9 @@ export function RecordPaymentDialog({
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="lp-date">Fecha</FieldLabel>
                     <DatePicker
-                      id="lp-date"
-                      value={field.value}
-                      onChange={field.onChange}
+                      {...field}
                       aria-invalid={fieldState.invalid}
+                      id="lp-date"
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -197,8 +159,8 @@ export function RecordPaymentDialog({
                   </FieldLabel>
                   <Input
                     {...field}
-                    id="lp-notes"
                     aria-invalid={fieldState.invalid}
+                    id="lp-notes"
                     placeholder="Ej: Transferencia BCP"
                   />
                   {fieldState.invalid && (
@@ -211,13 +173,13 @@ export function RecordPaymentDialog({
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" type="button">
+            <Button type="button" variant="outline">
               Cancelar
             </Button>
           </DialogClose>
           <Button disabled={isPending} form="loan-payment-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}
-            Confirmar abono
+            {isLent ? "Confirmar devolución" : "Confirmar pago"}
           </Button>
         </DialogFooter>
       </DialogContent>

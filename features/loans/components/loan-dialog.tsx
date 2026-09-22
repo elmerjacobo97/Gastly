@@ -33,6 +33,7 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { LoanCurrencyOptions } from "@/features/loans/components/loan-currency-options";
+import { LoanPersonSelect } from "@/features/loans/components/loan-person-select";
 import { normalizePersonName } from "@/features/loans/lib/group-loans";
 import {
   loanSchema,
@@ -53,6 +54,8 @@ const EMPTY_DEFAULTS: LoanValues = {
   personName: "",
   amount: 0,
   currency: "PEN",
+  interestRate: 0,
+  description: "",
   expectedOn: "",
   loanedOn: getTodayStr(),
   notes: "",
@@ -121,8 +124,8 @@ export function LoanDialog({
         <DialogHeader>
           <DialogTitle>Nuevo préstamo</DialogTitle>
           <DialogDescription>
-            Para una persona nueva. Si ya está en la lista, usa Otro préstamo en
-            su tarjeta.
+            Elige una persona existente o crea una nueva. Si el saldo ya existe,
+            el monto se suma.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -160,18 +163,13 @@ export function LoanDialog({
                       ? "A quién le presté"
                       : "Quién me prestó"}
                   </FieldLabel>
-                  <Input
-                    {...field}
-                    id="loan-person"
-                    list="loan-person-names"
+                  <LoanPersonSelect
                     aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Juan García"
+                    id="loan-person"
+                    onChange={field.onChange}
+                    personNames={personNames}
+                    value={field.value}
                   />
-                  <datalist id="loan-person-names">
-                    {personNames.map((name) => (
-                      <option key={name} value={name} />
-                    ))}
-                  </datalist>
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}
@@ -223,6 +221,38 @@ export function LoanDialog({
               </FieldDescription>
             )}
 
+            <Controller
+              control={form.control}
+              name="interestRate"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="loan-interest">
+                    Interés mensual (%){" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opc.)
+                    </span>
+                  </FieldLabel>
+                  <NumberInput
+                    {...field}
+                    id="loan-interest"
+                    aria-invalid={fieldState.invalid}
+                    inputMode="decimal"
+                    max="100"
+                    min="0"
+                    placeholder="0"
+                    step="0.1"
+                  />
+                  <FieldDescription>
+                    Se calcula cada mes sobre el saldo pendiente. 0 = sin
+                    interés.
+                  </FieldDescription>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-3">
               <Controller
                 control={form.control}
@@ -273,6 +303,30 @@ export function LoanDialog({
 
             <Controller
               control={form.control}
+              name="description"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="loan-description">
+                    Motivo{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    id="loan-description"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Ej: Pollo de pico rico"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
               name="notes"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -286,7 +340,7 @@ export function LoanDialog({
                     {...field}
                     id="loan-notes"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Para emergencia médica"
+                    placeholder="Ej: Acordado devolver en 2 partes"
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

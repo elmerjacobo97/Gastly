@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { Loader2Icon, PlusIcon } from "lucide-react";
-import { useState, useTransition } from "react";
+import { type ReactNode, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { type Resolver, Controller, useForm } from "react-hook-form";
 
@@ -46,11 +46,21 @@ function defaultCurrency(group: LoanPersonGroup) {
 
 type AddLoanDialogProps = {
   group: LoanPersonGroup;
+  onOpenChange?: (open: boolean) => void;
+  open?: boolean;
+  trigger?: ReactNode;
 };
 
-export function AddLoanDialog({ group }: AddLoanDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddLoanDialog({
+  group,
+  onOpenChange,
+  open,
+  trigger,
+}: AddLoanDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const isControlled = open !== undefined;
+  const dialogOpen = isControlled ? open : internalOpen;
   const formId = `add-loan-form-${group.key.replaceAll(/[^a-z0-9-]/gi, "-")}`;
 
   const form = useForm<AddLoanValues>({
@@ -58,6 +68,8 @@ export function AddLoanDialog({ group }: AddLoanDialogProps) {
     defaultValues: {
       amount: 0,
       currency: defaultCurrency(group),
+      interestRate: 0,
+      description: "",
       loanedOn: getTodayStr(),
       notes: "",
     },
@@ -71,6 +83,7 @@ export function AddLoanDialog({ group }: AddLoanDialogProps) {
           personName: group.personName,
           amount: values.amount,
           currency: values.currency,
+          interestRate: values.interestRate,
           loanedOn: values.loanedOn,
           notes: values.notes,
         });
@@ -78,10 +91,12 @@ export function AddLoanDialog({ group }: AddLoanDialogProps) {
         form.reset({
           amount: 0,
           currency: defaultCurrency(group),
+          interestRate: 0,
+          description: "",
           loanedOn: getTodayStr(),
           notes: "",
         });
-        setOpen(false);
+        handleOpenChange(false);
       } catch (error) {
         toast.error("No se pudo registrar el préstamo", {
           description:
@@ -91,27 +106,33 @@ export function AddLoanDialog({ group }: AddLoanDialogProps) {
     });
   }
 
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      form.reset({
+        amount: 0,
+        currency: defaultCurrency(group),
+        interestRate: 0,
+        description: "",
+        loanedOn: getTodayStr(),
+        notes: "",
+      });
+    }
+    if (onOpenChange) onOpenChange(next);
+    else setInternalOpen(next);
+  }
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (next) {
-          form.reset({
-            amount: 0,
-            currency: defaultCurrency(group),
-            loanedOn: getTodayStr(),
-            notes: "",
-          });
-        }
-        setOpen(next);
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <PlusIcon data-icon="inline-start" />
-          Otro préstamo
-        </Button>
-      </DialogTrigger>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+      {(!isControlled || trigger) && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button variant="outline" size="sm">
+              <PlusIcon data-icon="inline-start" />
+              Otro préstamo
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>
@@ -170,6 +191,33 @@ export function AddLoanDialog({ group }: AddLoanDialogProps) {
             </div>
             <Controller
               control={form.control}
+              name="interestRate"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={`${formId}-interest`}>
+                    Interés mensual (%){" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opc.)
+                    </span>
+                  </FieldLabel>
+                  <NumberInput
+                    {...field}
+                    id={`${formId}-interest`}
+                    aria-invalid={fieldState.invalid}
+                    inputMode="decimal"
+                    max="100"
+                    min="0"
+                    placeholder="0"
+                    step="0.1"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
               name="loanedOn"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -179,6 +227,29 @@ export function AddLoanDialog({ group }: AddLoanDialogProps) {
                     value={field.value}
                     onChange={field.onChange}
                     aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="description"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={`${formId}-description`}>
+                    Motivo{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    id={`${formId}-description`}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Ej: Pollo de pico rico"
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -201,7 +272,7 @@ export function AddLoanDialog({ group }: AddLoanDialogProps) {
                     {...field}
                     id={`${formId}-notes`}
                     aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Pollo de pico rico"
+                    placeholder="Ej: Acordado devolver en 2 partes"
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

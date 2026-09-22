@@ -13,6 +13,7 @@ export const LOAN_CURRENCY_LABELS: Record<LoanCurrency, string> = {
 export type LoanPayment = {
   id: string;
   loanId: string;
+  disbursementId: string;
   amount: number;
   occurredOn: string;
   notes: string | null;
@@ -23,7 +24,10 @@ export type LoanDisbursement = {
   loanId: string;
   amount: number;
   occurredOn: string;
+  description: string | null;
   notes: string | null;
+  interestRate: number;
+  outstandingAmount: number;
 };
 
 export type Loan = {
@@ -31,13 +35,11 @@ export type Loan = {
   personName: string;
   direction: LoanDirection;
   currency: LoanCurrency;
-  amount: number;
   expectedOn: string | null;
-  loanedOn: string;
   notes: string | null;
   disbursements: LoanDisbursement[];
   payments: LoanPayment[];
-  paidAmount: number;
+  accruedInterest: number;
   pendingAmount: number;
   isSettled: boolean;
 };
@@ -59,5 +61,14 @@ export type LoanHistoryEntry = {
   currency: LoanCurrency;
   amount: number;
   occurredOn: string;
+  description: string | null;
   notes: string | null;
+  interestRate: number;
+};
+
+export type LoanMovementRow = LoanHistoryEntry & {
+  personName: string;
+  direction: LoanDirection;
+  isSettled: boolean;
+  pendingAmount: number;
 };

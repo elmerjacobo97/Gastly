@@ -1,4 +1,7 @@
+import { format } from "date-fns";
+
 import { createClient } from "@/lib/supabase/server";
+import { computeLoanInterest } from "@/features/loans/lib/loan-interest";
 import {
   type Loan,
   type LoanCurrency,
@@ -12,15 +15,14 @@ type LoanRow = {
   person_name: string;
   direction: LoanDirection;
   currency: LoanCurrency;
-  amount: number | string;
   expected_on: string | null;
-  loaned_on: string;
   notes: string | null;
 };
 
 type LoanPaymentRow = {
   id: string;
   loan_id: string;
+  disbursement_id: string;
   amount: number | string;
   occurred_on: string;
   notes: string | null;
@@ -31,13 +33,16 @@ type LoanDisbursementRow = {
   loan_id: string;
   amount: number | string;
   occurred_on: string;
+  description: string | null;
   notes: string | null;
+  interest_rate: number | string;
 };
 
 function mapPayment(row: LoanPaymentRow): LoanPayment {
   return {
     id: row.id,
     loanId: row.loan_id,
+    disbursementId: row.disbursement_id,
     amount: Number(row.amount),
     occurredOn: row.occurred_on,
     notes: row.notes,
@@ -50,7 +55,10 @@ function mapDisbursement(row: LoanDisbursementRow): LoanDisbursement {
     loanId: row.loan_id,
     amount: Number(row.amount),
     occurredOn: row.occurred_on,
+    description: row.description,
     notes: row.notes,
+    interestRate: Number(row.interest_rate ?? 0),
+    outstandingAmount: 0,
   };
 }
 
@@ -58,24 +66,29 @@ function mapLoan(
   row: LoanRow,
   disbursements: LoanDisbursement[],
   payments: LoanPayment[],
+  asOf: string,
 ): Loan {
-  const amount = disbursements.reduce((sum, item) => sum + item.amount, 0);
-  const paidAmount = payments.reduce((sum, item) => sum + item.amount, 0);
-  const pendingAmount = Math.max(0, amount - paidAmount);
+  const interest = computeLoanInterest(disbursements, payments, asOf);
+  const outstandingByDisbursement = new Map(
+    interest.disbursements.map((item) => [item.id, item.outstanding]),
+  );
+  const mappedDisbursements = disbursements.map((disbursement) => ({
+    ...disbursement,
+    outstandingAmount:
+      outstandingByDisbursement.get(disbursement.id) ?? disbursement.amount,
+  }));
   return {
     id: row.id,
     personName: row.person_name,
     direction: row.direction,
     currency: row.currency,
-    amount,
     expectedOn: row.expected_on,
-    loanedOn: row.loaned_on,
     notes: row.notes,
-    disbursements,
+    disbursements: mappedDisbursements,
     payments,
-    paidAmount,
-    pendingAmount,
-    isSettled: pendingAmount <= 0,
+    accruedInterest: interest.accruedInterest,
+    pendingAmount: interest.totalDue,
+    isSettled: interest.totalDue <= 0,
   };
 }
 
@@ -84,9 +97,7 @@ export async function getLoans(): Promise<Loan[]> {
 
   const { data: loans, error } = await supabase
     .from("loans")
-    .select(
-      "id, person_name, direction, currency, amount, expected_on, loaned_on, notes",
-    )
+    .select("id, person_name, direction, currency, expected_on, notes")
     .order("created_at", { ascending: false })
     .overrideTypes<LoanRow[], { merge: false }>();
 
@@ -94,17 +105,20 @@ export async function getLoans(): Promise<Loan[]> {
   if (!loans?.length) return [];
 
   const loanIds = loans.map((loan) => loan.id);
+  const asOf = format(new Date(), "yyyy-MM-dd");
 
   const [paymentsResult, disbursementsResult] = await Promise.all([
     supabase
       .from("loan_payments")
-      .select("id, loan_id, amount, occurred_on, notes")
+      .select("id, loan_id, disbursement_id, amount, occurred_on, notes")
       .in("loan_id", loanIds)
       .order("occurred_on", { ascending: false })
       .overrideTypes<LoanPaymentRow[], { merge: false }>(),
     supabase
       .from("loan_disbursements")
-      .select("id, loan_id, amount, occurred_on, notes")
+      .select(
+        "id, loan_id, amount, occurred_on, description, notes, interest_rate",
+      )
       .in("loan_id", loanIds)
       .order("occurred_on", { ascending: false })
       .overrideTypes<LoanDisbursementRow[], { merge: false }>(),
@@ -133,6 +147,7 @@ export async function getLoans(): Promise<Loan[]> {
       loan,
       disbursementsByLoan.get(loan.id) ?? [],
       paymentsByLoan.get(loan.id) ?? [],
+      asOf,
     ),
   );
 }

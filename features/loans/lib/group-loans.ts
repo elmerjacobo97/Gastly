@@ -1,6 +1,6 @@
 import {
   type Loan,
-  type LoanHistoryEntry,
+  type LoanMovementRow,
   type LoanPersonGroup,
 } from "@/features/loans/types/loan-types";
 
@@ -39,47 +39,46 @@ export function uniquePersonNames(loans: Loan[]) {
   return [...names].toSorted((a, b) => a.localeCompare(b, "es"));
 }
 
-export function historyEntriesForGroup(
-  group: LoanPersonGroup,
-): LoanHistoryEntry[] {
-  const entries: LoanHistoryEntry[] = [];
-
-  for (const loan of group.balances) {
-    for (const disbursement of loan.disbursements) {
-      entries.push({
+export function flattenLoanMovements(loans: Loan[]): LoanMovementRow[] {
+  return loans
+    .flatMap((loan) => [
+      ...loan.disbursements.map((disbursement): LoanMovementRow => ({
         id: disbursement.id,
         kind: "disbursement",
         loanId: loan.id,
+        personName: loan.personName,
+        direction: loan.direction,
         currency: loan.currency,
         amount: disbursement.amount,
         occurredOn: disbursement.occurredOn,
+        description: disbursement.description,
         notes: disbursement.notes,
-      });
-    }
-    for (const payment of loan.payments) {
-      entries.push({
+        isSettled: disbursement.outstandingAmount <= 0,
+        pendingAmount: disbursement.outstandingAmount,
+        interestRate: disbursement.interestRate,
+      })),
+      ...loan.payments.map((payment): LoanMovementRow => ({
         id: payment.id,
         kind: "payment",
         loanId: loan.id,
+        personName: loan.personName,
+        direction: loan.direction,
         currency: loan.currency,
         amount: payment.amount,
         occurredOn: payment.occurredOn,
+        description:
+          loan.disbursements.find(
+            (disbursement) => disbursement.id === payment.disbursementId,
+          )?.description ?? null,
         notes: payment.notes,
-      });
-    }
-  }
-
-  return entries.toSorted((a, b) => {
-    const byDate = b.occurredOn.localeCompare(a.occurredOn);
-    if (byDate !== 0) return byDate;
-    return a.kind.localeCompare(b.kind);
-  });
-}
-
-export function earliestLoanedOn(group: LoanPersonGroup) {
-  let earliest = group.balances[0]?.loanedOn ?? "";
-  for (const loan of group.balances) {
-    if (loan.loanedOn < earliest) earliest = loan.loanedOn;
-  }
-  return earliest;
+        isSettled: loan.isSettled,
+        pendingAmount: 0,
+        interestRate: 0,
+      })),
+    ])
+    .toSorted((a, b) => {
+      const byDate = b.occurredOn.localeCompare(a.occurredOn);
+      if (byDate !== 0) return byDate;
+      return a.kind.localeCompare(b.kind);
+    });
 }

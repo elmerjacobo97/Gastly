@@ -1,57 +1,27 @@
 "use client";
 
 import { HandCoinsIcon } from "lucide-react";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
 
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { EditLoanDialog } from "@/features/loans/components/edit-loan-dialog";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { LoanDialog } from "@/features/loans/components/loan-dialog";
-import { LoanDetailSheet } from "@/features/loans/components/loan-detail-sheet";
-import { LoansSections } from "@/features/loans/components/loans-sections";
 import { LoansSummaryCards } from "@/features/loans/components/loans-summary-cards";
-import {
-  uniquePersonNames,
-  groupLoansByPerson,
-} from "@/features/loans/lib/group-loans";
-import { deleteLoanBalances } from "@/features/loans/server/actions";
-import {
-  type Loan,
-  type LoanPersonGroup,
-} from "@/features/loans/types/loan-types";
+import { LoansWorkspace } from "@/features/loans/components/loans-workspace";
+import { uniquePersonNames } from "@/features/loans/lib/group-loans";
+import { type Loan } from "@/features/loans/types/loan-types";
 
 type LoansPanelProps = {
   loans: Loan[];
 };
 
 export function LoansPanel({ loans }: LoansPanelProps) {
-  const [isMutationPending, startTransition] = useTransition();
-  const [deleteGroup, setDeleteGroup] = useState<LoanPersonGroup | null>(null);
-  const [editGroup, setEditGroup] = useState<LoanPersonGroup | null>(null);
-  const [detailGroup, setDetailGroup] = useState<LoanPersonGroup | null>(null);
   const personNames = uniquePersonNames(loans);
-  const groups = groupLoansByPerson(loans);
-  const liveEditGroup = editGroup
-    ? (groups.find((group) => group.key === editGroup.key) ?? null)
-    : null;
-  const liveDetailGroup = detailGroup
-    ? (groups.find((group) => group.key === detailGroup.key) ?? null)
-    : null;
-
-  function handleDelete(group: LoanPersonGroup) {
-    startTransition(async () => {
-      try {
-        await deleteLoanBalances(group.balances.map((loan) => loan.id));
-        toast.success("Préstamo eliminado");
-        setDeleteGroup(null);
-      } catch (error) {
-        toast.error("No se pudo eliminar el préstamo", {
-          description:
-            error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        });
-      }
-    });
-  }
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -61,8 +31,7 @@ export function LoansPanel({ loans }: LoansPanelProps) {
             Préstamos
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Préstamos y deudas con terceros. Registra abonos para hacer
-            seguimiento.
+            Consulta tus deudas y todos sus movimientos en un solo lugar.
           </p>
         </div>
         <LoanDialog loans={loans} personNames={personNames} />
@@ -71,56 +40,27 @@ export function LoansPanel({ loans }: LoansPanelProps) {
       {loans.length > 0 && <LoansSummaryCards loans={loans} />}
 
       {loans.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <HandCoinsIcon className="size-6 text-muted-foreground" />
-          </div>
-          <div>
-            <p className="font-medium">No hay préstamos registrados</p>
-            <p className="text-sm text-muted-foreground">
+        <Empty className="border border-dashed py-16">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <HandCoinsIcon />
+            </EmptyMedia>
+            <EmptyTitle>No hay préstamos registrados</EmptyTitle>
+            <EmptyDescription>
               Registra el dinero que prestas para hacerle seguimiento.
-            </p>
-          </div>
-          <LoanDialog
-            triggerLabel="Registrar primer préstamo"
-            loans={loans}
-            personNames={personNames}
-          />
-        </div>
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <LoanDialog
+              loans={loans}
+              personNames={personNames}
+              triggerLabel="Registrar primer préstamo"
+            />
+          </EmptyContent>
+        </Empty>
       )}
 
-      {loans.length > 0 && (
-        <LoansSections
-          loans={loans}
-          onEdit={setEditGroup}
-          onDetails={setDetailGroup}
-          onDelete={setDeleteGroup}
-        />
-      )}
-
-      {liveEditGroup && (
-        <EditLoanDialog
-          group={liveEditGroup}
-          open={!!editGroup}
-          onOpenChange={(open) => !open && setEditGroup(null)}
-        />
-      )}
-
-      <ConfirmDialog
-        open={Boolean(deleteGroup)}
-        onOpenChange={(open) => !open && setDeleteGroup(null)}
-        description="Se eliminará esta persona y todo su historial de préstamos y abonos, en todas las monedas."
-        pending={isMutationPending}
-        onConfirm={() => deleteGroup && handleDelete(deleteGroup)}
-      />
-
-      {liveDetailGroup && (
-        <LoanDetailSheet
-          group={liveDetailGroup}
-          open={!!detailGroup}
-          onOpenChange={(open) => !open && setDetailGroup(null)}
-        />
-      )}
+      {loans.length > 0 && <LoansWorkspace loans={loans} />}
     </main>
   );
 }

@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { computeLoanInterest } from "@/features/loans/lib/loan-interest";
 import {
   type EditLoanPersonValues,
+  type LoanDisbursementValues,
   type LoanPaymentValues,
   type LoanValues,
 } from "@/features/loans/schemas/loan-schemas";
@@ -26,6 +28,71 @@ function revalidateLoans() {
 }
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
+async function validateLoanPayment(
+  supabase: ServerClient,
+  disbursementId: string,
+  values: LoanPaymentValues,
+  excludedPaymentId?: string,
+) {
+  const { data: disbursement, error: disbursementError } = await supabase
+    .from("loan_disbursements")
+    .select("id, amount, occurred_on, interest_rate")
+    .eq("id", disbursementId)
+    .single();
+
+  if (disbursementError || !disbursement) {
+    throw new Error(disbursementError?.message ?? "Préstamo no encontrado.");
+  }
+  if (values.occurredOn < disbursement.occurred_on) {
+    throw new Error("La devolución no puede ser anterior al préstamo.");
+  }
+
+  let paymentsQuery = supabase
+    .from("loan_payments")
+    .select("id, disbursement_id, amount, occurred_on")
+    .eq("disbursement_id", disbursementId);
+  if (excludedPaymentId) {
+    paymentsQuery = paymentsQuery.neq("id", excludedPaymentId);
+  }
+
+  const { data: payments, error: paymentsError } = await paymentsQuery;
+  if (paymentsError) throw new Error(paymentsError.message);
+
+  const paymentInputs = (payments ?? []).map((payment) => ({
+    id: payment.id,
+    disbursementId: payment.disbursement_id,
+    amount: Number(payment.amount),
+    occurredOn: payment.occurred_on,
+  }));
+  paymentInputs.push({
+    id: excludedPaymentId ?? "new-payment",
+    disbursementId,
+    amount: values.amount,
+    occurredOn: values.occurredOn,
+  });
+  const asOf = paymentInputs.reduce(
+    (latest, payment) =>
+      payment.occurredOn > latest ? payment.occurredOn : latest,
+    values.occurredOn,
+  );
+  const summary = computeLoanInterest(
+    [
+      {
+        id: disbursement.id,
+        amount: Number(disbursement.amount),
+        occurredOn: disbursement.occurred_on,
+        interestRate: Number(disbursement.interest_rate ?? 0),
+      },
+    ],
+    paymentInputs,
+    asOf,
+  );
+
+  if (summary.unappliedAmount > 0) {
+    throw new Error("El monto supera el saldo pendiente de este préstamo.");
+  }
+}
 
 async function syncLoanTotals(supabase: ServerClient, loanId: string) {
   const { data, error } = await supabase
@@ -71,7 +138,9 @@ export async function createLoan(values: LoanValues): Promise<void> {
       loan_id: match.id,
       amount: values.amount,
       occurred_on: values.loanedOn,
+      description: values.description || null,
       notes: values.notes || null,
+      interest_rate: values.interestRate ?? 0,
     });
     if (error) throw new Error(error.message);
 
@@ -113,7 +182,9 @@ export async function createLoan(values: LoanValues): Promise<void> {
       loan_id: loan.id,
       amount: values.amount,
       occurred_on: values.loanedOn,
+      description: values.description || null,
       notes: values.notes || null,
+      interest_rate: values.interestRate ?? 0,
     });
 
   if (disbursementError) {
@@ -154,12 +225,15 @@ export async function deleteLoanBalances(ids: string[]): Promise<void> {
 
 export async function recordLoanPayment(
   loanId: string,
+  disbursementId: string,
   values: LoanPaymentValues,
 ): Promise<void> {
   const { supabase } = await requireUser();
+  await validateLoanPayment(supabase, disbursementId, values);
 
   const { error } = await supabase.from("loan_payments").insert({
     loan_id: loanId,
+    disbursement_id: disbursementId,
     amount: values.amount,
     occurred_on: values.occurredOn,
     notes: values.notes || null,
@@ -173,6 +247,17 @@ export async function updateLoanPayment(
   values: LoanPaymentValues,
 ): Promise<void> {
   const { supabase } = await requireUser();
+
+  const { data: payment, error: paymentError } = await supabase
+    .from("loan_payments")
+    .select("disbursement_id")
+    .eq("id", id)
+    .single();
+  if (paymentError || !payment) {
+    throw new Error(paymentError?.message ?? "Devolución no encontrada.");
+  }
+
+  await validateLoanPayment(supabase, payment.disbursement_id, values, id);
 
   const { error } = await supabase
     .from("loan_payments")
@@ -196,7 +281,7 @@ export async function deleteLoanPayment(id: string): Promise<void> {
 
 export async function updateLoanDisbursement(
   id: string,
-  values: LoanPaymentValues,
+  values: LoanDisbursementValues,
 ): Promise<void> {
   const { supabase } = await requireUser();
 
@@ -208,12 +293,50 @@ export async function updateLoanDisbursement(
   if (fetchError || !row)
     throw new Error(fetchError?.message ?? "Préstamo no encontrado.");
 
+  const { data: payments, error: paymentsError } = await supabase
+    .from("loan_payments")
+    .select("id, disbursement_id, amount, occurred_on")
+    .eq("disbursement_id", id);
+  if (paymentsError) throw new Error(paymentsError.message);
+
+  const paymentInputs = (payments ?? []).map((payment) => ({
+    id: payment.id,
+    disbursementId: payment.disbursement_id,
+    amount: Number(payment.amount),
+    occurredOn: payment.occurred_on,
+  }));
+  if (paymentInputs.some((payment) => payment.occurredOn < values.occurredOn)) {
+    throw new Error("El préstamo no puede ser posterior a sus devoluciones.");
+  }
+  const asOf = paymentInputs.reduce(
+    (latest, payment) =>
+      payment.occurredOn > latest ? payment.occurredOn : latest,
+    values.occurredOn,
+  );
+  const summary = computeLoanInterest(
+    [
+      {
+        id,
+        amount: values.amount,
+        occurredOn: values.occurredOn,
+        interestRate: values.interestRate,
+      },
+    ],
+    paymentInputs,
+    asOf,
+  );
+  if (summary.unappliedAmount > 0) {
+    throw new Error("Los cambios dejarían devoluciones mayores al préstamo.");
+  }
+
   const { error } = await supabase
     .from("loan_disbursements")
     .update({
       amount: values.amount,
       occurred_on: values.occurredOn,
+      description: values.description || null,
       notes: values.notes || null,
+      interest_rate: values.interestRate ?? 0,
     })
     .eq("id", id);
   if (error) throw new Error(error.message);
@@ -232,6 +355,17 @@ export async function deleteLoanDisbursement(id: string): Promise<void> {
     .single();
   if (fetchError || !row)
     throw new Error(fetchError?.message ?? "Préstamo no encontrado.");
+
+  const { count: paymentCount, error: paymentCountError } = await supabase
+    .from("loan_payments")
+    .select("id", { count: "exact", head: true })
+    .eq("disbursement_id", id);
+  if (paymentCountError) throw new Error(paymentCountError.message);
+  if ((paymentCount ?? 0) > 0) {
+    throw new Error(
+      "No se puede eliminar un préstamo con devoluciones registradas.",
+    );
+  }
 
   const { count, error: countError } = await supabase
     .from("loan_disbursements")
