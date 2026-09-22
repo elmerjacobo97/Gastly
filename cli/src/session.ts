@@ -5,10 +5,6 @@ import type { GastlySession } from "./types.js"
 
 const SESSION_PATH = join(getGastlyDir(), "session.json")
 
-export function getSessionPath(): string {
-  return SESSION_PATH
-}
-
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0
 }

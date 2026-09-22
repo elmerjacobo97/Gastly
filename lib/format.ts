@@ -1,4 +1,4 @@
-export type CurrencyCode = "PEN" | "USD" | "MXN";
+type CurrencyCode = "PEN" | "USD" | "MXN";
 
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
 

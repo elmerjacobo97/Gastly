@@ -13,7 +13,7 @@ import {
 import { formatCompact } from "@/lib/chart-utils";
 import { formatCurrency } from "@/lib/format";
 
-export type MonthlyIncomeExpenseDatum = {
+type MonthlyIncomeExpenseDatum = {
   month: string;
   income: number;
   expenses: number;

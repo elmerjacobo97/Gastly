@@ -52,7 +52,7 @@ export type LoanPersonGroup = {
   isSettled: boolean;
 };
 
-export type LoanHistoryKind = "disbursement" | "payment";
+type LoanHistoryKind = "disbursement" | "payment";
 
 export type LoanHistoryEntry = {
   id: string;

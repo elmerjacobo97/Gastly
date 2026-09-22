@@ -1,18 +1,18 @@
-export type InterestDisbursementInput = {
+type InterestDisbursementInput = {
   id: string;
   amount: number;
   occurredOn: string;
   interestRate: number;
 };
 
-export type InterestPaymentInput = {
+type InterestPaymentInput = {
   id: string;
   disbursementId: string;
   amount: number;
   occurredOn: string;
 };
 
-export type LoanInterestSummary = {
+type LoanInterestSummary = {
   accruedInterest: number;
   outstandingPrincipal: number;
   totalDue: number;

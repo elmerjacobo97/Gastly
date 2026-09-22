@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const transactionTypes = ["expense", "income"] as const;
-export const paymentMethods = ["cash", "credit_card"] as const;
+const paymentMethods = ["cash", "credit_card"] as const;
 
 export const transactionSchema = z.object({
   type: z.enum(transactionTypes),

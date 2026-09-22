@@ -63,13 +63,13 @@ export async function requireConfig(): Promise<GastlyConfig> {
   return config
 }
 
-export async function requireSession(): Promise<GastlySession> {
+async function requireSession(): Promise<GastlySession> {
   const session = await readSession()
   if (!session) throw new Error("Not logged in. Run: gastly-cli login")
   return session
 }
 
-export function createClient(
+function createClient(
   config: GastlyConfig,
   accessToken?: string,
 ): SupabaseClient {

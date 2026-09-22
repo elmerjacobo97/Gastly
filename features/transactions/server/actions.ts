@@ -21,11 +21,9 @@ async function requireUser() {
 }
 
 function revalidateTransactions() {
-  revalidatePath("/dashboard/transactions");
-  revalidatePath("/dashboard/movements");
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/budget");
-  revalidatePath("/dashboard/reports");
+  revalidatePath("/transactions");
+  revalidatePath("/");
+  revalidatePath("/reports");
 }
 
 export async function createTransaction(values: TransactionValues) {

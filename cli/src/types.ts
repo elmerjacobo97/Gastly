@@ -41,19 +41,6 @@ export type AccountRecord = {
   notes: string | null
 }
 
-export type LoanRecord = {
-  id: string
-  personName: string
-  direction: "lent" | "borrowed"
-  currency: string
-  amount: number
-  expectedOn: string | null
-  loanedOn: string
-  notes: string | null
-  disbursements: { amount: number }[]
-  payments: { amount: number }[]
-}
-
 export type LoanSummary = {
   id: string
   personName: string

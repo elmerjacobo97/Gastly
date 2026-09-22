@@ -5,7 +5,7 @@ import { CheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type ColorOption = string | { value: string; hex: string };
+type ColorOption = string | { value: string; hex: string };
 
 type ColorPickerProps = {
   options: readonly ColorOption[];

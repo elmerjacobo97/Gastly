@@ -1,4 +1,4 @@
-export type SavingsMode = "percent" | "amount";
+type SavingsMode = "percent" | "amount";
 
 export type MonthlyPlan = {
   id: string;

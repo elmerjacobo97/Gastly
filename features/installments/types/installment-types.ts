@@ -1,4 +1,4 @@
-export type InstallmentCategory = {
+type InstallmentCategory = {
   id: string;
   name: string;
   color: string;
@@ -15,7 +15,7 @@ export type InstallmentPayment = {
   paidExternally: boolean;
 };
 
-export type InstallmentAccount = {
+type InstallmentAccount = {
   id: string;
   name: string;
   color: string;
