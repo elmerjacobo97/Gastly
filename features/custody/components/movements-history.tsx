@@ -115,7 +115,7 @@ export function MovementsHistory({
         <DataTable
           columns={columns}
           data={movements}
-          searchPlaceholder="Buscar por persona, propósito o notas..."
+          searchPlaceholder="Buscar"
           emptyState={
             <Empty className="bg-muted/20">
               <EmptyHeader>

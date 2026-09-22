@@ -166,7 +166,7 @@ export function MovementsPanel({
           <DataTable
             columns={columns}
             data={rows}
-            searchPlaceholder="Buscar por descripción o categoría..."
+            searchPlaceholder="Buscar"
             toolbar={
               <SegmentedControl
                 value={typeFilter}

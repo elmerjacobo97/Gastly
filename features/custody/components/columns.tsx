@@ -20,6 +20,7 @@ export function useCustodyMovementsColumns({
     () => [
       {
         accessorKey: "occurredOn",
+        enableGlobalFilter: false,
         header: "Fecha",
         cell: ({ row }) => (
           <span className="text-muted-foreground">
@@ -29,6 +30,7 @@ export function useCustodyMovementsColumns({
       },
       {
         accessorKey: "type",
+        enableGlobalFilter: false,
         header: "Tipo",
         cell: ({ row }) => {
           const type = row.getValue("type") as string;
@@ -61,6 +63,7 @@ export function useCustodyMovementsColumns({
       },
       {
         accessorKey: "method",
+        enableGlobalFilter: false,
         header: "Método",
         cell: ({ row }) => {
           const method = row.getValue("method") as string | null;
@@ -73,6 +76,7 @@ export function useCustodyMovementsColumns({
       },
       {
         accessorKey: "amount",
+        enableGlobalFilter: false,
         enableSorting: false,
         header: () => <div className="text-right">Monto</div>,
         cell: ({ row }) => {
@@ -93,6 +97,7 @@ export function useCustodyMovementsColumns({
       },
       {
         accessorKey: "notes",
+        enableGlobalFilter: false,
         header: "Notas",
         cell: ({ row }) => (
           <span className="max-w-50 truncate text-muted-foreground">

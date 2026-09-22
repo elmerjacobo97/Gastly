@@ -71,6 +71,7 @@ export function createMovementsColumns({
     {
       accessorFn: (row) => row.category?.name ?? "Sin categoría",
       id: "category",
+      enableGlobalFilter: false,
       header: "Categoría",
       cell: ({ row, getValue }) => (
         <div className="flex items-center gap-2 text-muted-foreground">
@@ -87,6 +88,7 @@ export function createMovementsColumns({
     },
     {
       accessorKey: "occurredOn",
+      enableGlobalFilter: false,
       header: "Fecha",
       cell: ({ row }) => (
         <span className="text-muted-foreground">
@@ -96,6 +98,7 @@ export function createMovementsColumns({
     },
     {
       accessorKey: "amount",
+      enableGlobalFilter: false,
       enableSorting: false,
       header: () => <div className="text-right">Monto</div>,
       cell: ({ row }) => <TransactionAmountCell transaction={row.original} />,
