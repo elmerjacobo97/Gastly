@@ -7,23 +7,21 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/features/dashboard/components/theme-toggle";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Resumen",
-  "/dashboard/transactions": "Transacciones",
-  "/dashboard/budget": "Presupuesto",
-  "/dashboard/recurring-payments": "Pagos recurrentes",
-  "/dashboard/installments": "Cuotas",
-  "/dashboard/loans": "Préstamos",
-  "/dashboard/custody": "Encargos",
-  "/dashboard/savings": "Ahorros",
-  "/dashboard/reports": "Reportes",
-  "/dashboard/settings": "Configuración",
-  "/dashboard/categories": "Categorías",
+  "/": "Resumen",
+  "/transactions": "Transacciones",
+  "/recurring-payments": "Pagos recurrentes",
+  "/installments": "Cuotas",
+  "/loans": "Préstamos",
+  "/custody": "Encargos",
+  "/savings": "Ahorros",
+  "/reports": "Reportes",
+  "/settings": "Configuración",
 };
 
 function getPageTitle(pathname: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
   const parent = Object.keys(PAGE_TITLES)
-    .filter((k) => pathname.startsWith(k) && k !== "/dashboard")
+    .filter((k) => pathname.startsWith(k) && k !== "/")
     .sort((a, b) => b.length - a.length)[0];
   return parent ? PAGE_TITLES[parent] : "Gastly";
 }

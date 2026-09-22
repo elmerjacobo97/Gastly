@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
-import { type UserSettings } from "@/features/settings/server/queries";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -17,28 +16,8 @@ async function requireUser() {
 }
 
 function revalidateSettings() {
-  revalidatePath("/dashboard/settings");
-  revalidatePath("/dashboard");
-}
-
-export async function upsertUserSettings(
-  values: Partial<UserSettings>,
-): Promise<void> {
-  const { supabase, userId } = await requireUser();
-
-  const { error } = await supabase.from("user_settings").upsert(
-    {
-      user_id: userId,
-      ...(values.savingsPercentage !== undefined && {
-        savings_percentage: values.savingsPercentage,
-      }),
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id" },
-  );
-  if (error) throw new Error(error.message);
-
-  revalidateSettings();
+  revalidatePath("/settings");
+  revalidatePath("/");
 }
 
 export async function generateTelegramLinkToken(): Promise<

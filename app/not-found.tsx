@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftIcon, LayoutDashboardIcon } from "lucide-react";
+import { LayoutDashboardIcon } from "lucide-react";
 
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -48,15 +48,9 @@ export default function NotFound() {
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" asChild>
-                <Link href="/dashboard">
-                  <LayoutDashboardIcon data-icon="inline-start" />
-                  Ir al dashboard
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
                 <Link href="/">
-                  <ArrowLeftIcon data-icon="inline-start" />
-                  Volver al inicio
+                  <LayoutDashboardIcon data-icon="inline-start" />
+                  Ir al panel
                 </Link>
               </Button>
             </div>

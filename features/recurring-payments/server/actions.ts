@@ -25,9 +25,9 @@ async function requireUser() {
 }
 
 function revalidateRecurring() {
-  revalidatePath("/dashboard/recurring-payments");
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/transactions");
+  revalidatePath("/recurring-payments");
+  revalidatePath("/");
+  revalidatePath("/transactions");
 }
 
 function getNextDueDate(

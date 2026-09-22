@@ -24,7 +24,7 @@ async function requireUser() {
 }
 
 function revalidateLoans() {
-  revalidatePath("/dashboard/loans");
+  revalidatePath("/loans");
 }
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>;

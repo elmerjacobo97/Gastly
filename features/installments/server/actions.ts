@@ -22,9 +22,9 @@ async function requireUser() {
 }
 
 function revalidateInstallments() {
-  revalidatePath("/dashboard/installments");
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/transactions");
+  revalidatePath("/installments");
+  revalidatePath("/");
+  revalidatePath("/transactions");
 }
 
 function buildPaymentRows(

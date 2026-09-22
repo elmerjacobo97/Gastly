@@ -8,6 +8,7 @@ import {
   changePasswordSchema,
   loginSchema,
 } from "@/features/auth/schemas/auth-schemas";
+import { isPrivatePath } from "@/lib/private-routes";
 import { createClient } from "@/lib/supabase/server";
 
 type AuthActionResult = {
@@ -15,34 +16,11 @@ type AuthActionResult = {
 };
 
 function redirectToSafePath(next: string | undefined): never {
-  switch (next) {
-    case "/dashboard/accounts":
-      redirect("/dashboard/accounts");
-    case "/dashboard/budget":
-      redirect("/dashboard/budget");
-    case "/dashboard/categories":
-      redirect("/dashboard/categories");
-    case "/dashboard/custody":
-      redirect("/dashboard/custody");
-    case "/dashboard/installments":
-      redirect("/dashboard/installments");
-    case "/dashboard/loans":
-      redirect("/dashboard/loans");
-    case "/dashboard/monthly-plan":
-      redirect("/dashboard/monthly-plan");
-    case "/dashboard/recurring-payments":
-      redirect("/dashboard/recurring-payments");
-    case "/dashboard/reports":
-      redirect("/dashboard/reports");
-    case "/dashboard/savings":
-      redirect("/dashboard/savings");
-    case "/dashboard/settings":
-      redirect("/dashboard/settings");
-    case "/dashboard/transactions":
-      redirect("/dashboard/transactions");
-    default:
-      redirect("/dashboard");
+  if (next && isPrivatePath(next)) {
+    redirect(next);
   }
+
+  redirect("/");
 }
 
 export async function signIn(

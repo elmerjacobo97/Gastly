@@ -41,7 +41,7 @@ export function UpcomingPaymentsCard({ payments }: UpcomingPaymentsCardProps) {
           asChild
           className="text-xs text-muted-foreground"
         >
-          <Link href="/dashboard/recurring-payments">
+          <Link href="/recurring-payments">
             Ver todos
             <ArrowRightIcon />
           </Link>

@@ -44,61 +44,49 @@ import {
 const navigationItems = [
   {
     title: "Resumen",
-    href: "/dashboard",
+    href: "/",
     icon: LayoutDashboardIcon,
     exact: true,
   },
   {
     title: "Transacciones",
-    href: "/dashboard/transactions",
+    href: "/transactions",
     icon: ArrowLeftRightIcon,
     exact: false,
   },
-  // {
-  //   title: "Presupuesto",
-  //   href: "/dashboard/budget",
-  //   icon: PiggyBankIcon,
-  //   exact: false,
-  // },
   {
     title: "Pagos recurrentes",
-    href: "/dashboard/recurring-payments",
+    href: "/recurring-payments",
     icon: CalendarClockIcon,
     exact: false,
   },
   {
     title: "Cuotas",
-    href: "/dashboard/installments",
+    href: "/installments",
     icon: CreditCardIcon,
     exact: false,
   },
   {
     title: "Préstamos",
-    href: "/dashboard/loans",
+    href: "/loans",
     icon: HandCoinsIcon,
     exact: false,
   },
   {
     title: "Encargos",
-    href: "/dashboard/custody",
+    href: "/custody",
     icon: PackageIcon,
     exact: false,
   },
-  // {
-  //   title: "Cuentas",
-  //   href: "/dashboard/accounts",
-  //   icon: WalletIcon,
-  //   exact: false,
-  // },
   {
     title: "Metas de ahorro",
-    href: "/dashboard/savings",
+    href: "/savings",
     icon: TargetIcon,
     exact: false,
   },
   {
     title: "Reportes",
-    href: "/dashboard/reports",
+    href: "/reports",
     icon: BarChart3Icon,
     exact: false,
   },
@@ -171,7 +159,7 @@ function UserFooter({ userEmail, userName, signOutAction }: AppSidebarProps) {
             </DropdownMenuLabel>
             <DropdownMenuItem asChild>
               <Link
-                href="/dashboard/settings"
+                href="/settings"
                 className="flex items-center gap-2"
                 onClick={() => setOpenMobile(false)}
               >
@@ -221,7 +209,7 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="Gastly">
-              <Link href="/dashboard" onClick={() => setOpenMobile(false)}>
+              <Link href="/" onClick={() => setOpenMobile(false)}>
                 <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
                   <span className="text-sm font-bold leading-none">G</span>
                 </div>

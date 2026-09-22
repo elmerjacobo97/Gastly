@@ -22,8 +22,8 @@ async function requireUser() {
 }
 
 function revalidateCustody() {
-  revalidatePath("/dashboard/custody");
-  revalidatePath("/dashboard");
+  revalidatePath("/custody");
+  revalidatePath("/");
 }
 
 export async function createCustodyOrder(

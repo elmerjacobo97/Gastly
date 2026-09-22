@@ -55,7 +55,7 @@ El `/**` cubre todos los paths incluyendo `/auth/confirm?next=/reset-password`.
 2. `signUp()` llama `supabase.auth.signUp` con `emailRedirectTo: /auth/confirm`
 3. Usuario recibe email → click en botón
 4. Redirige a `/auth/confirm?token_hash=...&type=signup`
-5. Route handler verifica OTP y redirige a `/dashboard`
+5. Route handler verifica OTP y redirige a `/`
 
 ### Restablecer contraseña
 

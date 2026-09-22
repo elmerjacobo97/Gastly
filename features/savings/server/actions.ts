@@ -21,7 +21,7 @@ async function requireUser() {
 }
 
 function revalidateSavings() {
-  revalidatePath("/dashboard/savings");
+  revalidatePath("/savings");
 }
 
 export async function createSavingsGoal(
