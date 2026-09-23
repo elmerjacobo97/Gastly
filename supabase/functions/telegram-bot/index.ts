@@ -1,6 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
+import {
+  addDays,
+  dateInTimeZone,
+  daysBetween,
+  monthRange,
+} from "../_shared/date.ts";
+import { hasValidWebhookSecret } from "../_shared/webhook-auth.ts";
 
 const TELEGRAM_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
+const TELEGRAM_WEBHOOK_SECRET = Deno.env.get("TELEGRAM_WEBHOOK_SECRET");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -23,23 +31,20 @@ async function getUserByTelegramId(telegramUserId: number) {
   return data?.user_id ?? null;
 }
 
-function currentMonthRange() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const end = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-  ).toISOString();
-  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  return { start, end, monthKey };
+function currentMonthRange(now = new Date()) {
+  const today = dateInTimeZone(now, "America/Lima");
+  return monthRange(today);
 }
 
-function formatCurrency(amount: number) {
-  return `S/ ${amount.toFixed(2)}`;
+function formatCurrency(amount: number, currency = "PEN") {
+  try {
+    return new Intl.NumberFormat("es-PE", {
+      style: "currency",
+      currency,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2)}`;
+  }
 }
 
 // /start <token> — link Telegram account to Gastly account
@@ -122,8 +127,8 @@ async function handleStart(
 // /gaste 50 almuerzo → register expense
 async function handleGaste(chatId: number, userId: string, args: string) {
   const parts = args.trim().split(" ");
-  const amount = parseFloat(parts[0]);
-  if (isNaN(amount) || amount <= 0) {
+  const amount = Number(parts[0]);
+  if (!Number.isFinite(amount) || amount <= 0) {
     await sendMessage(
       chatId,
       "❌ Formato: /gaste &lt;monto&gt; &lt;descripción&gt;\nEjemplo: /gaste 50 almuerzo",
@@ -147,7 +152,7 @@ async function handleGaste(chatId: number, userId: string, args: string) {
     if (match) categoryId = match.id;
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = dateInTimeZone(new Date(), "America/Lima");
   const { error } = await supabase.from("transactions").insert({
     user_id: userId,
     type: "expense",
@@ -173,8 +178,8 @@ async function handleGaste(chatId: number, userId: string, args: string) {
 // /ingreso 2500 sueldo → register income
 async function handleIngreso(chatId: number, userId: string, args: string) {
   const parts = args.trim().split(" ");
-  const amount = parseFloat(parts[0]);
-  if (isNaN(amount) || amount <= 0) {
+  const amount = Number(parts[0]);
+  if (!Number.isFinite(amount) || amount <= 0) {
     await sendMessage(
       chatId,
       "❌ Formato: /ingreso &lt;monto&gt; &lt;descripción&gt;\nEjemplo: /ingreso 2500 sueldo",
@@ -198,7 +203,7 @@ async function handleIngreso(chatId: number, userId: string, args: string) {
     if (match) categoryId = match.id;
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = dateInTimeZone(new Date(), "America/Lima");
   const { error } = await supabase.from("transactions").insert({
     user_id: userId,
     type: "income",
@@ -221,7 +226,7 @@ async function handleIngreso(chatId: number, userId: string, args: string) {
 
 // /saldo → available balance this month
 async function handleSaldo(chatId: number, userId: string) {
-  const { monthKey } = currentMonthRange();
+  const { monthKey, start, endExclusive } = currentMonthRange();
 
   const [{ data: plan }, { data: transactions }] = await Promise.all([
     supabase
@@ -234,8 +239,8 @@ async function handleSaldo(chatId: number, userId: string) {
       .from("transactions")
       .select("type, amount")
       .eq("user_id", userId)
-      .gte("occurred_on", `${monthKey}-01`)
-      .lte("occurred_on", `${monthKey}-31`),
+      .gte("occurred_on", start)
+      .lt("occurred_on", endExclusive),
   ]);
 
   let actualIncome = 0;
@@ -271,16 +276,12 @@ async function handleSaldo(chatId: number, userId: string) {
 
 // /pagos → upcoming payments next 7 days
 async function handlePagos(chatId: number, userId: string) {
-  const today = new Date();
-  const in7Days = new Date(today);
-  in7Days.setDate(in7Days.getDate() + 7);
-
-  const todayStr = today.toISOString().split("T")[0];
-  const in7DaysStr = in7Days.toISOString().split("T")[0];
+  const todayStr = dateInTimeZone(new Date(), "America/Lima");
+  const in7DaysStr = addDays(todayStr, 7);
 
   const { data: expenses } = await supabase
     .from("recurring_expenses")
-    .select("description, amount, next_due_on")
+    .select("description, amount, currency, next_due_on")
     .eq("user_id", userId)
     .eq("is_active", true)
     .gte("next_due_on", todayStr)
@@ -296,17 +297,14 @@ async function handlePagos(chatId: number, userId: string) {
   }
 
   const lines = expenses.map((e) => {
-    const dueDate = new Date(`${e.next_due_on}T12:00:00`);
-    const diffDays = Math.round(
-      (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-    );
+    const diffDays = daysBetween(todayStr, e.next_due_on);
     const label =
       diffDays === 0
         ? "Hoy"
         : diffDays === 1
           ? "Mañana"
           : `En ${diffDays} días`;
-    return `• ${label} — ${e.description}: <b>${formatCurrency(e.amount)}</b>`;
+    return `• ${label} — ${e.description}: <b>${formatCurrency(e.amount, e.currency)}</b>`;
   });
 
   await sendMessage(chatId, `📅 <b>Próximos pagos</b>\n\n${lines.join("\n")}`);
@@ -314,14 +312,14 @@ async function handlePagos(chatId: number, userId: string) {
 
 // /resumen → monthly summary
 async function handleResumen(chatId: number, userId: string) {
-  const { monthKey } = currentMonthRange();
+  const { monthKey, start, endExclusive } = currentMonthRange();
 
   const { data: transactions } = await supabase
     .from("transactions")
     .select("type, amount, category_id")
     .eq("user_id", userId)
-    .gte("occurred_on", `${monthKey}-01`)
-    .lte("occurred_on", `${monthKey}-31`);
+    .gte("occurred_on", start)
+    .lt("occurred_on", endExclusive);
 
   const income = (transactions ?? [])
     .filter((t) => t.type === "income")
@@ -339,12 +337,29 @@ async function handleResumen(chatId: number, userId: string) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method !== "POST") return new Response("OK");
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+  if (!TELEGRAM_WEBHOOK_SECRET) {
+    console.error("TELEGRAM_WEBHOOK_SECRET is not configured");
+    return new Response("Webhook not configured", { status: 503 });
+  }
+  if (
+    !hasValidWebhookSecret(
+      req,
+      "x-telegram-bot-api-secret-token",
+      TELEGRAM_WEBHOOK_SECRET,
+    )
+  ) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   try {
     const update = await req.json();
     const message = update.message;
-    if (!message?.text) return new Response("OK");
+    if (!message?.text || !message?.chat?.id || !message?.from?.id) {
+      return new Response("OK");
+    }
 
     const chatId: number = message.chat.id;
     const telegramUserId: number = message.from.id;

@@ -3,11 +3,12 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { isPrivatePath } from "@/lib/private-routes";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
+import type { Database } from "@/lib/supabase/database.types";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     getSupabaseUrl(),
     getSupabasePublishableKey(),
     {

@@ -23,13 +23,15 @@ Resend API → email al usuario
 
 ## Setup inicial (una sola vez)
 
-### 1. Agregar RESEND_API_KEY como secret
+### 1. Agregar los secrets de la Edge Function
 
 ```bash
-supabase secrets set RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
+REMINDERS_WEBHOOK_SECRET=$(openssl rand -hex 32)
+supabase secrets set RESEND_API_KEY=re_xxxxxxxxxxxxxxxx REMINDERS_WEBHOOK_SECRET="$REMINDERS_WEBHOOK_SECRET"
 ```
 
 El API key se genera en **resend.com → API Keys → Create API Key** con permiso _Sending access_.
+Guarda `REMINDERS_WEBHOOK_SECRET` en un gestor seguro; debe coincidir con el valor almacenado en Vault para el job de `pg_cron`. No lo guardes en el repositorio.
 
 Verificar:
 
@@ -37,24 +39,35 @@ Verificar:
 supabase secrets list
 ```
 
-### 2. Aplicar la migración (habilita pg_cron + pg_net y crea el job)
+### 2. Guardar el secret del cron en Vault
+
+En el SQL Editor de Supabase, crea un secret con el mismo valor de `REMINDERS_WEBHOOK_SECRET`:
+
+```sql
+select vault.create_secret(
+  '<pega aquí el valor de REMINDERS_WEBHOOK_SECRET>',
+  'send_reminders_webhook_secret',
+  'Auth header for the send-reminders pg_cron job'
+);
+```
+
+No guardes el valor real en SQL versionado ni en este documento.
+
+### 3. Aplicar las migraciones
 
 ```bash
 supabase db push
 ```
 
-Esto ejecuta `supabase/migrations/20260522210000_enable_pg_cron.sql` que:
+La migración original habilita `pg_cron`/`pg_net`; la migración `secure_reminder_webhook` actualiza el job para leer la clave desde Vault en cada ejecución y enviar `x-reminders-secret` (el valor no queda escrito en `cron.job.command`). Requiere que el paso anterior se complete primero.
 
-- Habilita las extensiones `pg_cron` y `pg_net`
-- Registra el job `send-payment-reminders` corriendo diariamente a las 13:00 UTC (8am Lima)
-
-### 3. Deploy de la Edge Function
+### 4. Deploy de la Edge Function
 
 ```bash
 supabase functions deploy send-reminders --no-verify-jwt
 ```
 
-> **`--no-verify-jwt` es obligatorio.** La función la llama pg_cron internamente, no un usuario autenticado.
+> **`--no-verify-jwt` sigue siendo necesario** porque invoca `pg_cron`, no un usuario con JWT de Supabase. El handler valida `x-reminders-secret`; requests no autenticados reciben 401.
 
 ---
 
@@ -89,37 +102,41 @@ send-payment-reminders   | 0 13 * * * | select net.http_post(...)
 
 ## Lógica de envío
 
-- Busca en `recurring_expenses` donde `is_active = true` y `next_due_on = CURRENT_DATE + 3 días`
+- Busca pagos con `is_active = true` y fechas calculadas desde el día actual de Lima (+3 días o venció ayer)
 - Agrupa por usuario
 - Por cada usuario, llama `supabase.auth.admin.getUserById()` para obtener email y nombre
 - Si un usuario tiene múltiples pagos ese día, recibe **un solo email** con todos listados
 - El asunto varía:
   - 1 pago: `Recordatorio: Netflix vence en 3 días`
   - N pagos: `Recordatorio: 3 pagos próximos en 3 días`
+- Repeticiones del mismo envío dentro del mismo día usan una clave de idempotencia de Resend.
 
 ---
 
 ## Variables de entorno
 
-| Variable                    | Dónde se configura     | Descripción               |
-| --------------------------- | ---------------------- | ------------------------- |
-| `RESEND_API_KEY`            | `supabase secrets set` | API key de Resend         |
-| `SUPABASE_URL`              | Automático             | URL del proyecto          |
-| `SUPABASE_SERVICE_ROLE_KEY` | Automático             | Permite usar `auth.admin` |
+| Variable                    | Dónde se configura     | Descripción                                                                 |
+| --------------------------- | ---------------------- | --------------------------------------------------------------------------- |
+| `RESEND_API_KEY`            | `supabase secrets set` | API key de Resend                                                           |
+| `REMINDERS_WEBHOOK_SECRET`  | `supabase secrets set` | Secret validado por el handler y también almacenado en Vault para `pg_cron` |
+| `SUPABASE_URL`              | Automático             | URL del proyecto                                                            |
+| `SUPABASE_SERVICE_ROLE_KEY` | Automático             | Permite usar `auth.admin`                                                   |
 
 ---
 
 ## Probar manualmente
 
 ```bash
-curl -X POST https://yadpullgqqehyusoonxs.supabase.co/functions/v1/send-reminders
+curl -X POST \
+  -H "x-reminders-secret: $REMINDERS_WEBHOOK_SECRET" \
+  https://yadpullgqqehyusoonxs.supabase.co/functions/v1/send-reminders
 ```
 
 Respuestas posibles:
 
 ```json
-{ "sent": 0 }                    // Sin pagos venciendo en 3 días
-{ "sent": 2, "date": "2026-05-25" } // Emails enviados
+{ "upcoming": 0, "overdue": 0, "date": "2026-05-25" } // Sin pagos para notificar
+{ "upcoming": 2, "overdue": 1, "date": "2026-05-25" } // Emails enviados por tipo
 { "error": "..." }               // Error (ver logs)
 ```
 

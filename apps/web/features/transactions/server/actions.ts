@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
 
 import { createClient } from "@/lib/supabase/server";
+import type { TablesUpdate } from "@/lib/supabase/database.types";
 import { parseOrThrow } from "@/lib/validation";
 import {
   creditCardNameSchema,
@@ -87,7 +88,7 @@ export async function updateTransaction(
 
   const isCreditCard = values.paymentMethod === "credit_card";
 
-  const updateData: Record<string, unknown> = {
+  const updateData: TablesUpdate<"transactions"> = {
     category_id: category.id,
     type: values.type,
     amount: values.amount,

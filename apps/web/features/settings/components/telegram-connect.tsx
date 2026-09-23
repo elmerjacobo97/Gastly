@@ -25,9 +25,9 @@ import {
 const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? "";
 
 export type TelegramConnection = {
-  telegram_user_id: string;
+  telegram_user_id: number;
   telegram_username: string | null;
-  created_at: string;
+  created_at: string | null;
 };
 
 type TelegramConnectProps = {

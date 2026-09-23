@@ -11,7 +11,7 @@ Usuario en Telegram
 Telegram API (webhook POST)
        │
        ▼
-Supabase Edge Function  ←── TELEGRAM_BOT_TOKEN (secret)
+Supabase Edge Function  ←── TELEGRAM_BOT_TOKEN + TELEGRAM_WEBHOOK_SECRET (secrets)
   /functions/v1/telegram-bot
        │
        ▼
@@ -31,11 +31,14 @@ La Edge Function corre en Deno (runtime de Supabase). Telegram envía cada mensa
 2. Enviar `/newbot`
 3. Seguir los pasos → obtendrás un token tipo `7123456789:AAF...`
 
-### 2. Agregar el token como secret de Supabase
+### 2. Configurar los secrets de Supabase
 
 ```bash
-supabase secrets set TELEGRAM_BOT_TOKEN=<tu_token>
+TELEGRAM_WEBHOOK_SECRET=$(openssl rand -hex 32)
+supabase secrets set TELEGRAM_BOT_TOKEN=<tu_token> TELEGRAM_WEBHOOK_SECRET="$TELEGRAM_WEBHOOK_SECRET"
 ```
+
+Conserva `TELEGRAM_WEBHOOK_SECRET` en un gestor seguro: también se usa al registrar el webhook con Telegram. No lo guardes en el repositorio.
 
 Verificar que quedó:
 
@@ -57,12 +60,17 @@ Esto crea las tablas `telegram_connections` y `telegram_link_tokens` con RLS act
 supabase functions deploy telegram-bot --no-verify-jwt
 ```
 
-> **`--no-verify-jwt` es obligatorio.** Sin esta flag, Supabase rechaza el webhook de Telegram con 401 porque no lleva token de autenticación.
+> **`--no-verify-jwt` sigue siendo necesario** porque Telegram no envía un JWT de Supabase. La función valida en su lugar el header secreto propio de Telegram; sin el secret, falla cerrada y no procesa updates.
 
 ### 5. Registrar el webhook con Telegram
 
 ```bash
-curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://yadpullgqqehyusoonxs.supabase.co/functions/v1/telegram-bot"
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+  -H 'Content-Type: application/json' \
+  -d "$(jq -n \
+    --arg url 'https://yadpullgqqehyusoonxs.supabase.co/functions/v1/telegram-bot' \
+    --arg secret_token "$TELEGRAM_WEBHOOK_SECRET" \
+    '{url: $url, secret_token: $secret_token}')"
 ```
 
 Respuesta esperada:
@@ -144,11 +152,12 @@ Token temporal (10 min) para vincular una cuenta. El usuario lo genera desde Set
 
 ## Variables de entorno
 
-| Variable                    | Dónde se configura           | Descripción                     |
-| --------------------------- | ---------------------------- | ------------------------------- |
-| `TELEGRAM_BOT_TOKEN`        | `supabase secrets set`       | Token del bot de BotFather      |
-| `SUPABASE_URL`              | Automático en Edge Functions | URL del proyecto                |
-| `SUPABASE_SERVICE_ROLE_KEY` | Automático en Edge Functions | Clave de servicio (bypasea RLS) |
+| Variable                    | Dónde se configura           | Descripción                                              |
+| --------------------------- | ---------------------------- | -------------------------------------------------------- |
+| `TELEGRAM_BOT_TOKEN`        | `supabase secrets set`       | Token del bot de BotFather                               |
+| `TELEGRAM_WEBHOOK_SECRET`   | `supabase secrets set`       | Secret validado contra `X-Telegram-Bot-Api-Secret-Token` |
+| `SUPABASE_URL`              | Automático en Edge Functions | URL del proyecto                                         |
+| `SUPABASE_SERVICE_ROLE_KEY` | Automático en Edge Functions | Clave de servicio (bypasea RLS)                          |
 
 `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los inyecta Supabase automáticamente en todas las Edge Functions — no hay que configurarlos manualmente.
 
@@ -170,9 +179,9 @@ supabase functions logs telegram-bot
 
 Errores comunes:
 
-| Error                            | Causa                                         | Solución                                  |
-| -------------------------------- | --------------------------------------------- | ----------------------------------------- |
-| `401 Unauthorized` en logs       | Deploy sin `--no-verify-jwt`                  | Re-deploy con la flag                     |
-| Bot no responde                  | Webhook no registrado o URL incorrecta        | Verificar con `getWebhookInfo`            |
-| `/saldo` no muestra plan mensual | No hay plan mensual creado para el mes        | Crear plan en la app web                  |
-| Token inválido en `/start`       | Token generado en localhost, no en producción | Generar token en `gastly.elmerjacobo.dev` |
+| Error                            | Causa                                                                      | Solución                                           |
+| -------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------- |
+| `401 Unauthorized`               | Secret del webhook ausente o Telegram no se re-registró con `secret_token` | Alinear secrets y ejecutar `setWebhook` nuevamente |
+| Bot no responde                  | Webhook no registrado o URL incorrecta                                     | Verificar con `getWebhookInfo`                     |
+| `/saldo` no muestra plan mensual | No hay plan mensual creado para el mes                                     | Crear plan en la app web                           |
+| Token inválido en `/start`       | Token generado en localhost, no en producción                              | Generar token en `gastly.elmerjacobo.dev`          |

@@ -1,8 +1,12 @@
+import "server-only";
+
 import { format, startOfMonth, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 
 import { createClient } from "@/lib/supabase/server";
 import { CHART_COLORS } from "@/lib/chart-utils";
+
+const PAGE_SIZE = 1000;
 
 export type MonthlyTotal = {
   month: string;
@@ -27,14 +31,19 @@ export async function getMonthlyTotals(months = 6): Promise<MonthlyTotal[]> {
     "yyyy-MM-dd",
   );
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("type, amount, occurred_on")
-    .gte("occurred_on", since)
-    .order("occurred_on", { ascending: true })
-    .limit(1000);
-
-  if (error) throw new Error(error.message);
+  const data: { type: string; amount: number; occurred_on: string }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page, error } = await supabase
+      .from("transactions")
+      .select("type, amount, occurred_on, id")
+      .gte("occurred_on", since)
+      .order("occurred_on", { ascending: true })
+      .order("id", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    data.push(...(page ?? []));
+    if (!page || page.length < PAGE_SIZE) break;
+  }
 
   const totals = new Map<string, { income: number; expenses: number }>();
 
@@ -71,15 +80,26 @@ export async function getCategoryTotals(
     "yyyy-MM-dd",
   );
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("amount, categories(name, color, icon)")
-    .eq("type", "expense")
-    .gte("occurred_on", start)
-    .lte("occurred_on", end)
-    .limit(500);
-
-  if (error) throw new Error(error.message);
+  const data: {
+    amount: number;
+    categories:
+      | { name: string; color: string; icon: string }
+      | { name: string; color: string; icon: string }[]
+      | null;
+  }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page, error } = await supabase
+      .from("transactions")
+      .select("amount, categories(name, color, icon), id")
+      .eq("type", "expense")
+      .gte("occurred_on", start)
+      .lte("occurred_on", end)
+      .order("id", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    data.push(...(page ?? []));
+    if (!page || page.length < PAGE_SIZE) break;
+  }
 
   const totals = new Map<
     string,
@@ -88,9 +108,7 @@ export async function getCategoryTotals(
 
   for (const tx of data ?? []) {
     const rawCat = tx.categories;
-    const cat = Array.isArray(rawCat)
-      ? (rawCat[0] as { name: string; color: string; icon: string } | undefined)
-      : (rawCat as { name: string; color: string; icon: string } | null);
+    const cat = Array.isArray(rawCat) ? rawCat[0] : rawCat;
     const name = cat?.name ?? "Sin categoría";
     const color = cat?.color ?? "gray";
     const entry = totals.get(name) ?? {

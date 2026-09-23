@@ -8,9 +8,10 @@
   - `pnpm build` — `turbo run build` (Next production build plus TypeScript check; also compiles the CLI to `dist/`).
   - `pnpm lint` — `turbo run lint`.
   - `pnpm typecheck` — `turbo run typecheck` (`tsc --noEmit` in `apps/web`).
-  - `pnpm test` — `turbo run test` (Vitest in `apps/web` and `packages/cli`).
+  - `pnpm test` — Vitest in `apps/web` and `packages/cli`, plus Deno unit tests for shared Edge Function helpers.
+  - `pnpm edge:check` — type-checks the `send-reminders` and `telegram-bot` Edge Functions with the `supabase/functions/deno.json` import map.
   - `pnpm format` / `pnpm format:check` — Prettier over the repo; `.prettierignore` excludes `packages/cli`, `apps/web/components/ui`, and generated dirs.
-  - `pnpm check` — `format:check` followed by `turbo run lint typecheck test build`.
+  - `pnpm check` — format check, Turbo lint/typecheck/build, all Vitest + Deno tests, and Edge Function type-check.
   - `pnpm publish:cli` — builds and publishes `@codigoconelmer/gastly-cli` from the repo root.
 - Target one package with `pnpm --filter web <script>` or `pnpm --filter @codigoconelmer/gastly-cli <script>`.
 - Turbo caches `build`, `lint`, `typecheck`, and `test`; `dev` is persistent and uncached.
@@ -41,6 +42,7 @@
 - Tests are colocated next to the module they cover (`foo.test.ts`). Existing tests target pure helpers and schemas. For `server-only` modules, mock the guard with `vi.mock("server-only", () => ({}))`.
 - No React Testing Library, Playwright, or component/end-to-end tests yet; add them only when the task requires it.
 - `packages/cli` has its own Vitest suite under `packages/cli/src/__tests__/` (flag parsing, config/session parsing, formatting).
+- Deno Edge Function helpers have unit tests in `supabase/functions/_shared/`; run them with `pnpm edge:test`.
 - `pnpm test` runs both suites through Turbo. Run the focused test file while iterating; report only tests actually executed.
 
 ## Architectural Exceptions
@@ -76,7 +78,7 @@ These are deliberate decisions, not hidden debt. Match them; do not "fix" them w
 
 ## Deployment
 
-- Production runs on Vercel + Supabase cloud. The Vercel project's Root Directory must be `apps/web` (manual dashboard action, still pending). No CI is configured; verification is a local `pnpm check`.
+- Production runs on Vercel + Supabase cloud. The Vercel project's Root Directory must be `apps/web` (manual dashboard action, still pending). GitHub Actions runs `pnpm check` on pushes and pull requests; configure branch protection separately if checks should be required to merge.
 - Apply production migrations from the repo root with `supabase db push` (link first with `supabase link --project-ref yadpullgqqehyusoonxs` if needed).
 - Production env vars are the same two `NEXT_PUBLIC_*` Supabase values.
 

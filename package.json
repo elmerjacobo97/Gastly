@@ -8,10 +8,12 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
+    "test": "turbo run test && pnpm edge:test",
+    "edge:test": "deno test --config supabase/functions/deno.json supabase/functions/_shared",
+    "edge:check": "deno check --config supabase/functions/deno.json supabase/functions/telegram-bot/index.ts supabase/functions/send-reminders/index.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && turbo run lint typecheck test build",
+    "check": "pnpm format:check && turbo run lint typecheck build && pnpm test && pnpm edge:check",
     "publish:cli": "turbo run build --filter=@codigoconelmer/gastly-cli && pnpm --filter @codigoconelmer/gastly-cli publish"
   },
   "devDependencies": {
