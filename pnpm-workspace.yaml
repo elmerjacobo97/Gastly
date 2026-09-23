@@ -1,4 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
 allowBuilds:
+  esbuild: true
   msgpackr-extract: true
   msw: true
   sharp: true
@@ -39,3 +44,4 @@ minimumReleaseAgeExclude:
 trustPolicyExclude:
   - "eslint-import-resolver-typescript@3.10.1"
   - "semver@6.3.1"
+  - "undici-types@6.21.0"

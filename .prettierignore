@@ -1,12 +1,12 @@
 node_modules
 .next
+.turbo
 out
 build
 coverage
-cli
-components/ui
+packages/cli
+apps/web/components/ui
 pnpm-lock.yaml
-cli/pnpm-lock.yaml
 supabase/.temp
 graphify-out
 .agents

@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+apps/*/node_modules
+packages/*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -15,14 +17,17 @@
 
 # next.js
 /.next/
+apps/web/.next/
 /out/
 
 # production
 /build
 
+# turbo
+.turbo/
+
 # cli
-cli/dist
-cli/node_modules
+packages/cli/dist
 
 # misc
 .DS_Store
