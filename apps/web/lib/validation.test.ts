@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { parseOrThrow } from "@/lib/validation";
+import {
+  numberInput,
+  optionalNumberInput,
+  parseOrThrow,
+} from "@/lib/validation";
 
 const personSchema = z.object({
   name: z.string().trim().min(2, "Ingresa el nombre."),
@@ -45,5 +49,37 @@ describe("parseOrThrow", () => {
 
   it("throws for a primitive schema when the value is null", () => {
     expect(() => parseOrThrow(z.string(), null)).toThrow(Error);
+  });
+});
+
+describe("numberInput", () => {
+  const schema = numberInput(
+    z.number({ error: "Ingresa un monto válido." }).positive(),
+  );
+
+  it("coerces numeric strings and accepts numbers", () => {
+    expect(schema.parse("12.5")).toBe(12.5);
+    expect(schema.parse(12.5)).toBe(12.5);
+  });
+
+  it.each(["", "   ", null, true, false])(
+    "rejects invalid numeric input %s",
+    (value) => {
+      expect(schema.safeParse(value).success).toBe(false);
+    },
+  );
+});
+
+describe("optionalNumberInput", () => {
+  const schema = optionalNumberInput(z.number().nonnegative());
+
+  it("treats blank or null input as omitted", () => {
+    expect(schema.parse("")).toBeUndefined();
+    expect(schema.parse("  ")).toBeUndefined();
+    expect(schema.parse(null)).toBeUndefined();
+  });
+
+  it("rejects boolean input", () => {
+    expect(schema.safeParse(true).success).toBe(false);
   });
 });

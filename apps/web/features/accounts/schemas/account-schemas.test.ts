@@ -75,6 +75,12 @@ describe("accountSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it.each(["", "   ", null, true])("rejects invalid balance %s", (balance) => {
+    expect(accountSchema.safeParse({ ...validAccount, balance }).success).toBe(
+      false,
+    );
+  });
+
   it("rejects a missing balance", () => {
     const result = accountSchema.safeParse({
       name: "Ahorros",

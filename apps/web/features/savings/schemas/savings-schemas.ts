@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { numberInput } from "@/lib/validation";
+
 export const GOAL_COLORS = [
   "#1d42d0",
   "#10b981",
@@ -13,16 +15,22 @@ export const GOAL_COLORS = [
 
 export const savingsGoalSchema = z.object({
   name: z.string().trim().min(2, "Ingresa el nombre de la meta."),
-  targetAmount: z.coerce
-    .number()
-    .positive("El monto objetivo debe ser mayor a 0."),
+  targetAmount: numberInput(
+    z
+      .number({ error: "Ingresa un monto objetivo válido." })
+      .positive("El monto objetivo debe ser mayor a 0."),
+  ),
   targetDate: z.string().optional(),
   color: z.string(),
   notes: z.string().trim().optional(),
 });
 
 export const contributionSchema = z.object({
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0."),
+  amount: numberInput(
+    z
+      .number({ error: "Ingresa un monto válido." })
+      .positive("El monto debe ser mayor a 0."),
+  ),
   occurredOn: z.string().min(1, "Selecciona una fecha."),
   notes: z.string().trim().optional(),
 });

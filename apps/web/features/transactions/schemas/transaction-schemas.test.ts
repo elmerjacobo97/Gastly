@@ -101,6 +101,13 @@ describe("transactionSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects a boolean amount", () => {
+    expect(
+      transactionSchema.safeParse({ ...validTransaction, amount: true })
+        .success,
+    ).toBe(false);
+  });
+
   it("rejects a short description", () => {
     const result = transactionSchema.safeParse({
       ...validTransaction,

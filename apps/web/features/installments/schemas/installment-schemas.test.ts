@@ -215,6 +215,21 @@ describe("installmentPurchaseSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects blank nonnegative numeric fields", () => {
+    expect(
+      installmentPurchaseSchema.safeParse({
+        ...validPurchase,
+        interestAmount: "",
+      }).success,
+    ).toBe(false);
+    expect(
+      installmentPurchaseSchema.safeParse({
+        ...validPurchase,
+        alreadyPaid: "",
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe("payInstallmentsSchema", () => {

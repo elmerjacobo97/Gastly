@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { numberInput } from "@/lib/validation";
+
 export const ACCOUNT_COLORS = [
   "#3b82f6",
   "#10b981",
@@ -15,7 +17,11 @@ export const ACCOUNT_COLORS = [
 
 export const accountSchema = z.object({
   name: z.string().trim().min(2, "Ingresa el nombre de la cuenta."),
-  balance: z.coerce.number().min(0, "El saldo no puede ser negativo."),
+  balance: numberInput(
+    z
+      .number({ error: "Ingresa un saldo válido." })
+      .min(0, "El saldo no puede ser negativo."),
+  ),
   color: z.string(),
   notes: z.string().trim().optional(),
 });

@@ -109,6 +109,15 @@ describe("loanSchema", () => {
     }
   });
 
+  it("rejects blank interest rates and boolean amounts", () => {
+    expect(
+      loanSchema.safeParse({ ...validLoan, interestRate: "" }).success,
+    ).toBe(false);
+    expect(loanSchema.safeParse({ ...validLoan, amount: true }).success).toBe(
+      false,
+    );
+  });
+
   it("rejects an interest rate above 100", () => {
     const result = loanSchema.safeParse({ ...validLoan, interestRate: "101" });
 

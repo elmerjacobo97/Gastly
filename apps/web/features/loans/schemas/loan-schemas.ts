@@ -1,16 +1,23 @@
 import { z } from "zod";
 
 import { LOAN_CURRENCIES } from "@/features/loans/types/loan-types";
+import { numberInput } from "@/lib/validation";
 
 export const loanSchema = z.object({
   direction: z.enum(["lent", "borrowed"]),
   personName: z.string().trim().min(2, "Ingresa el nombre de la persona."),
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0."),
+  amount: numberInput(
+    z
+      .number({ error: "Ingresa un monto válido." })
+      .positive("El monto debe ser mayor a 0."),
+  ),
   currency: z.enum(LOAN_CURRENCIES),
-  interestRate: z.coerce
-    .number()
-    .min(0, "El interés no puede ser negativo.")
-    .max(100, "El interés mensual no puede superar 100%."),
+  interestRate: numberInput(
+    z
+      .number({ error: "Ingresa un interés válido." })
+      .min(0, "El interés no puede ser negativo.")
+      .max(100, "El interés mensual no puede superar 100%."),
+  ),
   description: z.string().trim().optional(),
   expectedOn: z.string().optional(),
   loanedOn: z.string().min(1, "Selecciona la fecha del préstamo."),
@@ -39,7 +46,11 @@ export const editLoanPersonSchema = z.object({
 export type EditLoanPersonValues = z.infer<typeof editLoanPersonSchema>;
 
 export const loanPaymentSchema = z.object({
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0."),
+  amount: numberInput(
+    z
+      .number({ error: "Ingresa un monto válido." })
+      .positive("El monto debe ser mayor a 0."),
+  ),
   occurredOn: z.string().min(1, "Selecciona la fecha del pago."),
   notes: z.string().trim().optional(),
 });
@@ -48,10 +59,12 @@ export type LoanPaymentValues = z.infer<typeof loanPaymentSchema>;
 
 export const loanDisbursementSchema = loanPaymentSchema.extend({
   description: z.string().trim().optional(),
-  interestRate: z.coerce
-    .number()
-    .min(0, "El interés no puede ser negativo.")
-    .max(100, "El interés mensual no puede superar 100%."),
+  interestRate: numberInput(
+    z
+      .number({ error: "Ingresa un interés válido." })
+      .min(0, "El interés no puede ser negativo.")
+      .max(100, "El interés mensual no puede superar 100%."),
+  ),
 });
 
 export type LoanDisbursementValues = z.infer<typeof loanDisbursementSchema>;

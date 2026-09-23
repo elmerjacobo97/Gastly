@@ -84,6 +84,26 @@ describe("custodyOrderSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("treats a blank optional target amount as omitted", () => {
+    const parsed = custodyOrderSchema.parse({
+      personName: "Maria",
+      title: "Encargo",
+      targetAmount: "",
+    });
+
+    expect(parsed.targetAmount).toBeUndefined();
+  });
+
+  it("rejects a boolean target amount", () => {
+    expect(
+      custodyOrderSchema.safeParse({
+        personName: "Maria",
+        title: "Encargo",
+        targetAmount: true,
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe("custodyMovementSchema", () => {
