@@ -66,7 +66,7 @@ export function RecurringPaymentAlerts({
           </AlertTitle>
           <AlertDescription>
             {soonPayments.length === 1
-              ? formatCurrency(soonPayments[0].amount)
+              ? formatCurrency(soonPayments[0].amount, soonPayments[0].currency)
               : soonPayments
                   .map(
                     (payment) =>

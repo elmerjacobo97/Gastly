@@ -1,9 +1,12 @@
 "use client";
 
 import { SummaryMetricCards } from "@/components/summary-metric-cards";
+import {
+  formatCurrencyTotals,
+  sumByCurrency,
+} from "@/features/recurring-payments/lib/currency-totals";
 import { isRelevantForMonth } from "@/features/recurring-payments/lib/recurring-payment-helpers";
 import { type RecurringPayment } from "@/lib/recurring-payment-types";
-import { formatCurrency } from "@/lib/format";
 
 type RecurringPaymentSummaryCardsProps = {
   payments: RecurringPayment[];
@@ -18,15 +21,24 @@ export function RecurringPaymentSummaryCards({
     (p) =>
       p.type === "expense" && p.isActive && isRelevantForMonth(p, monthKey),
   );
-  const totalCommitted = activeExpensePayments.reduce(
-    (sum, p) => sum + p.amount,
-    0,
+  const committed = sumByCurrency(activeExpensePayments, (p) => p.amount);
+  // Foreign charges are booked in PEN, so paid foreign items count at their estimate.
+  const paid = sumByCurrency(
+    activeExpensePayments.filter((p) => p.paidOn),
+    (p) => (p.currency === "PEN" ? (p.paidAmount ?? p.amount) : p.amount),
   );
-  const totalPaid = activeExpensePayments
-    .filter((p) => p.paidOn)
-    .reduce((sum, p) => sum + (p.paidAmount ?? p.amount), 0);
-  const totalPending = Math.max(totalCommitted - totalPaid, 0);
-  const allPaid = totalPending === 0;
+  const pending = sumByCurrency(activeExpensePayments, (p) =>
+    Math.max(
+      p.amount -
+        (p.paidOn
+          ? p.currency === "PEN"
+            ? (p.paidAmount ?? p.amount)
+            : p.amount
+          : 0),
+      0,
+    ),
+  );
+  const allPaid = Object.values(pending).every((value) => value === 0);
 
   return (
     <SummaryMetricCards
@@ -34,7 +46,7 @@ export function RecurringPaymentSummaryCards({
       cards={[
         {
           title: "Programado este mes",
-          value: formatCurrency(totalCommitted),
+          value: formatCurrencyTotals(committed),
           description:
             activeExpensePayments.length === 0
               ? "Sin pagos programados"
@@ -42,12 +54,12 @@ export function RecurringPaymentSummaryCards({
         },
         {
           title: "Pagado este mes",
-          value: formatCurrency(totalPaid),
+          value: formatCurrencyTotals(paid),
           description: "Pagos recurrentes registrados",
         },
         {
           title: "Falta pagar este mes",
-          value: formatCurrency(totalPending),
+          value: formatCurrencyTotals(pending),
           description:
             activeExpensePayments.length === 0
               ? "Sin pagos programados"

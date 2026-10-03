@@ -2,6 +2,7 @@ import "server-only";
 
 import { endOfMonth, format, startOfMonth } from "date-fns";
 
+import { type CurrencyCode } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import {
   type PaymentHistoryEntry,
@@ -11,6 +12,7 @@ import {
 type RecurringPaymentRow = {
   id: string;
   amount: number | string;
+  currency: CurrencyCode;
   description: string;
   frequency: "monthly" | "custom_months" | "yearly";
   interval_months: number;
@@ -44,6 +46,7 @@ function mapRecurringPayment(
   return {
     id: row.id,
     amount: Number(row.amount),
+    currency: row.currency,
     description: row.description,
     frequency: row.frequency,
     intervalMonths: row.interval_months,
@@ -75,6 +78,7 @@ export async function getRecurringPayments(
       `
       id,
       amount,
+      currency,
       description,
       frequency,
       interval_months,

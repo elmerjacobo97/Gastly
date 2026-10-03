@@ -25,6 +25,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { CurrencyOptions } from "@/components/currency-options";
 import { NumberInput } from "@/components/ui/number-input";
 import {
   NativeSelect,
@@ -51,6 +52,7 @@ export function ReactivateRecurringPaymentDialog({
 }: ReactivateRecurringPaymentDialogProps) {
   const {
     amount,
+    currency: paymentCurrency,
     frequency: paymentFrequency,
     intervalMonths,
     nextDueOn,
@@ -60,11 +62,12 @@ export function ReactivateRecurringPaymentDialog({
     const today = format(new Date(), "yyyy-MM-dd");
     return {
       amount,
+      currency: paymentCurrency,
       frequency: paymentFrequency,
       intervalMonths: intervalMonths ?? 2,
       nextDueOn: nextDueOn < today ? today : nextDueOn,
     };
-  }, [amount, paymentFrequency, intervalMonths, nextDueOn]);
+  }, [amount, paymentCurrency, paymentFrequency, intervalMonths, nextDueOn]);
 
   const form = useForm<ReactivateRecurringPaymentValues>({
     resolver: zodResolver(
@@ -75,6 +78,7 @@ export function ReactivateRecurringPaymentDialog({
   });
 
   const frequency = useWatch({ control: form.control, name: "frequency" });
+  const currency = useWatch({ control: form.control, name: "currency" });
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -112,11 +116,30 @@ export function ReactivateRecurringPaymentDialog({
           <FieldGroup>
             <Controller
               control={form.control}
+              name="currency"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="rrp-currency">Moneda</FieldLabel>
+                  <NativeSelect
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    id="rrp-currency"
+                  >
+                    <CurrencyOptions />
+                  </NativeSelect>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
               name="amount"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="rrp-amount">
-                    Monto estimado (PEN)
+                    Monto estimado ({currency})
                   </FieldLabel>
                   <NumberInput
                     {...field}

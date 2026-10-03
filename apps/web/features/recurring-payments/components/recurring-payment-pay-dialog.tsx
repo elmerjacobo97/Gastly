@@ -36,7 +36,7 @@ import {
   type RecurringPaymentPaymentValues,
 } from "@/features/recurring-payments/schemas/recurring-payment-schemas";
 import { type RecurringPayment } from "@/lib/recurring-payment-types";
-import { formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 type RecurringPaymentPayDialogProps = {
   payment: RecurringPayment | null;
@@ -57,7 +57,8 @@ export function RecurringPaymentPayDialog({
   const isPayingEarly = !!payment && payment.nextDueOn > todayStr;
 
   const paymentId = payment?.id ?? null;
-  const paymentAmount = payment?.amount ?? 0;
+  const isForeign = !!payment && payment.currency !== "PEN";
+  const paymentAmount = isForeign ? 0 : (payment?.amount ?? 0);
   const paymentDueOn = payment?.nextDueOn ?? "";
   const paymentNotes = payment?.notes ?? "";
 
@@ -82,6 +83,7 @@ export function RecurringPaymentPayDialog({
   }, [open, paymentId, defaults, form]);
 
   const isIncome = payment?.type === "income";
+  const amountLabel = isIncome ? "cobrado" : "pagado";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,6 +108,19 @@ export function RecurringPaymentPayDialog({
             </AlertDescription>
           </Alert>
         )}
+        {isForeign && (
+          <Alert variant="info">
+            <InfoIcon />
+            <AlertTitle>
+              {isIncome ? "Cobro" : "Cargo"} de{" "}
+              {formatCurrency(payment.amount, payment.currency)}
+            </AlertTitle>
+            <AlertDescription>
+              Ingresa en soles lo que {isIncome ? "te abonó" : "te cobró"} el
+              banco. La transacción se registra en soles.
+            </AlertDescription>
+          </Alert>
+        )}
         <form
           className="flex flex-col gap-5"
           id="recurring-payment-payment-form"
@@ -119,7 +134,7 @@ export function RecurringPaymentPayDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="rpp-amount">
-                    {isIncome ? "Monto real cobrado" : "Monto real pagado"}
+                    Monto real {amountLabel} (PEN)
                   </FieldLabel>
                   <NumberInput
                     {...field}

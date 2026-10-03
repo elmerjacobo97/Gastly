@@ -69,6 +69,7 @@ export async function createRecurringPayment(
     user_id: userId,
     category_id: values.categoryId,
     amount: values.amount,
+    currency: values.currency,
     description: values.description,
     frequency: values.frequency,
     interval_months:
@@ -106,6 +107,7 @@ export async function updateRecurringPayment(
     .update({
       category_id: values.categoryId,
       amount: values.amount,
+      currency: values.currency,
       description: values.description,
       frequency: values.frequency,
       interval_months: getIntervalMonths(values),
@@ -138,6 +140,7 @@ export async function reactivateRecurringPayment(
     .update({
       is_active: true,
       amount: values.amount,
+      currency: values.currency,
       frequency: values.frequency,
       interval_months: getIntervalMonths(values),
       next_due_on: values.nextDueOn,

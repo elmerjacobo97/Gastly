@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { CURRENCY_CODES } from "@/lib/format";
 import { numberInput } from "@/lib/validation";
 
 export const recurringPaymentSchema = z.object({
@@ -9,6 +10,7 @@ export const recurringPaymentSchema = z.object({
       .number({ error: "Ingresa un monto estimado válido." })
       .positive("El monto estimado debe ser mayor a 0."),
   ),
+  currency: z.enum(CURRENCY_CODES),
   categoryId: z.string().min(1, "Selecciona una categoria."),
   frequency: z.enum(["monthly", "custom_months", "yearly"]),
   intervalMonths: numberInput(
@@ -27,6 +29,7 @@ export const recurringPaymentSchema = z.object({
 
 export const reactivateRecurringPaymentSchema = recurringPaymentSchema.pick({
   amount: true,
+  currency: true,
   frequency: true,
   intervalMonths: true,
   nextDueOn: true,
@@ -65,6 +68,7 @@ export const recurringPaymentRefSchema = z.object({
   frequency: z.enum(["monthly", "custom_months", "yearly"]),
   intervalMonths: numberInput(z.number().int().positive()),
   nextDueOn: z.string().min(1),
+  currency: z.enum(CURRENCY_CODES),
   notes: z.string().nullable(),
   category: z.object({ id: z.string().uuid() }).nullable(),
   accountId: z.string().uuid().nullable(),

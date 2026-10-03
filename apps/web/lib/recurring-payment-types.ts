@@ -1,3 +1,5 @@
+import { type CurrencyCode } from "@/lib/format";
+
 type RecurringPaymentCategory = {
   id: string;
   name: string;
@@ -8,6 +10,7 @@ type RecurringPaymentCategory = {
 export type RecurringPayment = {
   id: string;
   amount: number;
+  currency: CurrencyCode;
   description: string;
   frequency: "monthly" | "custom_months" | "yearly";
   intervalMonths: number;

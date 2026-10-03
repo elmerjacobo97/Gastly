@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/native-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { CurrencyOptions } from "@/components/currency-options";
 import { AccountSelect } from "@/components/account-select";
 import { CategorySelect } from "@/components/category-select";
 import { createRecurringPayment } from "@/features/recurring-payments/server/actions";
@@ -48,6 +49,7 @@ function buildDefaultValues(): RecurringPaymentValues {
   return {
     description: "",
     amount: 0,
+    currency: "PEN",
     categoryId: "",
     frequency: "monthly",
     intervalMonths: 2,
@@ -80,6 +82,7 @@ export function CreateRecurringPaymentDialog({
   });
 
   const frequency = useWatch({ control: form.control, name: "frequency" });
+  const currency = useWatch({ control: form.control, name: "currency" });
   const type = useWatch({ control: form.control, name: "type" });
 
   function onSubmit(values: RecurringPaymentValues) {
@@ -172,11 +175,30 @@ export function CreateRecurringPaymentDialog({
                 />
                 <Controller
                   control={form.control}
+                  name="currency"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="crp-currency">Moneda</FieldLabel>
+                      <NativeSelect
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="crp-currency"
+                      >
+                        <CurrencyOptions />
+                      </NativeSelect>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
                   name="amount"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="crp-amount">
-                        Monto estimado (PEN)
+                        Monto estimado ({currency})
                       </FieldLabel>
                       <NumberInput
                         {...field}

@@ -95,7 +95,9 @@ function RecurringPaymentAmount({ payment }: { payment: RecurringPayment }) {
       )}
     >
       {isIncome ? "+" : ""}
-      {formatCurrency(payment.paidAmount ?? payment.amount)}
+      {payment.paidAmount === null
+        ? formatCurrency(payment.amount, payment.currency)
+        : formatCurrency(payment.paidAmount)}
     </p>
   );
 }

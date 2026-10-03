@@ -1,4 +1,12 @@
-type CurrencyCode = "PEN" | "USD" | "MXN";
+export const CURRENCY_CODES = ["PEN", "USD", "MXN"] as const;
+
+export type CurrencyCode = (typeof CURRENCY_CODES)[number];
+
+export const CURRENCY_LABELS: Record<CurrencyCode, string> = {
+  PEN: "Soles (PEN)",
+  USD: "Dólares (USD)",
+  MXN: "Pesos (MXN)",
+};
 
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
 

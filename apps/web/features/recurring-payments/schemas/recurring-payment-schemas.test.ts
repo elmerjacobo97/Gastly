@@ -12,6 +12,7 @@ import {
 const validPayment = {
   description: "Netflix",
   amount: "35.9",
+  currency: "PEN",
   categoryId: "cat-1",
   frequency: "monthly",
   intervalMonths: "1",
@@ -27,6 +28,7 @@ describe("recurringPaymentSchema", () => {
     expect(parsed).toEqual({
       description: "Netflix",
       amount: 35.9,
+      currency: "PEN",
       categoryId: "cat-1",
       frequency: "monthly",
       intervalMonths: 1,
@@ -320,6 +322,7 @@ describe("recurringPaymentRefSchema", () => {
     frequency: "monthly",
     intervalMonths: "1",
     nextDueOn: "2026-02-01",
+    currency: "PEN",
     notes: null,
     category: { id },
     accountId: id,
@@ -394,10 +397,26 @@ describe("reactivateRecurringPaymentSchema", () => {
       }),
     ).toEqual({
       amount: 35.9,
+      currency: "PEN",
       frequency: "yearly",
       intervalMonths: 12,
       nextDueOn: "2026-02-01",
     });
+  });
+
+  it("accepts USD and rejects an unknown currency", () => {
+    expect(
+      reactivateRecurringPaymentSchema.parse({
+        ...validPayment,
+        currency: "USD",
+      }).currency,
+    ).toBe("USD");
+    expect(
+      reactivateRecurringPaymentSchema.safeParse({
+        ...validPayment,
+        currency: "EUR",
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects an empty next due date", () => {

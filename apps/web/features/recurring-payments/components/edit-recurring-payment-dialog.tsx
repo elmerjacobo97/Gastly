@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/native-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { CurrencyOptions } from "@/components/currency-options";
 import { AccountSelect } from "@/components/account-select";
 import { CategorySelect } from "@/components/category-select";
 import { updateRecurringPayment } from "@/features/recurring-payments/server/actions";
@@ -61,6 +62,7 @@ export function EditRecurringPaymentDialog({
   const {
     description,
     amount,
+    currency: paymentCurrency,
     category,
     frequency: paymentFrequency,
     intervalMonths,
@@ -76,6 +78,7 @@ export function EditRecurringPaymentDialog({
     () => ({
       description,
       amount,
+      currency: paymentCurrency,
       categoryId,
       frequency: paymentFrequency,
       intervalMonths: intervalMonths ?? 2,
@@ -88,6 +91,7 @@ export function EditRecurringPaymentDialog({
     [
       description,
       amount,
+      paymentCurrency,
       categoryId,
       paymentFrequency,
       intervalMonths,
@@ -108,6 +112,7 @@ export function EditRecurringPaymentDialog({
   });
 
   const frequency = useWatch({ control: form.control, name: "frequency" });
+  const currency = useWatch({ control: form.control, name: "currency" });
   const type = useWatch({ control: form.control, name: "type" });
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -194,11 +199,30 @@ export function EditRecurringPaymentDialog({
                 />
                 <Controller
                   control={form.control}
+                  name="currency"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="erp-currency">Moneda</FieldLabel>
+                      <NativeSelect
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="erp-currency"
+                      >
+                        <CurrencyOptions />
+                      </NativeSelect>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
                   name="amount"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="erp-amount">
-                        Monto estimado (PEN)
+                        Monto estimado ({currency})
                       </FieldLabel>
                       <NumberInput
                         {...field}

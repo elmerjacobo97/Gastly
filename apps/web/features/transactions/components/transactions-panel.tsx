@@ -78,10 +78,9 @@ export function TransactionsPanel({
   const installmentPendingPayments = monthInstallments.filter(
     ({ payment }) => !payment.transactionId && !payment.paidExternally,
   );
-  const recurringPendingTotal = recurringPendingPayments.reduce(
-    (sum, payment) => sum + payment.amount,
-    0,
-  );
+  const recurringPendingTotal = recurringPendingPayments
+    .filter((payment) => payment.currency === "PEN")
+    .reduce((sum, payment) => sum + payment.amount, 0);
   const installmentsPendingTotal = installmentPendingPayments.reduce(
     (sum, { payment }) => sum + payment.amount,
     0,
