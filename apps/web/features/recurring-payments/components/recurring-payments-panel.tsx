@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MonthNav } from "@/components/month-nav";
 import { CreateRecurringPaymentDialog } from "@/features/recurring-payments/components/create-recurring-payment-dialog";
 import { EditRecurringPaymentDialog } from "@/features/recurring-payments/components/edit-recurring-payment-dialog";
+import { ReactivateRecurringPaymentDialog } from "@/features/recurring-payments/components/reactivate-recurring-payment-dialog";
 import { RecurringPaymentAlerts } from "@/features/recurring-payments/components/recurring-payment-alerts";
 import { RecurringPaymentHistoryDialog } from "@/features/recurring-payments/components/recurring-payment-history-dialog";
 import { RecurringPaymentList } from "@/features/recurring-payments/components/recurring-payment-list";
@@ -42,6 +43,8 @@ export function RecurringPaymentsPanel({
   month: monthStr,
 }: RecurringPaymentsPanelProps) {
   const [editPayment, setEditPayment] = useState<RecurringPayment | null>(null);
+  const [reactivatePayment, setReactivatePayment] =
+    useState<RecurringPayment | null>(null);
   const [payPayment, setPayPayment] = useState<RecurringPayment | null>(null);
   const [payOpen, setPayOpen] = useState(false);
   const [historyPayment, setHistoryPayment] = useState<RecurringPayment | null>(
@@ -72,14 +75,14 @@ export function RecurringPaymentsPanel({
   }
 
   function handleToggle(payment: RecurringPayment) {
+    if (!payment.isActive) {
+      setReactivatePayment(payment);
+      return;
+    }
     startTransition(async () => {
       try {
-        await setRecurringPaymentActive(payment.id, !payment.isActive);
-        toast.success(
-          payment.isActive
-            ? "Pago recurrente pausado"
-            : "Pago recurrente activado",
-        );
+        await setRecurringPaymentActive(payment.id, false);
+        toast.success("Pago recurrente pausado");
         router.refresh();
       } catch (error) {
         toast.error("No se pudo actualizar el estado", {
@@ -162,6 +165,13 @@ export function RecurringPaymentsPanel({
           categories={categories}
           open={!!editPayment}
           onOpenChange={(open) => !open && setEditPayment(null)}
+        />
+      )}
+      {reactivatePayment && (
+        <ReactivateRecurringPaymentDialog
+          payment={reactivatePayment}
+          open
+          onOpenChange={(open) => !open && setReactivatePayment(null)}
         />
       )}
       <RecurringPaymentPayDialog

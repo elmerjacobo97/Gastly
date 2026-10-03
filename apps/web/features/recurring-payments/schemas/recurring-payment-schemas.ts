@@ -25,6 +25,13 @@ export const recurringPaymentSchema = z.object({
   type: z.enum(["expense", "income"]),
 });
 
+export const reactivateRecurringPaymentSchema = recurringPaymentSchema.pick({
+  amount: true,
+  frequency: true,
+  intervalMonths: true,
+  nextDueOn: true,
+});
+
 export const recurringPaymentPaymentSchema = z.object({
   amount: numberInput(
     z
@@ -36,6 +43,9 @@ export const recurringPaymentPaymentSchema = z.object({
 });
 
 export type RecurringPaymentValues = z.infer<typeof recurringPaymentSchema>;
+export type ReactivateRecurringPaymentValues = z.infer<
+  typeof reactivateRecurringPaymentSchema
+>;
 export type RecurringPaymentPaymentValues = z.infer<
   typeof recurringPaymentPaymentSchema
 >;

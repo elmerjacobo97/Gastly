@@ -6,11 +6,13 @@ import { addMonths, addYears, format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { parseOrThrow } from "@/lib/validation";
 import {
+  reactivateRecurringPaymentSchema,
   recurringPaymentActiveSchema,
   recurringPaymentIdSchema,
   recurringPaymentPaymentSchema,
   recurringPaymentRefSchema,
   recurringPaymentSchema,
+  type ReactivateRecurringPaymentValues,
   type RecurringPaymentPaymentValues,
   type RecurringPaymentValues,
 } from "@/features/recurring-payments/schemas/recurring-payment-schemas";
@@ -47,6 +49,14 @@ function getNextDueDate(
     addMonths(date, frequency === "monthly" ? 1 : intervalMonths),
     "yyyy-MM-dd",
   );
+}
+
+function getIntervalMonths(values: {
+  frequency: RecurringPayment["frequency"];
+  intervalMonths: number;
+}) {
+  if (values.frequency === "custom_months") return values.intervalMonths;
+  return values.frequency === "yearly" ? 12 : 1;
 }
 
 export async function createRecurringPayment(
@@ -98,18 +108,40 @@ export async function updateRecurringPayment(
       amount: values.amount,
       description: values.description,
       frequency: values.frequency,
-      interval_months:
-        values.frequency === "custom_months"
-          ? values.intervalMonths
-          : values.frequency === "yearly"
-            ? 12
-            : 1,
+      interval_months: getIntervalMonths(values),
       payment_kind: values.paymentKind,
       next_due_on: values.nextDueOn,
       billing_day: new Date(`${values.nextDueOn}T12:00:00`).getDate(),
       notes: values.notes || null,
       account_id: values.accountId || null,
       type: values.type ?? "expense",
+    })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidateRecurring();
+}
+
+export async function reactivateRecurringPayment(
+  rawId: string,
+  rawValues: ReactivateRecurringPaymentValues,
+) {
+  const id = parseOrThrow(recurringPaymentIdSchema, rawId);
+  const values = parseOrThrow(reactivateRecurringPaymentSchema, rawValues);
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase
+    .from("recurring_expenses")
+    .update({
+      is_active: true,
+      amount: values.amount,
+      frequency: values.frequency,
+      interval_months: getIntervalMonths(values),
+      next_due_on: values.nextDueOn,
+      billing_day: new Date(`${values.nextDueOn}T12:00:00`).getDate(),
     })
     .eq("id", id);
 

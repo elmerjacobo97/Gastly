@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  reactivateRecurringPaymentSchema,
   recurringPaymentActiveSchema,
   recurringPaymentIdSchema,
   recurringPaymentPaymentSchema,
@@ -378,6 +379,32 @@ describe("recurringPaymentRefSchema", () => {
       recurringPaymentRefSchema.safeParse({
         ...validRef,
         frequency: "weekly",
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("reactivateRecurringPaymentSchema", () => {
+  it("parses amount, frequency, interval and due date only", () => {
+    expect(
+      reactivateRecurringPaymentSchema.parse({
+        ...validPayment,
+        frequency: "yearly",
+        intervalMonths: "12",
+      }),
+    ).toEqual({
+      amount: 35.9,
+      frequency: "yearly",
+      intervalMonths: 12,
+      nextDueOn: "2026-02-01",
+    });
+  });
+
+  it("rejects an empty next due date", () => {
+    expect(
+      reactivateRecurringPaymentSchema.safeParse({
+        ...validPayment,
+        nextDueOn: "",
       }).success,
     ).toBe(false);
   });
