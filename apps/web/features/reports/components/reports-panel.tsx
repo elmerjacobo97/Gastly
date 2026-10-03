@@ -15,8 +15,6 @@ import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { CsvExportConfirmDialog } from "@/components/csv-export-confirm-dialog";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { calculateSavings } from "@/lib/savings-calc";
-import { type MonthlyPlan } from "@/lib/monthly-plan-types";
 import { type Transaction } from "@/lib/transaction-types";
 import {
   ReportsVisuals,
@@ -175,10 +173,9 @@ function exportToCSV(transactions: Transaction[], filename: string) {
 
 type ReportsPanelProps = {
   transactions: Transaction[];
-  plan: MonthlyPlan | null;
 };
 
-export function ReportsPanel({ transactions, plan }: ReportsPanelProps) {
+export function ReportsPanel({ transactions }: ReportsPanelProps) {
   const [period, setPeriod] = useState<Period>("3m");
   const [csvConfirmOpen, setCsvConfirmOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<ReportTypeFilter>("expense");
@@ -216,7 +213,6 @@ export function ReportsPanel({ transactions, plan }: ReportsPanelProps) {
     (sum, transaction) => sum + transaction.amount,
     0,
   );
-  const monthlySavings = calculateSavings(plan, totalIncome);
   const monthlyData = computeMonthlyData(all);
   const recurringVsVariableData = computeRecurringVsVariable(all);
   const breakdownType = typeFilter === "all" ? "expense" : typeFilter;
@@ -272,8 +268,6 @@ export function ReportsPanel({ transactions, plan }: ReportsPanelProps) {
         totalExpenses={totalExpenses}
         balance={balance}
         savingsRate={savingsRate}
-        monthlySavings={monthlySavings}
-        hasPlan={Boolean(plan)}
         totalRecurring={totalRecurring}
         totalVariable={totalVariable}
         recurringCount={recurringExpenses.length}

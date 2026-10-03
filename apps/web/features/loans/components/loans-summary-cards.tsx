@@ -1,14 +1,6 @@
 "use client";
 
-import { ArrowDownIcon, ArrowUpIcon, ScaleIcon } from "lucide-react";
-
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SummaryMetricCards } from "@/components/summary-metric-cards";
 import { groupLoansByPerson } from "@/features/loans/lib/group-loans";
 import {
   type Loan,
@@ -65,78 +57,35 @@ export function LoansSummaryCards({ loans }: LoansSummaryCardsProps) {
   const isNetPositive = net.every(([, amount]) => amount >= 0);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-xs font-medium text-muted-foreground">
-            Me deben
-          </CardTitle>
-          <CardAction>
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <ArrowDownIcon className="size-4" />
-            </div>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            {activeLent.length} persona{activeLent.length !== 1 ? "s" : ""}
-          </p>
-          <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-            {formatAmounts(toReceive)}
-          </p>
-        </CardContent>
-      </Card>
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-xs font-medium text-muted-foreground">
-            Debo
-          </CardTitle>
-          <CardAction>
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive">
-              <ArrowUpIcon className="size-4" />
-            </div>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            {activeBorrowed.length} persona
-            {activeBorrowed.length !== 1 ? "s" : ""}
-          </p>
-          <p className="text-lg font-semibold tabular-nums text-destructive">
-            {formatAmounts(toPay)}
-          </p>
-        </CardContent>
-      </Card>
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-xs font-medium text-muted-foreground">
-            Balance neto
-          </CardTitle>
-          <CardAction>
-            <div
-              className={`grid size-8 shrink-0 place-items-center rounded-lg ${isNetPositive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}
-            >
-              <ScaleIcon className="size-4" />
-            </div>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            {isNetPositive ? "A tu favor" : "Por moneda"}
-          </p>
-          <p
-            className={`text-lg font-semibold tabular-nums ${isNetPositive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
-          >
-            {net.length === 0
+    <SummaryMetricCards
+      ariaLabel="Resumen de préstamos"
+      cards={[
+        {
+          title: "Me deben",
+          value: formatAmounts(toReceive),
+          description: `${activeLent.length} ${activeLent.length === 1 ? "persona" : "personas"}`,
+        },
+        {
+          title: "Debo",
+          value: formatAmounts(toPay),
+          description: `${activeBorrowed.length} ${activeBorrowed.length === 1 ? "persona" : "personas"}`,
+        },
+        {
+          title: "Balance neto",
+          value:
+            net.length === 0
               ? formatCurrency(0)
               : net
                   .map(([currency, amount]) =>
                     formatCurrency(Math.abs(amount), currency),
                   )
-                  .join(" · ")}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+                  .join(" · "),
+          description: isNetPositive ? "A tu favor" : "Por moneda",
+          emphasis: true,
+          negative: !isNetPositive,
+        },
+      ]}
+      columns={3}
+    />
   );
 }

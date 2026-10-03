@@ -1,105 +1,61 @@
 import {
-  ArrowDownIcon,
-  CreditCardIcon,
-  TrendingUpIcon,
-  WalletCardsIcon,
-} from "lucide-react";
-
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  SummaryMetricCards,
+  type SummaryMetricCard,
+} from "@/components/summary-metric-cards";
 import { formatCurrency } from "@/lib/format";
 
 type DashboardSummaryCardsProps = {
-  availableForVariable: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  monthlyBalance: number;
   totalToPay: number;
-  creditCardDebt: number;
-  availableAfterSavings: number;
-  variableSpent: number;
-  usage: number;
-  remaining: number;
+  incomeMovementCount: number;
+  expenseMovementCount: number;
+  pendingPaymentCount: number;
 };
 
 export function DashboardSummaryCards({
-  availableForVariable,
+  monthlyIncome,
+  monthlyExpenses,
+  monthlyBalance,
   totalToPay,
-  creditCardDebt,
-  availableAfterSavings,
-  variableSpent,
-  usage,
-  remaining,
+  incomeMovementCount,
+  expenseMovementCount,
+  pendingPaymentCount,
 }: DashboardSummaryCardsProps) {
-  const summaryCards = [
+  const cards: SummaryMetricCard[] = [
     {
-      title: "Disponible libre",
-      value: formatCurrency(availableForVariable),
-      description: "Lo que queda después de obligaciones",
-      icon: WalletCardsIcon,
-      positive: remaining >= 0,
+      title: "Balance neto",
+      value: formatCurrency(monthlyBalance),
+      description: "Ingresos menos gastos del mes",
+      emphasis: true,
+      negative: monthlyBalance < 0,
+    },
+    {
+      title: "Ingresos del mes",
+      value: formatCurrency(monthlyIncome),
+      description: `${incomeMovementCount} ${incomeMovementCount === 1 ? "movimiento registrado" : "movimientos registrados"}`,
+    },
+    {
+      title: "Gastos del mes",
+      value: formatCurrency(monthlyExpenses),
+      description: `${expenseMovementCount} ${expenseMovementCount === 1 ? "movimiento registrado" : "movimientos registrados"}`,
     },
     {
       title: "Por pagar este mes",
       value: formatCurrency(totalToPay),
-      description: "Recurrentes + cuotas",
-      icon: ArrowDownIcon,
-      positive: totalToPay <= availableAfterSavings,
-    },
-    {
-      title: "Deuda de tarjeta",
-      value: formatCurrency(creditCardDebt),
       description:
-        creditCardDebt > 0
-          ? "Compras pendientes de pagar"
-          : "Sin deuda pendiente",
-      icon: CreditCardIcon,
-      positive: creditCardDebt === 0,
-    },
-    {
-      title: "Gastos variables",
-      value: formatCurrency(variableSpent),
-      description: `${usage}% del disponible`,
-      icon: TrendingUpIcon,
-      positive: usage < 85,
+        pendingPaymentCount === 0
+          ? "Sin recurrentes ni cuotas pendientes"
+          : `${pendingPaymentCount} ${pendingPaymentCount === 1 ? "pago pendiente" : "pagos pendientes"} de recurrentes y cuotas`,
     },
   ];
 
   return (
-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {summaryCards.map((card) => {
-        const Icon = card.icon;
-        const isPositive = card.positive;
-        return (
-          <Card size="sm" key={card.title}>
-            <CardHeader>
-              <CardTitle className="text-xs font-medium text-muted-foreground">
-                {card.title}
-              </CardTitle>
-              <CardDescription className="text-xs">
-                {card.description}
-              </CardDescription>
-              <CardAction>
-                <div
-                  className={`grid size-8 shrink-0 place-items-center rounded-lg ${isPositive ? "bg-muted/50 text-muted-foreground" : "bg-destructive/10 text-destructive"}`}
-                >
-                  <Icon className="size-4" />
-                </div>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <p
-                className={`text-lg font-semibold tabular-nums ${isPositive ? "text-foreground" : "text-destructive"}`}
-              >
-                {card.value}
-              </p>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </section>
+    <SummaryMetricCards
+      ariaLabel="Resumen financiero del mes"
+      cards={cards}
+      columns={4}
+    />
   );
 }

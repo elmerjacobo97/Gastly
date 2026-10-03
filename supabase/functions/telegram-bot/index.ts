@@ -228,20 +228,12 @@ async function handleIngreso(chatId: number, userId: string, args: string) {
 async function handleSaldo(chatId: number, userId: string) {
   const { monthKey, start, endExclusive } = currentMonthRange();
 
-  const [{ data: plan }, { data: transactions }] = await Promise.all([
-    supabase
-      .from("monthly_plans")
-      .select("savings_mode, savings_value")
-      .eq("user_id", userId)
-      .eq("month", `${monthKey}-01`)
-      .single(),
-    supabase
-      .from("transactions")
-      .select("type, amount")
-      .eq("user_id", userId)
-      .gte("occurred_on", start)
-      .lt("occurred_on", endExclusive),
-  ]);
+  const { data: transactions } = await supabase
+    .from("transactions")
+    .select("type, amount")
+    .eq("user_id", userId)
+    .gte("occurred_on", start)
+    .lt("occurred_on", endExclusive);
 
   let actualIncome = 0;
   let totalExpenses = 0;
@@ -250,27 +242,12 @@ async function handleSaldo(chatId: number, userId: string) {
     if (transaction.type === "expense") totalExpenses += transaction.amount;
   }
 
-  if (!plan) {
-    await sendMessage(
-      chatId,
-      `📊 <b>Este mes</b>\nIngresos: ${formatCurrency(actualIncome)}\nGastos: ${formatCurrency(totalExpenses)}\nBalance: ${formatCurrency(actualIncome - totalExpenses)}\n\n<i>Crea tu plan mensual en Gastly para ver tu saldo disponible real.</i>`,
-    );
-    return;
-  }
-
-  const savings =
-    plan.savings_mode === "percent"
-      ? actualIncome * (plan.savings_value / 100)
-      : plan.savings_value;
-  const available = Math.max(actualIncome - savings - totalExpenses, 0);
-  const savingsLabel =
-    plan.savings_mode === "percent"
-      ? `Ahorro (${plan.savings_value}%)`
-      : "Ahorro (fijo)";
+  const balance = actualIncome - totalExpenses;
+  const available = Math.max(balance, 0);
 
   await sendMessage(
     chatId,
-    `📊 <b>Saldo disponible — ${monthKey}</b>\n\nIngresos reales: ${formatCurrency(actualIncome)}\n${savingsLabel}: ${formatCurrency(savings)}\nGastado: ${formatCurrency(totalExpenses)}\n\n<b>Disponible: ${formatCurrency(available)}</b>`,
+    `📊 <b>Saldo disponible — ${monthKey}</b>\n\nIngresos reales: ${formatCurrency(actualIncome)}\nGastado: ${formatCurrency(totalExpenses)}\nBalance: ${formatCurrency(balance)}\n\n<b>Disponible: ${formatCurrency(available)}</b>`,
   );
 }
 

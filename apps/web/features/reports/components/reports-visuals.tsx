@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CalendarClockIcon,
-  PiggyBankIcon,
-  ScaleIcon,
-  ShuffleIcon,
-  type LucideIcon,
-} from "lucide-react";
+import { CalendarClockIcon, ShuffleIcon } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -20,11 +12,11 @@ import {
 } from "recharts";
 
 import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { SummaryMetricCards } from "@/components/summary-metric-cards";
 import { MonthlyIncomeExpenseChart } from "@/components/monthly-income-expense-chart";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -328,87 +320,39 @@ function SummaryCards({
   totalExpenses,
   balance,
   savingsRate,
-  monthlySavings,
-  plan,
 }: {
   totalIncome: number;
   totalExpenses: number;
   balance: number;
   savingsRate: number;
-  monthlySavings: number;
-  plan: boolean;
 }) {
-  const cards: {
-    title: string;
-    value: string;
-    description?: string;
-    icon: LucideIcon;
-    positive: boolean;
-  }[] = [
-    {
-      title: "Total ingresos",
-      value: formatCurrency(totalIncome),
-      icon: ArrowUpIcon,
-      positive: true,
-    },
-    {
-      title: "Total gastos",
-      value: formatCurrency(totalExpenses),
-      icon: ArrowDownIcon,
-      positive: false,
-    },
-    {
-      title: "Balance neto",
-      value: formatCurrency(balance),
-      description:
-        savingsRate > 0 ? `Tasa de ahorro: ${savingsRate}%` : undefined,
-      icon: ScaleIcon,
-      positive: balance >= 0,
-    },
-    ...(plan
-      ? [
-          {
-            title: "Ahorro proyectado anual",
-            value: formatCurrency(monthlySavings * 12),
-            description: `${formatCurrency(monthlySavings)}/mes × 12`,
-            icon: PiggyBankIcon,
-            positive: true,
-          },
-        ]
-      : []),
-  ];
-
   return (
-    <section className="grid gap-3 sm:grid-cols-3">
-      {cards.map((card) => (
-        <Card size="sm" key={card.title}>
-          <CardHeader>
-            <CardTitle className="text-xs font-medium text-muted-foreground">
-              {card.title}
-            </CardTitle>
-            {card.description && (
-              <CardDescription className="text-xs">
-                {card.description}
-              </CardDescription>
-            )}
-            <CardAction>
-              <div
-                className={`grid size-8 shrink-0 place-items-center rounded-lg ${card.positive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}
-              >
-                <card.icon className="size-4" />
-              </div>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <p
-              className={`text-lg font-semibold tabular-nums ${card.positive ? "text-foreground" : "text-destructive"}`}
-            >
-              {card.value}
-            </p>
-          </CardContent>
-        </Card>
-      ))}
-    </section>
+    <SummaryMetricCards
+      ariaLabel="Resumen de reportes"
+      cards={[
+        {
+          title: "Total ingresos",
+          value: formatCurrency(totalIncome),
+          description: "Período seleccionado",
+        },
+        {
+          title: "Total gastos",
+          value: formatCurrency(totalExpenses),
+          description: "Período seleccionado",
+        },
+        {
+          title: "Balance neto",
+          value: formatCurrency(balance),
+          description:
+            savingsRate > 0
+              ? `Tasa de ahorro: ${savingsRate}%`
+              : "Ingresos menos gastos",
+          emphasis: true,
+          negative: balance < 0,
+        },
+      ]}
+      columns={3}
+    />
   );
 }
 
@@ -423,8 +367,6 @@ export function ReportsVisuals({
   totalExpenses,
   balance,
   savingsRate,
-  monthlySavings,
-  hasPlan,
   totalRecurring,
   totalVariable,
   recurringCount,
@@ -440,8 +382,6 @@ export function ReportsVisuals({
   totalExpenses: number;
   balance: number;
   savingsRate: number;
-  monthlySavings: number;
-  hasPlan: boolean;
   totalRecurring: number;
   totalVariable: number;
   recurringCount: number;
@@ -454,8 +394,6 @@ export function ReportsVisuals({
         totalExpenses={totalExpenses}
         balance={balance}
         savingsRate={savingsRate}
-        monthlySavings={monthlySavings}
-        plan={hasPlan}
       />
       <section className="grid min-w-0 gap-4 lg:grid-cols-[1.6fr_1fr]">
         <MonthlyChartCard data={monthlyData} />

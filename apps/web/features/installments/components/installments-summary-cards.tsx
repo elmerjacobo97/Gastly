@@ -1,14 +1,6 @@
 "use client";
 
-import { CreditCardIcon, CheckCircle2Icon, CalendarIcon } from "lucide-react";
-
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SummaryMetricCards } from "@/components/summary-metric-cards";
 import { formatCurrency } from "@/lib/format";
 import { type InstallmentPurchase } from "@/lib/installment-types";
 import { getMonthInstallments } from "@/lib/installments-calcs";
@@ -38,69 +30,27 @@ export function InstallmentsSummaryCards({
   const totalPending = activePurchases.reduce((s, p) => s + p.totalPending, 0);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-xs font-medium text-muted-foreground">
-            Pendiente total
-          </CardTitle>
-          <CardAction>
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-              <CreditCardIcon className="size-4" />
-            </div>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            {activePurchases.length} compra
-            {activePurchases.length !== 1 ? "s" : ""} activa
-            {activePurchases.length !== 1 ? "s" : ""}
-          </p>
-          <p className="text-lg font-semibold tabular-nums">
-            {formatCurrency(totalPending)}
-          </p>
-        </CardContent>
-      </Card>
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-xs font-medium text-muted-foreground">
-            Cuotas de este mes
-          </CardTitle>
-          <CardAction>
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <CalendarIcon className="size-4" />
-            </div>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            {monthPayments.length} cuota{monthPayments.length !== 1 ? "s" : ""}
-          </p>
-          <p className="text-lg font-semibold tabular-nums">
-            {formatCurrency(totalThisMonth)}
-          </p>
-        </CardContent>
-      </Card>
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-xs font-medium text-muted-foreground">
-            Pagado este mes
-          </CardTitle>
-          <CardAction>
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-              <CheckCircle2Icon className="size-4" />
-            </div>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            {paidThisMonth.length} cuota{paidThisMonth.length !== 1 ? "s" : ""}
-          </p>
-          <p className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-            {formatCurrency(totalPaidThisMonth)}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <SummaryMetricCards
+      ariaLabel="Resumen de cuotas"
+      cards={[
+        {
+          title: "Pendiente total",
+          value: formatCurrency(totalPending),
+          description: `${activePurchases.length} ${activePurchases.length === 1 ? "compra activa" : "compras activas"}`,
+          emphasis: true,
+        },
+        {
+          title: "Cuotas de este mes",
+          value: formatCurrency(totalThisMonth),
+          description: `${monthPayments.length} ${monthPayments.length === 1 ? "cuota programada" : "cuotas programadas"}`,
+        },
+        {
+          title: "Pagado este mes",
+          value: formatCurrency(totalPaidThisMonth),
+          description: `${paidThisMonth.length} ${paidThisMonth.length === 1 ? "cuota pagada" : "cuotas pagadas"}`,
+        },
+      ]}
+      columns={3}
+    />
   );
 }

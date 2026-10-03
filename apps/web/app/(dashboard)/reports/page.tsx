@@ -2,7 +2,6 @@ import { endOfYear, format, startOfYear, subYears } from "date-fns";
 import { redirect } from "next/navigation";
 
 import { ReportsPanel } from "@/features/reports/components/reports-panel";
-import { getMonthlyPlan } from "@/features/monthly-plan/server/queries";
 import { getTransactions } from "@/features/transactions/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,13 +18,10 @@ export default async function ReportsPage() {
   if (!user) redirect("/login");
 
   const today = new Date();
-  const [transactions, plan] = await Promise.all([
-    getTransactions({
-      from: format(startOfYear(subYears(today, 1)), "yyyy-MM-dd"),
-      to: format(endOfYear(today), "yyyy-MM-dd"),
-    }),
-    getMonthlyPlan(today),
-  ]);
+  const transactions = await getTransactions({
+    from: format(startOfYear(subYears(today, 1)), "yyyy-MM-dd"),
+    to: format(endOfYear(today), "yyyy-MM-dd"),
+  });
 
-  return <ReportsPanel transactions={transactions} plan={plan} />;
+  return <ReportsPanel transactions={transactions} />;
 }

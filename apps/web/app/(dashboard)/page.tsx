@@ -11,7 +11,6 @@ import {
   getTransactions,
   getUnpaidCreditCardTransactions,
 } from "@/features/transactions/server/queries";
-import { getUserSettings } from "@/features/settings/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -31,7 +30,6 @@ export default async function DashboardPage() {
     unpaidCreditCard,
     allRecurring,
     installments,
-    settings,
     monthlyData,
     categoryData,
   ] = await Promise.all([
@@ -39,7 +37,6 @@ export default async function DashboardPage() {
     getUnpaidCreditCardTransactions(),
     getRecurringPayments(today, "expense"),
     getInstallmentPurchases(),
-    getUserSettings(),
     getMonthlyTotals(6),
     getCategoryTotals(today),
   ]);
@@ -52,7 +49,6 @@ export default async function DashboardPage() {
       unpaidCreditCard={unpaidCreditCard}
       recurringPayments={allRecurring}
       installments={installments}
-      savingsPct={settings.savingsPercentage}
       monthlyData={monthlyData}
       categoryData={categoryData}
     />

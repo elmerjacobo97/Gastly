@@ -23,7 +23,6 @@ type TransactionsPanelProps = {
   unpaidCreditCard: Transaction[];
   recurringPayments: RecurringPayment[];
   installments: InstallmentPurchase[];
-  savingsPct: number;
   monthlyData?: MonthlyTotal[];
   categoryData?: CategoryTotal[];
 };
@@ -52,7 +51,6 @@ export function TransactionsPanel({
   unpaidCreditCard,
   recurringPayments: allRecurring,
   installments,
-  savingsPct,
   monthlyData,
   categoryData,
 }: TransactionsPanelProps) {
@@ -62,44 +60,35 @@ export function TransactionsPanel({
   const displayName = userName || userEmail?.split("@")[0] || "Usuario";
 
   const summary = computeSummary(transactions);
+  const incomeMovementCount = transactions.filter(
+    (transaction) => transaction.type === "income",
+  ).length;
+  const expenseMovementCount = transactions.filter(
+    (transaction) => transaction.type === "expense",
+  ).length;
 
   const recurringPayments = allRecurring.filter(
     (p) => p.type === "expense" && isRelevantForMonth(p, monthKey),
   );
 
-  const savings = Math.round(((summary.income * savingsPct) / 100) * 100) / 100;
-  const recurringEstimated = recurringPayments.reduce((sum, payment) => {
-    return sum + (payment.paidAmount ?? payment.amount);
-  }, 0);
-  const recurringPaid = recurringPayments.reduce((sum, payment) => {
-    return sum + (payment.paidAmount ?? 0);
-  }, 0);
-  const availableAfterSavings = Math.max(summary.income - savings, 0);
-  const availableForVariable = Math.max(
-    availableAfterSavings - recurringEstimated,
+  const monthInstallments = getMonthInstallments(installments, today);
+  const recurringPendingPayments = recurringPayments.filter(
+    (payment) => payment.paidOn === null,
+  );
+  const installmentPendingPayments = monthInstallments.filter(
+    ({ payment }) => !payment.transactionId && !payment.paidExternally,
+  );
+  const recurringPendingTotal = recurringPendingPayments.reduce(
+    (sum, payment) => sum + payment.amount,
     0,
   );
-  const variableSpent = Math.max(summary.expenses - recurringPaid, 0);
-  const remaining = availableForVariable - variableSpent;
-  const usage =
-    availableForVariable > 0
-      ? Math.round((variableSpent / availableForVariable) * 100)
-      : variableSpent > 0
-        ? 100
-        : 0;
-
-  const monthInstallments = getMonthInstallments(installments, today);
-  const recurringPendingTotal = recurringPayments
-    .filter((p) => p.paidOn === null)
-    .reduce((s, p) => s + p.amount, 0);
-  const installmentsPendingTotal = monthInstallments
-    .filter(({ payment }) => !payment.transactionId && !payment.paidExternally)
-    .reduce((s, { payment }) => s + payment.amount, 0);
-  const creditCardPendingTotal = unpaidCreditCard.reduce(
-    (s, t) => s + t.amount,
+  const installmentsPendingTotal = installmentPendingPayments.reduce(
+    (sum, { payment }) => sum + payment.amount,
     0,
   );
   const totalToPay = recurringPendingTotal + installmentsPendingTotal;
+  const pendingPaymentCount =
+    recurringPendingPayments.length + installmentPendingPayments.length;
 
   const upcomingPayments = recurringPayments
     .map((payment) => ({
@@ -126,13 +115,13 @@ export function TransactionsPanel({
       </section>
 
       <DashboardSummaryCards
-        availableForVariable={availableForVariable}
+        monthlyIncome={summary.income}
+        monthlyExpenses={summary.expenses}
+        monthlyBalance={summary.balance}
         totalToPay={totalToPay}
-        creditCardDebt={creditCardPendingTotal}
-        availableAfterSavings={availableAfterSavings}
-        variableSpent={variableSpent}
-        usage={usage}
-        remaining={remaining}
+        incomeMovementCount={incomeMovementCount}
+        expenseMovementCount={expenseMovementCount}
+        pendingPaymentCount={pendingPaymentCount}
       />
 
       <UpcomingPaymentsCard payments={upcomingPayments} />
