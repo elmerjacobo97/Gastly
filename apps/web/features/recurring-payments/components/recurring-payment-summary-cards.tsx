@@ -4,7 +4,7 @@ import { SummaryMetricCards } from "@/components/summary-metric-cards";
 import {
   formatCurrencyTotals,
   sumByCurrency,
-} from "@/features/recurring-payments/lib/currency-totals";
+} from "@/lib/currency-totals";
 import { isRelevantForMonth } from "@/features/recurring-payments/lib/recurring-payment-helpers";
 import { type RecurringPayment } from "@/lib/recurring-payment-types";
 

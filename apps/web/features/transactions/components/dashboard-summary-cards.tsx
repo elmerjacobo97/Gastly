@@ -2,13 +2,14 @@ import {
   SummaryMetricCards,
   type SummaryMetricCard,
 } from "@/components/summary-metric-cards";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrencyTotals } from "@/lib/currency-totals";
+import { formatCurrency, type CurrencyCode } from "@/lib/format";
 
 type DashboardSummaryCardsProps = {
   monthlyIncome: number;
   monthlyExpenses: number;
   monthlyBalance: number;
-  totalToPay: number;
+  pendingTotals: Partial<Record<CurrencyCode, number>>;
   incomeMovementCount: number;
   expenseMovementCount: number;
   pendingPaymentCount: number;
@@ -18,7 +19,7 @@ export function DashboardSummaryCards({
   monthlyIncome,
   monthlyExpenses,
   monthlyBalance,
-  totalToPay,
+  pendingTotals,
   incomeMovementCount,
   expenseMovementCount,
   pendingPaymentCount,
@@ -43,7 +44,7 @@ export function DashboardSummaryCards({
     },
     {
       title: "Por pagar este mes",
-      value: formatCurrency(totalToPay),
+      value: formatCurrencyTotals(pendingTotals),
       description:
         pendingPaymentCount === 0
           ? "Sin recurrentes ni cuotas pendientes"

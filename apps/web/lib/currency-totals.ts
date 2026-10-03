@@ -3,11 +3,9 @@ import {
   formatCurrency,
   type CurrencyCode,
 } from "@/lib/format";
-import { type RecurringPayment } from "@/lib/recurring-payment-types";
-
-export function sumByCurrency(
-  payments: RecurringPayment[],
-  getAmount: (payment: RecurringPayment) => number,
+export function sumByCurrency<T extends { currency: CurrencyCode }>(
+  payments: T[],
+  getAmount: (payment: T) => number,
 ) {
   const totals: Partial<Record<CurrencyCode, number>> = {};
   for (const payment of payments) {

@@ -6,6 +6,7 @@ import { CreditCardDebtCard } from "@/features/transactions/components/credit-ca
 import { DashboardCharts } from "@/features/transactions/components/dashboard-charts";
 import { DashboardSummaryCards } from "@/features/transactions/components/dashboard-summary-cards";
 import { UpcomingPaymentsCard } from "@/features/transactions/components/upcoming-payments-card";
+import { sumByCurrency } from "@/lib/currency-totals";
 import { getMonthInstallments } from "@/lib/installments-calcs";
 import { computeSummary } from "@/features/transactions/lib/transactions-api";
 import {
@@ -78,14 +79,16 @@ export function TransactionsPanel({
   const installmentPendingPayments = monthInstallments.filter(
     ({ payment }) => !payment.transactionId && !payment.paidExternally,
   );
-  const recurringPendingTotal = recurringPendingPayments
-    .filter((payment) => payment.currency === "PEN")
-    .reduce((sum, payment) => sum + payment.amount, 0);
-  const installmentsPendingTotal = installmentPendingPayments.reduce(
-    (sum, { payment }) => sum + payment.amount,
-    0,
+  const pendingTotals = sumByCurrency(
+    recurringPendingPayments,
+    (payment) => payment.amount,
   );
-  const totalToPay = recurringPendingTotal + installmentsPendingTotal;
+  pendingTotals.PEN =
+    (pendingTotals.PEN ?? 0) +
+    installmentPendingPayments.reduce(
+      (sum, { payment }) => sum + payment.amount,
+      0,
+    );
   const pendingPaymentCount =
     recurringPendingPayments.length + installmentPendingPayments.length;
 
@@ -117,7 +120,7 @@ export function TransactionsPanel({
         monthlyIncome={summary.income}
         monthlyExpenses={summary.expenses}
         monthlyBalance={summary.balance}
-        totalToPay={totalToPay}
+        pendingTotals={pendingTotals}
         incomeMovementCount={incomeMovementCount}
         expenseMovementCount={expenseMovementCount}
         pendingPaymentCount={pendingPaymentCount}
