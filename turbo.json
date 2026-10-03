@@ -9,6 +9,11 @@
         "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
         "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME"
       ],
+      "passThroughEnv": [
+        "TELEGRAM_BOT_TOKEN",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "CALENDAR_SECRET"
+      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env.production.local",
