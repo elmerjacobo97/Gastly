@@ -1,5 +1,5 @@
+import { SummaryMetricCardsSkeleton } from "@/components/summary-metric-cards-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function DashboardLoading() {
   return (
@@ -12,22 +12,7 @@ export default function DashboardLoading() {
         </div>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card size="sm" key={i}>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="size-8 rounded-lg" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="mt-2 h-5 w-28" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <SummaryMetricCardsSkeleton columns={4} />
 
       <div className="rounded-xl border bg-card">
         <div className="flex items-center justify-between border-b p-6">
