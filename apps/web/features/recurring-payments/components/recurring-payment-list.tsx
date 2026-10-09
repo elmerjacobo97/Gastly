@@ -190,7 +190,9 @@ export function RecurringPaymentList({
                                 {payment.description}
                               </span>
                               {isIncome && (
-                                <StatusBadge tone="success">Ingreso</StatusBadge>
+                                <StatusBadge tone="success">
+                                  Ingreso
+                                </StatusBadge>
                               )}
                             </div>
                             {payment.category && (
