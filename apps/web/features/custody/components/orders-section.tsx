@@ -1,6 +1,10 @@
 "use client";
 
-import { CheckCircle2Icon, PackageIcon } from "lucide-react";
+import {
+  ArrowLeftRightIcon,
+  CheckCircle2Icon,
+  PackageIcon,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ProgressCell } from "@/components/progress-cell";
@@ -23,15 +27,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { CreateMovementDialog } from "@/features/custody/components/create-movement-dialog";
 import {
-  DepositButton,
-  DisbursementButton,
-} from "@/features/custody/components/create-movement-dialog";
-import { type CustodyOrder } from "@/features/custody/types/custody-types";
+  type CustodyMovementType,
+  type CustodyOrder,
+} from "@/features/custody/types/custody-types";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 
 type OrderFilter = "active" | "closed" | "all";
+
+type MovementTarget = { order: CustodyOrder; type: CustodyMovementType };
 
 const FILTER_OPTIONS: { value: OrderFilter; label: string }[] = [
   { value: "active", label: "Activos" },
@@ -54,6 +60,7 @@ export function OrdersSection({
 }: OrdersSectionProps) {
   const [filter, setFilter] = useState<OrderFilter>("active");
   const [query, setQuery] = useState("");
+  const [movement, setMovement] = useState<MovementTarget | null>(null);
 
   const activeCount = orders.filter(
     (order) => order.status === "active",
@@ -107,7 +114,7 @@ export function OrdersSection({
                 </TableHead>
                 <TableHead className="text-right">En custodia</TableHead>
                 <TableHead className="hidden lg:table-cell">Estimado</TableHead>
-                <TableHead className="w-24">
+                <TableHead className="w-12">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -179,30 +186,28 @@ export function OrdersSection({
                         {order.expectedOn ? formatDate(order.expectedOn) : "—"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          {isActive && (
-                            <>
-                              <DepositButton order={order} />
-                              <DisbursementButton order={order} />
-                            </>
-                          )}
-                          <RowActionsMenu
-                            onEdit={() => onEdit(order)}
-                            onDelete={() => onDelete(order.id)}
-                            additionalActions={
-                              isActive
-                                ? [
-                                    {
-                                      icon: <CheckCircle2Icon />,
-                                      label: "Marcar completado",
-                                      onSelect: () => onComplete(order.id),
-                                    },
-                                  ]
-                                : undefined
-                            }
-                            className="text-muted-foreground data-[state=open]:bg-muted"
-                          />
-                        </div>
+                        <RowActionsMenu
+                          onEdit={() => onEdit(order)}
+                          onDelete={() => onDelete(order.id)}
+                          additionalActions={
+                            isActive
+                              ? [
+                                  {
+                                    icon: <ArrowLeftRightIcon />,
+                                    label: "Registrar movimiento",
+                                    onSelect: () =>
+                                      setMovement({ order, type: "deposit" }),
+                                  },
+                                  {
+                                    icon: <CheckCircle2Icon />,
+                                    label: "Marcar completado",
+                                    onSelect: () => onComplete(order.id),
+                                  },
+                                ]
+                              : undefined
+                          }
+                          className="text-muted-foreground data-[state=open]:bg-muted"
+                        />
                       </TableCell>
                     </TableRow>
                   );
@@ -211,6 +216,16 @@ export function OrdersSection({
             </TableBody>
           </Table>
         </div>
+        {movement && (
+          <CreateMovementDialog
+            order={movement.order}
+            type={movement.type}
+            open
+            onOpenChange={(open) => {
+              if (!open) setMovement(null);
+            }}
+          />
+        )}
       </CardContent>
     </Card>
   );
