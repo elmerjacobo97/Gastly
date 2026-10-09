@@ -1,22 +1,6 @@
 import { SummaryMetricCardsSkeleton } from "@/components/summary-metric-cards-skeleton";
+import { TableCardSkeleton } from "@/components/table-card-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
-
-function TableSkeleton() {
-  return (
-    <div className="rounded-xl border bg-card">
-      <div className="space-y-1.5 border-b p-6">
-        <Skeleton className="h-5 w-24" />
-        <Skeleton className="h-3 w-32" />
-      </div>
-      <div className="p-6">
-        <Skeleton className="mb-4 h-9 w-64" />
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="mb-2 h-12 w-full" />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function LoansLoading() {
   return (
@@ -31,8 +15,8 @@ export default function LoansLoading() {
 
       <SummaryMetricCardsSkeleton columns={3} />
 
-      <TableSkeleton />
-      <TableSkeleton />
+      <TableCardSkeleton rows={5} />
+      <TableCardSkeleton rows={5} />
     </main>
   );
 }

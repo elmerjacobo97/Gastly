@@ -1,9 +1,43 @@
 "use client";
 
-import { PackageIcon } from "lucide-react";
+import { CheckCircle2Icon, PackageIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 
-import { OrderCard } from "@/features/custody/components/order-card";
+import { ProgressCell } from "@/components/progress-cell";
+import { RowActionsMenu } from "@/components/row-actions-menu";
+import { StatusBadge } from "@/components/status-badge";
+import { TableSearchInput } from "@/components/table-search-input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DepositButton,
+  DisbursementButton,
+} from "@/features/custody/components/create-movement-dialog";
 import { type CustodyOrder } from "@/features/custody/types/custody-types";
+import { formatCurrency, formatDate } from "@/lib/format";
+import { matchesQuery } from "@/lib/search";
+
+type OrderFilter = "active" | "closed" | "all";
+
+const FILTER_OPTIONS: { value: OrderFilter; label: string }[] = [
+  { value: "active", label: "Activos" },
+  { value: "closed", label: "Cerrados" },
+  { value: "all", label: "Todos" },
+];
 
 type OrdersSectionProps = {
   orders: CustodyOrder[];
@@ -18,49 +52,167 @@ export function OrdersSection({
   onDelete,
   onComplete,
 }: OrdersSectionProps) {
-  const activeOrders = orders.filter((o) => o.status === "active");
-  const completedOrders = orders.filter((o) => o.status !== "active");
+  const [filter, setFilter] = useState<OrderFilter>("active");
+  const [query, setQuery] = useState("");
+
+  const activeCount = orders.filter(
+    (order) => order.status === "active",
+  ).length;
+  const closedCount = orders.length - activeCount;
+
+  const visibleOrders = useMemo(
+    () =>
+      orders
+        .filter((order) => {
+          if (filter === "active") return order.status === "active";
+          if (filter === "closed") return order.status !== "active";
+          return true;
+        })
+        .filter((order) =>
+          matchesQuery(query, order.personName, order.title, order.notes),
+        ),
+    [filter, orders, query],
+  );
 
   return (
-    <>
-      {activeOrders.length > 0 && (
-        <>
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Activos ({activeOrders.length})
-          </h2>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {activeOrders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                onEdit={() => onEdit(order)}
-                onDelete={() => onDelete(order.id)}
-                onComplete={() => onComplete(order.id)}
-              />
-            ))}
-          </section>
-        </>
-      )}
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Encargos registrados</CardTitle>
+        <CardDescription>
+          {activeCount} activo{activeCount !== 1 ? "s" : ""} · {closedCount}{" "}
+          cerrado{closedCount !== 1 ? "s" : ""}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <TableSearchInput value={query} onChange={setQuery} />
+          <SegmentedControl
+            value={filter}
+            onChange={setFilter}
+            options={FILTER_OPTIONS}
+          />
+        </div>
 
-      {completedOrders.length > 0 && (
-        <>
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Completados / cancelados ({completedOrders.length})
-          </h2>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {completedOrders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                onEdit={() => onEdit(order)}
-                onDelete={() => onDelete(order.id)}
-                onComplete={() => onComplete(order.id)}
-              />
-            ))}
-          </section>
-        </>
-      )}
-    </>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Encargo</TableHead>
+                <TableHead>Progreso</TableHead>
+                <TableHead className="hidden text-right md:table-cell">
+                  Entradas
+                </TableHead>
+                <TableHead className="hidden text-right md:table-cell">
+                  Salidas
+                </TableHead>
+                <TableHead className="text-right">En custodia</TableHead>
+                <TableHead className="hidden lg:table-cell">Estimado</TableHead>
+                <TableHead className="w-24">
+                  <span className="sr-only">Acciones</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visibleOrders.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="h-24 text-center text-sm text-muted-foreground"
+                  >
+                    Sin resultados.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                visibleOrders.map((order) => {
+                  const isActive = order.status === "active";
+                  const target = order.targetAmount ?? 0;
+                  const pctProgress =
+                    target > 0
+                      ? Math.min(
+                          100,
+                          Math.round((order.totalDeposited / target) * 100),
+                        )
+                      : null;
+
+                  return (
+                    <TableRow key={order.id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="max-w-48 truncate font-medium">
+                              {order.personName}
+                            </span>
+                            {order.status === "completed" && (
+                              <StatusBadge tone="muted">Completado</StatusBadge>
+                            )}
+                            {order.status === "cancelled" && (
+                              <StatusBadge tone="muted">Cancelado</StatusBadge>
+                            )}
+                          </div>
+                          <span className="max-w-64 truncate text-xs text-muted-foreground">
+                            {order.title}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {pctProgress === null ? (
+                          <span className="text-xs text-muted-foreground">
+                            Sin objetivo
+                          </span>
+                        ) : (
+                          <ProgressCell percent={pctProgress}>
+                            {formatCurrency(order.totalDeposited)} de{" "}
+                            {formatCurrency(target)}
+                          </ProgressCell>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden text-right text-muted-foreground tabular-nums md:table-cell">
+                        {formatCurrency(order.totalDeposited)}
+                      </TableCell>
+                      <TableCell className="hidden text-right text-muted-foreground tabular-nums md:table-cell">
+                        {formatCurrency(order.totalDisbursed)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium tabular-nums">
+                        {formatCurrency(order.balanceHeld)}
+                      </TableCell>
+                      <TableCell className="hidden text-muted-foreground lg:table-cell">
+                        {order.expectedOn ? formatDate(order.expectedOn) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          {isActive && (
+                            <>
+                              <DepositButton order={order} />
+                              <DisbursementButton order={order} />
+                            </>
+                          )}
+                          <RowActionsMenu
+                            onEdit={() => onEdit(order)}
+                            onDelete={() => onDelete(order.id)}
+                            additionalActions={
+                              isActive
+                                ? [
+                                    {
+                                      icon: <CheckCircle2Icon />,
+                                      label: "Marcar completado",
+                                      onSelect: () => onComplete(order.id),
+                                    },
+                                  ]
+                                : undefined
+                            }
+                            className="text-muted-foreground data-[state=open]:bg-muted"
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

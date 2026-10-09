@@ -1,6 +1,5 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { DownloadIcon } from "lucide-react";
@@ -17,14 +16,14 @@ import {
 } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CsvExportConfirmDialog } from "@/components/csv-export-confirm-dialog";
-import { DataTable, type DataTableFeatures } from "@/components/ui/data-table";
 import { MonthNav } from "@/components/month-nav";
-import { SegmentedControl } from "@/components/ui/segmented-control";
 import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
 import { EditTransactionDialog } from "@/features/transactions/components/edit-transaction-dialog";
-import { createMovementsColumns } from "@/features/transactions/components/movements-columns";
-import { MovementsEmptyState } from "@/features/transactions/components/movements-empty-state";
 import { MovementsSummaryCards } from "@/features/transactions/components/movements-summary-cards";
+import {
+  MovementsTable,
+  type TypeFilter,
+} from "@/features/transactions/components/movements-table";
 import { exportTransactionsToCSV } from "@/features/transactions/lib/export-transactions-csv";
 import { sumByCurrency } from "@/lib/currency-totals";
 import {
@@ -33,16 +32,7 @@ import {
 } from "@/features/transactions/lib/movements-labels";
 import { deleteTransaction } from "@/features/transactions/server/actions";
 import { type Transaction } from "@/lib/transaction-types";
-import { type TransactionType } from "@/lib/transaction-types";
 import { type Category } from "@/lib/category-types";
-
-type TypeFilter = "all" | TransactionType;
-
-const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
-  { value: "all", label: "Todos" },
-  { value: "expense", label: "Gastos" },
-  { value: "income", label: "Ingresos" },
-];
 
 type MovementsPanelProps = {
   transactions: Transaction[];
@@ -106,15 +96,6 @@ export function MovementsPanel({
     });
   }
 
-  const columns = useMemo<ColumnDef<DataTableFeatures, Transaction>[]>(
-    () =>
-      createMovementsColumns({
-        onEdit: setEditTransaction,
-        onDelete: setDeleteId,
-      }),
-    [],
-  );
-
   const addLabel = transactionAddLabel(typeFilter);
 
   return (
@@ -166,23 +147,13 @@ export function MovementsPanel({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={rows}
-            searchPlaceholder="Buscar"
-            toolbar={
-              <SegmentedControl
-                value={typeFilter}
-                onChange={setTypeFilter}
-                options={TYPE_OPTIONS}
-              />
-            }
-            emptyState={
-              <MovementsEmptyState
-                typeFilter={typeFilter}
-                categories={categories}
-              />
-            }
+          <MovementsTable
+            rows={rows}
+            categories={categories}
+            typeFilter={typeFilter}
+            onTypeFilterChange={setTypeFilter}
+            onEdit={setEditTransaction}
+            onDelete={setDeleteId}
           />
         </CardContent>
       </Card>

@@ -1,4 +1,5 @@
 import { SummaryMetricCardsSkeleton } from "@/components/summary-metric-cards-skeleton";
+import { TableCardSkeleton } from "@/components/table-card-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function InstallmentsLoading() {
@@ -17,25 +18,8 @@ export default function InstallmentsLoading() {
 
       <SummaryMetricCardsSkeleton columns={3} />
 
-      <div className="rounded-xl border bg-card p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="space-y-1.5">
-            <Skeleton className="h-5 w-44" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-          <Skeleton className="h-9 w-48" />
-        </div>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 py-3">
-            <Skeleton className="size-8 rounded-lg" />
-            <div className="flex-1 space-y-1.5">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-            <Skeleton className="h-5 w-16" />
-          </div>
-        ))}
-      </div>
+      <TableCardSkeleton rows={4} />
+      <TableCardSkeleton rows={4} />
     </main>
   );
 }

@@ -27,7 +27,7 @@ import {
   BudgetLegend,
   budgetTone,
 } from "@/features/budgets/components/budget-bar";
-import { CategoryBudgetRow } from "@/features/budgets/components/category-budget-row";
+import { CategoryBudgetTable } from "@/features/budgets/components/category-budget-table";
 import { CategoryBudgetDialog } from "@/features/budgets/components/category-budget-dialog";
 import { MonthlyBudgetTotalDialog } from "@/features/budgets/components/monthly-budget-total-dialog";
 import { calculateBudgetProgress } from "@/features/budgets/lib/budget-calculations";
@@ -162,6 +162,17 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
     });
   }
 
+  const addCategoryButton = (
+    <Button
+      size="sm"
+      onClick={() => openCategoryBudget()}
+      disabled={availableCategories.length === 0}
+    >
+      <PlusIcon />
+      Añadir categoría
+    </Button>
+  );
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -188,7 +199,7 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
         </div>
       </section>
 
-      <Card className="border-l-4 border-l-primary">
+      <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
@@ -264,54 +275,43 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
                 : `${categoryBudgets.length} categoría${categoryBudgets.length === 1 ? "" : "s"} con límite · ${currency}`}
             </CardDescription>
           </div>
-          <CardAction className="self-center">
-            <Button
-              size="sm"
-              onClick={() => openCategoryBudget()}
-              disabled={availableCategories.length === 0}
-            >
-              <PlusIcon />
-              Añadir categoría
-            </Button>
-          </CardAction>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="flex flex-col gap-4">
           {categoryBudgets.length === 0 ? (
-            <div className="m-4 flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center">
-              <p className="font-medium">
-                Todavía no hay límites por categoría
-              </p>
-              <p className="max-w-md text-sm text-muted-foreground">
-                Elige categoría de gasto y monto mensual. Los gastos aparecerán
-                aquí a medida que los registres.
-              </p>
-              {overview.categories.length === 0 && (
-                <Link
-                  href="/settings"
-                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  Crear categoría de gasto
-                </Link>
-              )}
-            </div>
+            <>
+              <div className="flex justify-end">{addCategoryButton}</div>
+              <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center">
+                <p className="font-medium">
+                  Todavía no hay límites por categoría
+                </p>
+                <p className="max-w-md text-sm text-muted-foreground">
+                  Elige categoría de gasto y monto mensual. Los gastos
+                  aparecerán aquí a medida que los registres.
+                </p>
+                {overview.categories.length === 0 && (
+                  <Link
+                    href="/settings"
+                    className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    Crear categoría de gasto
+                  </Link>
+                )}
+              </div>
+            </>
           ) : (
-            <div className="flex flex-col divide-y">
-              {categoryBudgets.map((budget) => (
-                <CategoryBudgetRow
-                  key={budget.id}
-                  budget={budget}
-                  currency={currency}
-                  onEdit={openCategoryBudget}
-                  onDelete={(item) =>
-                    setDeleteTarget({
-                      id: item.id,
-                      type: "category",
-                      label: item.categoryName,
-                    })
-                  }
-                />
-              ))}
-            </div>
+            <CategoryBudgetTable
+              budgets={categoryBudgets}
+              currency={currency}
+              toolbarAction={addCategoryButton}
+              onEdit={openCategoryBudget}
+              onDelete={(item) =>
+                setDeleteTarget({
+                  id: item.id,
+                  type: "category",
+                  label: item.categoryName,
+                })
+              }
+            />
           )}
         </CardContent>
       </Card>

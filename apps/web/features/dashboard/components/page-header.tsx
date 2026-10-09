@@ -13,7 +13,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/installments": "Cuotas",
   "/loans": "Préstamos",
   "/custody": "Encargos",
-  "/savings": "Ahorros",
+  "/savings": "Metas de ahorro",
+  "/budgets": "Presupuestos",
   "/reports": "Reportes",
   "/settings": "Configuración",
 };

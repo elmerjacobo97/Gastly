@@ -2,7 +2,6 @@
 
 import { CheckCircle2Icon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,6 +11,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { StatusBadge } from "@/components/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PayInstallmentsDialog } from "@/features/installments/components/pay-installments-dialog";
 import {
   type InstallmentPayment,
@@ -70,55 +78,70 @@ export function InstallmentMonthPaymentsCard({
         )}
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col divide-y">
-          {monthPayments.map(({ payment, purchase }) => {
-            const isPaid = !!(payment.transactionId || payment.paidExternally);
-            return (
-              <div
-                key={payment.id}
-                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                {purchase.category && (
-                  <CategoryIconBadge
-                    icon={purchase.category.icon}
-                    color={purchase.category.color}
-                    className="size-8 shrink-0 rounded-lg"
-                  />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {purchase.description}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    Cuota {payment.paymentNumber}/{purchase.totalInstallments} ·{" "}
-                    {formatDate(payment.dueOn)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-sm font-medium tabular-nums">
-                    {formatCurrency(payment.amount)}
-                  </span>
-                  {isPaid ? (
-                    <Badge
-                      variant="secondary"
-                      className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                    >
-                      Pagado
-                    </Badge>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => onPay({ payment, purchase })}
-                    >
-                      Pagar
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Compra</TableHead>
+                <TableHead className="hidden md:table-cell">Vence</TableHead>
+                <TableHead className="text-right">Monto</TableHead>
+                <TableHead className="text-right">Estado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {monthPayments.map(({ payment, purchase }) => {
+                const isPaid = !!(
+                  payment.transactionId || payment.paidExternally
+                );
+                return (
+                  <TableRow key={payment.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {purchase.category && (
+                          <CategoryIconBadge
+                            icon={purchase.category.icon}
+                            color={purchase.category.color}
+                            className="size-6 shrink-0 rounded-md"
+                          />
+                        )}
+                        <div className="flex min-w-0 flex-col">
+                          <span className="max-w-64 truncate font-medium">
+                            {purchase.description}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Cuota {payment.paymentNumber}/
+                            {purchase.totalInstallments}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden text-muted-foreground md:table-cell">
+                      {formatDate(payment.dueOn)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium tabular-nums">
+                      {formatCurrency(payment.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end">
+                        {isPaid ? (
+                          <StatusBadge tone="success">Pagado</StatusBadge>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => onPay({ payment, purchase })}
+                          >
+                            Pagar
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>

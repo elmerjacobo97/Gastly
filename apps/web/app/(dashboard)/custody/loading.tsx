@@ -1,4 +1,5 @@
 import { SummaryMetricCardsSkeleton } from "@/components/summary-metric-cards-skeleton";
+import { TableCardSkeleton } from "@/components/table-card-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CustodyLoading() {
@@ -14,47 +15,8 @@ export default function CustodyLoading() {
 
       <SummaryMetricCardsSkeleton columns={3} />
 
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-28" />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-xl border bg-card">
-            <div className="flex items-start justify-between gap-3 border-b p-5 pb-3">
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-3 w-40" />
-              </div>
-              <Skeleton className="size-8 rounded-md" />
-            </div>
-            <div className="flex flex-col gap-2 p-5">
-              <Skeleton className="h-7 w-28" />
-              <Skeleton className="h-2 w-full rounded-full" />
-              <div className="flex justify-between">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-xl border bg-card">
-        <div className="flex items-center justify-between border-b p-6">
-          <div className="space-y-1.5">
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-3 w-36" />
-          </div>
-          <Skeleton className="h-8 w-48" />
-        </div>
-        <div className="p-4">
-          <Skeleton className="mb-3 h-9 w-64" />
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="mb-2 h-12 w-full" />
-          ))}
-        </div>
-      </div>
+      <TableCardSkeleton rows={3} />
+      <TableCardSkeleton rows={4} />
     </main>
   );
 }

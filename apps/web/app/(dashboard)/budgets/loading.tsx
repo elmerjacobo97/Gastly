@@ -1,3 +1,4 @@
+import { TableCardSkeleton } from "@/components/table-card-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BudgetsLoading() {
@@ -16,20 +17,7 @@ export default function BudgetsLoading() {
 
       <Skeleton className="h-40 w-full rounded-xl" />
 
-      <div className="rounded-xl border bg-card">
-        <div className="divide-y p-0">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-5 py-3.5">
-              <Skeleton className="size-8 rounded-lg" />
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-1.5 w-full" />
-              </div>
-              <Skeleton className="h-5 w-16" />
-            </div>
-          ))}
-        </div>
-      </div>
+      <TableCardSkeleton rows={4} />
     </main>
   );
 }

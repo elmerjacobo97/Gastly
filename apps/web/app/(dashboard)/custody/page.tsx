@@ -6,7 +6,7 @@ import { getCustodyOrders } from "@/features/custody/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Custodia",
+  title: "Encargos",
 };
 
 export default async function CustodyPage() {

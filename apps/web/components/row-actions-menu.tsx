@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type RowActionsMenuProps = {
-  onEdit: () => void;
+  onEdit?: () => void;
   onDelete: () => void;
   additionalActions?: {
     icon: ReactNode;
@@ -40,10 +40,12 @@ export function RowActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={onEdit}>
-          <PencilIcon />
-          {editLabel}
-        </DropdownMenuItem>
+        {onEdit && (
+          <DropdownMenuItem onSelect={onEdit}>
+            <PencilIcon />
+            {editLabel}
+          </DropdownMenuItem>
+        )}
         {additionalActions?.map((action) => (
           <DropdownMenuItem key={action.label} onSelect={action.onSelect}>
             {action.icon}

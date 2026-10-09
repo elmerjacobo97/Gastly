@@ -1,4 +1,5 @@
 import { SummaryMetricCardsSkeleton } from "@/components/summary-metric-cards-skeleton";
+import { TableCardSkeleton } from "@/components/table-card-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TransactionsLoading() {
@@ -17,18 +18,7 @@ export default function TransactionsLoading() {
 
       <SummaryMetricCardsSkeleton columns={3} />
 
-      <div className="rounded-xl border bg-card">
-        <div className="space-y-1.5 border-b p-6">
-          <Skeleton className="h-5 w-44" />
-          <Skeleton className="h-3 w-20" />
-        </div>
-        <div className="p-6">
-          <Skeleton className="mb-4 h-9 w-64" />
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="mb-2 h-12 w-full" />
-          ))}
-        </div>
-      </div>
+      <TableCardSkeleton rows={6} />
     </main>
   );
 }

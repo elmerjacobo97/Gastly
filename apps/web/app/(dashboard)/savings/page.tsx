@@ -6,7 +6,7 @@ import { getSavingsGoals } from "@/features/savings/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Ahorros",
+  title: "Metas de ahorro",
 };
 
 export default async function SavingsPage() {

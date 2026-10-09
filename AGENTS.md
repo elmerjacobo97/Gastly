@@ -64,7 +64,7 @@ These are deliberate decisions, not hidden debt. Match them; do not "fix" them w
 
 - ESLint uses `eslint-config-next/core-web-vitals` plus `eslint-config-next/typescript` from `apps/web/eslint.config.mjs`; generated Next output, repo-local skills in `.agents/**`, and `next-env.d.ts` are ignored.
 - TypeScript is v6 in `apps/web` (the JS-API line). Do not bump to 7 (`tsgo`): `typescript-eslint`/`@typescript-eslint/typescript-estree` do not support TS 7 yet, and the TS 7 npm package ships no `lib/typescript.js` JS API, which breaks `pnpm lint` through `eslint-config-next`. `packages/cli` pins its own TypeScript 5.8 toolchain.
-- TanStack Table is v9: configure tables with `tableFeatures({...})` + `useTable({ features, ... })` from `@tanstack/react-table`; column defs are `ColumnDef<Features, TData>`. See `apps/web/components/ui/data-table.tsx` for the working setup (exports `DataTableFeatures`).
+- Tables use shadcn `Table*` primitives from `components/ui/table.tsx` directly, inside a `Card`. No table wrapper and no TanStack Table. Each list owns its search input (`TableSearchInput`, `lib/search.ts` `matchesQuery`) and segmented filters; no pagination or sort.
 - Zod is v4 in `apps/web`: import from `zod` (not `zod/v3`). Forms with `z.coerce` fields use `resolver: zodResolver(schema) as Resolver<XValues>` (see any `*-dialog.tsx`). The CLI still uses zod 3 and stays on it until migrated.
 - `apps/web/next.config.ts` only sets `devIndicators: false`; avoid inventing config unless a change needs it.
 

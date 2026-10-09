@@ -10,7 +10,7 @@ import { MonthNav } from "@/components/month-nav";
 import { EditInstallmentDialog } from "@/features/installments/components/edit-installment-dialog";
 import { InstallmentDialog } from "@/features/installments/components/installment-dialog";
 import { InstallmentMonthPaymentsCard } from "@/features/installments/components/installment-month-payments-card";
-import { InstallmentPurchaseSections } from "@/features/installments/components/installment-purchase-sections";
+import { InstallmentPurchasesTable } from "@/features/installments/components/installment-purchases-table";
 import { InstallmentsEmptyState } from "@/features/installments/components/installments-empty-state";
 import { InstallmentsSummaryCards } from "@/features/installments/components/installments-summary-cards";
 import { PaySingleInstallmentDialog } from "@/features/installments/components/pay-single-installment-dialog";
@@ -64,8 +64,6 @@ export function InstallmentsPanel({
   }
 
   const monthPayments = getMonthInstallments(purchases, month);
-  const activePurchases = purchases.filter((p) => p.pendingCount > 0);
-  const completedPurchases = purchases.filter((p) => p.pendingCount === 0);
   const monthLabel = format(month, "MMMM yyyy", { locale: es });
 
   return (
@@ -104,13 +102,14 @@ export function InstallmentsPanel({
         </div>
       )}
 
-      <InstallmentPurchaseSections
-        activePurchases={activePurchases}
-        completedPurchases={completedPurchases}
-        month={month}
-        onEdit={setEditPurchase}
-        onDelete={setDeleteId}
-      />
+      {purchases.length > 0 && (
+        <InstallmentPurchasesTable
+          purchases={purchases}
+          month={month}
+          onEdit={setEditPurchase}
+          onDelete={setDeleteId}
+        />
+      )}
 
       {purchases.length === 0 && (
         <InstallmentsEmptyState accounts={accounts} categories={categories} />
