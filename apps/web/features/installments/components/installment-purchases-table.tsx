@@ -154,6 +154,8 @@ export function InstallmentPurchasesTable({
                               {purchase.description}
                             </span>
                             <span className="text-xs text-muted-foreground">
+                              {purchase.category &&
+                                `${purchase.category.name} · `}
                               {purchase.totalInstallments} cuotas
                             </span>
                           </div>

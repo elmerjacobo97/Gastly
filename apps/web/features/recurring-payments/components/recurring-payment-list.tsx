@@ -184,12 +184,19 @@ export function RecurringPaymentList({
                               className="size-8 shrink-0 rounded-lg"
                             />
                           )}
-                          <div className="flex items-center gap-1.5">
-                            <span className="max-w-56 truncate font-medium">
-                              {payment.description}
-                            </span>
-                            {isIncome && (
-                              <StatusBadge tone="success">Ingreso</StatusBadge>
+                          <div className="flex min-w-0 flex-col">
+                            <div className="flex items-center gap-1.5">
+                              <span className="max-w-56 truncate font-medium">
+                                {payment.description}
+                              </span>
+                              {isIncome && (
+                                <StatusBadge tone="success">Ingreso</StatusBadge>
+                              )}
+                            </div>
+                            {payment.category && (
+                              <span className="text-xs text-muted-foreground">
+                                {payment.category.name}
+                              </span>
                             )}
                           </div>
                         </div>

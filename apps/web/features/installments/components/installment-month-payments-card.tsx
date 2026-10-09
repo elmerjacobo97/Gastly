@@ -109,6 +109,8 @@ export function InstallmentMonthPaymentsCard({
                             {purchase.description}
                           </span>
                           <span className="text-xs text-muted-foreground">
+                            {purchase.category &&
+                              `${purchase.category.name} · `}
                             Cuota {payment.paymentNumber}/
                             {purchase.totalInstallments}
                           </span>
