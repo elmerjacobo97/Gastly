@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { CsvExportConfirmDialog } from "@/components/csv-export-confirm-dialog";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { type Transaction } from "@/lib/transaction-types";
+import { CURRENCY_CODES, type CurrencyCode } from "@/lib/format";
 import {
   ReportsVisuals,
   type ReportTypeFilter,
@@ -143,6 +144,7 @@ function exportToCSV(transactions: Transaction[], filename: string) {
     "Descripción",
     "Categoría",
     "Monto",
+    "Moneda",
     "Notas",
   ];
   const rows = transactions.map((transaction) => [
@@ -151,6 +153,7 @@ function exportToCSV(transactions: Transaction[], filename: string) {
     transaction.description,
     transaction.category?.name ?? "Sin categoría",
     transaction.amount.toString(),
+    transaction.currency,
     transaction.notes ?? "",
   ]);
   const csvContent = [headers, ...rows]
@@ -177,6 +180,13 @@ type ReportsPanelProps = {
 
 export function ReportsPanel({ transactions }: ReportsPanelProps) {
   const [period, setPeriod] = useState<Period>("3m");
+  const [currency, setCurrency] = useState<CurrencyCode>(
+    () =>
+      transactions.find((transaction) => transaction.currency === "PEN")
+        ?.currency ??
+      transactions[0]?.currency ??
+      "PEN",
+  );
   const [csvConfirmOpen, setCsvConfirmOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<ReportTypeFilter>("expense");
   const {
@@ -188,20 +198,23 @@ export function ReportsPanel({ transactions }: ReportsPanelProps) {
     (transaction) =>
       transaction.occurredOn >= fromDate && transaction.occurredOn <= toDate,
   );
-  const totalIncome = all
+  const currencyTransactions = all.filter(
+    (transaction) => transaction.currency === currency,
+  );
+  const totalIncome = currencyTransactions
     .filter((transaction) => transaction.type === "income")
     .reduce((sum, transaction) => sum + transaction.amount, 0);
-  const totalExpenses = all
+  const totalExpenses = currencyTransactions
     .filter((transaction) => transaction.type === "expense")
     .reduce((sum, transaction) => sum + transaction.amount, 0);
   const balance = totalIncome - totalExpenses;
   const savingsRate =
     totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0;
-  const recurringExpenses = all.filter(
+  const recurringExpenses = currencyTransactions.filter(
     (transaction) =>
       transaction.type === "expense" && transaction.recurringExpenseId,
   );
-  const variableExpenses = all.filter(
+  const variableExpenses = currencyTransactions.filter(
     (transaction) =>
       transaction.type === "expense" && !transaction.recurringExpenseId,
   );
@@ -213,10 +226,11 @@ export function ReportsPanel({ transactions }: ReportsPanelProps) {
     (sum, transaction) => sum + transaction.amount,
     0,
   );
-  const monthlyData = computeMonthlyData(all);
-  const recurringVsVariableData = computeRecurringVsVariable(all);
+  const monthlyData = computeMonthlyData(currencyTransactions);
+  const recurringVsVariableData =
+    computeRecurringVsVariable(currencyTransactions);
   const breakdownType = typeFilter === "all" ? "expense" : typeFilter;
-  const filteredForBreakdown = all.filter(
+  const filteredForBreakdown = currencyTransactions.filter(
     (transaction) => transaction.type === breakdownType,
   );
   const categoryBreakdown = computeCategoryBreakdown(filteredForBreakdown);
@@ -249,12 +263,23 @@ export function ReportsPanel({ transactions }: ReportsPanelProps) {
             </Button>
           </div>
         </div>
-        <SegmentedControl
-          value={period}
-          onChange={setPeriod}
-          options={PERIOD_OPTIONS}
-          className="w-fit print:hidden"
-        />
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <SegmentedControl
+            value={period}
+            onChange={setPeriod}
+            options={PERIOD_OPTIONS}
+          />
+          <div role="group" aria-label="Moneda de reportes">
+            <SegmentedControl
+              value={currency}
+              onChange={setCurrency}
+              options={CURRENCY_CODES.map((code) => ({
+                value: code,
+                label: code,
+              }))}
+            />
+          </div>
+        </div>
       </section>
 
       <ReportsVisuals
@@ -262,6 +287,7 @@ export function ReportsPanel({ transactions }: ReportsPanelProps) {
         recurringVsVariableData={recurringVsVariableData}
         categoryBreakdown={categoryBreakdown}
         maxCategory={maxCategory}
+        currency={currency}
         typeFilter={typeFilter}
         onTypeFilterChange={setTypeFilter}
         totalIncome={totalIncome}
@@ -278,7 +304,7 @@ export function ReportsPanel({ transactions }: ReportsPanelProps) {
         open={csvConfirmOpen}
         onOpenChange={setCsvConfirmOpen}
         title="Exportar reporte"
-        description={`Se descargará un archivo CSV con ${all.length} transacción${all.length !== 1 ? "es" : ""} del ${fromDate} al ${toDate} (${periodLabel}).`}
+        description={`Se descargará un archivo CSV con ${all.length} transacción${all.length !== 1 ? "es" : ""} de todas las monedas del ${fromDate} al ${toDate} (${periodLabel}).`}
         onConfirm={() =>
           exportToCSV(all, `gastly-reporte-${fromDate}-${toDate}.csv`)
         }

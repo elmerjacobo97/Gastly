@@ -17,6 +17,7 @@ import { CategoryIconBadge } from "@/components/category-icon-badge";
 import { payAllCreditCardTransactions } from "@/features/transactions/server/actions";
 import { type Transaction } from "@/lib/transaction-types";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrencyTotals, sumByCurrency } from "@/lib/currency-totals";
 
 type CreditCardDebtCardProps = {
   transactions: Transaction[];
@@ -24,6 +25,7 @@ type CreditCardDebtCardProps = {
 
 type CardGroup = {
   cardName: string | null;
+  currency: Transaction["currency"];
   transactions: Transaction[];
   total: number;
   earliestDueOn: string | null;
@@ -32,7 +34,7 @@ type CardGroup = {
 function groupByCard(transactions: Transaction[]): CardGroup[] {
   const map = new Map<string, CardGroup>();
   for (const t of transactions) {
-    const key = t.creditCardName ?? "__none__";
+    const key = JSON.stringify([t.currency, t.creditCardName]);
     const existing = map.get(key);
     if (existing) {
       existing.transactions.push(t);
@@ -46,6 +48,7 @@ function groupByCard(transactions: Transaction[]): CardGroup[] {
     } else {
       map.set(key, {
         cardName: t.creditCardName,
+        currency: t.currency,
         transactions: [t],
         total: t.amount,
         earliestDueOn: t.creditCardDueOn,
@@ -80,7 +83,10 @@ export function CreditCardDebtCard({ transactions }: CreditCardDebtCardProps) {
 
   const groups = groupByCard(transactions);
   const today = new Date().toISOString().slice(0, 10);
-  const grandTotal = transactions.reduce((s, t) => s + t.amount, 0);
+  const grandTotal = sumByCurrency(
+    transactions,
+    (transaction) => transaction.amount,
+  );
 
   return (
     <Card>
@@ -100,14 +106,14 @@ export function CreditCardDebtCard({ transactions }: CreditCardDebtCardProps) {
           </div>
         </div>
         <p className="shrink-0 text-xl font-bold tabular-nums text-destructive">
-          {formatCurrency(grandTotal)}
+          {formatCurrencyTotals(grandTotal)}
         </p>
       </CardHeader>
 
       <CardContent className="pt-0">
         <Accordion type="multiple">
           {groups.map((group) => {
-            const key = group.cardName ?? "__none__";
+            const key = JSON.stringify([group.currency, group.cardName]);
             const displayName = group.cardName ?? "Tarjeta de crédito";
             const isOverdue = group.earliestDueOn
               ? group.earliestDueOn < today
@@ -146,7 +152,7 @@ export function CreditCardDebtCard({ transactions }: CreditCardDebtCardProps) {
                         {isOverdue ? "Vencido" : "Por pagar"}
                       </Badge>
                       <span className="text-sm font-semibold tabular-nums">
-                        {formatCurrency(group.total)}
+                        {formatCurrency(group.total, group.currency)}
                       </span>
                     </div>
                   </div>
@@ -178,7 +184,7 @@ export function CreditCardDebtCard({ transactions }: CreditCardDebtCardProps) {
                             </span>
                           </div>
                           <span className="shrink-0 text-sm font-medium tabular-nums text-destructive">
-                            -{formatCurrency(t.amount)}
+                            -{formatCurrency(t.amount, t.currency)}
                           </span>
                         </div>
                       ))}
@@ -187,7 +193,7 @@ export function CreditCardDebtCard({ transactions }: CreditCardDebtCardProps) {
                       <p className="text-sm text-muted-foreground">
                         Total:{" "}
                         <span className="font-semibold text-foreground tabular-nums">
-                          {formatCurrency(group.total)}
+                          {formatCurrency(group.total, group.currency)}
                         </span>
                       </p>
                       <Button

@@ -95,6 +95,7 @@ const validId = "123e4567-e89b-12d3-a456-426614174000";
 const validValues: TransactionValues = {
   type: "expense",
   amount: 100,
+  currency: "PEN",
   description: "Supermercado",
   categoryName: "Comida",
   occurredOn: "2026-09-01",
@@ -158,6 +159,7 @@ describe("createTransaction", () => {
       category_id: "cat-1",
       type: "expense",
       amount: 100,
+      currency: "PEN",
       description: "Supermercado",
       occurred_on: "2026-09-01",
       notes: null,
@@ -165,7 +167,12 @@ describe("createTransaction", () => {
       credit_card_name: null,
       credit_card_due_on: null,
     });
-    expect(revalidatedRoutes()).toEqual(["/transactions", "/", "/reports"]);
+    expect(revalidatedRoutes()).toEqual([
+      "/transactions",
+      "/",
+      "/reports",
+      "/budgets",
+    ]);
   });
 
   it("guarda los datos de tarjeta de crédito cuando corresponde", async () => {
@@ -258,6 +265,7 @@ describe("updateTransaction", () => {
       category_id: "cat-1",
       type: "expense",
       amount: 100,
+      currency: "PEN",
       description: "Supermercado",
       occurred_on: "2026-09-01",
       notes: null,
@@ -267,7 +275,12 @@ describe("updateTransaction", () => {
       credit_card_paid_on: null,
     });
     expect(transactions.eq).toHaveBeenCalledWith("id", validId);
-    expect(revalidatedRoutes()).toEqual(["/transactions", "/", "/reports"]);
+    expect(revalidatedRoutes()).toEqual([
+      "/transactions",
+      "/",
+      "/reports",
+      "/budgets",
+    ]);
   });
 
   it("no toca credit_card_paid_on al mantener tarjeta de crédito", async () => {
@@ -338,7 +351,12 @@ describe("deleteTransaction", () => {
     expect(supabase.from).toHaveBeenCalledWith("transactions");
     expect(transactions.delete).toHaveBeenCalledTimes(1);
     expect(transactions.eq).toHaveBeenCalledWith("id", validId);
-    expect(revalidatedRoutes()).toEqual(["/transactions", "/", "/reports"]);
+    expect(revalidatedRoutes()).toEqual([
+      "/transactions",
+      "/",
+      "/reports",
+      "/budgets",
+    ]);
   });
 
   it("rechaza cuando falla el delete", async () => {
@@ -392,7 +410,12 @@ describe("payAllCreditCardTransactions", () => {
     );
     expect(transactions.is).toHaveBeenCalledWith("credit_card_paid_on", null);
     expect(transactions.is).toHaveBeenCalledWith("credit_card_name", null);
-    expect(revalidatedRoutes()).toEqual(["/transactions", "/", "/reports"]);
+    expect(revalidatedRoutes()).toEqual([
+      "/transactions",
+      "/",
+      "/reports",
+      "/budgets",
+    ]);
   });
 
   it("paga solo la tarjeta indicada", async () => {

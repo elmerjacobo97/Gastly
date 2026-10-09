@@ -20,6 +20,7 @@ describe("transactionSchema", () => {
     expect(transactionSchema.parse(validTransaction)).toEqual({
       type: "expense",
       amount: 45.9,
+      currency: "PEN",
       description: "Almuerzo",
       categoryName: "Comida",
       occurredOn: "2026-05-10",
@@ -151,6 +152,17 @@ describe("transactionSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("accepts supported currencies and rejects unsupported ones", () => {
+    expect(
+      transactionSchema.parse({ ...validTransaction, currency: "USD" })
+        .currency,
+    ).toBe("USD");
+    expect(
+      transactionSchema.safeParse({ ...validTransaction, currency: "EUR" })
+        .success,
+    ).toBe(false);
   });
 });
 

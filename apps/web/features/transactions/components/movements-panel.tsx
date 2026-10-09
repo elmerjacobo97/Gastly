@@ -26,6 +26,7 @@ import { createMovementsColumns } from "@/features/transactions/components/movem
 import { MovementsEmptyState } from "@/features/transactions/components/movements-empty-state";
 import { MovementsSummaryCards } from "@/features/transactions/components/movements-summary-cards";
 import { exportTransactionsToCSV } from "@/features/transactions/lib/export-transactions-csv";
+import { sumByCurrency } from "@/lib/currency-totals";
 import {
   transactionAddLabel,
   movementsCardTitle,
@@ -77,14 +78,16 @@ export function MovementsPanel({
   const csvTo = format(endOfMonth(month), "d 'de' MMMM yyyy", { locale: es });
   const csvFilename = `gastly-transacciones-${format(month, "yyyy-MM")}.csv`;
 
-  const totals = rows.reduce(
-    (acc, t) => {
-      if (t.type === "income") acc.income += t.amount;
-      else acc.expense += t.amount;
-      return acc;
-    },
-    { income: 0, expense: 0 },
-  );
+  const totals = {
+    income: sumByCurrency(
+      rows.filter((transaction) => transaction.type === "income"),
+      (transaction) => transaction.amount,
+    ),
+    expense: sumByCurrency(
+      rows.filter((transaction) => transaction.type === "expense"),
+      (transaction) => transaction.amount,
+    ),
+  };
   const incomeCount = rows.filter((t) => t.type === "income").length;
   const expenseCount = rows.length - incomeCount;
 

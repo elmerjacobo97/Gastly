@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { CURRENCY_CODES } from "@/lib/format";
 import { paymentMethods, transactionTypes } from "@/lib/transaction-types";
 import { numberInput } from "@/lib/validation";
 
@@ -10,6 +11,7 @@ export const transactionSchema = z.object({
       .number({ error: "Ingresa un monto válido." })
       .positive("Ingresa un monto mayor a 0."),
   ),
+  currency: z.enum(CURRENCY_CODES).default("PEN"),
   description: z.string().trim().min(2, "Describe la transacción."),
   categoryName: z.string().trim().min(2, "Ingresa una categoria."),
   occurredOn: z.string().min(1, "Selecciona una fecha."),

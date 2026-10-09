@@ -36,6 +36,7 @@ function revalidateRecurring() {
   revalidatePath("/recurring-payments");
   revalidatePath("/");
   revalidatePath("/transactions");
+  revalidatePath("/budgets");
 }
 
 function getNextDueDate(
@@ -212,6 +213,7 @@ export async function registerRecurringPaymentPayment(
     recurring_expense_id: payment.id,
     type: payment.type === "income" ? "income" : "expense",
     amount: values.amount,
+    currency: payment.currency,
     description: payment.description,
     occurred_on: values.occurredOn,
     notes: values.notes || payment.notes,

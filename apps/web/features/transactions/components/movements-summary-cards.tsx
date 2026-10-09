@@ -1,11 +1,15 @@
 "use client";
 
 import { SummaryMetricCards } from "@/components/summary-metric-cards";
-import { formatCurrency } from "@/lib/format";
+import {
+  formatCurrencyTotals,
+  subtractCurrencyTotals,
+} from "@/lib/currency-totals";
+import { type CurrencyTotals } from "@/lib/format";
 
 type MovementsSummaryCardsProps = {
-  income: number;
-  expense: number;
+  income: CurrencyTotals;
+  expense: CurrencyTotals;
   incomeCount: number;
   expenseCount: number;
 };
@@ -16,7 +20,7 @@ export function MovementsSummaryCards({
   incomeCount,
   expenseCount,
 }: MovementsSummaryCardsProps) {
-  const diff = income - expense;
+  const diff = subtractCurrencyTotals(income, expense);
 
   return (
     <SummaryMetricCards
@@ -24,20 +28,20 @@ export function MovementsSummaryCards({
       cards={[
         {
           title: "Ingresos",
-          value: formatCurrency(income),
+          value: formatCurrencyTotals(income),
           description: `${incomeCount} ${incomeCount === 1 ? "registro" : "registros"}`,
         },
         {
           title: "Gastos",
-          value: formatCurrency(expense),
+          value: formatCurrencyTotals(expense),
           description: `${expenseCount} ${expenseCount === 1 ? "registro" : "registros"}`,
         },
         {
           title: "Diferencia",
-          value: `${diff >= 0 ? "+" : ""}${formatCurrency(diff)}`,
+          value: formatCurrencyTotals(diff),
           description: "Ingresos menos gastos",
           emphasis: true,
-          negative: diff < 0,
+          negative: Object.values(diff).some((amount) => amount < 0),
         },
       ]}
       columns={3}

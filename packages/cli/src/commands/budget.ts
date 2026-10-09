@@ -3,6 +3,8 @@ import { getFlagValue, hasFlag, parseMonth } from "../flags.js"
 import { formatCurrency, formatPercent, writeJson, writeLine } from "../format.js"
 import type { BudgetRecord } from "../types.js"
 
+const PAGE_SIZE = 1000
+
 export async function runBudget(args: string[]): Promise<void> {
   if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
     process.stdout.write(`Usage:\n  gastly-cli budget [--month YYYY-MM] [--json]\n\nShow budget vs actual spending for the month.\n`)
@@ -23,24 +25,32 @@ export async function runBudget(args: string[]): Promise<void> {
 
   const { data: budgets, error: budgetError } = await supabase
     .from("budgets")
-    .select("id, amount, month, categories!inner(id, name, color, icon)")
+    .select("id, amount, month, currency, categories!inner(id, name, color, icon)")
     .eq("month", monthStart)
 
   if (budgetError) throw new Error(budgetError.message)
 
-  const { data: transactions, error: txError } = await supabase
-    .from("transactions")
-    .select("category_id, amount")
-    .eq("type", "expense")
-    .gte("occurred_on", monthStart)
-    .lte("occurred_on", monthEnd)
+  const transactions: { category_id: string | null; amount: number; currency: string }[] = []
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("category_id, amount, currency, id")
+      .eq("type", "expense")
+      .gte("occurred_on", monthStart)
+      .lte("occurred_on", monthEnd)
+      .order("id", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1)
 
-  if (txError) throw new Error(txError.message)
+    if (error) throw new Error(error.message)
+    transactions.push(...(data ?? []))
+    if (!data || data.length < PAGE_SIZE) break
+  }
 
   const spentByCategory = new Map<string, number>()
-  for (const tx of transactions ?? []) {
-    const current = spentByCategory.get(tx.category_id) ?? 0
-    spentByCategory.set(tx.category_id, current + Number(tx.amount))
+  for (const tx of transactions) {
+    const key = `${tx.category_id ?? "uncategorized"}:${tx.currency}`
+    const current = spentByCategory.get(key) ?? 0
+    spentByCategory.set(key, current + Number(tx.amount))
   }
 
   const records: BudgetRecord[] = (budgets ?? []).map((row) => {
@@ -51,7 +61,10 @@ export async function runBudget(args: string[]): Promise<void> {
       id: row.id,
       categoryName: cat?.name ?? "Unknown",
       amount: Number(row.amount),
-      spent: spentByCategory.get(cat?.id ?? "") ?? 0,
+      currency: row.currency,
+      spent:
+        spentByCategory.get(`${cat?.id ?? "uncategorized"}:${row.currency}`) ??
+        0,
       month: monthLabel,
     }
   })
@@ -70,10 +83,10 @@ export async function runBudget(args: string[]): Promise<void> {
       const remaining = b.amount - b.spent
       const bar = pct >= 100 ? "!!!" : pct >= 80 ? "!" : "ok"
       writeLine(
-        `  ${b.categoryName.padEnd(20)} ${formatCurrency(b.spent).padStart(12)} / ${formatCurrency(b.amount).padStart(12)}  ${formatPercent(pct).padStart(6)}  ${bar}`,
+        `  ${b.categoryName.padEnd(20)} ${formatCurrency(b.spent, b.currency).padStart(12)} / ${formatCurrency(b.amount, b.currency).padStart(12)}  ${formatPercent(pct).padStart(6)}  ${bar}`,
       )
       if (remaining < 0) {
-        writeLine(`    Over by ${formatCurrency(Math.abs(remaining))}`)
+        writeLine(`    Over by ${formatCurrency(Math.abs(remaining), b.currency)}`)
       }
     }
   }

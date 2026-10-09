@@ -46,7 +46,7 @@ function TransactionAmountCell({ transaction }: { transaction: Transaction }) {
       }`}
     >
       {isIncome ? "+" : "-"}
-      {formatCurrency(transaction.amount)}
+      {formatCurrency(transaction.amount, transaction.currency)}
     </div>
   );
 }

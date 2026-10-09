@@ -1,10 +1,7 @@
 "use client";
 
 import { SummaryMetricCards } from "@/components/summary-metric-cards";
-import {
-  formatCurrencyTotals,
-  sumByCurrency,
-} from "@/lib/currency-totals";
+import { formatCurrencyTotals, sumByCurrency } from "@/lib/currency-totals";
 import { isRelevantForMonth } from "@/features/recurring-payments/lib/recurring-payment-helpers";
 import { type RecurringPayment } from "@/lib/recurring-payment-types";
 
@@ -22,23 +19,19 @@ export function RecurringPaymentSummaryCards({
       p.type === "expense" && p.isActive && isRelevantForMonth(p, monthKey),
   );
   const committed = sumByCurrency(activeExpensePayments, (p) => p.amount);
-  // Foreign charges are booked in PEN, so paid foreign items count at their estimate.
   const paid = sumByCurrency(
-    activeExpensePayments.filter((p) => p.paidOn),
-    (p) => (p.currency === "PEN" ? (p.paidAmount ?? p.amount) : p.amount),
+    activeExpensePayments
+      .filter((payment) => payment.paidOn)
+      .map((payment) => ({
+        currency: payment.paidCurrency ?? payment.currency,
+        amount: payment.paidAmount ?? payment.amount,
+      })),
+    (payment) => payment.amount,
   );
   const pending = sumByCurrency(activeExpensePayments, (p) =>
-    Math.max(
-      p.amount -
-        (p.paidOn
-          ? p.currency === "PEN"
-            ? (p.paidAmount ?? p.amount)
-            : p.amount
-          : 0),
-      0,
-    ),
+    p.paidOn ? 0 : p.amount,
   );
-  const allPaid = Object.values(pending).every((value) => value === 0);
+  const allPaid = activeExpensePayments.every((payment) => payment.paidOn);
 
   return (
     <SummaryMetricCards

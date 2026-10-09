@@ -14,6 +14,13 @@ import {
 } from "../format.js"
 import type { TransactionRecord, TransactionType } from "../types.js"
 
+const TRANSACTION_CURRENCIES = ["PEN", "USD", "MXN"] as const
+const DEFAULT_CURRENCY = "PEN"
+
+function isTransactionCurrency(value: string): boolean {
+  return (TRANSACTION_CURRENCIES as readonly string[]).includes(value)
+}
+
 function joinField(
   join: unknown,
   field: string,
@@ -47,6 +54,7 @@ Required:
 
 Optional:
   --category <name>         Category name (must exist)
+  --currency <PEN|USD|MXN>  Currency (defaults to PEN)
   --date <YYYY-MM-DD>       Occurred on (defaults to today)
   --notes <text>            Additional notes
   --json                    Output created transaction as JSON
@@ -60,6 +68,7 @@ Options:
   --amount <N>              New amount
   -d, --description <text>  New description
   --category <name>         New category name
+  --currency <PEN|USD|MXN>  New currency
   --date <YYYY-MM-DD>       New date
   --notes <text>            New notes (omit flag to keep, use "" to clear)
   --json                    Output updated transaction as JSON
@@ -144,6 +153,7 @@ async function runNew(args: string[]): Promise<void> {
   const amountStr = getFlagValue(args, "--amount")
   const description = getFlagValue(args, "-d") ?? getFlagValue(args, "--description")
   const categoryName = getFlagValue(args, "--category")
+  const currency = getFlagValue(args, "--currency") ?? DEFAULT_CURRENCY
   const date = getFlagValue(args, "--date") ?? todayString()
   const notes = getFlagValue(args, "--notes")
 
@@ -165,6 +175,11 @@ async function runNew(args: string[]): Promise<void> {
   }
   if (!description || description.length < 2) {
     writeError("-d/--description is required (min 2 chars)")
+    process.exitCode = 1
+    return
+  }
+  if (!isTransactionCurrency(currency)) {
+    writeError("--currency must be PEN, USD, or MXN")
     process.exitCode = 1
     return
   }
@@ -192,12 +207,13 @@ async function runNew(args: string[]): Promise<void> {
       category_id: categoryId,
       type,
       amount,
+      currency,
       description,
       occurred_on: date,
       notes: notes || null,
       payment_method: "cash",
     })
-    .select("id, type, amount, description, occurred_on, notes, categories(name)")
+    .select("id, type, amount, currency, description, occurred_on, notes, categories(name)")
     .single()
 
   if (error) throw new Error(error.message)
@@ -206,6 +222,7 @@ async function runNew(args: string[]): Promise<void> {
     id: data.id,
     type: data.type as TransactionType,
     amount: Number(data.amount),
+    currency: data.currency,
     description: data.description,
     occurredOn: data.occurred_on,
     notes: data.notes,
@@ -220,7 +237,7 @@ async function runNew(args: string[]): Promise<void> {
   } else {
     writeLine(`Transaction created: ${record.id}`)
     writeLine(
-      `  ${record.type === "expense" ? "-" : "+"}${formatCurrency(record.amount)} ` +
+      `  ${record.type === "expense" ? "-" : "+"}${formatCurrency(record.amount, record.currency)} ` +
         `"${record.description}" on ${formatDate(record.occurredOn)}` +
         (record.categoryName ? ` [${record.categoryName}]` : ""),
     )
@@ -239,7 +256,7 @@ async function runList(args: string[]): Promise<void> {
   let query = supabase
     .from("transactions")
     .select(
-      "id, type, amount, description, occurred_on, notes, payment_method, categories(name, type), created_at",
+      "id, type, amount, currency, description, occurred_on, notes, payment_method, categories(name, type), created_at",
     )
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })
@@ -266,6 +283,7 @@ async function runList(args: string[]): Promise<void> {
     id: row.id,
     type: row.type as TransactionType,
     amount: Number(row.amount),
+    currency: row.currency,
     description: row.description,
     occurredOn: row.occurred_on,
     notes: row.notes,
@@ -285,7 +303,7 @@ async function runList(args: string[]): Promise<void> {
     for (const tx of transactions) {
       const sign = tx.type === "expense" ? "-" : "+"
       writeLine(
-        `${tx.id.slice(0, 8)}  ${sign}${formatCurrency(tx.amount).padStart(12)}  ` +
+        `${tx.id.slice(0, 8)}  ${sign}${formatCurrency(tx.amount, tx.currency).padStart(12)}  ` +
           `${formatDate(tx.occurredOn)}  ${tx.description}` +
           (tx.categoryName ? ` [${tx.categoryName}]` : ""),
       )
@@ -306,7 +324,7 @@ async function runSearch(args: string[]): Promise<void> {
   const { supabase } = await createAuthedClient()
   const { data, error } = await supabase
     .from("transactions")
-    .select("id, type, amount, description, occurred_on, notes, categories(name, type)")
+    .select("id, type, amount, currency, description, occurred_on, notes, categories(name, type)")
     .ilike("description", `%${query}%`)
     .order("occurred_on", { ascending: false })
     .limit(50)
@@ -317,6 +335,7 @@ async function runSearch(args: string[]): Promise<void> {
     id: row.id,
     type: row.type as TransactionType,
     amount: Number(row.amount),
+    currency: row.currency,
     description: row.description,
     occurredOn: row.occurred_on,
     notes: row.notes,
@@ -336,7 +355,7 @@ async function runSearch(args: string[]): Promise<void> {
     for (const tx of transactions) {
       const sign = tx.type === "expense" ? "-" : "+"
       writeLine(
-        `${tx.id.slice(0, 8)}  ${sign}${formatCurrency(tx.amount).padStart(12)}  ` +
+        `${tx.id.slice(0, 8)}  ${sign}${formatCurrency(tx.amount, tx.currency).padStart(12)}  ` +
           `${formatDate(tx.occurredOn)}  ${tx.description}` +
           (tx.categoryName ? ` [${tx.categoryName}]` : ""),
       )
@@ -363,7 +382,7 @@ async function runUpdate(args: string[]): Promise<void> {
 
   const { data: existing, error: fetchError } = await supabase
     .from("transactions")
-    .select("id, type, amount, description, occurred_on, notes, category_id")
+    .select("id, type, amount, currency, description, occurred_on, notes, category_id")
     .eq("id", id)
     .single()
 
@@ -376,6 +395,7 @@ async function runUpdate(args: string[]): Promise<void> {
   const type = (getFlagValue(args, "--type") as TransactionType) ?? (existing.type as TransactionType)
   const amountStr = getFlagValue(args, "--amount")
   const amount = amountStr ? Number(amountStr) : Number(existing.amount)
+  const currency = getFlagValue(args, "--currency") ?? existing.currency ?? DEFAULT_CURRENCY
   const description = getFlagValue(args, "-d") ?? getFlagValue(args, "--description") ?? existing.description
   const date = getFlagValue(args, "--date") ?? existing.occurred_on
   const notes = getFlagValue(args, "--notes") ?? existing.notes
@@ -383,6 +403,11 @@ async function runUpdate(args: string[]): Promise<void> {
 
   if (amountStr && (isNaN(amount) || amount <= 0)) {
     writeError("--amount must be a positive number")
+    process.exitCode = 1
+    return
+  }
+  if (!isTransactionCurrency(currency)) {
+    writeError("--currency must be PEN, USD, or MXN")
     process.exitCode = 1
     return
   }
@@ -397,6 +422,7 @@ async function runUpdate(args: string[]): Promise<void> {
     .update({
       type,
       amount,
+      currency,
       description,
       occurred_on: date,
       notes: notes === "" ? null : notes,

@@ -11,7 +11,7 @@ import {
 } from "recharts";
 
 import { formatCompact } from "@/lib/chart-utils";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, type CurrencyCode } from "@/lib/format";
 
 type MonthlyIncomeExpenseDatum = {
   month: string;
@@ -21,8 +21,10 @@ type MonthlyIncomeExpenseDatum = {
 
 export function MonthlyIncomeExpenseChart({
   data,
+  currency,
 }: {
   data: MonthlyIncomeExpenseDatum[];
+  currency: CurrencyCode;
 }) {
   return (
     <>
@@ -52,7 +54,7 @@ export function MonthlyIncomeExpenseChart({
             />
             <Tooltip
               formatter={(value: unknown, name: unknown) => [
-                formatCurrency(Number(value)),
+                formatCurrency(Number(value), currency),
                 name === "income" ? "Ingresos" : "Gastos",
               ]}
               contentStyle={{

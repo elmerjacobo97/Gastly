@@ -31,6 +31,7 @@ function revalidateTransactions() {
   revalidatePath("/transactions");
   revalidatePath("/");
   revalidatePath("/reports");
+  revalidatePath("/budgets");
 }
 
 export async function createTransaction(rawValues: TransactionValues) {
@@ -55,6 +56,7 @@ export async function createTransaction(rawValues: TransactionValues) {
     category_id: category.id,
     type: values.type,
     amount: values.amount,
+    currency: values.currency,
     description: values.description,
     occurred_on: values.occurredOn,
     notes: values.notes || null,
@@ -92,6 +94,7 @@ export async function updateTransaction(
     category_id: category.id,
     type: values.type,
     amount: values.amount,
+    currency: values.currency,
     description: values.description,
     occurred_on: values.occurredOn,
     notes: values.notes || null,

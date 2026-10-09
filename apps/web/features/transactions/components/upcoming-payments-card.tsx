@@ -80,7 +80,10 @@ export function UpcomingPaymentsCard({ payments }: UpcomingPaymentsCardProps) {
                   <span className="text-sm font-medium tabular-nums">
                     {expense.paidAmount === null
                       ? formatCurrency(expense.amount, expense.currency)
-                      : formatCurrency(expense.paidAmount)}
+                      : formatCurrency(
+                          expense.paidAmount,
+                          expense.paidCurrency ?? expense.currency,
+                        )}
                   </span>
                   <Badge
                     variant={isOverdue ? "destructive" : "secondary"}

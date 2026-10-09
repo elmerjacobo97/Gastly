@@ -22,7 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, type CurrencyCode } from "@/lib/format";
 import { CHART_COLORS, formatCompact } from "@/lib/chart-utils";
 
 export type ReportTypeFilter = "all" | "expense" | "income";
@@ -43,7 +43,13 @@ const PERIOD_OPTIONS = [
   { value: "income" as const, label: "Ingresos" },
 ];
 
-function MonthlyChartCard({ data }: { data: MonthlyDatum[] }) {
+function MonthlyChartCard({
+  data,
+  currency,
+}: {
+  data: MonthlyDatum[];
+  currency: CurrencyCode;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -51,7 +57,7 @@ function MonthlyChartCard({ data }: { data: MonthlyDatum[] }) {
         <CardDescription>Comparativa mensual del período</CardDescription>
       </CardHeader>
       <CardContent>
-        <MonthlyIncomeExpenseChart data={data} />
+        <MonthlyIncomeExpenseChart data={data} currency={currency} />
       </CardContent>
     </Card>
   );
@@ -62,11 +68,13 @@ function CategoryBreakdownCard({
   onTypeFilterChange,
   categories,
   maxCategory,
+  currency,
 }: {
   typeFilter: ReportTypeFilter;
   onTypeFilterChange: (value: ReportTypeFilter) => void;
   categories: CategoryDatum[];
   maxCategory: number;
+  currency: CurrencyCode;
 }) {
   const label = typeFilter === "income" ? "Ingresos" : "Gastos";
 
@@ -109,7 +117,7 @@ function CategoryBreakdownCard({
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <span className="tabular-nums">
-                      {formatCurrency(category.amount)}
+                      {formatCurrency(category.amount, currency)}
                     </span>
                     <span className="w-8 text-right tabular-nums">
                       {category.pct}%
@@ -134,7 +142,13 @@ function CategoryBreakdownCard({
   );
 }
 
-function RecurringChartCard({ data }: { data: RecurringDatum[] }) {
+function RecurringChartCard({
+  data,
+  currency,
+}: {
+  data: RecurringDatum[];
+  currency: CurrencyCode;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -173,7 +187,7 @@ function RecurringChartCard({ data }: { data: RecurringDatum[] }) {
                 />
                 <Tooltip
                   formatter={(value: unknown, name: unknown) => [
-                    formatCurrency(Number(value)),
+                    formatCurrency(Number(value), currency),
                     name === "recurring" ? "Recurrentes" : "Variables",
                   ]}
                   contentStyle={{
@@ -227,12 +241,14 @@ function ExpenseCompositionCard({
   totalVariable,
   recurringCount,
   variableCount,
+  currency,
 }: {
   totalExpenses: number;
   totalRecurring: number;
   totalVariable: number;
   recurringCount: number;
   variableCount: number;
+  currency: CurrencyCode;
 }) {
   if (totalExpenses === 0) {
     return (
@@ -288,7 +304,7 @@ function ExpenseCompositionCard({
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <span className="font-medium tabular-nums text-foreground">
-                    {formatCurrency(row.amount)}
+                    {formatCurrency(row.amount, currency)}
                   </span>
                   <span className="w-8 text-right tabular-nums">
                     {Math.round(percentage)}%
@@ -320,11 +336,13 @@ function SummaryCards({
   totalExpenses,
   balance,
   savingsRate,
+  currency,
 }: {
   totalIncome: number;
   totalExpenses: number;
   balance: number;
   savingsRate: number;
+  currency: CurrencyCode;
 }) {
   return (
     <SummaryMetricCards
@@ -332,17 +350,17 @@ function SummaryCards({
       cards={[
         {
           title: "Total ingresos",
-          value: formatCurrency(totalIncome),
+          value: formatCurrency(totalIncome, currency),
           description: "Período seleccionado",
         },
         {
           title: "Total gastos",
-          value: formatCurrency(totalExpenses),
+          value: formatCurrency(totalExpenses, currency),
           description: "Período seleccionado",
         },
         {
           title: "Balance neto",
-          value: formatCurrency(balance),
+          value: formatCurrency(balance, currency),
           description:
             savingsRate > 0
               ? `Tasa de ahorro: ${savingsRate}%`
@@ -361,6 +379,7 @@ export function ReportsVisuals({
   recurringVsVariableData,
   categoryBreakdown,
   maxCategory,
+  currency,
   typeFilter,
   onTypeFilterChange,
   totalIncome,
@@ -376,6 +395,7 @@ export function ReportsVisuals({
   recurringVsVariableData: RecurringDatum[];
   categoryBreakdown: CategoryDatum[];
   maxCategory: number;
+  currency: CurrencyCode;
   typeFilter: ReportTypeFilter;
   onTypeFilterChange: (value: ReportTypeFilter) => void;
   totalIncome: number;
@@ -394,24 +414,30 @@ export function ReportsVisuals({
         totalExpenses={totalExpenses}
         balance={balance}
         savingsRate={savingsRate}
+        currency={currency}
       />
       <section className="grid min-w-0 gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <MonthlyChartCard data={monthlyData} />
+        <MonthlyChartCard data={monthlyData} currency={currency} />
         <CategoryBreakdownCard
           typeFilter={typeFilter}
           onTypeFilterChange={onTypeFilterChange}
           categories={categoryBreakdown}
           maxCategory={maxCategory}
+          currency={currency}
         />
       </section>
       <section className="grid min-w-0 gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <RecurringChartCard data={recurringVsVariableData} />
+        <RecurringChartCard
+          data={recurringVsVariableData}
+          currency={currency}
+        />
         <ExpenseCompositionCard
           totalExpenses={totalExpenses}
           totalRecurring={totalRecurring}
           totalVariable={totalVariable}
           recurringCount={recurringCount}
           variableCount={variableCount}
+          currency={currency}
         />
       </section>
     </>

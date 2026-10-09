@@ -142,7 +142,7 @@ gastly-cli transactions list --json | jq '.[] | select(.type == "expense")'
 
 ## Currency
 
-Transactions are PEN (Peruvian Sol) by default. Loans and accounts support PEN, USD, and MXN.
+Transactions default to PEN and support PEN, USD, and MXN. Loans and accounts also support these currencies.
 
 ## Agent Usage
 
