@@ -59,6 +59,11 @@ type RecurringExpenseRow = {
 
 type PaidRecurringRow = { recurring_expense_id: string | null };
 
+type PendingInstallmentRow = {
+  amount: number | string;
+  installment_purchases: { category_id: string | null };
+};
+
 export async function getBudgetOverview(month: Date): Promise<BudgetOverview> {
   const supabase = await createClient();
   const monthStart = format(startOfMonth(month), "yyyy-MM-dd");
@@ -135,6 +140,24 @@ export async function getBudgetOverview(month: Date): Promise<BudgetOverview> {
       if (row.recurring_expense_id) paidIds.add(row.recurring_expense_id);
     }
   }
+  const { data: pendingInstallmentRows, error: pendingInstallmentError } =
+    await supabase
+      .from("installment_payments")
+      .select("amount, installment_purchases!inner(category_id)")
+      .gte("due_on", monthStart)
+      .lte("due_on", monthEnd)
+      .is("transaction_id", null)
+      .eq("paid_externally", false)
+      .overrideTypes<PendingInstallmentRow[], { merge: false }>();
+  if (pendingInstallmentError) throw new Error(pendingInstallmentError.message);
+
+  const pendingInstallments = pendingInstallmentRows.map(
+    (row): BudgetExpense => ({
+      categoryId: row.installment_purchases.category_id,
+      amount: Number(row.amount),
+      currency: "PEN",
+    }),
+  );
   const committed = aggregatePendingPayments(
     recurringRows.map((row) => ({
       id: row.id,
@@ -146,6 +169,7 @@ export async function getBudgetOverview(month: Date): Promise<BudgetOverview> {
     })),
     paidIds,
     format(startOfMonth(month), "yyyy-MM"),
+    pendingInstallments,
   );
 
   const categories = categoryResult.data.map((row) => ({
