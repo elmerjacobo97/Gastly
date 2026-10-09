@@ -1,6 +1,7 @@
 export const CURRENCY_CODES = ["PEN", "USD", "MXN"] as const;
 
 export type CurrencyCode = (typeof CURRENCY_CODES)[number];
+export type CurrencyTotals = Partial<Record<CurrencyCode, number>>;
 
 export const CURRENCY_LABELS: Record<CurrencyCode, string> = {
   PEN: "Soles (PEN)",

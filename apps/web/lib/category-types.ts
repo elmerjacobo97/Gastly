@@ -6,5 +6,6 @@ export type Category = {
   type: TransactionType;
   color: string;
   icon: string;
+  description: string;
   createdAt?: string;
 };

@@ -146,8 +146,9 @@ export function CategoriesPanel({
                     <p className="truncate text-sm font-medium">
                       {category.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {category.type === "expense" ? "Gasto" : "Ingreso"}
+                    <p className="truncate text-xs text-muted-foreground">
+                      {category.description ||
+                        (category.type === "expense" ? "Gasto" : "Ingreso")}
                     </p>
                   </div>
                   <RowActionsMenu

@@ -25,6 +25,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -69,11 +70,11 @@ export function EditCategoryDialog({
   open,
   onOpenChange,
 }: EditCategoryDialogProps) {
-  const { name, type, color, icon } = category;
+  const { name, type, color, icon, description } = category;
 
   const defaults = useMemo(
-    () => ({ name, type, color, icon }),
-    [name, type, color, icon],
+    () => ({ name, type, color, icon, description }),
+    [name, type, color, icon, description],
   );
 
   const form = useForm<CategoryValues>({
@@ -108,7 +109,7 @@ export function EditCategoryDialog({
         <DialogHeader>
           <DialogTitle>Editar categoría</DialogTitle>
           <DialogDescription>
-            Cambia el nombre, color o icono de la categoría.
+            Cambia el nombre, descripción, color o icono de la categoría.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="-mx-4 min-h-0">
@@ -133,6 +134,27 @@ export function EditCategoryDialog({
                         aria-invalid={fieldState.invalid}
                         id="edit-category-name"
                         placeholder="Ej. Comida, sueldo, transporte"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="description"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="edit-category-description">
+                        Qué va aquí (opcional)
+                      </FieldLabel>
+                      <Textarea
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="edit-category-description"
+                        placeholder="Ej. Pensión, almuerzos, menú diario"
+                        rows={2}
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
