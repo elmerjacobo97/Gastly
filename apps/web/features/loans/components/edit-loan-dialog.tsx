@@ -24,6 +24,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   editLoanPersonSchema,
   type EditLoanPersonValues,
@@ -93,7 +94,8 @@ export function EditLoanDialog({
         <DialogHeader>
           <DialogTitle>Editar préstamo</DialogTitle>
           <DialogDescription>
-            Cambia el nombre o las notas. Los montos se editan en el historial.
+            Cambia el nombre, la fecha o el motivo. Los montos se editan en el
+            historial.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -157,16 +159,17 @@ export function EditLoanDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="el-notes">
-                    Notas{" "}
+                    Motivo{" "}
                     <span className="font-normal text-muted-foreground">
                       (opcional)
                     </span>
                   </FieldLabel>
-                  <Input
+                  <Textarea
                     {...field}
                     id="el-notes"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Para emergencia médica"
+                    placeholder="Ej: Pollo de pico rico"
+                    rows={2}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

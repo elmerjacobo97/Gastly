@@ -6,6 +6,7 @@ import { HistoryIcon, PlusIcon } from "lucide-react";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { Badge } from "@/components/ui/badge";
 import { type DataTableFeatures } from "@/components/ui/data-table";
+import { LoanDueDate } from "@/features/loans/components/loan-due-date";
 import { type Loan } from "@/features/loans/types/loan-types";
 import { formatCurrency } from "@/lib/format";
 
@@ -29,6 +30,7 @@ function LoanPersonCell({ loan }: { loan: Loan }) {
           {loan.notes}
         </span>
       )}
+      <LoanDueDate expectedOn={loan.expectedOn} isSettled={loan.isSettled} />
     </div>
   );
 }

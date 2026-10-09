@@ -6,6 +6,7 @@ import { ReceiptTextIcon } from "lucide-react";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { Badge } from "@/components/ui/badge";
 import { type DataTableFeatures } from "@/components/ui/data-table";
+import { LoanDueDate } from "@/features/loans/components/loan-due-date";
 import { type LoanMovementRow } from "@/features/loans/types/loan-types";
 import { formatCurrency, formatDate } from "@/lib/format";
 
@@ -101,6 +102,19 @@ export function createLoanDisbursementsColumns({
           </div>
         );
       },
+    },
+    {
+      accessorKey: "expectedOn",
+      enableGlobalFilter: false,
+      enableSorting: false,
+      header: "Devolución",
+      cell: ({ row }) =>
+        row.original.kind === "disbursement" && (
+          <LoanDueDate
+            expectedOn={row.original.expectedOn}
+            isSettled={row.original.isSettled}
+          />
+        ),
     },
     {
       accessorKey: "pendingAmount",

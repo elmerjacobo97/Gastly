@@ -69,6 +69,7 @@ export type LoanHistoryEntry = {
 export type LoanMovementRow = LoanHistoryEntry & {
   personName: string;
   direction: LoanDirection;
+  expectedOn: string | null;
   isSettled: boolean;
   pendingAmount: number;
 };

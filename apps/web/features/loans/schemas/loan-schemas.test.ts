@@ -39,13 +39,11 @@ describe("loanSchema", () => {
       personName: "  Carlos  ",
       description: "  para el viaje  ",
       expectedOn: "2026-02-01",
-      notes: "  sin interes  ",
     });
 
     expect(parsed.personName).toBe("Carlos");
     expect(parsed.description).toBe("para el viaje");
     expect(parsed.expectedOn).toBe("2026-02-01");
-    expect(parsed.notes).toBe("sin interes");
   });
 
   it("rejects an empty person name", () => {

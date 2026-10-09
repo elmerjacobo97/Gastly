@@ -149,7 +149,6 @@ export async function createLoan(rawValues: LoanValues): Promise<void> {
       amount: values.amount,
       occurred_on: values.loanedOn,
       description: values.description || null,
-      notes: values.notes || null,
       interest_rate: values.interestRate ?? 0,
     });
     if (error) throw new Error(error.message);
@@ -178,7 +177,7 @@ export async function createLoan(rawValues: LoanValues): Promise<void> {
       currency: values.currency,
       expected_on: values.expectedOn || null,
       loaned_on: values.loanedOn,
-      notes: values.notes || null,
+      notes: values.description || null,
     })
     .select("id")
     .single();
@@ -193,7 +192,6 @@ export async function createLoan(rawValues: LoanValues): Promise<void> {
       amount: values.amount,
       occurred_on: values.loanedOn,
       description: values.description || null,
-      notes: values.notes || null,
       interest_rate: values.interestRate ?? 0,
     });
 

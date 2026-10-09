@@ -11,6 +11,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { LoanDialog } from "@/features/loans/components/loan-dialog";
+import { LoanDueAlerts } from "@/features/loans/components/loan-due-alerts";
 import { LoansSummaryCards } from "@/features/loans/components/loans-summary-cards";
 import { LoansWorkspace } from "@/features/loans/components/loans-workspace";
 import { type Loan } from "@/features/loans/types/loan-types";
@@ -34,6 +35,7 @@ export function LoansPanel({ loans }: LoansPanelProps) {
         <LoanDialog loans={loans} />
       </section>
 
+      <LoanDueAlerts loans={loans} />
       {loans.length > 0 && <LoansSummaryCards loans={loans} />}
 
       {loans.length === 0 && (

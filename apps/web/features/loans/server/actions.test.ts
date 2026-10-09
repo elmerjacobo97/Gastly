@@ -137,7 +137,6 @@ const validLoan: LoanValues = {
   description: "Préstamo",
   expectedOn: "2026-03-01",
   loanedOn: "2026-01-10",
-  notes: "Sin apuro",
 };
 
 const validPayment: LoanPaymentValues = {
@@ -195,7 +194,7 @@ describe("createLoan", () => {
       currency: "PEN",
       expected_on: "2026-03-01",
       loaned_on: "2026-01-10",
-      notes: "Sin apuro",
+      notes: "Préstamo",
     });
     expect(
       supabase.callsOn("loan_disbursements", "insert")[0]?.args[0],
@@ -204,7 +203,6 @@ describe("createLoan", () => {
       amount: 100,
       occurred_on: "2026-01-10",
       description: "Préstamo",
-      notes: "Sin apuro",
       interest_rate: 0,
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/loans");
@@ -236,7 +234,6 @@ describe("createLoan", () => {
       amount: 100,
       occurred_on: "2026-01-10",
       description: "Préstamo",
-      notes: "Sin apuro",
       interest_rate: 0,
     });
     expect(supabase.callsOn("loans", "update")[0]?.args[0]).toEqual({

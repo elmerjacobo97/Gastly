@@ -21,7 +21,6 @@ export const loanSchema = z.object({
   description: z.string().trim().optional(),
   expectedOn: z.string().optional(),
   loanedOn: z.string().min(1, "Selecciona la fecha del préstamo."),
-  notes: z.string().trim().optional(),
 });
 
 export type LoanValues = z.infer<typeof loanSchema>;
