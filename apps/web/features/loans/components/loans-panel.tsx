@@ -13,7 +13,6 @@ import {
 import { LoanDialog } from "@/features/loans/components/loan-dialog";
 import { LoansSummaryCards } from "@/features/loans/components/loans-summary-cards";
 import { LoansWorkspace } from "@/features/loans/components/loans-workspace";
-import { uniquePersonNames } from "@/features/loans/lib/group-loans";
 import { type Loan } from "@/features/loans/types/loan-types";
 
 type LoansPanelProps = {
@@ -21,8 +20,6 @@ type LoansPanelProps = {
 };
 
 export function LoansPanel({ loans }: LoansPanelProps) {
-  const personNames = uniquePersonNames(loans);
-
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -34,7 +31,7 @@ export function LoansPanel({ loans }: LoansPanelProps) {
             Consulta tus deudas y todos sus movimientos en un solo lugar.
           </p>
         </div>
-        <LoanDialog loans={loans} personNames={personNames} />
+        <LoanDialog loans={loans} />
       </section>
 
       {loans.length > 0 && <LoansSummaryCards loans={loans} />}
@@ -53,7 +50,6 @@ export function LoansPanel({ loans }: LoansPanelProps) {
           <EmptyContent>
             <LoanDialog
               loans={loans}
-              personNames={personNames}
               triggerLabel="Registrar primer préstamo"
             />
           </EmptyContent>

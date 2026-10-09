@@ -31,14 +31,6 @@ export function groupLoansByPerson(loans: Loan[]): LoanPersonGroup[] {
   return [...groups.values()];
 }
 
-export function uniquePersonNames(loans: Loan[]) {
-  const names = new Set<string>();
-  for (const loan of loans) {
-    names.add(loan.personName);
-  }
-  return [...names].toSorted((a, b) => a.localeCompare(b, "es"));
-}
-
 export function flattenLoanMovements(loans: Loan[]): LoanMovementRow[] {
   return loans
     .flatMap((loan) => [

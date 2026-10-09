@@ -25,9 +25,9 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import { LoanCurrencyOptions } from "@/features/loans/components/loan-currency-options";
 import {
   addLoanSchema,
@@ -71,7 +71,6 @@ export function AddLoanDialog({
       interestRate: 0,
       description: "",
       loanedOn: getTodayStr(),
-      notes: "",
     },
   });
 
@@ -85,7 +84,7 @@ export function AddLoanDialog({
           currency: values.currency,
           interestRate: values.interestRate,
           loanedOn: values.loanedOn,
-          notes: values.notes,
+          description: values.description,
         });
         toast.success("Monto sumado al saldo");
         form.reset({
@@ -94,7 +93,6 @@ export function AddLoanDialog({
           interestRate: 0,
           description: "",
           loanedOn: getTodayStr(),
-          notes: "",
         });
         handleOpenChange(false);
       } catch (error) {
@@ -114,7 +112,6 @@ export function AddLoanDialog({
         interestRate: 0,
         description: "",
         loanedOn: getTodayStr(),
-        notes: "",
       });
     }
     if (onOpenChange) onOpenChange(next);
@@ -245,34 +242,12 @@ export function AddLoanDialog({
                       (opcional)
                     </span>
                   </FieldLabel>
-                  <Input
+                  <Textarea
                     {...field}
                     id={`${formId}-description`}
                     aria-invalid={fieldState.invalid}
                     placeholder="Ej: Pollo de pico rico"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="notes"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-notes`}>
-                    Notas{" "}
-                    <span className="font-normal text-muted-foreground">
-                      (opcional)
-                    </span>
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id={`${formId}-notes`}
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Acordado devolver en 2 partes"
+                    rows={2}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

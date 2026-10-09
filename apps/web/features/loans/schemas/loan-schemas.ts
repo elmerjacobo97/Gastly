@@ -32,7 +32,6 @@ export const addLoanSchema = loanSchema.pick({
   interestRate: true,
   description: true,
   loanedOn: true,
-  notes: true,
 });
 
 export type AddLoanValues = z.infer<typeof addLoanSchema>;

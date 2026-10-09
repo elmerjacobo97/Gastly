@@ -32,8 +32,9 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import { LoanCurrencyOptions } from "@/features/loans/components/loan-currency-options";
-import { LoanPersonSelect } from "@/features/loans/components/loan-person-select";
 import { normalizePersonName } from "@/features/loans/lib/group-loans";
 import {
   loanSchema,
@@ -58,19 +59,16 @@ const EMPTY_DEFAULTS: LoanValues = {
   description: "",
   expectedOn: "",
   loanedOn: getTodayStr(),
-  notes: "",
 };
 
 type LoanDialogProps = {
   triggerLabel?: string;
   loans: Loan[];
-  personNames: string[];
 };
 
 export function LoanDialog({
   triggerLabel = "Nuevo préstamo",
   loans,
-  personNames,
 }: LoanDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -120,236 +118,215 @@ export function LoanDialog({
           <span className="hidden sm:inline">{triggerLabel}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Nuevo préstamo</DialogTitle>
           <DialogDescription>
-            Elige una persona existente o crea una nueva. Si el saldo ya existe,
-            el monto se suma.
+            Crea el saldo de una persona nueva.
           </DialogDescription>
         </DialogHeader>
-        <form
-          id="loan-form"
-          className="flex flex-col gap-5"
-          noValidate
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FieldGroup>
-            <Controller
-              control={form.control}
-              name="direction"
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel htmlFor="loan-direction">Tipo</FieldLabel>
-                  <NativeSelect {...field} id="loan-direction">
-                    <NativeSelectOption value="lent">
-                      Yo presté
-                    </NativeSelectOption>
-                    <NativeSelectOption value="borrowed">
-                      Me prestaron
-                    </NativeSelectOption>
-                  </NativeSelect>
-                </Field>
-              )}
-            />
-
-            <Controller
-              control={form.control}
-              name="personName"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="loan-person">
-                    {direction === "lent"
-                      ? "A quién le presté"
-                      : "Quién me prestó"}
-                  </FieldLabel>
-                  <LoanPersonSelect
-                    aria-invalid={fieldState.invalid}
-                    id="loan-person"
-                    onChange={field.onChange}
-                    personNames={personNames}
-                    value={field.value}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="px-4 pb-1">
+            <form
+              id="loan-form"
+              className="flex flex-col gap-5"
+              noValidate
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <FieldGroup>
+                <Controller
+                  control={form.control}
+                  name="direction"
+                  render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor="loan-direction">Tipo</FieldLabel>
+                      <NativeSelect {...field} id="loan-direction">
+                        <NativeSelectOption value="lent">
+                          Yo presté
+                        </NativeSelectOption>
+                        <NativeSelectOption value="borrowed">
+                          Me prestaron
+                        </NativeSelectOption>
+                      </NativeSelect>
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
+                />
 
-            <div className="grid grid-cols-2 gap-3">
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="loan-currency">Moneda</FieldLabel>
-                    <NativeSelect {...field} id="loan-currency">
-                      <LoanCurrencyOptions />
-                    </NativeSelect>
-                  </Field>
-                )}
-              />
+                <Controller
+                  control={form.control}
+                  name="personName"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="loan-person">
+                        {direction === "lent"
+                          ? "A quién le presté"
+                          : "Quién me prestó"}
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id="loan-person"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="Ej: Juan García"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
 
-              <Controller
-                control={form.control}
-                name="amount"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="loan-amount">Monto</FieldLabel>
-                    <NumberInput
-                      {...field}
-                      id="loan-amount"
-                      aria-invalid={fieldState.invalid}
-                      inputMode="decimal"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Controller
+                    control={form.control}
+                    name="currency"
+                    render={({ field }) => (
+                      <Field>
+                        <FieldLabel htmlFor="loan-currency">Moneda</FieldLabel>
+                        <NativeSelect {...field} id="loan-currency">
+                          <LoanCurrencyOptions />
+                        </NativeSelect>
+                      </Field>
                     )}
-                  </Field>
-                )}
-              />
-            </div>
-            {matchingBalance && (
-              <FieldDescription>
-                Se sumará al saldo en{" "}
-                {LOAN_CURRENCY_LABELS[matchingBalance.currency]} de{" "}
-                {matchingBalance.personName}.
-              </FieldDescription>
-            )}
-
-            <Controller
-              control={form.control}
-              name="interestRate"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="loan-interest">
-                    Interés mensual (%){" "}
-                    <span className="font-normal text-muted-foreground">
-                      (opc.)
-                    </span>
-                  </FieldLabel>
-                  <NumberInput
-                    {...field}
-                    id="loan-interest"
-                    aria-invalid={fieldState.invalid}
-                    inputMode="decimal"
-                    max="100"
-                    min="0"
-                    placeholder="0"
-                    step="0.1"
                   />
+
+                  <Controller
+                    control={form.control}
+                    name="amount"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="loan-amount">Monto</FieldLabel>
+                        <NumberInput
+                          {...field}
+                          id="loan-amount"
+                          aria-invalid={fieldState.invalid}
+                          inputMode="decimal"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </div>
+                {matchingBalance && (
                   <FieldDescription>
-                    Se calcula cada mes sobre el saldo pendiente. 0 = sin
-                    interés.
+                    Se sumará al saldo en{" "}
+                    {LOAN_CURRENCY_LABELS[matchingBalance.currency]} de{" "}
+                    {matchingBalance.personName}.
                   </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-3">
-              <Controller
-                control={form.control}
-                name="loanedOn"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="loan-date">
-                      Fecha del préstamo
-                    </FieldLabel>
-                    <DatePicker
-                      id="loan-date"
-                      value={field.value}
-                      onChange={field.onChange}
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
                 )}
-              />
 
-              <Controller
-                control={form.control}
-                name="expectedOn"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="loan-expected-on">
-                      Devolución esperada{" "}
-                      <span className="font-normal text-muted-foreground">
-                        (opc.)
-                      </span>
-                    </FieldLabel>
-                    <DatePicker
-                      id="loan-expected-on"
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      placeholder="Sin fecha"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                <Controller
+                  control={form.control}
+                  name="interestRate"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="loan-interest">
+                        Interés mensual (%){" "}
+                        <span className="font-normal text-muted-foreground">
+                          (opc.)
+                        </span>
+                      </FieldLabel>
+                      <NumberInput
+                        {...field}
+                        id="loan-interest"
+                        aria-invalid={fieldState.invalid}
+                        inputMode="decimal"
+                        max="100"
+                        min="0"
+                        placeholder="0"
+                        step="0.1"
+                      />
+                      <FieldDescription>
+                        Se calcula cada mes sobre el saldo pendiente. 0 = sin
+                        interés.
+                      </FieldDescription>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Controller
+                    control={form.control}
+                    name="loanedOn"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="loan-date">
+                          Fecha del préstamo
+                        </FieldLabel>
+                        <DatePicker
+                          id="loan-date"
+                          value={field.value}
+                          onChange={field.onChange}
+                          aria-invalid={fieldState.invalid}
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
                     )}
-                  </Field>
-                )}
-              />
-            </div>
-
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="loan-description">
-                    Motivo{" "}
-                    <span className="font-normal text-muted-foreground">
-                      (opcional)
-                    </span>
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id="loan-description"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Pollo de pico rico"
                   />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
 
-            <Controller
-              control={form.control}
-              name="notes"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="loan-notes">
-                    Notas{" "}
-                    <span className="font-normal text-muted-foreground">
-                      (opcional)
-                    </span>
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id="loan-notes"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Acordado devolver en 2 partes"
+                  <Controller
+                    control={form.control}
+                    name="expectedOn"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="loan-expected-on">
+                          Devolución esperada{" "}
+                          <span className="font-normal text-muted-foreground">
+                            (opc.)
+                          </span>
+                        </FieldLabel>
+                        <DatePicker
+                          id="loan-expected-on"
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          placeholder="Sin fecha"
+                          aria-invalid={fieldState.invalid}
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
                   />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                </div>
+
+                <Controller
+                  control={form.control}
+                  name="description"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="loan-description">
+                        Motivo{" "}
+                        <span className="font-normal text-muted-foreground">
+                          (opcional)
+                        </span>
+                      </FieldLabel>
+                      <Textarea
+                        {...field}
+                        id="loan-description"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="Ej: Pollo de pico rico"
+                        rows={2}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-          </FieldGroup>
-        </form>
+                />
+              </FieldGroup>
+            </form>
+          </div>
+        </ScrollArea>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" type="button">

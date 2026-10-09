@@ -3,7 +3,6 @@ import {
   flattenLoanMovements,
   groupLoansByPerson,
   normalizePersonName,
-  uniquePersonNames,
 } from "@/features/loans/lib/group-loans";
 import type { Loan } from "@/features/loans/types/loan-types";
 
@@ -95,32 +94,6 @@ describe("groupLoansByPerson", () => {
 
     expect(mixed[0].isSettled).toBe(false);
     expect(settled[0].isSettled).toBe(true);
-  });
-});
-
-describe("uniquePersonNames", () => {
-  it("returns no names for an empty list", () => {
-    expect(uniquePersonNames([])).toEqual([]);
-  });
-
-  it("deduplicates and sorts names with the es locale", () => {
-    const names = uniquePersonNames([
-      makeLoan({ personName: "Zoe" }),
-      makeLoan({ personName: "Ana" }),
-      makeLoan({ personName: "marta" }),
-      makeLoan({ personName: "Ana" }),
-    ]);
-
-    expect(names).toEqual(["Ana", "marta", "Zoe"]);
-  });
-
-  it("treats case-different names as distinct", () => {
-    const names = uniquePersonNames([
-      makeLoan({ personName: "Ana" }),
-      makeLoan({ personName: "ana" }),
-    ]);
-
-    expect(names).toHaveLength(2);
   });
 });
 
