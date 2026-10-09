@@ -103,7 +103,7 @@ function CategoryBreakdownCard({
             Sin gastos en el período
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex max-h-60 flex-col gap-3 overflow-y-auto pr-2">
             {categories.map((category, index) => (
               <div key={category.name} className="flex flex-col gap-1">
                 <div className="flex items-center justify-between text-xs">
