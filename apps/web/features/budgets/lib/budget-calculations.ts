@@ -50,9 +50,10 @@ export function aggregatePendingPayments(
   payments: PendingPayment[],
   paidIds: Set<string>,
   monthKey: string,
+  pendingInstallments: BudgetExpense[] = [],
 ): ExpenseSpending {
-  return aggregateBudgetExpenses(
-    payments
+  return aggregateBudgetExpenses([
+    ...payments
       .filter(
         (payment) =>
           !paidIds.has(payment.id) &&
@@ -64,7 +65,8 @@ export function aggregatePendingPayments(
         amount,
         currency,
       })),
-  );
+    ...pendingInstallments,
+  ]);
 }
 
 export function calculateBudgetProgress(

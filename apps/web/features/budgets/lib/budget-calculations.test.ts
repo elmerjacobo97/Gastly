@@ -99,4 +99,29 @@ describe("aggregatePendingPayments", () => {
       categoryByCurrency: { "food:PEN": 300 },
     });
   });
+
+  it("adds pending installments to totals and their category", () => {
+    expect(
+      aggregatePendingPayments(
+        [
+          {
+            ...base,
+            id: "a",
+            categoryId: "food",
+            amount: 300,
+            frequency: "monthly",
+          },
+        ],
+        new Set(),
+        "2026-10",
+        [
+          { categoryId: "food", amount: 150, currency: "PEN" },
+          { categoryId: null, amount: 40, currency: "PEN" },
+        ],
+      ),
+    ).toEqual({
+      totalByCurrency: { PEN: 490 },
+      categoryByCurrency: { "food:PEN": 450 },
+    });
+  });
 });
