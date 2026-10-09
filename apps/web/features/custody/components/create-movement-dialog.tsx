@@ -2,10 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { ArrowDownIcon, ArrowUpIcon, Loader2Icon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { type Resolver, Controller, useForm } from "react-hook-form";
+import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Field,
@@ -71,7 +70,6 @@ type CreateMovementDialogProps = {
   type?: CustodyMovementType;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  trigger?: React.ReactNode;
 };
 
 export function CreateMovementDialog({
@@ -79,7 +77,6 @@ export function CreateMovementDialog({
   type = "deposit",
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
-  trigger,
 }: CreateMovementDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -101,9 +98,21 @@ export function CreateMovementDialog({
     defaultValues: defaults,
   });
 
+  const selectedType = useWatch({ control: form.control, name: "type" });
+
   useEffect(() => {
     if (open) form.reset(defaults);
   }, [open, defaults, form]);
+
+  function handleTypeChange(
+    nextType: CustodyMovementType,
+    onChange: (value: CustodyMovementType) => void,
+  ) {
+    const nextDefaults = getDefaultValues(nextType, balanceHeld);
+    onChange(nextType);
+    form.setValue("amount", nextDefaults.amount);
+    form.setValue("method", nextDefaults.method);
+  }
 
   function onSubmit(values: CustodyMovementValues) {
     startTransition(async () => {
@@ -122,12 +131,9 @@ export function CreateMovementDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>
-            {type === "deposit" ? "Registrar depósito" : "Registrar desembolso"}
-          </DialogTitle>
+          <DialogTitle>Registrar movimiento</DialogTitle>
           <DialogDescription>
             {personName} · {title} · En custodia: {formatCurrency(balanceHeld)}
           </DialogDescription>
@@ -139,6 +145,33 @@ export function CreateMovementDialog({
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
+            <Controller
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="cm-type">Tipo</FieldLabel>
+                  <NativeSelect
+                    {...field}
+                    id="cm-type"
+                    onChange={(event) =>
+                      handleTypeChange(
+                        event.target.value as CustodyMovementType,
+                        field.onChange,
+                      )
+                    }
+                  >
+                    <NativeSelectOption value="deposit">
+                      Depósito
+                    </NativeSelectOption>
+                    <NativeSelectOption value="disbursement">
+                      Desembolso
+                    </NativeSelectOption>
+                  </NativeSelect>
+                </Field>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-3">
               <Controller
                 control={form.control}
@@ -182,7 +215,7 @@ export function CreateMovementDialog({
               />
             </div>
 
-            {type === "deposit" && (
+            {selectedType === "deposit" && (
               <Controller
                 control={form.control}
                 name="method"
@@ -221,7 +254,7 @@ export function CreateMovementDialog({
                     id="cm-notes"
                     aria-invalid={fieldState.invalid}
                     placeholder={
-                      type === "deposit"
+                      selectedType === "deposit"
                         ? "Ej: Operación YAPE #123"
                         : "Ej: Compra en tienda X"
                     }
@@ -251,36 +284,6 @@ export function CreateMovementDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-export function DepositButton({ order }: { order: CustodyOrder }) {
-  return (
-    <CreateMovementDialog
-      order={order}
-      type="deposit"
-      trigger={
-        <Button variant="outline" size="sm">
-          <ArrowDownIcon data-icon="inline-start" />
-          Depósito
-        </Button>
-      }
-    />
-  );
-}
-
-export function DisbursementButton({ order }: { order: CustodyOrder }) {
-  return (
-    <CreateMovementDialog
-      order={order}
-      type="disbursement"
-      trigger={
-        <Button variant="outline" size="sm">
-          <ArrowUpIcon data-icon="inline-start" />
-          Desembolso
-        </Button>
-      }
-    />
   );
 }
 

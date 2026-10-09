@@ -4,15 +4,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ReportsLoading() {
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-      <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <Skeleton className="h-7 w-32" />
-          <Skeleton className="h-4 w-48" />
+      <section className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-36" />
+            <Skeleton className="h-8 w-24" />
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-40" />
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-8 w-32" />
         </div>
       </section>
 
