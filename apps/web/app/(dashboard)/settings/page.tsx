@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -35,28 +34,18 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-          Cargando configuración...
-        </div>
+    <SettingsPanel
+      userEmail={user.email ?? ""}
+      userName={user.user_metadata?.full_name ?? ""}
+      calendarUrl={calendarUrl}
+      telegramConnection={telegramConnection}
+      securitySection={<SecuritySection />}
+      categoriesSection={
+        <CategoriesSection
+          categoriesPanel={<CategoriesPanel categories={categories} embedded />}
+          createCategoryDialog={<CreateCategoryDialog />}
+        />
       }
-    >
-      <SettingsPanel
-        userEmail={user.email ?? ""}
-        userName={user.user_metadata?.full_name ?? ""}
-        calendarUrl={calendarUrl}
-        telegramConnection={telegramConnection}
-        securitySection={<SecuritySection />}
-        categoriesSection={
-          <CategoriesSection
-            categoriesPanel={
-              <CategoriesPanel categories={categories} embedded />
-            }
-            createCategoryDialog={<CreateCategoryDialog />}
-          />
-        }
-      />
-    </Suspense>
+    />
   );
 }
