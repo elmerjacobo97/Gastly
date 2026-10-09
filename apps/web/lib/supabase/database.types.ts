@@ -100,6 +100,7 @@ export type Database = {
           amount: number;
           category_id: string;
           created_at: string;
+          currency: string;
           id: string;
           month: string;
           updated_at: string;
@@ -109,6 +110,7 @@ export type Database = {
           amount: number;
           category_id: string;
           created_at?: string;
+          currency?: string;
           id?: string;
           month: string;
           updated_at?: string;
@@ -118,6 +120,7 @@ export type Database = {
           amount?: number;
           category_id?: string;
           created_at?: string;
+          currency?: string;
           id?: string;
           month?: string;
           updated_at?: string;
@@ -136,6 +139,7 @@ export type Database = {
       categories: {
         Row: {
           color: string;
+          description: string | null;
           created_at: string;
           icon: string;
           id: string;
@@ -146,6 +150,7 @@ export type Database = {
         };
         Insert: {
           color?: string;
+          description?: string | null;
           created_at?: string;
           icon?: string;
           id?: string;
@@ -156,6 +161,7 @@ export type Database = {
         };
         Update: {
           color?: string;
+          description?: string | null;
           created_at?: string;
           icon?: string;
           id?: string;
@@ -503,6 +509,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      monthly_budget_totals: {
+        Row: {
+          amount: number;
+          created_at: string;
+          currency: string;
+          id: string;
+          month: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          currency: string;
+          id?: string;
+          month: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          month?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       projects: {
         Row: {
           created_at: string;
@@ -776,6 +812,7 @@ export type Database = {
           credit_card_due_on: string | null;
           credit_card_name: string | null;
           credit_card_paid_on: string | null;
+          currency: string;
           description: string;
           id: string;
           monthly_plan_id: string | null;
@@ -794,6 +831,7 @@ export type Database = {
           credit_card_due_on?: string | null;
           credit_card_name?: string | null;
           credit_card_paid_on?: string | null;
+          currency?: string;
           description: string;
           id?: string;
           monthly_plan_id?: string | null;
@@ -812,6 +850,7 @@ export type Database = {
           credit_card_due_on?: string | null;
           credit_card_name?: string | null;
           credit_card_paid_on?: string | null;
+          currency?: string;
           description?: string;
           id?: string;
           monthly_plan_id?: string | null;

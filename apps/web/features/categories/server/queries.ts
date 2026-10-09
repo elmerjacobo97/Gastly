@@ -10,6 +10,7 @@ type CategoryRow = {
   type: TransactionType;
   color: string;
   icon: string;
+  description: string | null;
   created_at: string;
 };
 
@@ -20,6 +21,7 @@ function mapCategory(row: CategoryRow): Category {
     type: row.type,
     color: row.color,
     icon: row.icon,
+    description: row.description ?? "",
     createdAt: row.created_at,
   };
 }
@@ -28,7 +30,7 @@ export async function getCategories(type?: TransactionType) {
   const supabase = await createClient();
   let query = supabase
     .from("categories")
-    .select("id, name, type, color, icon, created_at")
+    .select("id, name, type, color, icon, description, created_at")
     .order("type", { ascending: true })
     .order("name", { ascending: true });
 

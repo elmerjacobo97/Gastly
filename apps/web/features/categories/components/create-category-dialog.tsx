@@ -26,6 +26,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -63,6 +64,7 @@ const EMPTY_DEFAULTS: CategoryValues = {
   type: "expense",
   color: "blue",
   icon: "tag",
+  description: "",
 };
 
 export function CreateCategoryDialog() {
@@ -129,6 +131,27 @@ export function CreateCategoryDialog() {
                         aria-invalid={fieldState.invalid}
                         id="category-name"
                         placeholder="Ej. Comida, sueldo, transporte"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="description"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="category-description">
+                        Qué va aquí (opcional)
+                      </FieldLabel>
+                      <Textarea
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="category-description"
+                        placeholder="Ej. Pensión, almuerzos, menú diario"
+                        rows={2}
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />

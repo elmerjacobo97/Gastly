@@ -11,7 +11,7 @@ import {
 } from "@/lib/transaction-types";
 
 const TRANSACTION_SELECT =
-  "id, type, amount, description, occurred_on, notes, recurring_expense_id, payment_method, credit_card_name, credit_card_due_on, credit_card_paid_on, categories(id, name, type, color, icon)";
+  "id, type, amount, description, occurred_on, notes, recurring_expense_id, payment_method, credit_card_name, credit_card_due_on, credit_card_paid_on, categories(id, name, type, color, icon, description)";
 
 type TransactionRow = {
   id: string;
@@ -34,6 +34,7 @@ type CategoryRow = {
   type: TransactionType;
   color: string;
   icon: string;
+  description: string | null;
 };
 
 function mapCategory(row: CategoryRow): Category {
@@ -43,6 +44,7 @@ function mapCategory(row: CategoryRow): Category {
     type: row.type,
     color: row.color,
     icon: row.icon,
+    description: row.description ?? "",
   };
 }
 

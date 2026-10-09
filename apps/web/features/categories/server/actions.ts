@@ -45,6 +45,7 @@ export async function createCategory(
       type: values.type,
       color: values.color,
       icon: values.icon,
+      description: values.description || null,
     })
     .select("id")
     .single();
@@ -63,7 +64,7 @@ export async function createCategory(
 
 export async function updateCategory(
   rawId: string,
-  rawValues: Pick<CategoryValues, "name" | "color" | "icon">,
+  rawValues: Pick<CategoryValues, "name" | "color" | "icon" | "description">,
 ) {
   const id = parseOrThrow(categoryIdSchema, rawId);
   const values = parseOrThrow(categoryUpdateSchema, rawValues);
@@ -71,7 +72,12 @@ export async function updateCategory(
 
   const { error } = await supabase
     .from("categories")
-    .update({ name: values.name, color: values.color, icon: values.icon })
+    .update({
+      name: values.name,
+      color: values.color,
+      icon: values.icon,
+      description: values.description || null,
+    })
     .eq("id", id);
 
   if (error) {

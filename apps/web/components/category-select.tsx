@@ -40,6 +40,8 @@ export function CategorySelect({
     ? categories.filter((c) => c.type === type)
     : categories;
 
+  const selectedDescription = filtered.find((c) => c.id === value)?.description;
+
   return (
     <>
       <QuickCreateCategoryDialog
@@ -78,6 +80,9 @@ export function CategorySelect({
           <PlusIcon className="size-4" />
         </Button>
       </div>
+      {selectedDescription && (
+        <p className="text-xs text-muted-foreground">{selectedDescription}</p>
+      )}
     </>
   );
 }

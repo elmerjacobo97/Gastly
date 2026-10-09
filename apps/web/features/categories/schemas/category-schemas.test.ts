@@ -11,6 +11,7 @@ const validCategory = {
   type: "expense",
   color: "#f97316",
   icon: "utensils",
+  description: "",
 };
 
 describe("categorySchema", () => {
@@ -83,10 +84,14 @@ describe("categorySchema", () => {
 });
 
 describe("categoryUpdateSchema", () => {
-  it("accepts name, color and icon without a type", () => {
-    expect(
-      categoryUpdateSchema.parse({ name: "Ocio", color: "#10b981", icon: "x" }),
-    ).toEqual({ name: "Ocio", color: "#10b981", icon: "x" });
+  it("accepts name, color, icon and description without a type", () => {
+    const values = {
+      name: "Ocio",
+      color: "#10b981",
+      icon: "x",
+      description: "",
+    };
+    expect(categoryUpdateSchema.parse(values)).toEqual(values);
   });
 
   it("rejects a missing icon", () => {
@@ -119,5 +124,20 @@ describe("categoryIdSchema", () => {
 
   it("rejects an empty string", () => {
     expect(categoryIdSchema.safeParse("").success).toBe(false);
+  });
+});
+
+describe("category description", () => {
+  it("trims the description and rejects more than 200 characters", () => {
+    expect(
+      categorySchema.parse({ ...validCategory, description: "  Pensión  " })
+        .description,
+    ).toBe("Pensión");
+    expect(
+      categorySchema.safeParse({
+        ...validCategory,
+        description: "x".repeat(201),
+      }).success,
+    ).toBe(false);
   });
 });

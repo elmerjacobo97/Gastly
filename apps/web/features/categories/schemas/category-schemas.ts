@@ -7,6 +7,7 @@ export const categorySchema = z.object({
   type: z.enum(transactionTypes),
   color: z.string().trim().min(1, "Selecciona un color."),
   icon: z.string().trim().min(1, "Selecciona un icono."),
+  description: z.string().trim().max(200, "Máximo 200 caracteres."),
 });
 
 export type CategoryValues = z.infer<typeof categorySchema>;
@@ -15,6 +16,7 @@ export const categoryUpdateSchema = categorySchema.pick({
   name: true,
   color: true,
   icon: true,
+  description: true,
 });
 
 export const categoryIdSchema = z

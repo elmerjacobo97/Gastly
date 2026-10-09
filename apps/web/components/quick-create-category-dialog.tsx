@@ -25,6 +25,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { createCategory } from "@/features/categories/server/actions";
 import {
@@ -75,6 +76,7 @@ export function QuickCreateCategoryDialog({
       type: defaultType,
       color: "blue",
       icon: "tag",
+      description: "",
     }),
     [initialName, defaultType],
   );
@@ -145,6 +147,27 @@ export function QuickCreateCategoryDialog({
                         aria-invalid={fieldState.invalid}
                         placeholder="Ej. Comida, transporte, sueldo"
                         autoFocus
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="description"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="qc-description">
+                        Qué va aquí (opcional)
+                      </FieldLabel>
+                      <Textarea
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="qc-description"
+                        placeholder="Ej. Pensión, almuerzos, menú diario"
+                        rows={2}
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
