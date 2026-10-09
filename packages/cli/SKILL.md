@@ -32,7 +32,7 @@ All commands support `--json` for machine-readable output.
 gastly-cli transactions new --type expense --amount 100 -d "Groceries" --json
 ```
 
-Optional: `--category <name>`, `--date YYYY-MM-DD`, `--notes <text>`.
+Optional: `--category <name>`, `--date YYYY-MM-DD`, `--notes <text>`, `--currency PEN|USD|MXN` (defaults to PEN).
 
 ### Record income
 
@@ -57,6 +57,8 @@ gastly-cli transactions search "groceries" --json
 
 ```bash
 gastly-cli transactions update <id> --amount 150 -d "Updated description" --json
+# Change currency
+gastly-cli transactions update <id> --currency USD --json
 ```
 
 ### Delete a transaction
@@ -114,7 +116,7 @@ With `--json`: JSON array or object, suitable for programmatic consumption.
 
 ## Currency
 
-All transactions are PEN (Peruvian Sol). Loans and accounts support PEN/USD/MXN.
+Transactions default to PEN and support PEN/USD/MXN. Loans and accounts support PEN/USD/MXN.
 
 ## Auth
 

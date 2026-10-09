@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+import { CurrencyField } from "@/components/currency-field";
 import { TransactionCategoryField } from "@/components/transaction-category-field";
 import {
   Dialog,
@@ -59,6 +60,7 @@ function buildDefaultValues(defaultType: TransactionType): TransactionValues {
   return {
     type: defaultType,
     amount: 0,
+    currency: "PEN",
     description: "",
     categoryName: "",
     occurredOn: getToday(),
@@ -93,6 +95,7 @@ export function CreateTransactionDialog({
     control: form.control,
     name: "paymentMethod",
   });
+  const currentCurrency = useWatch({ control: form.control, name: "currency" });
 
   const existingCategories = categories.filter((c) => c.type === currentType);
 
@@ -175,10 +178,24 @@ export function CreateTransactionDialog({
                   />
                   <Controller
                     control={form.control}
+                    name="currency"
+                    render={({ field, fieldState }) => (
+                      <CurrencyField
+                        id="ct-currency"
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={fieldState.error?.message}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
                     name="amount"
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="ct-amount">Monto (PEN)</FieldLabel>
+                        <FieldLabel htmlFor="ct-amount">
+                          Monto ({currentCurrency})
+                        </FieldLabel>
                         <NumberInput
                           {...field}
                           aria-invalid={fieldState.invalid}

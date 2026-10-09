@@ -36,12 +36,22 @@ type PaidTransactionRow = {
   recurring_expense_id: string | null;
   occurred_on: string;
   amount: number | string;
+  currency: CurrencyCode;
+};
+
+type PaymentHistoryRow = {
+  id: string;
+  occurred_on: string;
+  amount: number | string;
+  currency: CurrencyCode;
+  notes: string | null;
 };
 
 function mapRecurringPayment(
   row: RecurringPaymentRow,
   paidByExpense: Map<string, string>,
   paidAmountByExpense: Map<string, number>,
+  paidCurrencyByExpense: Map<string, CurrencyCode>,
 ): RecurringPayment {
   return {
     id: row.id,
@@ -60,6 +70,7 @@ function mapRecurringPayment(
     account: row.accounts ?? null,
     paidOn: paidByExpense.get(row.id) ?? null,
     paidAmount: paidAmountByExpense.get(row.id) ?? null,
+    paidCurrency: paidCurrencyByExpense.get(row.id) ?? null,
   };
 }
 
@@ -112,11 +123,12 @@ export async function getRecurringPayments(
   const ids = data.map((expense) => expense.id);
   const paidByExpense = new Map<string, string>();
   const paidAmountByExpense = new Map<string, number>();
+  const paidCurrencyByExpense = new Map<string, CurrencyCode>();
 
   if (ids.length > 0) {
     const { data: transactions, error: txError } = await supabase
       .from("transactions")
-      .select("recurring_expense_id, occurred_on, amount")
+      .select("recurring_expense_id, occurred_on, amount, currency")
       .in("recurring_expense_id", ids)
       .gte("occurred_on", monthStart)
       .lte("occurred_on", monthEnd)
@@ -136,12 +148,21 @@ export async function getRecurringPayments(
           transaction.recurring_expense_id,
           Number(transaction.amount),
         );
+        paidCurrencyByExpense.set(
+          transaction.recurring_expense_id,
+          transaction.currency,
+        );
       }
     }
   }
 
   return data.map((row) =>
-    mapRecurringPayment(row, paidByExpense, paidAmountByExpense),
+    mapRecurringPayment(
+      row,
+      paidByExpense,
+      paidAmountByExpense,
+      paidCurrencyByExpense,
+    ),
   );
 }
 
@@ -151,9 +172,10 @@ export async function getRecurringPaymentHistory(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("transactions")
-    .select("id, occurred_on, amount, notes")
+    .select("id, occurred_on, amount, currency, notes")
     .eq("recurring_expense_id", paymentId)
-    .order("occurred_on", { ascending: false });
+    .order("occurred_on", { ascending: false })
+    .overrideTypes<PaymentHistoryRow[], { merge: false }>();
 
   if (error) throw new Error(error.message);
 
@@ -161,6 +183,7 @@ export async function getRecurringPaymentHistory(
     id: row.id,
     occurredOn: row.occurred_on,
     amount: Number(row.amount),
+    currency: row.currency,
     notes: row.notes,
   }));
 }

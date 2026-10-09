@@ -11,12 +11,13 @@ import {
 } from "@/lib/transaction-types";
 
 const TRANSACTION_SELECT =
-  "id, type, amount, description, occurred_on, notes, recurring_expense_id, payment_method, credit_card_name, credit_card_due_on, credit_card_paid_on, categories(id, name, type, color, icon, description)";
+  "id, type, amount, currency, description, occurred_on, notes, recurring_expense_id, payment_method, credit_card_name, credit_card_due_on, credit_card_paid_on, categories(id, name, type, color, icon, description)";
 
 type TransactionRow = {
   id: string;
   type: TransactionType;
   amount: number | string;
+  currency: Transaction["currency"];
   description: string;
   occurred_on: string;
   notes: string | null;
@@ -53,6 +54,7 @@ function mapTransaction(row: TransactionRow): Transaction {
     id: row.id,
     type: row.type,
     amount: Number(row.amount),
+    currency: row.currency,
     description: row.description,
     occurredOn: row.occurred_on,
     notes: row.notes,

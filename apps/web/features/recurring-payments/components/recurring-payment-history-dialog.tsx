@@ -13,7 +13,13 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type PaymentHistoryEntry } from "@/lib/recurring-payment-types";
 import { type RecurringPayment } from "@/lib/recurring-payment-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import {
+  CURRENCY_CODES,
+  formatCurrency,
+  formatDate,
+  type CurrencyTotals,
+} from "@/lib/format";
+import { formatCurrencyTotals, sumByCurrency } from "@/lib/currency-totals";
 
 type RecurringPaymentHistoryDialogProps = {
   payment: RecurringPayment | null;
@@ -28,8 +34,13 @@ export function RecurringPaymentHistoryDialog({
   open,
   onOpenChange,
 }: RecurringPaymentHistoryDialogProps) {
-  const total = history.reduce((sum, entry) => sum + entry.amount, 0);
-  const avg = history.length > 0 ? total / history.length : 0;
+  const totals = sumByCurrency(history, (entry) => entry.amount);
+  const counts = sumByCurrency(history, () => 1);
+  const averages: CurrencyTotals = {};
+  for (const currency of CURRENCY_CODES) {
+    const count = counts[currency] ?? 0;
+    if (count > 0) averages[currency] = (totals[currency] ?? 0) / count;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,7 +88,7 @@ export function RecurringPaymentHistoryDialog({
                         className={`shrink-0 text-sm font-semibold tabular-nums ${payment?.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
                       >
                         {payment?.type === "income" ? "+" : "-"}
-                        {formatCurrency(entry.amount)}
+                        {formatCurrency(entry.amount, entry.currency)}
                       </span>
                     </div>
                   ))}
@@ -86,7 +97,7 @@ export function RecurringPaymentHistoryDialog({
               <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm">
                 <span className="text-muted-foreground">Promedio mensual</span>
                 <span className="font-semibold tabular-nums">
-                  {formatCurrency(avg)}
+                  {formatCurrencyTotals(averages)}
                 </span>
               </div>
             </>

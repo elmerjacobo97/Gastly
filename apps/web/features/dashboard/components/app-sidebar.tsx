@@ -13,6 +13,7 @@ import {
   PackageIcon,
   Settings2Icon,
   TargetIcon,
+  WalletCardsIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -52,6 +53,12 @@ const navigationItems = [
     title: "Transacciones",
     href: "/transactions",
     icon: ArrowLeftRightIcon,
+    exact: false,
+  },
+  {
+    title: "Presupuestos",
+    href: "/budgets",
+    icon: WalletCardsIcon,
     exact: false,
   },
   {

@@ -1,4 +1,5 @@
 import { type Category } from "@/lib/category-types";
+import { type CurrencyCode, type CurrencyTotals } from "@/lib/format";
 
 export const transactionTypes = ["expense", "income"] as const;
 
@@ -12,6 +13,7 @@ export type Transaction = {
   id: string;
   type: TransactionType;
   amount: number;
+  currency: CurrencyCode;
   description: string;
   occurredOn: string;
   notes: string | null;
@@ -24,8 +26,8 @@ export type Transaction = {
 };
 
 export type TransactionSummary = {
-  balance: number;
-  income: number;
-  expenses: number;
-  budgetUsage: number;
+  balance: CurrencyTotals;
+  income: CurrencyTotals;
+  expenses: CurrencyTotals;
+  budgetUsage: Partial<Record<CurrencyCode, number>>;
 };

@@ -10,6 +10,7 @@ export function exportTransactionsToCSV(
     "Descripción",
     "Categoría",
     "Monto",
+    "Moneda",
     "Método de pago",
     "Notas",
   ];
@@ -19,6 +20,7 @@ export function exportTransactionsToCSV(
     t.description,
     t.category?.name ?? "Sin categoría",
     t.amount.toString(),
+    t.currency,
     t.paymentMethod === "credit_card"
       ? `TC${t.creditCardName ? ` (${t.creditCardName})` : ""}`
       : "Efectivo",

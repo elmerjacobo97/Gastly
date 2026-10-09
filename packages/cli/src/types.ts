@@ -15,6 +15,7 @@ export type TransactionRecord = {
   id: string
   type: TransactionType
   amount: number
+  currency: string
   description: string
   occurredOn: string
   notes: string | null
@@ -89,6 +90,7 @@ export type BudgetRecord = {
   id: string
   categoryName: string
   amount: number
+  currency: string
   spent: number
   month: string
 }

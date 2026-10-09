@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+import { CurrencyField } from "@/components/currency-field";
 import { TransactionCategoryField } from "@/components/transaction-category-field";
 import {
   Dialog,
@@ -62,6 +63,7 @@ export function EditTransactionDialog({
   const {
     type,
     amount,
+    currency,
     description,
     category,
     occurredOn,
@@ -76,6 +78,7 @@ export function EditTransactionDialog({
     () => ({
       type,
       amount,
+      currency,
       description,
       categoryName,
       occurredOn,
@@ -87,6 +90,7 @@ export function EditTransactionDialog({
     [
       type,
       amount,
+      currency,
       description,
       categoryName,
       occurredOn,
@@ -111,6 +115,7 @@ export function EditTransactionDialog({
     control: form.control,
     name: "paymentMethod",
   });
+  const currentCurrency = useWatch({ control: form.control, name: "currency" });
 
   const [isPending, startTransition] = useTransition();
 
@@ -186,10 +191,24 @@ export function EditTransactionDialog({
                   />
                   <Controller
                     control={form.control}
+                    name="currency"
+                    render={({ field, fieldState }) => (
+                      <CurrencyField
+                        id="et-currency"
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={fieldState.error?.message}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
                     name="amount"
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="et-amount">Monto (PEN)</FieldLabel>
+                        <FieldLabel htmlFor="et-amount">
+                          Monto ({currentCurrency})
+                        </FieldLabel>
                         <NumberInput
                           {...field}
                           aria-invalid={fieldState.invalid}

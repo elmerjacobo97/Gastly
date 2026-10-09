@@ -3,12 +3,12 @@ import {
   type SummaryMetricCard,
 } from "@/components/summary-metric-cards";
 import { formatCurrencyTotals } from "@/lib/currency-totals";
-import { formatCurrency, type CurrencyCode } from "@/lib/format";
+import { type CurrencyCode, type CurrencyTotals } from "@/lib/format";
 
 type DashboardSummaryCardsProps = {
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  monthlyBalance: number;
+  monthlyIncome: CurrencyTotals;
+  monthlyExpenses: CurrencyTotals;
+  monthlyBalance: CurrencyTotals;
   pendingTotals: Partial<Record<CurrencyCode, number>>;
   incomeMovementCount: number;
   expenseMovementCount: number;
@@ -27,19 +27,19 @@ export function DashboardSummaryCards({
   const cards: SummaryMetricCard[] = [
     {
       title: "Balance neto",
-      value: formatCurrency(monthlyBalance),
+      value: formatCurrencyTotals(monthlyBalance),
       description: "Ingresos menos gastos del mes",
       emphasis: true,
-      negative: monthlyBalance < 0,
+      negative: Object.values(monthlyBalance).some((amount) => amount < 0),
     },
     {
       title: "Ingresos del mes",
-      value: formatCurrency(monthlyIncome),
+      value: formatCurrencyTotals(monthlyIncome),
       description: `${incomeMovementCount} ${incomeMovementCount === 1 ? "movimiento registrado" : "movimientos registrados"}`,
     },
     {
       title: "Gastos del mes",
-      value: formatCurrency(monthlyExpenses),
+      value: formatCurrencyTotals(monthlyExpenses),
       description: `${expenseMovementCount} ${expenseMovementCount === 1 ? "movimiento registrado" : "movimientos registrados"}`,
     },
     {

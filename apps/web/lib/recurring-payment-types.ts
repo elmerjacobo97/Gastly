@@ -11,6 +11,7 @@ export type RecurringPayment = {
   id: string;
   amount: number;
   currency: CurrencyCode;
+  paidCurrency?: CurrencyCode | null;
   description: string;
   frequency: "monthly" | "custom_months" | "yearly";
   intervalMonths: number;
@@ -30,5 +31,6 @@ export type PaymentHistoryEntry = {
   id: string;
   occurredOn: string;
   amount: number;
+  currency: CurrencyCode;
   notes: string | null;
 };
