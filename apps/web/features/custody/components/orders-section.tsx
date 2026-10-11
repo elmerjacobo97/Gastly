@@ -107,10 +107,10 @@ export function OrdersSection({
                 <TableHead>Encargo</TableHead>
                 <TableHead>Progreso</TableHead>
                 <TableHead className="hidden text-right md:table-cell">
-                  Entradas
+                  Depositado
                 </TableHead>
                 <TableHead className="hidden text-right md:table-cell">
-                  Salidas
+                  Devuelto
                 </TableHead>
                 <TableHead className="text-right">En custodia</TableHead>
                 <TableHead className="hidden lg:table-cell">Estimado</TableHead>
@@ -133,11 +133,12 @@ export function OrdersSection({
                 visibleOrders.map((order) => {
                   const isActive = order.status === "active";
                   const target = order.targetAmount ?? 0;
+                  const progressAmount = Math.max(0, order.balanceHeld);
                   const pctProgress =
                     target > 0
                       ? Math.min(
                           100,
-                          Math.round((order.totalDeposited / target) * 100),
+                          Math.round((progressAmount / target) * 100),
                         )
                       : null;
 
@@ -168,7 +169,7 @@ export function OrdersSection({
                           </span>
                         ) : (
                           <ProgressCell percent={pctProgress}>
-                            {formatCurrency(order.totalDeposited)} de{" "}
+                            {formatCurrency(progressAmount)} de{" "}
                             {formatCurrency(target)}
                           </ProgressCell>
                         )}
