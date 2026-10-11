@@ -15,7 +15,32 @@ export default function BudgetsLoading() {
         </div>
       </section>
 
-      <Skeleton className="h-40 w-full rounded-xl" />
+      <div className="rounded-xl border bg-card">
+        <div className="flex items-center justify-between gap-3 border-b p-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-9 shrink-0 rounded-lg" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-3 w-56 max-w-full" />
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="size-8" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-4 p-6">
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-9 w-40" />
+            </div>
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <Skeleton className="h-2.5 w-full rounded-full" />
+          <Skeleton className="h-4 w-64 max-w-full" />
+        </div>
+      </div>
 
       <TableCardSkeleton rows={4} />
     </main>
