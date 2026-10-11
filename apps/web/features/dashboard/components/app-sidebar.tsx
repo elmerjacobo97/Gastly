@@ -7,6 +7,7 @@ import {
   CalendarClockIcon,
   ChevronsUpDownIcon,
   CreditCardIcon,
+  GiftIcon,
   HandCoinsIcon,
   LayoutDashboardIcon,
   LogOutIcon,
@@ -89,6 +90,12 @@ const navigationItems = [
     title: "Metas de ahorro",
     href: "/savings",
     icon: TargetIcon,
+    exact: false,
+  },
+  {
+    title: "Lista de deseos",
+    href: "/wishlist",
+    icon: GiftIcon,
     exact: false,
   },
   {

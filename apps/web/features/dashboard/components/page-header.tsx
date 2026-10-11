@@ -14,6 +14,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/loans": "Préstamos",
   "/custody": "Encargos",
   "/savings": "Metas de ahorro",
+  "/wishlist": "Lista de deseos",
   "/budgets": "Presupuestos",
   "/reports": "Reportes",
   "/settings": "Configuración",

@@ -904,6 +904,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      wishlist_items: {
+        Row: {
+          created_at: string;
+          currency: string;
+          estimated_price: number;
+          id: string;
+          name: string;
+          notes: string | null;
+          priority: string;
+          status: string;
+          url: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          currency?: string;
+          estimated_price: number;
+          id?: string;
+          name: string;
+          notes?: string | null;
+          priority?: string;
+          status?: string;
+          url?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          currency?: string;
+          estimated_price?: number;
+          id?: string;
+          name?: string;
+          notes?: string | null;
+          priority?: string;
+          status?: string;
+          url?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

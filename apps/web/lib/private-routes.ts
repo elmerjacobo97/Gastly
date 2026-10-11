@@ -8,6 +8,7 @@ export const PRIVATE_ROUTES = [
   "/savings",
   "/settings",
   "/transactions",
+  "/wishlist",
 ] as const;
 
 export function isPrivatePath(pathname: string): boolean {

@@ -50,13 +50,20 @@ type CreateTransactionDialogProps = {
   lockType?: boolean;
   triggerLabel?: string;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialValues?: Partial<TransactionValues>;
+  onSuccess?: () => void;
 };
 
 function getToday() {
   return format(new Date(), "yyyy-MM-dd");
 }
 
-function buildDefaultValues(defaultType: TransactionType): TransactionValues {
+function buildDefaultValues(
+  defaultType: TransactionType,
+  initialValues: Partial<TransactionValues> = {},
+): TransactionValues {
   return {
     type: defaultType,
     amount: 0,
@@ -68,6 +75,7 @@ function buildDefaultValues(defaultType: TransactionType): TransactionValues {
     paymentMethod: "cash",
     creditCardName: "",
     creditCardDueOn: "",
+    ...initialValues,
   };
 }
 
@@ -77,14 +85,21 @@ export function CreateTransactionDialog({
   lockType = false,
   triggerLabel = "Nueva transacción",
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  initialValues,
+  onSuccess,
 }: CreateTransactionDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const isControlled = controlledOpen !== undefined;
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
 
   const form = useForm<TransactionValues>({
     resolver: zodResolver(transactionSchema) as Resolver<TransactionValues>,
-    defaultValues: buildDefaultValues(defaultType),
+    defaultValues: buildDefaultValues(defaultType, initialValues),
   });
 
   const currentType = useWatch({
@@ -106,6 +121,7 @@ export function CreateTransactionDialog({
         toast.success("Transacción registrada");
         form.reset(buildDefaultValues(defaultType));
         setOpen(false);
+        onSuccess?.();
       } catch (error) {
         toast.error("No se pudo registrar la transacción", {
           description:
@@ -133,7 +149,9 @@ export function CreateTransactionDialog({
         }
       />
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
+        {!isControlled && (
+          <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
+        )}
         <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Nueva transacción</DialogTitle>
