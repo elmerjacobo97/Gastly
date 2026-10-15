@@ -25,6 +25,7 @@ function movement(overrides: Partial<LoanMovementRow>): LoanMovementRow {
     isSettled: false,
     pendingAmount: 100,
     interestRate: 0,
+    isSale: false,
     ...overrides,
   };
 }

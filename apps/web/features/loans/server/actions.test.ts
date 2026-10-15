@@ -141,6 +141,7 @@ const validLoan: LoanValues = {
   description: "Préstamo",
   expectedOn: "2026-03-01",
   loanedOn: "2026-01-10",
+  isSale: false,
 };
 
 const validPayment: LoanPaymentValues = {
@@ -155,6 +156,7 @@ const validDisbursement: LoanDisbursementValues = {
   description: "",
   notes: "",
   interestRate: 2,
+  isSale: false,
 };
 
 let supabase: SupabaseMock;
@@ -208,6 +210,7 @@ describe("createLoan", () => {
       occurred_on: "2026-01-10",
       description: "Préstamo",
       interest_rate: 0,
+      is_sale: false,
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/loans");
   });
@@ -239,6 +242,7 @@ describe("createLoan", () => {
       occurred_on: "2026-01-10",
       description: "Préstamo",
       interest_rate: 0,
+      is_sale: false,
     });
     expect(supabase.callsOn("loans", "update")[0]?.args[0]).toEqual({
       amount: 75.5,
@@ -386,7 +390,7 @@ describe("recordLoanPayment", () => {
       error: null,
     });
     supabase.queue("loan_payments", { data: [], error: null });
-    supabase.queue("loan_payments", { error: null });
+    supabase.queue("loan_payments", { data: { id: PAYMENT_ID }, error: null });
 
     await expect(
       recordLoanPayment(LOAN_ID, DISBURSEMENT_ID, validPayment),
@@ -400,6 +404,81 @@ describe("recordLoanPayment", () => {
       notes: null,
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/loans");
+    expect(supabase.callsOn("transactions", "insert")).toHaveLength(0);
+  });
+
+  it("registra el pago de una venta como ingreso en Ventas", async () => {
+    supabase.queue("loan_disbursements", {
+      data: {
+        id: DISBURSEMENT_ID,
+        amount: 100,
+        occurred_on: "2026-01-10",
+        interest_rate: 0,
+        description: "Repisa",
+        is_sale: true,
+      },
+      error: null,
+    });
+    supabase.queue("loan_payments", { data: [], error: null });
+    supabase.queue("loan_payments", { data: { id: PAYMENT_ID }, error: null });
+    supabase.queue("loans", {
+      data: { person_name: "María López", currency: "PEN" },
+      error: null,
+    });
+    supabase.queue("categories", { data: { id: "cat-1" }, error: null });
+    supabase.queue("transactions", { error: null });
+
+    await expect(
+      recordLoanPayment(LOAN_ID, DISBURSEMENT_ID, validPayment),
+    ).resolves.toBeUndefined();
+
+    expect(supabase.callsOn("categories", "upsert")[0]?.args[0]).toEqual({
+      user_id: USER_ID,
+      name: "Ventas",
+      type: "income",
+    });
+    expect(supabase.callsOn("transactions", "insert")[0]?.args[0]).toEqual({
+      user_id: USER_ID,
+      category_id: "cat-1",
+      type: "income",
+      amount: 40,
+      currency: "PEN",
+      description: "Venta a María López: Repisa",
+      occurred_on: "2026-01-20",
+      notes: null,
+      payment_method: "cash",
+      loan_payment_id: PAYMENT_ID,
+    });
+    expect(revalidatePathMock).toHaveBeenCalledWith("/transactions");
+  });
+
+  it("borra el pago si falla el ingreso de la venta", async () => {
+    supabase.queue("loan_disbursements", {
+      data: {
+        id: DISBURSEMENT_ID,
+        amount: 100,
+        occurred_on: "2026-01-10",
+        interest_rate: 0,
+        description: null,
+        is_sale: true,
+      },
+      error: null,
+    });
+    supabase.queue("loan_payments", { data: [], error: null });
+    supabase.queue("loan_payments", { data: { id: PAYMENT_ID }, error: null });
+    supabase.queue("loans", {
+      data: { person_name: "María López", currency: "PEN" },
+      error: null,
+    });
+    supabase.queue("categories", { data: { id: "cat-1" }, error: null });
+    supabase.queue("transactions", { error: { message: "fallo" } });
+    supabase.queue("loan_payments", { error: null });
+
+    await expect(
+      recordLoanPayment(LOAN_ID, DISBURSEMENT_ID, validPayment),
+    ).rejects.toThrow("fallo");
+
+    expect(supabase.callsOn("loan_payments", "delete")).toHaveLength(1);
   });
 
   it("rechaza una devolución anterior al préstamo", async () => {
@@ -487,6 +566,7 @@ describe("updateLoanPayment", () => {
     });
     supabase.queue("loan_payments", { data: [], error: null });
     supabase.queue("loan_payments", { error: null });
+    supabase.queue("transactions", { error: null });
 
     await expect(
       updateLoanPayment(PAYMENT_ID, {
@@ -506,6 +586,14 @@ describe("updateLoanPayment", () => {
       occurred_on: "2026-02-01",
       notes: null,
     });
+    expect(supabase.callsOn("transactions", "update")[0]?.args[0]).toEqual({
+      amount: 60,
+      occurred_on: "2026-02-01",
+    });
+    expect(supabase.callsOn("transactions", "eq")[0]?.args).toEqual([
+      "loan_payment_id",
+      PAYMENT_ID,
+    ]);
     expect(revalidatePathMock).toHaveBeenCalledWith("/loans");
   });
 
@@ -610,7 +698,7 @@ describe("updateLoanDisbursement", () => {
 
   it("actualiza el desembolso, sincroniza totales y revalida /loans", async () => {
     supabase.queue("loan_disbursements", {
-      data: { loan_id: LOAN_ID },
+      data: { loan_id: LOAN_ID, is_sale: false, loans: { direction: "lent" } },
       error: null,
     });
     supabase.queue("loan_payments", { data: [], error: null });
@@ -631,6 +719,7 @@ describe("updateLoanDisbursement", () => {
       occurred_on: "2026-01-05",
       description: null,
       interest_rate: 2,
+      is_sale: false,
     });
     expect(supabase.callsOn("loans", "update")[0]?.args[0]).toEqual({
       amount: 120,
@@ -641,7 +730,7 @@ describe("updateLoanDisbursement", () => {
 
   it("rechaza una fecha posterior a alguna devolución", async () => {
     supabase.queue("loan_disbursements", {
-      data: { loan_id: LOAN_ID },
+      data: { loan_id: LOAN_ID, is_sale: false, loans: { direction: "lent" } },
       error: null,
     });
     supabase.queue("loan_payments", {
@@ -669,7 +758,7 @@ describe("updateLoanDisbursement", () => {
 
   it("rechaza cambios que dejarían devoluciones mayores al préstamo", async () => {
     supabase.queue("loan_disbursements", {
-      data: { loan_id: LOAN_ID },
+      data: { loan_id: LOAN_ID, is_sale: false, loans: { direction: "lent" } },
       error: null,
     });
     supabase.queue("loan_payments", {
@@ -721,7 +810,7 @@ describe("deleteLoanDisbursement", () => {
 
   it("elimina el desembolso, sincroniza totales y revalida /loans", async () => {
     supabase.queue("loan_disbursements", {
-      data: { loan_id: LOAN_ID },
+      data: { loan_id: LOAN_ID, is_sale: false, loans: { direction: "lent" } },
       error: null,
     });
     supabase.queue("loan_payments", { count: 0, error: null });
@@ -747,7 +836,7 @@ describe("deleteLoanDisbursement", () => {
 
   it("rechaza eliminar un desembolso con devoluciones registradas", async () => {
     supabase.queue("loan_disbursements", {
-      data: { loan_id: LOAN_ID },
+      data: { loan_id: LOAN_ID, is_sale: false, loans: { direction: "lent" } },
       error: null,
     });
     supabase.queue("loan_payments", { count: 1, error: null });
@@ -762,7 +851,7 @@ describe("deleteLoanDisbursement", () => {
 
   it("rechaza eliminar el único desembolso del saldo", async () => {
     supabase.queue("loan_disbursements", {
-      data: { loan_id: LOAN_ID },
+      data: { loan_id: LOAN_ID, is_sale: false, loans: { direction: "lent" } },
       error: null,
     });
     supabase.queue("loan_payments", { count: 0, error: null });
@@ -813,6 +902,7 @@ describe("compensateLoans", () => {
       description: null,
       notes: null,
       interestRate: 0,
+      isSale: false,
       outstandingAmount: outstanding,
     };
   }

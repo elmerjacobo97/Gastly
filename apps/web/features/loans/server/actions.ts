@@ -41,6 +41,14 @@ function revalidateLoans() {
   revalidatePath("/loans");
 }
 
+function revalidateLoansAndIncome() {
+  revalidateLoans();
+  revalidatePath("/transactions");
+  revalidatePath("/");
+  revalidatePath("/reports");
+  revalidatePath("/budgets");
+}
+
 type ServerClient = Awaited<ReturnType<typeof createClient>>;
 
 async function validateLoanPayment(
@@ -51,7 +59,7 @@ async function validateLoanPayment(
 ) {
   const { data: disbursement, error: disbursementError } = await supabase
     .from("loan_disbursements")
-    .select("id, amount, occurred_on, interest_rate")
+    .select("id, amount, occurred_on, interest_rate, description, is_sale")
     .eq("id", disbursementId)
     .single();
 
@@ -106,6 +114,52 @@ async function validateLoanPayment(
   if (summary.unappliedAmount > 0) {
     throw new Error("El monto supera el saldo pendiente de este préstamo.");
   }
+
+  return disbursement;
+}
+
+async function createSaleIncome(
+  supabase: ServerClient,
+  userId: string,
+  loanId: string,
+  paymentId: string,
+  saleDescription: string | null,
+  values: LoanPaymentValues,
+) {
+  const { data: loan, error: loanError } = await supabase
+    .from("loans")
+    .select("person_name, currency")
+    .eq("id", loanId)
+    .single();
+  if (loanError || !loan) {
+    throw new Error(loanError?.message ?? "Préstamo no encontrado.");
+  }
+
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .upsert(
+      { user_id: userId, name: "Ventas", type: "income" },
+      { onConflict: "user_id,type,name" },
+    )
+    .select("id")
+    .single();
+  if (categoryError) throw new Error(categoryError.message);
+
+  const { error } = await supabase.from("transactions").insert({
+    user_id: userId,
+    category_id: category.id,
+    type: "income",
+    amount: values.amount,
+    currency: loan.currency,
+    description: saleDescription
+      ? `Venta a ${loan.person_name}: ${saleDescription}`
+      : `Venta a ${loan.person_name}`,
+    occurred_on: values.occurredOn,
+    notes: values.notes || null,
+    payment_method: "cash",
+    loan_payment_id: paymentId,
+  });
+  if (error) throw new Error(error.message);
 }
 
 async function syncLoanTotals(supabase: ServerClient, loanId: string) {
@@ -155,6 +209,7 @@ export async function createLoan(rawValues: LoanValues): Promise<void> {
       occurred_on: values.loanedOn,
       description: values.description || null,
       interest_rate: values.interestRate ?? 0,
+      is_sale: values.isSale,
     });
     if (error) throw new Error(error.message);
 
@@ -198,6 +253,7 @@ export async function createLoan(rawValues: LoanValues): Promise<void> {
       occurred_on: values.loanedOn,
       description: values.description || null,
       interest_rate: values.interestRate ?? 0,
+      is_sale: values.isSale,
     });
 
   if (disbursementError) {
@@ -249,18 +305,47 @@ export async function recordLoanPayment(
     rawDisbursementId,
   );
   const values = parseOrThrow(loanPaymentSchema, rawValues);
-  const { supabase } = await requireUser();
-  await validateLoanPayment(supabase, disbursementId, values);
+  const { supabase, userId } = await requireUser();
+  const disbursement = await validateLoanPayment(
+    supabase,
+    disbursementId,
+    values,
+  );
 
-  const { error } = await supabase.from("loan_payments").insert({
-    loan_id: loanId,
-    disbursement_id: disbursementId,
-    amount: values.amount,
-    occurred_on: values.occurredOn,
-    notes: values.notes || null,
-  });
-  if (error) throw new Error(error.message);
-  revalidateLoans();
+  const { data: payment, error } = await supabase
+    .from("loan_payments")
+    .insert({
+      loan_id: loanId,
+      disbursement_id: disbursementId,
+      amount: values.amount,
+      occurred_on: values.occurredOn,
+      notes: values.notes || null,
+    })
+    .select("id")
+    .single();
+  if (error || !payment) {
+    throw new Error(error?.message ?? "No se pudo registrar el pago.");
+  }
+
+  if (!disbursement.is_sale) {
+    revalidateLoans();
+    return;
+  }
+
+  try {
+    await createSaleIncome(
+      supabase,
+      userId,
+      loanId,
+      payment.id,
+      disbursement.description,
+      values,
+    );
+  } catch (incomeError) {
+    await supabase.from("loan_payments").delete().eq("id", payment.id);
+    throw incomeError;
+  }
+  revalidateLoansAndIncome();
 }
 
 export async function compensateLoans(
@@ -287,6 +372,7 @@ export async function compensateLoans(
     );
   }
 
+  // ponytail: offsets settle sale debts without cash, so no income is recorded.
   const amount = Math.min(lent.pendingAmount, borrowed.pendingAmount);
   if (amount <= 0) throw new Error("No hay saldo para compensar.");
 
@@ -334,7 +420,13 @@ export async function updateLoanPayment(
     })
     .eq("id", id);
   if (error) throw new Error(error.message);
-  revalidateLoans();
+
+  const { error: incomeError } = await supabase
+    .from("transactions")
+    .update({ amount: values.amount, occurred_on: values.occurredOn })
+    .eq("loan_payment_id", id);
+  if (incomeError) throw new Error(incomeError.message);
+  revalidateLoansAndIncome();
 }
 
 export async function deleteLoanPayment(rawId: string): Promise<void> {
@@ -343,7 +435,7 @@ export async function deleteLoanPayment(rawId: string): Promise<void> {
 
   const { error } = await supabase.from("loan_payments").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  revalidateLoans();
+  revalidateLoansAndIncome();
 }
 
 export async function updateLoanDisbursement(
@@ -356,7 +448,7 @@ export async function updateLoanDisbursement(
 
   const { data: row, error: fetchError } = await supabase
     .from("loan_disbursements")
-    .select("loan_id")
+    .select("loan_id, is_sale, loans(direction)")
     .eq("id", id)
     .single();
   if (fetchError || !row)
@@ -374,6 +466,14 @@ export async function updateLoanDisbursement(
     amount: Number(payment.amount),
     occurredOn: payment.occurred_on,
   }));
+  if (values.isSale !== row.is_sale) {
+    if (paymentInputs.length > 0) {
+      throw new Error("No se puede cambiar el tipo con pagos registrados.");
+    }
+    if (values.isSale && row.loans?.direction !== "lent") {
+      throw new Error("Solo puedes registrar ventas que tú hiciste.");
+    }
+  }
   if (paymentInputs.some((payment) => payment.occurredOn < values.occurredOn)) {
     throw new Error("El préstamo no puede ser posterior a sus devoluciones.");
   }
@@ -405,6 +505,7 @@ export async function updateLoanDisbursement(
       occurred_on: values.occurredOn,
       description: values.description || null,
       interest_rate: values.interestRate ?? 0,
+      is_sale: values.isSale,
     })
     .eq("id", id);
   if (error) throw new Error(error.message);

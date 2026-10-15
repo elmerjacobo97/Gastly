@@ -139,8 +139,8 @@ export type Database = {
       categories: {
         Row: {
           color: string;
-          description: string | null;
           created_at: string;
+          description: string | null;
           icon: string;
           id: string;
           name: string;
@@ -150,8 +150,8 @@ export type Database = {
         };
         Insert: {
           color?: string;
-          description?: string | null;
           created_at?: string;
+          description?: string | null;
           icon?: string;
           id?: string;
           name: string;
@@ -161,8 +161,8 @@ export type Database = {
         };
         Update: {
           color?: string;
-          description?: string | null;
           created_at?: string;
+          description?: string | null;
           icon?: string;
           id?: string;
           name?: string;
@@ -364,6 +364,7 @@ export type Database = {
           description: string | null;
           id: string;
           interest_rate: number;
+          is_sale: boolean;
           loan_id: string;
           notes: string | null;
           occurred_on: string;
@@ -374,6 +375,7 @@ export type Database = {
           description?: string | null;
           id?: string;
           interest_rate?: number;
+          is_sale?: boolean;
           loan_id: string;
           notes?: string | null;
           occurred_on: string;
@@ -384,6 +386,7 @@ export type Database = {
           description?: string | null;
           id?: string;
           interest_rate?: number;
+          is_sale?: boolean;
           loan_id?: string;
           notes?: string | null;
           occurred_on?: string;
@@ -482,33 +485,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      monthly_plans: {
-        Row: {
-          created_at: string;
-          id: string;
-          month: string;
-          notes: string | null;
-          updated_at: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          month: string;
-          notes?: string | null;
-          updated_at?: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          month?: string;
-          notes?: string | null;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
       monthly_budget_totals: {
         Row: {
           amount: number;
@@ -534,6 +510,33 @@ export type Database = {
           currency?: string;
           id?: string;
           month?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      monthly_plans: {
+        Row: {
+          created_at: string;
+          id: string;
+          month: string;
+          notes: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          month: string;
+          notes?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          month?: string;
+          notes?: string | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -815,6 +818,7 @@ export type Database = {
           currency: string;
           description: string;
           id: string;
+          loan_payment_id: string | null;
           monthly_plan_id: string | null;
           notes: string | null;
           occurred_on: string;
@@ -834,6 +838,7 @@ export type Database = {
           currency?: string;
           description: string;
           id?: string;
+          loan_payment_id?: string | null;
           monthly_plan_id?: string | null;
           notes?: string | null;
           occurred_on?: string;
@@ -853,6 +858,7 @@ export type Database = {
           currency?: string;
           description?: string;
           id?: string;
+          loan_payment_id?: string | null;
           monthly_plan_id?: string | null;
           notes?: string | null;
           occurred_on?: string;
@@ -868,6 +874,13 @@ export type Database = {
             columns: ["category_id"];
             isOneToOne: false;
             referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transactions_loan_payment_id_fkey";
+            columns: ["loan_payment_id"];
+            isOneToOne: false;
+            referencedRelation: "loan_payments";
             referencedColumns: ["id"];
           },
           {

@@ -113,6 +113,7 @@ describe("allocateOffset", () => {
     description: null,
     notes: null,
     interestRate: 0,
+    isSale: false,
     outstandingAmount,
   });
 
@@ -160,6 +161,7 @@ describe("flattenLoanMovements", () => {
           description: "inicial",
           notes: null,
           interestRate: 5,
+          isSale: false,
           outstandingAmount: 0,
         },
         {
@@ -170,6 +172,7 @@ describe("flattenLoanMovements", () => {
           description: "extra",
           notes: "nota",
           interestRate: 8,
+          isSale: false,
           outstandingAmount: 50,
         },
       ],
@@ -244,6 +247,7 @@ describe("flattenLoanMovements", () => {
           description: null,
           notes: null,
           interestRate: 0,
+          isSale: false,
           outstandingAmount: 100,
         },
       ],
@@ -278,6 +282,7 @@ describe("flattenLoanMovements", () => {
             description: null,
             notes: null,
             interestRate: 0,
+            isSale: false,
             outstandingAmount: 100,
           },
         ],
@@ -294,6 +299,7 @@ describe("flattenLoanMovements", () => {
             description: null,
             notes: null,
             interestRate: 0,
+            isSale: false,
             outstandingAmount: 300,
           },
         ],
