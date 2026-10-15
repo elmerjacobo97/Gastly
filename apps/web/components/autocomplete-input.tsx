@@ -97,18 +97,18 @@ export function AutocompleteInput({
       >
         <ul role="listbox">
           {matches.map((name, index) => (
-            <li key={name} role="option" aria-selected={index === activeIndex}>
-              <button
-                className={cn(
-                  "w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted",
-                  index === activeIndex && "bg-muted",
-                )}
-                onClick={() => choose(name)}
-                onMouseDown={(event) => event.preventDefault()}
-                type="button"
-              >
-                {name}
-              </button>
+            <li
+              aria-selected={index === activeIndex}
+              className={cn(
+                "cursor-default rounded-md px-2 py-1.5 text-sm hover:bg-muted",
+                index === activeIndex && "bg-muted",
+              )}
+              key={name}
+              onClick={() => choose(name)}
+              onMouseDown={(event) => event.preventDefault()}
+              role="option"
+            >
+              {name}
             </li>
           ))}
         </ul>
