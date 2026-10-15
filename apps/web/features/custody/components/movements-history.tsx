@@ -166,10 +166,10 @@ export function MovementsHistory({
                     <TableHead className="hidden md:table-cell">
                       Método
                     </TableHead>
-                    <TableHead className="text-right">Monto</TableHead>
                     <TableHead className="hidden md:table-cell">
                       Notas
                     </TableHead>
+                    <TableHead className="text-right">Monto</TableHead>
                     <TableHead className="w-12">
                       <span className="sr-only">Acciones</span>
                     </TableHead>
@@ -205,13 +205,24 @@ export function MovementsHistory({
                               <span className="font-medium">
                                 {movement.personName}
                               </span>
-                              <span className="text-xs text-muted-foreground">
+                              <span
+                                className="line-clamp-2 max-w-64 text-xs whitespace-normal break-words text-muted-foreground"
+                                title={movement.orderTitle}
+                              >
                                 {movement.orderTitle}
                               </span>
                             </div>
                           </TableCell>
                           <TableCell className="hidden text-muted-foreground md:table-cell">
                             {methodLabel(movement.method) ?? "—"}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <span
+                              className="line-clamp-2 max-w-50 whitespace-normal break-words text-muted-foreground"
+                              title={movement.notes ?? undefined}
+                            >
+                              {movement.notes || "—"}
+                            </span>
                           </TableCell>
                           <TableCell
                             className={`text-right font-medium tabular-nums ${
@@ -222,11 +233,6 @@ export function MovementsHistory({
                           >
                             {isDeposit ? "+" : "-"}
                             {formatCurrency(movement.amount)}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            <span className="block max-w-50 truncate text-muted-foreground">
-                              {movement.notes || "—"}
-                            </span>
                           </TableCell>
                           <TableCell>
                             <div className="flex justify-end">

@@ -140,7 +140,6 @@ export function RecurringPaymentsPanel({
       <RecurringPaymentList
         payments={payments}
         monthKey={monthKey}
-        pending={isPending}
         onPay={(payment) => {
           setPayPayment(payment);
           setPayOpen(true);

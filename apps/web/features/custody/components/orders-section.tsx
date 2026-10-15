@@ -106,6 +106,7 @@ export function OrdersSection({
               <TableRow>
                 <TableHead>Encargo</TableHead>
                 <TableHead>Progreso</TableHead>
+                <TableHead className="hidden lg:table-cell">Estimado</TableHead>
                 <TableHead className="hidden text-right md:table-cell">
                   Depositado
                 </TableHead>
@@ -113,7 +114,6 @@ export function OrdersSection({
                   Devuelto
                 </TableHead>
                 <TableHead className="text-right">En custodia</TableHead>
-                <TableHead className="hidden lg:table-cell">Estimado</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -157,7 +157,10 @@ export function OrdersSection({
                               <StatusBadge tone="muted">Cancelado</StatusBadge>
                             )}
                           </div>
-                          <span className="max-w-64 truncate text-xs text-muted-foreground">
+                          <span
+                            className="line-clamp-2 max-w-64 text-xs whitespace-normal break-words text-muted-foreground"
+                            title={order.title}
+                          >
                             {order.title}
                           </span>
                         </div>
@@ -174,6 +177,9 @@ export function OrdersSection({
                           </ProgressCell>
                         )}
                       </TableCell>
+                      <TableCell className="hidden text-muted-foreground lg:table-cell">
+                        {order.expectedOn ? formatDate(order.expectedOn) : "—"}
+                      </TableCell>
                       <TableCell className="hidden text-right text-muted-foreground tabular-nums md:table-cell">
                         {formatCurrency(order.totalDeposited)}
                       </TableCell>
@@ -183,32 +189,31 @@ export function OrdersSection({
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatCurrency(order.balanceHeld)}
                       </TableCell>
-                      <TableCell className="hidden text-muted-foreground lg:table-cell">
-                        {order.expectedOn ? formatDate(order.expectedOn) : "—"}
-                      </TableCell>
                       <TableCell>
-                        <RowActionsMenu
-                          onEdit={() => onEdit(order)}
-                          onDelete={() => onDelete(order.id)}
-                          additionalActions={
-                            isActive
-                              ? [
-                                  {
-                                    icon: <ArrowLeftRightIcon />,
-                                    label: "Registrar movimiento",
-                                    onSelect: () =>
-                                      setMovement({ order, type: "deposit" }),
-                                  },
-                                  {
-                                    icon: <CheckCircle2Icon />,
-                                    label: "Marcar completado",
-                                    onSelect: () => onComplete(order.id),
-                                  },
-                                ]
-                              : undefined
-                          }
-                          className="text-muted-foreground data-[state=open]:bg-muted"
-                        />
+                        <div className="flex justify-end">
+                          <RowActionsMenu
+                            onEdit={() => onEdit(order)}
+                            onDelete={() => onDelete(order.id)}
+                            additionalActions={
+                              isActive
+                                ? [
+                                    {
+                                      icon: <ArrowLeftRightIcon />,
+                                      label: "Registrar movimiento",
+                                      onSelect: () =>
+                                        setMovement({ order, type: "deposit" }),
+                                    },
+                                    {
+                                      icon: <CheckCircle2Icon />,
+                                      label: "Marcar completado",
+                                      onSelect: () => onComplete(order.id),
+                                    },
+                                  ]
+                                : undefined
+                            }
+                            className="text-muted-foreground data-[state=open]:bg-muted"
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

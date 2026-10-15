@@ -134,12 +134,12 @@ export function WishlistSection({
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
-                <TableHead className="text-right">Precio estimado</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Prioridad
                 </TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead className="w-24">
+                <TableHead className="text-right">Precio estimado</TableHead>
+                <TableHead className="w-12">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -163,11 +163,17 @@ export function WishlistSection({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="flex min-w-0 flex-col">
-                            <span className="max-w-48 truncate font-medium">
+                            <span
+                              className="line-clamp-2 max-w-48 font-medium whitespace-normal break-words"
+                              title={item.name}
+                            >
                               {item.name}
                             </span>
                             {item.notes && (
-                              <span className="max-w-48 truncate text-xs text-muted-foreground">
+                              <span
+                                className="max-w-48 truncate text-xs text-muted-foreground"
+                                title={item.notes}
+                              >
                                 {item.notes}
                               </span>
                             )}
@@ -185,9 +191,6 @@ export function WishlistSection({
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">
-                        {formatCurrency(item.estimatedPrice, item.currency)}
-                      </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <StatusBadge tone={PRIORITY_TONES[item.priority]}>
                           {PRIORITY_LABELS[item.priority]}
@@ -197,6 +200,9 @@ export function WishlistSection({
                         <StatusBadge tone={isPending ? "muted" : "success"}>
                           {STATUS_LABELS[item.status]}
                         </StatusBadge>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {formatCurrency(item.estimatedPrice, item.currency)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end">

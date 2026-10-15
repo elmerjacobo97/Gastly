@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CheckCircle2Icon,
   HistoryIcon,
   PauseCircleIcon,
   PlayCircleIcon,
@@ -14,7 +13,6 @@ import { RowActionsMenu } from "@/components/row-actions-menu";
 import { StatusBadge } from "@/components/status-badge";
 import { TableSearchInput } from "@/components/table-search-input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -48,13 +46,6 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "income", label: "Ingresos" },
 ];
 
-function payButtonLabel(payment: RecurringPayment) {
-  const isPaid = !!payment.paidOn;
-  const isIncome = payment.type === "income";
-  if (isPaid) return isIncome ? "Cobrado" : "Pagado";
-  return isIncome ? "Cobrar" : "Pagar";
-}
-
 function dateLabel(payment: RecurringPayment) {
   const isIncome = payment.type === "income";
   if (payment.paidOn) {
@@ -77,7 +68,6 @@ function amountLabel(payment: RecurringPayment) {
 type RecurringPaymentListProps = {
   payments: RecurringPayment[];
   monthKey: string;
-  pending: boolean;
   onPay: (payment: RecurringPayment) => void;
   onEdit: (payment: RecurringPayment) => void;
   onHistory: (payment: RecurringPayment) => void;
@@ -88,7 +78,6 @@ type RecurringPaymentListProps = {
 export function RecurringPaymentList({
   payments,
   monthKey,
-  pending,
   onPay,
   onEdit,
   onHistory,
@@ -144,11 +133,8 @@ export function RecurringPaymentList({
                   Frecuencia
                 </TableHead>
                 <TableHead className="hidden md:table-cell">Fecha</TableHead>
-                <TableHead className="text-right">Monto</TableHead>
                 <TableHead className="hidden sm:table-cell">Estado</TableHead>
-                <TableHead>
-                  <span className="sr-only">Pago</span>
-                </TableHead>
+                <TableHead className="text-right">Monto</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -158,7 +144,7 @@ export function RecurringPaymentList({
               {visiblePayments.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={6}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
                     Sin resultados.
@@ -167,7 +153,7 @@ export function RecurringPaymentList({
               ) : (
                 visiblePayments.map((payment) => {
                   const badge = getPaymentBadge(payment, monthKey);
-                  const isPaid = !!payment.paidOn;
+                  const canPay = payment.isActive && !payment.paidOn;
                   const isIncome = payment.type === "income";
 
                   return (
@@ -186,7 +172,10 @@ export function RecurringPaymentList({
                           )}
                           <div className="flex min-w-0 flex-col">
                             <div className="flex items-center gap-1.5">
-                              <span className="max-w-56 truncate font-medium">
+                              <span
+                                className="line-clamp-2 max-w-56 font-medium whitespace-normal break-words"
+                                title={payment.description}
+                              >
                                 {payment.description}
                               </span>
                               {isIncome && (
@@ -219,14 +208,6 @@ export function RecurringPaymentList({
                       <TableCell className="hidden text-muted-foreground md:table-cell">
                         {dateLabel(payment)}
                       </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-right font-medium tabular-nums",
-                          isIncome && "text-emerald-600 dark:text-emerald-400",
-                        )}
-                      >
-                        {amountLabel(payment)}
-                      </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <Badge
                           variant={badge.variant}
@@ -235,21 +216,13 @@ export function RecurringPaymentList({
                           {badge.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant={isPaid ? "secondary" : "outline"}
-                          disabled={!payment.isActive || isPaid || pending}
-                          onClick={() => onPay(payment)}
-                          className="h-8"
-                        >
-                          {isPaid ? (
-                            <CheckCircle2Icon className="size-3.5" />
-                          ) : (
-                            <ReceiptTextIcon className="size-3.5" />
-                          )}
-                          {payButtonLabel(payment)}
-                        </Button>
+                      <TableCell
+                        className={cn(
+                          "text-right font-medium tabular-nums",
+                          isIncome && "text-emerald-600 dark:text-emerald-400",
+                        )}
+                      >
+                        {amountLabel(payment)}
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end">
@@ -257,6 +230,15 @@ export function RecurringPaymentList({
                             onEdit={() => onEdit(payment)}
                             onDelete={() => onDelete(payment.id)}
                             additionalActions={[
+                              ...(canPay
+                                ? [
+                                    {
+                                      icon: <ReceiptTextIcon />,
+                                      label: isIncome ? "Cobrar" : "Pagar",
+                                      onSelect: () => onPay(payment),
+                                    },
+                                  ]
+                                : []),
                               {
                                 icon: <HistoryIcon />,
                                 label: "Historial de pagos",

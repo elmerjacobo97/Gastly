@@ -41,7 +41,12 @@ function TransactionDescriptionCell({
 
   return (
     <div className="flex max-w-64 flex-col whitespace-normal">
-      <span className="font-medium">{transaction.description}</span>
+      <span
+        className="line-clamp-2 font-medium break-words"
+        title={transaction.description}
+      >
+        {transaction.description}
+      </span>
       {isCreditCard && (
         <span
           className={`text-xs ${isPendingCC ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}
@@ -52,7 +57,10 @@ function TransactionDescriptionCell({
         </span>
       )}
       {transaction.notes && (
-        <span className="truncate text-xs text-muted-foreground">
+        <span
+          className="line-clamp-1 text-xs break-words text-muted-foreground"
+          title={transaction.notes}
+        >
           {transaction.notes}
         </span>
       )}

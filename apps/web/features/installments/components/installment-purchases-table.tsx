@@ -99,11 +99,11 @@ export function InstallmentPurchasesTable({
                 <TableHead>Compra</TableHead>
                 <TableHead className="hidden md:table-cell">Cuenta</TableHead>
                 <TableHead>Progreso</TableHead>
-                <TableHead className="hidden text-right md:table-cell">
-                  Cuota
-                </TableHead>
                 <TableHead className="hidden md:table-cell">
                   Próxima cuota
+                </TableHead>
+                <TableHead className="hidden text-right md:table-cell">
+                  Cuota
                 </TableHead>
                 <TableHead className="text-right">Pendiente</TableHead>
                 <TableHead className="w-12">
@@ -150,7 +150,10 @@ export function InstallmentPurchasesTable({
                             />
                           )}
                           <div className="flex min-w-0 flex-col">
-                            <span className="max-w-64 truncate font-medium">
+                            <span
+                              className="line-clamp-2 max-w-64 font-medium whitespace-normal break-words"
+                              title={purchase.description}
+                            >
                               {purchase.description}
                             </span>
                             <span className="text-xs text-muted-foreground">
@@ -181,13 +184,13 @@ export function InstallmentPurchasesTable({
                             : `${purchase.paidCount}/${purchase.totalInstallments} · ${pctPaid}%`}
                         </ProgressCell>
                       </TableCell>
-                      <TableCell className="hidden text-right font-medium tabular-nums md:table-cell">
-                        {formatCurrency(purchase.installmentAmount)}
-                      </TableCell>
                       <TableCell className="hidden text-muted-foreground md:table-cell">
                         {nextPayment
                           ? `Cuota ${nextPayment.paymentNumber}/${purchase.totalInstallments} · ${formatDate(nextPayment.dueOn)}`
                           : "—"}
+                      </TableCell>
+                      <TableCell className="hidden text-right font-medium tabular-nums md:table-cell">
+                        {formatCurrency(purchase.installmentAmount)}
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatCurrency(purchase.totalPending)}

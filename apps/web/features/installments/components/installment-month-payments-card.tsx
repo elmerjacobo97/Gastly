@@ -84,8 +84,11 @@ export function InstallmentMonthPaymentsCard({
               <TableRow>
                 <TableHead>Compra</TableHead>
                 <TableHead className="hidden md:table-cell">Vence</TableHead>
+                <TableHead className="hidden sm:table-cell">Estado</TableHead>
                 <TableHead className="text-right">Monto</TableHead>
-                <TableHead className="text-right">Estado</TableHead>
+                <TableHead className="w-24">
+                  <span className="sr-only">Pagar</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,7 +108,10 @@ export function InstallmentMonthPaymentsCard({
                           />
                         )}
                         <div className="flex min-w-0 flex-col">
-                          <span className="max-w-64 truncate font-medium">
+                          <span
+                            className="line-clamp-2 max-w-64 font-medium whitespace-normal break-words"
+                            title={purchase.description}
+                          >
                             {purchase.description}
                           </span>
                           <span className="text-xs text-muted-foreground">
@@ -120,18 +126,21 @@ export function InstallmentMonthPaymentsCard({
                     <TableCell className="hidden text-muted-foreground md:table-cell">
                       {formatDate(payment.dueOn)}
                     </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {isPaid ? (
+                        <StatusBadge tone="success">Pagado</StatusBadge>
+                      ) : (
+                        <StatusBadge tone="warning">Pendiente</StatusBadge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatCurrency(payment.amount)}
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end">
-                        {isPaid ? (
-                          <StatusBadge tone="success">Pagado</StatusBadge>
-                        ) : (
+                        {!isPaid && (
                           <Button
-                            variant="outline"
                             size="sm"
-                            className="h-7 text-xs"
                             onClick={() => onPay({ payment, purchase })}
                           >
                             Pagar

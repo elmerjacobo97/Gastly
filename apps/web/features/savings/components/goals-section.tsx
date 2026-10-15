@@ -136,11 +136,11 @@ export function GoalsSection({ goals, onEdit, onDelete }: GoalsSectionProps) {
               <TableRow>
                 <TableHead>Meta</TableHead>
                 <TableHead>Progreso</TableHead>
-                <TableHead className="text-right">Ahorrado</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Fecha límite
                 </TableHead>
                 <TableHead className="hidden lg:table-cell">Ritmo</TableHead>
+                <TableHead className="text-right">Ahorrado</TableHead>
                 <TableHead className="w-24">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -169,7 +169,10 @@ export function GoalsSection({ goals, onEdit, onDelete }: GoalsSectionProps) {
                             className="size-3 shrink-0 rounded-full"
                             style={{ backgroundColor: goal.color }}
                           />
-                          <span className="max-w-48 truncate font-medium">
+                          <span
+                            className="line-clamp-2 max-w-48 font-medium whitespace-normal break-words"
+                            title={goal.name}
+                          >
                             {goal.name}
                           </span>
                         </div>
@@ -183,14 +186,6 @@ export function GoalsSection({ goals, onEdit, onDelete }: GoalsSectionProps) {
                             ? "Completada"
                             : `${goal.progress}% · Faltan ${formatCurrency(goal.remaining)}`}
                         </ProgressCell>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        <span className="font-medium">
-                          {formatCurrency(goal.currentAmount)}
-                        </span>
-                        <span className="block text-xs text-muted-foreground">
-                          de {formatCurrency(goal.targetAmount)}
-                        </span>
                       </TableCell>
                       <TableCell className="hidden text-muted-foreground md:table-cell">
                         {goal.targetDate ? formatDate(goal.targetDate) : "—"}
@@ -208,6 +203,14 @@ export function GoalsSection({ goals, onEdit, onDelete }: GoalsSectionProps) {
                         ) : (
                           "—"
                         )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <span className="font-medium">
+                          {formatCurrency(goal.currentAmount)}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          de {formatCurrency(goal.targetAmount)}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">

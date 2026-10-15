@@ -77,11 +77,11 @@ export function CategoryBudgetTable({
             <TableRow>
               <TableHead>Categoría</TableHead>
               <TableHead className="min-w-56">Progreso</TableHead>
+              <TableHead className="hidden lg:table-cell">Estado</TableHead>
               <TableHead className="hidden text-right md:table-cell">
                 Límite
               </TableHead>
               <TableHead className="text-right">Disponible</TableHead>
-              <TableHead className="hidden lg:table-cell">Estado</TableHead>
               <TableHead className="w-12">
                 <span className="sr-only">Acciones</span>
               </TableHead>
@@ -116,11 +116,17 @@ export function CategoryBudgetTable({
                           className="size-8 shrink-0 rounded-lg"
                         />
                         <div className="flex min-w-0 flex-col">
-                          <span className="max-w-48 truncate font-medium">
+                          <span
+                            className="line-clamp-2 max-w-48 font-medium whitespace-normal break-words"
+                            title={budget.categoryName}
+                          >
                             {budget.categoryName}
                           </span>
                           {budget.categoryDescription && (
-                            <span className="max-w-48 truncate text-xs text-muted-foreground">
+                            <span
+                              className="max-w-48 truncate text-xs text-muted-foreground"
+                              title={budget.categoryDescription}
+                            >
                               {budget.categoryDescription}
                             </span>
                           )}
@@ -147,6 +153,9 @@ export function CategoryBudgetTable({
                         />
                       </div>
                     </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <BudgetStatusBadge progress={progress} />
+                    </TableCell>
                     <TableCell className="hidden text-right tabular-nums text-muted-foreground md:table-cell">
                       {formatCurrency(budget.amount, currency)}
                     </TableCell>
@@ -158,9 +167,6 @@ export function CategoryBudgetTable({
                     >
                       {progress.isOverBudget ? "Excedido por " : "Quedan "}
                       {formatCurrency(Math.abs(progress.remaining), currency)}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <BudgetStatusBadge progress={progress} />
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end">
