@@ -4,178 +4,183 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { AddLoanDialog } from "@/features/loans/components/add-loan-dialog";
 import { EditLoanDialog } from "@/features/loans/components/edit-loan-dialog";
 import { EditLoanEventDialog } from "@/features/loans/components/edit-loan-event-dialog";
 import { LoanBalancesTable } from "@/features/loans/components/loan-balances-table";
-import { LoanDisbursementsTable } from "@/features/loans/components/loan-disbursements-table";
-import { LoanHistorySheet } from "@/features/loans/components/loan-history-sheet";
+import { LoanDialog } from "@/features/loans/components/loan-dialog";
+import {
+  LoanHistorySheet,
+  type LoanOffset,
+} from "@/features/loans/components/loan-history-sheet";
 import { RecordPaymentDialog } from "@/features/loans/components/record-payment-dialog";
+import { buildAccountStatement } from "@/features/loans/lib/account-statement";
 import {
   flattenLoanMovements,
   groupLoansByPerson,
   normalizePersonName,
 } from "@/features/loans/lib/group-loans";
 import {
+  compensateLoans,
   deleteLoanBalances,
   deleteLoanDisbursement,
   deleteLoanPayment,
 } from "@/features/loans/server/actions";
 import {
   type Loan,
-  type LoanDirection,
   type LoanMovementRow,
   type LoanPersonGroup,
 } from "@/features/loans/types/loan-types";
+import { formatCurrency } from "@/lib/format";
 
 type LoansWorkspaceProps = {
   loans: Loan[];
+  ownerName: string;
 };
 
-type HistoryContext = {
-  personName: string;
-  direction: LoanDirection;
-};
-
-export function LoansWorkspace({ loans }: LoansWorkspaceProps) {
+export function LoansWorkspace({ loans, ownerName }: LoansWorkspaceProps) {
   const [isMutationPending, startTransition] = useTransition();
-  const [addGroup, setAddGroup] = useState<LoanPersonGroup | null>(null);
-  const [editGroup, setEditGroup] = useState<LoanPersonGroup | null>(null);
+  const [addPersonName, setAddPersonName] = useState<string | null>(null);
+  const [editKey, setEditKey] = useState<string | null>(null);
+  const [detailKey, setDetailKey] = useState<string | null>(null);
+  const [deleteGroup, setDeleteGroup] = useState<LoanPersonGroup | null>(null);
+  const [offset, setOffset] = useState<LoanOffset | null>(null);
   const [paymentMovement, setPaymentMovement] =
     useState<LoanMovementRow | null>(null);
-  const [historyContext, setHistoryContext] = useState<HistoryContext | null>(
-    null,
-  );
   const [editMovement, setEditMovement] = useState<LoanMovementRow | null>(
     null,
   );
-  const [deleteLoan, setDeleteLoan] = useState<Loan | null>(null);
   const [deleteMovement, setDeleteMovement] = useState<LoanMovementRow | null>(
     null,
   );
   const groups = groupLoansByPerson(loans);
-  const allMovements = flattenLoanMovements(loans);
-  const disbursements = allMovements.filter(
-    (movement) => movement.kind === "disbursement" && !movement.isSettled,
-  );
-  const historyMovements = historyContext
-    ? allMovements.filter(
+  const detailGroup = groups.find((group) => group.key === detailKey) ?? null;
+  const editGroup = groups.find((group) => group.key === editKey) ?? null;
+  const detailMovements = detailGroup
+    ? flattenLoanMovements(loans).filter(
         (movement) =>
-          movement.direction === historyContext.direction &&
-          normalizePersonName(movement.personName) ===
-            normalizePersonName(historyContext.personName),
+          normalizePersonName(movement.personName) === detailGroup.key,
       )
     : [];
-  const liveAddGroup = addGroup
-    ? (groups.find((group) => group.key === addGroup.key) ?? null)
-    : null;
-  const liveEditGroup = editGroup
-    ? (groups.find((group) => group.key === editGroup.key) ?? null)
-    : null;
-  function findGroupForLoan(loan: Loan) {
-    return groups.find((group) =>
-      group.balances.some((balance) => balance.id === loan.id),
-    );
+
+  function runMutation(
+    action: () => Promise<void>,
+    success: string,
+    failure: string,
+    onDone: () => void,
+  ) {
+    startTransition(async () => {
+      try {
+        await action();
+        toast.success(success);
+        onDone();
+      } catch (error) {
+        toast.error(failure, {
+          description:
+            error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        });
+      }
+    });
   }
 
-  function openAddDialog(loan: Loan) {
-    const group = findGroupForLoan(loan);
-    if (group) setAddGroup(group);
+  function statementFor(group: LoanPersonGroup) {
+    return buildAccountStatement({
+      group,
+      movements: flattenLoanMovements(loans).filter(
+        (movement) => normalizePersonName(movement.personName) === group.key,
+      ),
+      ownerName,
+    });
   }
 
-  function openEditDialog(loan: Loan) {
-    const group = findGroupForLoan(loan);
-    if (group) setEditGroup(group);
-  }
-
-  function openMovementPayment(movement: LoanMovementRow) {
-    if (movement.kind === "disbursement" && !movement.isSettled) {
-      setPaymentMovement(movement);
+  async function copyStatement(group: LoanPersonGroup) {
+    try {
+      await navigator.clipboard.writeText(statementFor(group));
+      toast.success("Estado de cuenta copiado");
+    } catch {
+      toast.error("No se pudo copiar");
     }
   }
 
-  function handleDeleteLoan(loan: Loan) {
-    startTransition(async () => {
-      try {
-        await deleteLoanBalances([loan.id]);
-        toast.success("Saldo eliminado");
-        setDeleteLoan(null);
-      } catch (error) {
-        toast.error("No se pudo eliminar el saldo", {
-          description:
-            error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        });
-      }
-    });
+  function shareStatement(group: LoanPersonGroup) {
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(statementFor(group))}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+
+  function handleDeleteGroup(group: LoanPersonGroup) {
+    runMutation(
+      () => deleteLoanBalances(group.balances.map((loan) => loan.id)),
+      "Persona eliminada",
+      "No se pudo eliminar",
+      () => setDeleteGroup(null),
+    );
+  }
+
+  function handleCompensate({ lent, borrowed }: LoanOffset) {
+    runMutation(
+      () => compensateLoans(lent.id, borrowed.id),
+      "Saldos compensados",
+      "No se pudo compensar",
+      () => setOffset(null),
+    );
   }
 
   function handleDeleteMovement(movement: LoanMovementRow) {
-    startTransition(async () => {
-      try {
-        if (movement.kind === "payment") {
-          await deleteLoanPayment(movement.id);
-          toast.success("Abono eliminado");
-        } else {
-          await deleteLoanDisbursement(movement.id);
-          toast.success("Movimiento eliminado");
-        }
-        setDeleteMovement(null);
-      } catch (error) {
-        toast.error("No se pudo eliminar el movimiento", {
-          description:
-            error instanceof Error ? error.message : "Inténtalo de nuevo.",
-        });
-      }
-    });
+    runMutation(
+      () =>
+        movement.kind === "payment"
+          ? deleteLoanPayment(movement.id)
+          : deleteLoanDisbursement(movement.id),
+      movement.kind === "payment" ? "Abono eliminado" : "Movimiento eliminado",
+      "No se pudo eliminar el movimiento",
+      () => setDeleteMovement(null),
+    );
   }
 
   return (
     <>
       <LoanBalancesTable
-        loans={loans}
-        onAdd={openAddDialog}
-        onDelete={setDeleteLoan}
-        onEdit={openEditDialog}
-        onHistory={(loan) =>
-          setHistoryContext({
-            personName: loan.personName,
-            direction: loan.direction,
-          })
-        }
+        groups={groups}
+        onAdd={(group) => setAddPersonName(group.personName)}
+        onDelete={setDeleteGroup}
+        onCopyStatement={copyStatement}
+        onEdit={(group) => setEditKey(group.key)}
+        onShareStatement={shareStatement}
+        onOpen={(group) => setDetailKey(group.key)}
       />
 
-      <LoanDisbursementsTable
-        disbursements={disbursements}
-        onDelete={setDeleteMovement}
-        onEdit={setEditMovement}
-        onPay={openMovementPayment}
-      />
-
-      {historyContext && (
+      {detailGroup && (
         <LoanHistorySheet
-          direction={historyContext.direction}
-          movements={historyMovements}
+          group={detailGroup}
+          movements={detailMovements}
+          onCopyStatement={() => copyStatement(detailGroup)}
+          onShareStatement={() => shareStatement(detailGroup)}
+          onAdd={() => setAddPersonName(detailGroup.personName)}
+          onCompensate={setOffset}
           onDelete={setDeleteMovement}
           onEdit={setEditMovement}
-          onOpenChange={(open) => !open && setHistoryContext(null)}
-          open
-          personName={historyContext.personName}
-        />
-      )}
-
-      {liveAddGroup && (
-        <AddLoanDialog
-          group={liveAddGroup}
-          onOpenChange={(open) => !open && setAddGroup(null)}
+          onOpenChange={(open) => !open && setDetailKey(null)}
+          onPay={setPaymentMovement}
           open
         />
       )}
 
-      {liveEditGroup && (
+      {addPersonName !== null && (
+        <LoanDialog
+          defaultPersonName={addPersonName}
+          loans={loans}
+          onOpenChange={(open) => !open && setAddPersonName(null)}
+          open
+        />
+      )}
+
+      {editGroup && (
         <EditLoanDialog
-          group={liveEditGroup}
+          group={editGroup}
           open
-          onOpenChange={(open) => !open && setEditGroup(null)}
+          onOpenChange={(open) => !open && setEditKey(null)}
         />
       )}
 
@@ -196,11 +201,25 @@ export function LoansWorkspace({ loans }: LoansWorkspaceProps) {
       )}
 
       <ConfirmDialog
-        open={Boolean(deleteLoan)}
-        onOpenChange={(open) => !open && setDeleteLoan(null)}
-        description="Se eliminará este saldo y todo su historial de préstamos y abonos en esta moneda."
+        open={Boolean(deleteGroup)}
+        onOpenChange={(open) => !open && setDeleteGroup(null)}
+        description="Se eliminarán todos los préstamos y devoluciones de esta persona."
         pending={isMutationPending}
-        onConfirm={() => deleteLoan && handleDeleteLoan(deleteLoan)}
+        onConfirm={() => deleteGroup && handleDeleteGroup(deleteGroup)}
+      />
+
+      <ConfirmDialog
+        open={Boolean(offset)}
+        onOpenChange={(open) => !open && setOffset(null)}
+        title="¿Compensar saldos?"
+        description={
+          offset
+            ? `Se registrará una devolución de ${formatCurrency(offset.amount, offset.lent.currency)} en ambos lados y se saldará la deuda menor.`
+            : ""
+        }
+        confirmLabel="Compensar"
+        pending={isMutationPending}
+        onConfirm={() => offset && handleCompensate(offset)}
       />
 
       <ConfirmDialog

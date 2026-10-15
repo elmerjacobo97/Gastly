@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addLoanSchema,
   editLoanPersonSchema,
   loanDisbursementSchema,
   loanIdSchema,
@@ -151,53 +150,16 @@ describe("loanSchema", () => {
   });
 });
 
-describe("addLoanSchema", () => {
-  it("accepts the disbursement subset without person or direction", () => {
-    const parsed = addLoanSchema.parse({
-      amount: "250",
-      currency: "PEN",
-      interestRate: "0",
-      loanedOn: "2026-01-20",
-    });
-
-    expect(parsed.amount).toBe(250);
-    expect(parsed.interestRate).toBe(0);
-  });
-
-  it("rejects a missing currency", () => {
-    const result = addLoanSchema.safeParse({
-      amount: "250",
-      interestRate: "0",
-      loanedOn: "2026-01-20",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects an invalid amount", () => {
-    const result = addLoanSchema.safeParse({
-      amount: "abc",
-      currency: "PEN",
-      interestRate: "0",
-      loanedOn: "2026-01-20",
-    });
-
-    expect(result.success).toBe(false);
-  });
-});
-
 describe("editLoanPersonSchema", () => {
   it("accepts a valid person edit", () => {
     expect(
       editLoanPersonSchema.parse({
         personName: "  Carlos  ",
         expectedOn: "2026-03-01",
-        notes: "  ok  ",
       }),
     ).toEqual({
       personName: "Carlos",
       expectedOn: "2026-03-01",
-      notes: "ok",
     });
   });
 

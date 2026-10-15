@@ -109,7 +109,7 @@ export function EditLoanEventDialog({
           <DialogDescription>
             {isPayment
               ? "Corrige el monto, la fecha o las notas de este abono."
-              : "Corrige el monto, la fecha, el motivo o las notas de este préstamo."}
+              : "Corrige el monto, la fecha, el motivo o el interés de este préstamo."}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -214,33 +214,31 @@ export function EditLoanEventDialog({
                 )}
               />
             )}
-            <Controller
-              control={form.control}
-              name="notes"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="ee-notes">
-                    Notas{" "}
-                    <span className="font-normal text-muted-foreground">
-                      (opcional)
-                    </span>
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id="ee-notes"
-                    aria-invalid={fieldState.invalid}
-                    placeholder={
-                      isPayment
-                        ? "Ej: Yape"
-                        : "Ej: Acordado devolver en 2 partes"
-                    }
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+            {isPayment && (
+              <Controller
+                control={form.control}
+                name="notes"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="ee-notes">
+                      Notas{" "}
+                      <span className="font-normal text-muted-foreground">
+                        (opcional)
+                      </span>
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      id="ee-notes"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Ej: Yape"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            )}
           </FieldGroup>
         </form>
         <DialogFooter>

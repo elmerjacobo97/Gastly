@@ -1,6 +1,6 @@
 "use client";
 
-import { HistoryIcon, PlusIcon } from "lucide-react";
+import { CopyIcon, EyeIcon, MessageCircleIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { RowActionsMenu } from "@/components/row-actions-menu";
@@ -23,107 +23,165 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LoanDueDate } from "@/features/loans/components/loan-due-date";
-import { type Loan } from "@/features/loans/types/loan-types";
+import { netLabel } from "@/features/loans/lib/group-loans";
+import { type LoanPersonGroup } from "@/features/loans/types/loan-types";
 import { formatCurrency } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 
-type LoanFilter = "all" | "lent" | "borrowed" | "settled";
+type PersonFilter = "all" | "owed" | "owe" | "settled";
 
-const LOAN_FILTER_OPTIONS: { value: LoanFilter; label: string }[] = [
+const PERSON_FILTER_OPTIONS: { value: PersonFilter; label: string }[] = [
   { value: "all", label: "Todas" },
-  { value: "lent", label: "Yo presté" },
-  { value: "borrowed", label: "Me prestaron" },
+  { value: "owed", label: "Me deben" },
+  { value: "owe", label: "Debo" },
   { value: "settled", label: "Saldadas" },
 ];
 
-function directionLabel(direction: Loan["direction"]) {
-  return direction === "lent" ? "Yo presté" : "Me prestaron";
+function matchesFilter(group: LoanPersonGroup, filter: PersonFilter) {
+  if (filter === "settled") return group.isSettled;
+  if (filter === "owed") return group.totals.some((total) => total.net > 0);
+  if (filter === "owe") return group.totals.some((total) => total.net < 0);
+  return true;
 }
 
-function LoanPersonCell({ loan }: { loan: Loan }) {
+function nextExpectedOn(group: LoanPersonGroup) {
   return (
-    <div className="flex min-w-32 flex-col">
-      <span className="font-medium">{loan.personName}</span>
-      {loan.notes && (
-        <span className="max-w-48 truncate text-xs text-muted-foreground">
-          {loan.notes}
-        </span>
-      )}
-      <LoanDueDate expectedOn={loan.expectedOn} isSettled={loan.isSettled} />
+    group.balances
+      .filter((loan) => !loan.isSettled && loan.expectedOn)
+      .map((loan) => loan.expectedOn!)
+      .toSorted()[0] ?? null
+  );
+}
+
+function PersonCell({
+  group,
+  onOpen,
+}: {
+  group: LoanPersonGroup;
+  onOpen: () => void;
+}) {
+  return (
+    <div className="flex min-w-28 flex-col items-start">
+      <button
+        className="font-medium hover:underline"
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen();
+        }}
+        type="button"
+      >
+        {group.personName}
+      </button>
+      <LoanDueDate
+        expectedOn={nextExpectedOn(group)}
+        isSettled={group.isSettled}
+      />
     </div>
   );
 }
 
-function LoanPendingCell({ loan }: { loan: Loan }) {
-  if (loan.isSettled) {
-    return <StatusBadge tone="muted">Saldado</StatusBadge>;
+function netClass(net: number) {
+  if (net > 0) return "text-emerald-600 dark:text-emerald-400";
+  if (net < 0) return "text-destructive";
+  return "text-muted-foreground";
+}
+
+// Same hues as the "Le prestaste" / "Te prestó" badges in the person panel.
+const SIDE_CLASSES = {
+  lent: "text-sky-700 dark:text-sky-400",
+  borrowed: "text-amber-700 dark:text-amber-400",
+} as const;
+
+function SideCell({
+  group,
+  side,
+}: {
+  group: LoanPersonGroup;
+  side: "lent" | "borrowed";
+}) {
+  const totals = group.totals.filter((total) => total[side] > 0);
+  if (totals.length === 0) {
+    return <span className="block text-right text-muted-foreground">—</span>;
   }
 
   return (
-    <div className="text-right">
-      <span
-        className={
-          loan.direction === "lent"
-            ? "font-medium tabular-nums text-emerald-600 dark:text-emerald-400"
-            : "font-medium tabular-nums text-destructive"
-        }
-      >
-        {formatCurrency(loan.pendingAmount, loan.currency)}
-      </span>
-      {loan.accruedInterest > 0 && (
-        <span className="mt-0.5 block text-xs text-muted-foreground">
-          Incluye {formatCurrency(loan.accruedInterest, loan.currency)} de
-          interés
+    <div
+      className={`flex flex-col items-end gap-0.5 font-medium tabular-nums ${SIDE_CLASSES[side]}`}
+    >
+      {totals.map((total) => (
+        <span key={total.currency}>
+          {formatCurrency(total[side], total.currency)}
         </span>
-      )}
+      ))}
+    </div>
+  );
+}
+
+function NetCell({ group }: { group: LoanPersonGroup }) {
+  if (group.totals.length === 0) {
+    return (
+      <div className="flex justify-end">
+        <StatusBadge tone="muted">Saldado</StatusBadge>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-0.5 text-right">
+      {group.totals.map((total) => (
+        <span
+          className={`font-semibold tabular-nums ${netClass(total.net)}`}
+          key={total.currency}
+        >
+          {netLabel(total)}
+        </span>
+      ))}
     </div>
   );
 }
 
 type LoanBalancesTableProps = {
-  loans: Loan[];
-  onAdd: (loan: Loan) => void;
-  onEdit: (loan: Loan) => void;
-  onHistory: (loan: Loan) => void;
-  onDelete: (loan: Loan) => void;
+  groups: LoanPersonGroup[];
+  onAdd: (group: LoanPersonGroup) => void;
+  onOpen: (group: LoanPersonGroup) => void;
+  onEdit: (group: LoanPersonGroup) => void;
+  onCopyStatement: (group: LoanPersonGroup) => void;
+  onShareStatement: (group: LoanPersonGroup) => void;
+  onDelete: (group: LoanPersonGroup) => void;
 };
 
 export function LoanBalancesTable({
-  loans,
+  groups,
   onAdd,
+  onOpen,
   onEdit,
-  onHistory,
+  onCopyStatement,
+  onShareStatement,
   onDelete,
 }: LoanBalancesTableProps) {
-  const [filter, setFilter] = useState<LoanFilter>("all");
+  const [filter, setFilter] = useState<PersonFilter>("all");
   const [query, setQuery] = useState("");
 
-  const visibleLoans = useMemo(() => {
-    const byFilter =
-      filter === "all"
-        ? loans
-        : filter === "settled"
-          ? loans.filter((loan) => loan.isSettled)
-          : loans.filter((loan) => loan.direction === filter);
-
-    return byFilter.filter((loan) =>
-      matchesQuery(
-        query,
-        loan.personName,
-        loan.notes,
-        directionLabel(loan.direction),
-      ),
-    );
-  }, [filter, loans, query]);
+  const visibleGroups = useMemo(
+    () =>
+      groups
+        .filter(
+          (group) =>
+            matchesFilter(group, filter) &&
+            matchesQuery(query, group.personName),
+        )
+        .toSorted((a, b) => Number(a.isSettled) - Number(b.isSettled)),
+    [filter, groups, query],
+  );
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Deudas</CardTitle>
+        <CardTitle className="text-base">Personas</CardTitle>
         <CardDescription>
-          {visibleLoans.length} saldo
-          {visibleLoans.length !== 1 ? "s" : ""} registrado
-          {visibleLoans.length !== 1 ? "s" : ""}
+          {visibleGroups.length}{" "}
+          {visibleGroups.length === 1 ? "persona" : "personas"} · toca una para
+          ver sus movimientos
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -132,7 +190,7 @@ export function LoanBalancesTable({
           <SegmentedControl
             value={filter}
             onChange={setFilter}
-            options={LOAN_FILTER_OPTIONS}
+            options={PERSON_FILTER_OPTIONS}
           />
         </div>
 
@@ -141,58 +199,77 @@ export function LoanBalancesTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Persona</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead className="text-right">Pendiente</TableHead>
+                <TableHead className="hidden text-right md:table-cell">
+                  Me debe
+                </TableHead>
+                <TableHead className="hidden text-right md:table-cell">
+                  Le debo
+                </TableHead>
+                <TableHead className="text-right">Saldo neto</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visibleLoans.length === 0 ? (
+              {visibleGroups.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
                     Sin resultados.
                   </TableCell>
                 </TableRow>
               ) : (
-                visibleLoans.map((loan) => (
-                  <TableRow key={loan.id}>
+                visibleGroups.map((group) => (
+                  <TableRow
+                    className={`cursor-pointer ${group.isSettled ? "opacity-60" : ""}`}
+                    key={group.key}
+                    onClick={() => onOpen(group)}
+                  >
                     <TableCell>
-                      <LoanPersonCell loan={loan} />
+                      <PersonCell group={group} onOpen={() => onOpen(group)} />
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <SideCell group={group} side="lent" />
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <SideCell group={group} side="borrowed" />
                     </TableCell>
                     <TableCell>
-                      <StatusBadge
-                        tone={loan.direction === "lent" ? "success" : "danger"}
-                      >
-                        {directionLabel(loan.direction)}
-                      </StatusBadge>
+                      <NetCell group={group} />
                     </TableCell>
-                    <TableCell>
-                      <LoanPendingCell loan={loan} />
-                    </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(event) => event.stopPropagation()}>
                       <div className="flex justify-end">
                         <RowActionsMenu
                           additionalActions={[
                             {
                               icon: <PlusIcon />,
-                              label: "Otro préstamo",
-                              onSelect: () => onAdd(loan),
+                              label: "Registrar préstamo",
+                              onSelect: () => onAdd(group),
                             },
                             {
-                              icon: <HistoryIcon />,
-                              label: "Ver historial",
-                              onSelect: () => onHistory(loan),
+                              icon: <EyeIcon />,
+                              label: "Ver movimientos",
+                              onSelect: () => onOpen(group),
+                            },
+                            {
+                              icon: <CopyIcon />,
+                              label: "Copiar estado de cuenta",
+                              onSelect: () => onCopyStatement(group),
+                              separatorBefore: true,
+                            },
+                            {
+                              icon: <MessageCircleIcon />,
+                              label: "Enviar por WhatsApp",
+                              onSelect: () => onShareStatement(group),
                             },
                           ]}
                           className="text-muted-foreground data-[state=open]:bg-muted"
                           editLabel="Editar persona"
-                          onDelete={() => onDelete(loan)}
-                          onEdit={() => onEdit(loan)}
+                          onDelete={() => onDelete(group)}
+                          onEdit={() => onEdit(group)}
                         />
                       </div>
                     </TableCell>

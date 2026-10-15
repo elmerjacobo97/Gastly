@@ -58,4 +58,4 @@ supabase/.temp
 .impeccable/*
 
 # graphify
-/graphify-out/
+graphify-out/
