@@ -24,7 +24,10 @@ import {
 } from "@/components/ui/table";
 import { LoanDueDate } from "@/features/loans/components/loan-due-date";
 import { netLabel } from "@/features/loans/lib/group-loans";
-import { type LoanPersonGroup } from "@/features/loans/types/loan-types";
+import {
+  type LoanCurrency,
+  type LoanPersonGroup,
+} from "@/features/loans/types/loan-types";
 import { formatCurrency } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 
@@ -51,6 +54,14 @@ function nextExpectedOn(group: LoanPersonGroup) {
       .map((loan) => loan.expectedOn!)
       .toSorted()[0] ?? null
   );
+}
+
+function openSaleAmount(group: LoanPersonGroup, currency: LoanCurrency) {
+  return group.balances
+    .filter((loan) => loan.currency === currency)
+    .flatMap((loan) => loan.disbursements)
+    .filter((disbursement) => disbursement.isSale)
+    .reduce((sum, disbursement) => sum + disbursement.outstandingAmount, 0);
 }
 
 function PersonCell({
@@ -108,11 +119,22 @@ function SideCell({
     <div
       className={`flex flex-col items-end gap-0.5 font-medium tabular-nums ${SIDE_CLASSES[side]}`}
     >
-      {totals.map((total) => (
-        <span key={total.currency}>
-          {formatCurrency(total[side], total.currency)}
-        </span>
-      ))}
+      {totals.map((total) => {
+        const saleAmount =
+          side === "lent" ? openSaleAmount(group, total.currency) : 0;
+        return (
+          <span className="flex flex-col items-end" key={total.currency}>
+            {formatCurrency(total[side], total.currency)}
+            {saleAmount > 0 && (
+              <span className="text-xs font-normal text-violet-700 dark:text-violet-400">
+                {saleAmount === total[side]
+                  ? "Venta"
+                  : `Venta ${formatCurrency(saleAmount, total.currency)}`}
+              </span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -169,6 +170,11 @@ export function RecordPaymentDialog({
                 </Field>
               )}
             />
+            {movement.isSale && (
+              <FieldDescription>
+                Se registrará como ingreso en Transacciones (categoría Ventas).
+              </FieldDescription>
+            )}
           </FieldGroup>
         </form>
         <DialogFooter>

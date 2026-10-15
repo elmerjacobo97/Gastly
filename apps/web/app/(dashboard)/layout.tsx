@@ -30,13 +30,13 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar
-        userEmail={user.email}
-        userName={userName}
-        signOutAction={signOut}
-      />
+      <AppSidebar />
       <SidebarInset>
-        <PageHeader />
+        <PageHeader
+          userEmail={user.email}
+          userName={userName}
+          signOutAction={signOut}
+        />
         {children}
       </SidebarInset>
     </SidebarProvider>

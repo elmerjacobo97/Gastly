@@ -29,7 +29,22 @@ describe("loanSchema", () => {
       currency: "USD",
       interestRate: 2.5,
       loanedOn: "2026-01-15",
+      isSale: false,
     });
+  });
+
+  it("accepts a sale when the user lent", () => {
+    expect(loanSchema.parse({ ...validLoan, isSale: true }).isSale).toBe(true);
+  });
+
+  it("rejects a sale when the user borrowed", () => {
+    const result = loanSchema.safeParse({
+      ...validLoan,
+      direction: "borrowed",
+      isSale: true,
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("trims names and accepts optional fields", () => {
@@ -238,6 +253,7 @@ describe("loanDisbursementSchema", () => {
       occurredOn: "2026-02-15",
       interestRate: 3,
       description: "segundo desembolso",
+      isSale: false,
     });
   });
 

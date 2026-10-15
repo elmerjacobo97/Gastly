@@ -24,6 +24,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { NumberInput } from "@/components/ui/number-input";
 import {
   loanDisbursementSchema,
@@ -33,10 +37,10 @@ import {
   updateLoanDisbursement,
   updateLoanPayment,
 } from "@/features/loans/server/actions";
-import { type LoanHistoryEntry } from "@/features/loans/types/loan-types";
+import { type LoanMovementRow } from "@/features/loans/types/loan-types";
 
 type EditLoanEventDialogProps = {
-  entry: LoanHistoryEntry;
+  entry: LoanMovementRow;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -47,6 +51,7 @@ export function EditLoanEventDialog({
   onOpenChange,
 }: EditLoanEventDialogProps) {
   const isPayment = entry.kind === "payment";
+  const canBeSale = !isPayment && entry.direction === "lent";
   const defaults = useMemo(
     () => ({
       amount: entry.amount,
@@ -54,6 +59,7 @@ export function EditLoanEventDialog({
       description: entry.description ?? "",
       notes: entry.notes ?? "",
       interestRate: entry.interestRate,
+      isSale: entry.isSale,
     }),
     [
       entry.amount,
@@ -61,6 +67,7 @@ export function EditLoanEventDialog({
       entry.description,
       entry.notes,
       entry.interestRate,
+      entry.isSale,
     ],
   );
 
@@ -160,6 +167,34 @@ export function EditLoanEventDialog({
                 )}
               />
             </div>
+            {canBeSale && (
+              <Controller
+                control={form.control}
+                name="isSale"
+                render={({ field }) => (
+                  <Field>
+                    <FieldLabel htmlFor="ee-kind">Tipo</FieldLabel>
+                    <NativeSelect
+                      id="ee-kind"
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      onChange={(event) =>
+                        field.onChange(event.target.value === "sale")
+                      }
+                      ref={field.ref}
+                      value={field.value ? "sale" : "loan"}
+                    >
+                      <NativeSelectOption value="loan">
+                        Préstamo
+                      </NativeSelectOption>
+                      <NativeSelectOption value="sale">
+                        Venta a crédito
+                      </NativeSelectOption>
+                    </NativeSelect>
+                  </Field>
+                )}
+              />
+            )}
             {!isPayment && (
               <Controller
                 control={form.control}

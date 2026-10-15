@@ -38,6 +38,7 @@ type LoanDisbursementRow = {
   description: string | null;
   notes: string | null;
   interest_rate: number | string;
+  is_sale: boolean;
 };
 
 function mapPayment(row: LoanPaymentRow): LoanPayment {
@@ -60,6 +61,7 @@ function mapDisbursement(row: LoanDisbursementRow): LoanDisbursement {
     description: row.description,
     notes: row.notes,
     interestRate: Number(row.interest_rate ?? 0),
+    isSale: row.is_sale,
     outstandingAmount: 0,
   };
 }
@@ -119,7 +121,7 @@ export async function getLoans(): Promise<Loan[]> {
     supabase
       .from("loan_disbursements")
       .select(
-        "id, loan_id, amount, occurred_on, description, notes, interest_rate",
+        "id, loan_id, amount, occurred_on, description, notes, interest_rate, is_sale",
       )
       .in("loan_id", loanIds)
       .order("occurred_on", { ascending: false })

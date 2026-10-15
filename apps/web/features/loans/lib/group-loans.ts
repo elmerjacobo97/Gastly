@@ -100,26 +100,30 @@ export function flattenLoanMovements(loans: Loan[]): LoanMovementRow[] {
         isSettled: disbursement.outstandingAmount <= 0,
         pendingAmount: disbursement.outstandingAmount,
         interestRate: disbursement.interestRate,
+        isSale: disbursement.isSale,
       })),
-      ...loan.payments.map((payment): LoanMovementRow => ({
-        id: payment.id,
-        kind: "payment",
-        loanId: loan.id,
-        personName: loan.personName,
-        direction: loan.direction,
-        expectedOn: loan.expectedOn,
-        currency: loan.currency,
-        amount: payment.amount,
-        occurredOn: payment.occurredOn,
-        description:
-          loan.disbursements.find(
-            (disbursement) => disbursement.id === payment.disbursementId,
-          )?.description ?? null,
-        notes: payment.notes,
-        isSettled: loan.isSettled,
-        pendingAmount: 0,
-        interestRate: 0,
-      })),
+      ...loan.payments.map((payment): LoanMovementRow => {
+        const disbursement = loan.disbursements.find(
+          (item) => item.id === payment.disbursementId,
+        );
+        return {
+          id: payment.id,
+          kind: "payment",
+          loanId: loan.id,
+          personName: loan.personName,
+          direction: loan.direction,
+          expectedOn: loan.expectedOn,
+          currency: loan.currency,
+          amount: payment.amount,
+          occurredOn: payment.occurredOn,
+          description: disbursement?.description ?? null,
+          notes: payment.notes,
+          isSettled: loan.isSettled,
+          pendingAmount: 0,
+          interestRate: 0,
+          isSale: disbursement?.isSale ?? false,
+        };
+      }),
     ])
     .toSorted((a, b) => {
       const byDate = b.occurredOn.localeCompare(a.occurredOn);

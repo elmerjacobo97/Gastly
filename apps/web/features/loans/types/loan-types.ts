@@ -27,6 +27,7 @@ export type LoanDisbursement = {
   description: string | null;
   notes: string | null;
   interestRate: number;
+  isSale: boolean;
   outstandingAmount: number;
 };
 
@@ -71,6 +72,7 @@ export type LoanHistoryEntry = {
   description: string | null;
   notes: string | null;
   interestRate: number;
+  isSale: boolean;
 };
 
 export type LoanMovementRow = LoanHistoryEntry & {

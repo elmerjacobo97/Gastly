@@ -59,6 +59,7 @@ const EMPTY_DEFAULTS: LoanValues = {
   description: "",
   expectedOn: "",
   loanedOn: getTodayStr(),
+  isSale: false,
 };
 
 type LoanDialogProps = {
@@ -107,6 +108,7 @@ export function LoanDialog({
   }
 
   const direction = useWatch({ control: form.control, name: "direction" });
+  const isSale = useWatch({ control: form.control, name: "isSale" });
   const personName = useWatch({ control: form.control, name: "personName" });
   const currency = useWatch({ control: form.control, name: "currency" });
 
@@ -170,14 +172,34 @@ export function LoanDialog({
                   render={({ field }) => (
                     <Field>
                       <FieldLabel htmlFor="loan-direction">Tipo</FieldLabel>
-                      <NativeSelect {...field} id="loan-direction">
+                      <NativeSelect
+                        id="loan-direction"
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        onChange={(event) => {
+                          const kind = event.target.value;
+                          field.onChange(kind === "sale" ? "lent" : kind);
+                          form.setValue("isSale", kind === "sale");
+                        }}
+                        ref={field.ref}
+                        value={isSale ? "sale" : field.value}
+                      >
                         <NativeSelectOption value="lent">
                           Yo presté
                         </NativeSelectOption>
                         <NativeSelectOption value="borrowed">
                           Me prestaron
                         </NativeSelectOption>
+                        <NativeSelectOption value="sale">
+                          Vendí a crédito
+                        </NativeSelectOption>
                       </NativeSelect>
+                      {isSale && (
+                        <FieldDescription>
+                          Cada pago que recibas se registrará como ingreso en
+                          Transacciones (categoría Ventas).
+                        </FieldDescription>
+                      )}
                     </Field>
                   )}
                 />
@@ -188,9 +210,11 @@ export function LoanDialog({
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="loan-person">
-                        {direction === "lent"
-                          ? "A quién le presté"
-                          : "Quién me prestó"}
+                        {isSale
+                          ? "A quién le vendí"
+                          : direction === "lent"
+                            ? "A quién le presté"
+                            : "Quién me prestó"}
                       </FieldLabel>
                       <AutocompleteInput
                         id="loan-person"

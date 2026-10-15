@@ -74,8 +74,10 @@ function formatLoanDate(value: string) {
 
 function movementLabel(movement: LoanMovementRow) {
   if (movement.kind === "payment") {
+    if (movement.isSale) return "Te pagó";
     return movement.direction === "lent" ? "Te devolvió" : "Le devolviste";
   }
+  if (movement.isSale) return "Le vendiste";
   return movement.direction === "lent" ? "Le prestaste" : "Te prestó";
 }
 
@@ -90,6 +92,9 @@ function isActive(movement: LoanMovementRow) {
 }
 
 function movementBadgeClass(movement: LoanMovementRow) {
+  if (movement.isSale) {
+    return "bg-violet-500/10 text-violet-700 dark:text-violet-400";
+  }
   if (movement.kind === "payment") {
     return movement.direction === "lent"
       ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
@@ -145,7 +150,7 @@ function HistoryMovementRow({
     <div
       className={`flex items-start justify-between gap-3 py-3 ${
         isPending ? "" : "opacity-55"
-      }`}
+      } ${movement.isSale ? "bg-violet-500/[0.03]" : ""}`}
     >
       <div className="min-w-0">
         <p className="text-sm font-medium">

@@ -5,30 +5,17 @@ import {
   ArrowLeftRightIcon,
   BarChart3Icon,
   CalendarClockIcon,
-  ChevronsUpDownIcon,
   CreditCardIcon,
   GiftIcon,
   HandCoinsIcon,
   LayoutDashboardIcon,
-  LogOutIcon,
   PackageIcon,
-  Settings2Icon,
   TargetIcon,
   WalletCardsIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -106,109 +93,7 @@ const navigationItems = [
   },
 ];
 
-type AppSidebarProps = {
-  userEmail?: string;
-  userName?: string;
-  signOutAction?: (formData: FormData) => void | Promise<void>;
-};
-
-function UserFooter({ userEmail, userName, signOutAction }: AppSidebarProps) {
-  const { isMobile, setOpenMobile } = useSidebar();
-
-  const displayName = userName || userEmail?.split("@")[0] || "Usuario";
-  const initials = displayName
-    .split(" ")
-    .slice(0, 2)
-    .map((s) => s[0])
-    .join("")
-    .toUpperCase();
-
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="size-8 rounded-lg shrink-0 after:hidden">
-                <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{displayName}</span>
-                {userEmail && (
-                  <span className="truncate text-xs text-muted-foreground">
-                    {userEmail}
-                  </span>
-                )}
-              </div>
-              <ChevronsUpDownIcon className="ml-auto size-4 shrink-0" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="size-8 rounded-lg shrink-0 after:hidden">
-                  <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{displayName}</span>
-                  {userEmail && (
-                    <span className="truncate text-xs text-muted-foreground">
-                      {userEmail}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link
-                href="/settings"
-                className="flex items-center gap-2"
-                onClick={() => setOpenMobile(false)}
-              >
-                <Settings2Icon className="size-4" />
-                Configuración
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <form
-                action={signOutAction ?? (async () => {})}
-                className="w-full"
-              >
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  className="h-auto w-full justify-start gap-2 p-0 font-normal"
-                >
-                  <LogOutIcon className="size-4" />
-                  Cerrar sesión
-                </Button>
-              </form>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  );
-}
-
-export function AppSidebar({
-  userEmail,
-  userName,
-  signOutAction,
-}: AppSidebarProps) {
+export function AppSidebar() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
 
@@ -263,11 +148,6 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <UserFooter
-          userEmail={userEmail}
-          userName={userName}
-          signOutAction={signOutAction}
-        />
         <p className="px-2 pb-1 text-center text-[10px] text-muted-foreground/50">
           v{version}
         </p>
