@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  allocateOffset,
   flattenLoanMovements,
   groupLoansByPerson,
   normalizePersonName,
@@ -39,35 +40,37 @@ describe("groupLoansByPerson", () => {
 
     expect(groups).toHaveLength(1);
     expect(groups[0]).toMatchObject({
-      key: "lent:ana",
+      key: "ana",
       personName: "Ana",
-      direction: "lent",
       isSettled: false,
     });
     expect(groups[0].balances.map((loan) => loan.id)).toEqual(["l1"]);
   });
 
-  it("groups loans of the same person and direction ignoring case and spacing", () => {
+  it("groups loans of the same person ignoring case and spacing", () => {
     const groups = groupLoansByPerson([
       makeLoan({ id: "l1", personName: " Ana " }),
       makeLoan({ id: "l2", personName: "ana" }),
     ]);
 
     expect(groups).toHaveLength(1);
-    expect(groups[0].key).toBe("lent:ana");
+    expect(groups[0].key).toBe("ana");
     expect(groups[0].personName).toBe(" Ana ");
     expect(groups[0].balances.map((loan) => loan.id)).toEqual(["l1", "l2"]);
   });
 
-  it("separates the same person by direction", () => {
+  it("merges both directions into net totals per currency", () => {
     const groups = groupLoansByPerson([
-      makeLoan({ id: "l1", personName: "Ana", direction: "lent" }),
-      makeLoan({ id: "l2", personName: "Ana", direction: "borrowed" }),
+      makeLoan({ id: "l1", direction: "lent", pendingAmount: 333.97 }),
+      makeLoan({ id: "l2", direction: "borrowed", pendingAmount: 13 }),
+      makeLoan({ id: "l3", currency: "USD", pendingAmount: 2200 }),
+      makeLoan({ id: "l4", isSettled: true, pendingAmount: 0 }),
     ]);
 
-    expect(groups.map((group) => group.key)).toEqual([
-      "lent:ana",
-      "borrowed:ana",
+    expect(groups).toHaveLength(1);
+    expect(groups[0].totals).toEqual([
+      { currency: "PEN", lent: 333.97, borrowed: 13, net: 320.97 },
+      { currency: "USD", lent: 2200, borrowed: 0, net: 2200 },
     ]);
   });
 
@@ -94,6 +97,45 @@ describe("groupLoansByPerson", () => {
 
     expect(mixed[0].isSettled).toBe(false);
     expect(settled[0].isSettled).toBe(true);
+  });
+});
+
+describe("allocateOffset", () => {
+  const disbursement = (
+    id: string,
+    occurredOn: string,
+    outstandingAmount: number,
+  ) => ({
+    id,
+    loanId: "loan-1",
+    amount: outstandingAmount,
+    occurredOn,
+    description: null,
+    notes: null,
+    interestRate: 0,
+    outstandingAmount,
+  });
+
+  it("applies the amount to the oldest open disbursements first", () => {
+    expect(
+      allocateOffset(
+        [
+          disbursement("new", "2026-03-01", 50),
+          disbursement("paid", "2026-01-01", 0),
+          disbursement("old", "2026-02-01", 30),
+        ],
+        40,
+      ),
+    ).toEqual([
+      { disbursementId: "old", amount: 30 },
+      { disbursementId: "new", amount: 10 },
+    ]);
+  });
+
+  it("never allocates more than the outstanding balance", () => {
+    expect(
+      allocateOffset([disbursement("only", "2026-01-01", 13)], 100),
+    ).toEqual([{ disbursementId: "only", amount: 13 }]);
   });
 });
 

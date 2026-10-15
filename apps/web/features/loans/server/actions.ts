@@ -1,5 +1,6 @@
 "use server";
 
+import { format } from "date-fns";
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
@@ -19,7 +20,11 @@ import {
   type LoanPaymentValues,
   type LoanValues,
 } from "@/features/loans/schemas/loan-schemas";
-import { normalizePersonName } from "@/features/loans/lib/group-loans";
+import {
+  allocateOffset,
+  normalizePersonName,
+} from "@/features/loans/lib/group-loans";
+import { getLoans } from "@/features/loans/server/queries";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -217,7 +222,6 @@ export async function updateLoanPerson(
     .update({
       person_name: values.personName.trim(),
       expected_on: values.expectedOn || null,
-      notes: values.notes || null,
     })
     .in("id", ids);
   if (error) throw new Error(error.message);
@@ -255,6 +259,49 @@ export async function recordLoanPayment(
     occurred_on: values.occurredOn,
     notes: values.notes || null,
   });
+  if (error) throw new Error(error.message);
+  revalidateLoans();
+}
+
+export async function compensateLoans(
+  rawLentLoanId: string,
+  rawBorrowedLoanId: string,
+): Promise<void> {
+  const lentLoanId = parseOrThrow(loanIdSchema, rawLentLoanId);
+  const borrowedLoanId = parseOrThrow(loanIdSchema, rawBorrowedLoanId);
+  const { supabase } = await requireUser();
+
+  const loans = await getLoans();
+  const lent = loans.find((loan) => loan.id === lentLoanId);
+  const borrowed = loans.find((loan) => loan.id === borrowedLoanId);
+  if (!lent || !borrowed) throw new Error("Préstamo no encontrado.");
+  if (
+    lent.direction !== "lent" ||
+    borrowed.direction !== "borrowed" ||
+    lent.currency !== borrowed.currency ||
+    normalizePersonName(lent.personName) !==
+      normalizePersonName(borrowed.personName)
+  ) {
+    throw new Error(
+      "Solo se compensan saldos opuestos de la misma persona y moneda.",
+    );
+  }
+
+  const amount = Math.min(lent.pendingAmount, borrowed.pendingAmount);
+  if (amount <= 0) throw new Error("No hay saldo para compensar.");
+
+  const occurredOn = format(new Date(), "yyyy-MM-dd");
+  const rows = [lent, borrowed].flatMap((loan) =>
+    allocateOffset(loan.disbursements, amount).map((allocation) => ({
+      loan_id: loan.id,
+      disbursement_id: allocation.disbursementId,
+      amount: allocation.amount,
+      occurred_on: occurredOn,
+      notes: "Compensación",
+    })),
+  );
+
+  const { error } = await supabase.from("loan_payments").insert(rows);
   if (error) throw new Error(error.message);
   revalidateLoans();
 }
@@ -357,7 +404,6 @@ export async function updateLoanDisbursement(
       amount: values.amount,
       occurred_on: values.occurredOn,
       description: values.description || null,
-      notes: values.notes || null,
       interest_rate: values.interestRate ?? 0,
     })
     .eq("id", id);

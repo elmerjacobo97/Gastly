@@ -21,5 +21,9 @@ export default async function LoansPage() {
 
   const loans = await getLoans();
 
-  return <LoansPanel loans={loans} />;
+  const fullName = user.user_metadata?.full_name as string | undefined;
+  const ownerName =
+    fullName?.split(" ")[0] || user.email?.split("@")[0] || "Yo";
+
+  return <LoansPanel loans={loans} ownerName={ownerName} />;
 }

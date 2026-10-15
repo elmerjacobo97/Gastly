@@ -42,7 +42,7 @@ function daysBetween(from: string, to: string) {
   return Math.max(0, Math.round((toUtcDay(to) - toUtcDay(from)) / MS_PER_DAY));
 }
 
-function round2(value: number) {
+export function round2(value: number) {
   return Math.round(value * 100) / 100;
 }
 

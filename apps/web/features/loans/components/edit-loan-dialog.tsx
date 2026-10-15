@@ -24,7 +24,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   editLoanPersonSchema,
   type EditLoanPersonValues,
@@ -42,10 +41,6 @@ function getExpectedOn(group: LoanPersonGroup): string {
   return group.balances.find((loan) => loan.expectedOn)?.expectedOn ?? "";
 }
 
-function getNotes(group: LoanPersonGroup): string {
-  return group.balances.find((loan) => loan.notes)?.notes ?? "";
-}
-
 export function EditLoanDialog({
   group,
   open,
@@ -53,11 +48,10 @@ export function EditLoanDialog({
 }: EditLoanDialogProps) {
   const personName = group.personName;
   const expectedOn = getExpectedOn(group);
-  const notes = getNotes(group);
 
   const defaults = useMemo(
-    () => ({ personName, expectedOn, notes }),
-    [personName, expectedOn, notes],
+    () => ({ personName, expectedOn }),
+    [personName, expectedOn],
   );
 
   const form = useForm<EditLoanPersonValues>({
@@ -92,10 +86,10 @@ export function EditLoanDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Editar préstamo</DialogTitle>
+          <DialogTitle>Editar persona</DialogTitle>
           <DialogDescription>
-            Cambia el nombre, la fecha o el motivo. Los montos se editan en el
-            historial.
+            Cambia el nombre o la fecha de devolución. Los montos se editan en
+            el historial.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -110,11 +104,7 @@ export function EditLoanDialog({
               name="personName"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="el-person">
-                    {group.direction === "lent"
-                      ? "A quién le presté"
-                      : "Quién me prestó"}
-                  </FieldLabel>
+                  <FieldLabel htmlFor="el-person">Nombre</FieldLabel>
                   <Input
                     {...field}
                     id="el-person"
@@ -145,31 +135,6 @@ export function EditLoanDialog({
                     onChange={field.onChange}
                     placeholder="Sin fecha"
                     aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            <Controller
-              control={form.control}
-              name="notes"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="el-notes">
-                    Motivo{" "}
-                    <span className="font-normal text-muted-foreground">
-                      (opcional)
-                    </span>
-                  </FieldLabel>
-                  <Textarea
-                    {...field}
-                    id="el-notes"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Ej: Pollo de pico rico"
-                    rows={2}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

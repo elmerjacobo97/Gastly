@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
+import { AutocompleteInput } from "@/components/autocomplete-input";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -26,7 +27,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import {
   NativeSelect,
@@ -64,19 +64,47 @@ const EMPTY_DEFAULTS: LoanValues = {
 type LoanDialogProps = {
   triggerLabel?: string;
   loans: Loan[];
+  defaultPersonName?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export function LoanDialog({
-  triggerLabel = "Nuevo préstamo",
+  triggerLabel = "Registrar préstamo",
   loans,
+  defaultPersonName = "",
+  open: controlledOpen,
+  onOpenChange,
 }: LoanDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const personNames = [
+    ...new Map(
+      loans.map((loan) => [
+        normalizePersonName(loan.personName),
+        loan.personName,
+      ]),
+    ).values(),
+  ];
 
   const form = useForm<LoanValues>({
     resolver: zodResolver(loanSchema) as Resolver<LoanValues>,
-    defaultValues: EMPTY_DEFAULTS,
+    defaultValues: { ...EMPTY_DEFAULTS, personName: defaultPersonName },
   });
+
+  function setOpen(next: boolean) {
+    if (next) {
+      form.reset({
+        ...EMPTY_DEFAULTS,
+        personName: defaultPersonName,
+        loanedOn: getTodayStr(),
+      });
+    }
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  }
 
   const direction = useWatch({ control: form.control, name: "direction" });
   const personName = useWatch({ control: form.control, name: "personName" });
@@ -99,7 +127,6 @@ export function LoanDialog({
             ? "Monto sumado al saldo existente"
             : "Préstamo registrado",
         );
-        form.reset({ ...EMPTY_DEFAULTS, loanedOn: getTodayStr() });
         setOpen(false);
       } catch (error) {
         toast.error("No se pudo registrar el préstamo", {
@@ -112,17 +139,20 @@ export function LoanDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon data-icon="inline-start" />
-          <span className="hidden sm:inline">{triggerLabel}</span>
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button>
+            <PlusIcon data-icon="inline-start" />
+            <span className="hidden sm:inline">{triggerLabel}</span>
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Nuevo préstamo</DialogTitle>
+          <DialogTitle>Registrar préstamo</DialogTitle>
           <DialogDescription>
-            Crea el saldo de una persona nueva.
+            Anota dinero que prestas o que te prestan. Si la persona ya existe,
+            se suma a su saldo.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="-mx-4 min-h-0">
@@ -162,11 +192,15 @@ export function LoanDialog({
                           ? "A quién le presté"
                           : "Quién me prestó"}
                       </FieldLabel>
-                      <Input
-                        {...field}
+                      <AutocompleteInput
                         id="loan-person"
                         aria-invalid={fieldState.invalid}
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        onValueChange={field.onChange}
                         placeholder="Ej: Juan García"
+                        suggestions={personNames}
+                        value={field.value}
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />

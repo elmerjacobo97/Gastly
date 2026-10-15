@@ -9,7 +9,10 @@ import {
   getLoanDue,
   type LoanDue,
 } from "@/features/loans/lib/loan-due";
-import { type Loan } from "@/features/loans/types/loan-types";
+import {
+  type Loan,
+  type LoanCurrencyTotal,
+} from "@/features/loans/types/loan-types";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 type LoanDueAlertsProps = {
@@ -18,8 +21,7 @@ type LoanDueAlertsProps = {
 
 type DuePerson = {
   personName: string;
-  direction: Loan["direction"];
-  balances: Loan[];
+  totals: LoanCurrencyTotal[];
   expectedOn: string;
   days: number;
 };
@@ -36,14 +38,18 @@ function duePeople(
       if (dueInfo.status !== status) return [];
       return [{ loan, expectedOn: loan.expectedOn, days: dueInfo.days }];
     });
-    if (due.length === 0) return [];
+    const totals = group.totals.filter(
+      (total) =>
+        total.net !== 0 &&
+        due.some((item) => item.loan.currency === total.currency),
+    );
+    if (totals.length === 0) return [];
 
     const earliest = due.reduce((a, b) => (b.days < a.days ? b : a));
     return [
       {
         personName: group.personName,
-        direction: group.direction,
-        balances: due.map((item) => item.loan),
+        totals,
         expectedOn: earliest.expectedOn,
         days: earliest.days,
       },
@@ -51,13 +57,21 @@ function duePeople(
   });
 }
 
-function describePerson({ personName, direction, balances }: DuePerson) {
-  const amount = balances
-    .map((loan) => formatCurrency(loan.pendingAmount, loan.currency))
+function joinAmounts(totals: LoanCurrencyTotal[]) {
+  return totals
+    .map((total) => formatCurrency(Math.abs(total.net), total.currency))
     .join(" y ");
-  return direction === "lent"
-    ? `${personName} te debe ${amount}`
-    : `Debes ${amount} a ${personName}`;
+}
+
+function describePerson({ personName, totals }: DuePerson) {
+  const owed = totals.filter((total) => total.net > 0);
+  const owe = totals.filter((total) => total.net < 0);
+  return [
+    owed.length > 0 && `${personName} te debe ${joinAmounts(owed)}`,
+    owe.length > 0 && `Debes ${joinAmounts(owe)} a ${personName}`,
+  ]
+    .filter(Boolean)
+    .join("; ");
 }
 
 export function LoanDueAlerts({ loans }: LoanDueAlertsProps) {

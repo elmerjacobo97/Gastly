@@ -3,11 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("@/features/loans/server/queries", () => ({ getLoans: vi.fn() }));
 
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLoans } from "@/features/loans/server/queries";
+import { type Loan } from "@/features/loans/types/loan-types";
 import {
+  compensateLoans,
   createLoan,
   deleteLoanBalances,
   deleteLoanDisbursement,
@@ -302,7 +306,6 @@ describe("updateLoanPerson", () => {
     expect(supabase.callsOn("loans", "update")[0]?.args[0]).toEqual({
       person_name: "María López",
       expected_on: null,
-      notes: null,
     });
     expect(supabase.callsOn("loans", "in")[0]?.args).toEqual(["id", [LOAN_ID]]);
     expect(revalidatePathMock).toHaveBeenCalledWith("/loans");
@@ -627,7 +630,6 @@ describe("updateLoanDisbursement", () => {
       amount: 120,
       occurred_on: "2026-01-05",
       description: null,
-      notes: null,
       interest_rate: 2,
     });
     expect(supabase.callsOn("loans", "update")[0]?.args[0]).toEqual({
@@ -779,5 +781,94 @@ describe("deleteLoanDisbursement", () => {
     await expect(deleteLoanDisbursement(DISBURSEMENT_ID)).rejects.toThrow(
       "Préstamo no encontrado.",
     );
+  });
+});
+
+describe("compensateLoans", () => {
+  const BORROWED_ID = "77777777-7777-4777-8777-777777777777";
+
+  function loan(overrides: Partial<Loan>): Loan {
+    return {
+      id: LOAN_ID,
+      personName: "Richard",
+      direction: "lent",
+      currency: "PEN",
+      expectedOn: null,
+      notes: null,
+      disbursements: [],
+      payments: [],
+      accruedInterest: 0,
+      pendingAmount: 0,
+      isSettled: false,
+      ...overrides,
+    };
+  }
+
+  function disbursement(id: string, loanId: string, outstanding: number) {
+    return {
+      id,
+      loanId,
+      amount: outstanding,
+      occurredOn: "2026-01-01",
+      description: null,
+      notes: null,
+      interestRate: 0,
+      outstandingAmount: outstanding,
+    };
+  }
+
+  it("registra abonos cruzados por el menor saldo en un solo insert", async () => {
+    vi.mocked(getLoans).mockResolvedValue([
+      loan({
+        pendingAmount: 333.97,
+        disbursements: [disbursement(DISBURSEMENT_ID, LOAN_ID, 333.97)],
+      }),
+      loan({
+        id: BORROWED_ID,
+        personName: " richard ",
+        direction: "borrowed",
+        pendingAmount: 13,
+        disbursements: [disbursement(PAYMENT_ID, BORROWED_ID, 13)],
+      }),
+    ]);
+    supabase.queue("loan_payments", { error: null });
+
+    await expect(
+      compensateLoans(LOAN_ID, BORROWED_ID),
+    ).resolves.toBeUndefined();
+
+    const inserted = supabase.callsOn("loan_payments", "insert");
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0]?.args[0]).toEqual([
+      expect.objectContaining({
+        loan_id: LOAN_ID,
+        disbursement_id: DISBURSEMENT_ID,
+        amount: 13,
+        notes: "Compensación",
+      }),
+      expect.objectContaining({
+        loan_id: BORROWED_ID,
+        disbursement_id: PAYMENT_ID,
+        amount: 13,
+      }),
+    ]);
+    expect(revalidatePathMock).toHaveBeenCalledWith("/loans");
+  });
+
+  it("rechaza saldos de distinta moneda", async () => {
+    vi.mocked(getLoans).mockResolvedValue([
+      loan({ pendingAmount: 10 }),
+      loan({
+        id: BORROWED_ID,
+        direction: "borrowed",
+        currency: "USD",
+        pendingAmount: 10,
+      }),
+    ]);
+
+    await expect(compensateLoans(LOAN_ID, BORROWED_ID)).rejects.toThrow(
+      "Solo se compensan saldos opuestos de la misma persona y moneda.",
+    );
+    expect(supabase.callsOn("loan_payments", "insert")).toHaveLength(0);
   });
 });

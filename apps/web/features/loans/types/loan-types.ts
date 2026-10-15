@@ -44,11 +44,18 @@ export type Loan = {
   isSettled: boolean;
 };
 
+export type LoanCurrencyTotal = {
+  currency: LoanCurrency;
+  lent: number;
+  borrowed: number;
+  net: number;
+};
+
 export type LoanPersonGroup = {
   key: string;
   personName: string;
-  direction: LoanDirection;
   balances: Loan[];
+  totals: LoanCurrencyTotal[];
   isSettled: boolean;
 };
 

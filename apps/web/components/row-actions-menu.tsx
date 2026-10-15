@@ -1,7 +1,7 @@
 "use client";
 
 import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
-import { type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ type RowActionsMenuProps = {
     icon: ReactNode;
     label: string;
     onSelect: () => void;
+    separatorBefore?: boolean;
   }[];
   editLabel?: string;
   className?: string;
@@ -39,7 +40,7 @@ export function RowActionsMenu({
           <span className="sr-only">Acciones</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="min-w-52">
         {onEdit && (
           <DropdownMenuItem onSelect={onEdit}>
             <PencilIcon />
@@ -47,10 +48,13 @@ export function RowActionsMenu({
           </DropdownMenuItem>
         )}
         {additionalActions?.map((action) => (
-          <DropdownMenuItem key={action.label} onSelect={action.onSelect}>
-            {action.icon}
-            {action.label}
-          </DropdownMenuItem>
+          <Fragment key={action.label}>
+            {action.separatorBefore && <DropdownMenuSeparator />}
+            <DropdownMenuItem onSelect={action.onSelect}>
+              {action.icon}
+              {action.label}
+            </DropdownMenuItem>
+          </Fragment>
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem
