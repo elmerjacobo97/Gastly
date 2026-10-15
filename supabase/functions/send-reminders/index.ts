@@ -7,6 +7,22 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const REMINDERS_WEBHOOK_SECRET = Deno.env.get("REMINDERS_WEBHOOK_SECRET");
 const FROM_EMAIL = "Gastly <noreply@elmerjacobo.dev>";
+// ponytail: base URL from secret; falls back to prod. Set APP_URL per environment.
+const APP_URL = (
+  Deno.env.get("APP_URL") ?? "https://gastly.elmerjacobo.dev"
+).replace(/\/$/, "");
+const RECURRING_PAYMENTS_URL = `${APP_URL}/recurring-payments`;
+// Light theme tokens from apps/web/app/globals.css (email clients ignore CSS variables).
+const EMAIL_COLORS = {
+  background: "#f7f7f2",
+  card: "#ffffff",
+  foreground: "#050505",
+  mutedForeground: "#55554f",
+  border: "#d6d6ce",
+  primary: "#536b00",
+  primaryForeground: "#f7f7f2",
+  destructive: "#ff4a1c",
+} as const;
 const dateFormatter = new Intl.DateTimeFormat("es-PE", {
   day: "numeric",
   month: "long",
@@ -72,15 +88,15 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
     .map((p) => {
       const label =
         p.days_until === 0
-          ? '<strong style="color:#d97706">Hoy</strong>'
+          ? `<strong style="color:${EMAIL_COLORS.primary}">Hoy</strong>`
           : p.days_until === 1
-            ? '<strong style="color:#d97706">Mañana</strong>'
+            ? `<strong style="color:${EMAIL_COLORS.primary}">Mañana</strong>`
             : `En ${p.days_until} días`;
       return `
         <tr>
-          <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;color:#24292e">${escapeHtml(p.description)}</td>
-          <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;color:#6a737d">${label} · ${formatDate(p.next_due_on)}</td>
-          <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;font-weight:600;text-align:right;color:#24292e">${formatCurrency(p.amount, p.currency)}</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_COLORS.border};font-size:14px;line-height:24px;color:${EMAIL_COLORS.foreground}">${escapeHtml(p.description)}</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_COLORS.border};font-size:14px;line-height:24px;color:${EMAIL_COLORS.mutedForeground}">${label} · ${formatDate(p.next_due_on)}</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_COLORS.border};font-size:14px;line-height:24px;font-weight:600;text-align:right;color:${EMAIL_COLORS.foreground}">${formatCurrency(p.amount, p.currency)}</td>
         </tr>`;
     })
     .join("");
@@ -94,11 +110,11 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
   <meta name="x-apple-disable-message-reformatting" />
 </head>
-<body style="background-color:rgb(255,255,255)">
+<body style="background-color:${EMAIL_COLORS.background}">
   <table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" align="center">
     <tbody>
       <tr>
-        <td style='background-color:rgb(255,255,255);color:rgb(36,41,46);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif'>
+        <td style='background-color:${EMAIL_COLORS.background};color:${EMAIL_COLORS.foreground};font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif'>
           <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width:480px;margin-right:auto;margin-left:auto;">
             <tbody>
               <tr style="width:100%">
@@ -108,11 +124,11 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
                   <table border="0" cellpadding="0" cellspacing="0" role="presentation">
                     <tbody>
                       <tr>
-                        <td style="background-color:#1d42d0;border-radius:8px;width:32px;height:32px;text-align:center;vertical-align:middle;">
-                          <span style="color:#ffffff;font-size:18px;font-weight:700;line-height:32px;display:block;">G</span>
+                        <td style="background-color:${EMAIL_COLORS.primary};border-radius:8px;width:32px;height:32px;text-align:center;vertical-align:middle;">
+                          <span style="color:${EMAIL_COLORS.primaryForeground};font-size:18px;font-weight:700;line-height:32px;display:block;">G</span>
                         </td>
                         <td style="padding-left:10px;vertical-align:middle;">
-                          <span style="font-size:18px;font-weight:700;color:#111827;">Gastly</span>
+                          <span style="font-size:18px;font-weight:700;color:${EMAIL_COLORS.foreground};">Gastly</span>
                         </td>
                       </tr>
                     </tbody>
@@ -124,7 +140,7 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
 
                   <!-- Card -->
                   <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation"
-                    style="padding:24px;border-style:solid;border-width:1px;border-color:rgb(222,222,222);border-radius:8px;">
+                    style="padding:24px;border-style:solid;border-width:1px;background-color:${EMAIL_COLORS.card};border-color:${EMAIL_COLORS.border};border-radius:8px;">
                     <tbody>
                       <tr>
                         <td>
@@ -136,8 +152,8 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
                           <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px;">
                             <tbody>${rows}
                               <tr>
-                                <td colspan="2" style="padding-top:12px;font-size:14px;font-weight:600;color:#24292e">Total estimado</td>
-                                <td style="padding-top:12px;font-size:14px;font-weight:700;color:#24292e;text-align:right">${total}</td>
+                                <td colspan="2" style="padding-top:12px;font-size:14px;font-weight:600;color:${EMAIL_COLORS.foreground}">Total estimado</td>
+                                <td style="padding-top:12px;font-size:14px;font-weight:700;color:${EMAIL_COLORS.foreground};text-align:right">${total}</td>
                               </tr>
                             </tbody>
                           </table>
@@ -146,9 +162,9 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation">
                             <tbody>
                               <tr>
-                                <td style="background-color:#1d42d0;border-radius:8px;">
-                                  <a href="https://gastly.elmerjacobo.dev/recurring-payments"
-                                     style="text-decoration:none;display:inline-block;font-size:14px;font-weight:600;color:rgb(255,255,255);padding:12px 24px;"
+                                <td style="background-color:${EMAIL_COLORS.primary};border-radius:8px;">
+                                  <a href="${RECURRING_PAYMENTS_URL}"
+                                     style="text-decoration:none;display:inline-block;font-size:14px;font-weight:600;color:${EMAIL_COLORS.primaryForeground};padding:12px 24px;"
                                      target="_blank">
                                     Ver pagos recurrentes
                                   </a>
@@ -157,7 +173,7 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
                             </tbody>
                           </table>
 
-                          <p style="font-size:12px;line-height:20px;color:rgb(106,115,125);margin-top:20px;margin-bottom:0;">
+                          <p style="font-size:12px;line-height:20px;color:${EMAIL_COLORS.mutedForeground};margin-top:20px;margin-bottom:0;">
                             Recibes este recordatorio porque tienes pagos próximos en los próximos 3 días.
                           </p>
                         </td>
@@ -166,7 +182,7 @@ function buildEmail(displayName: string, payments: DuePayment[]) {
                   </table>
 
                   <!-- Footer -->
-                  <p style="font-size:12px;line-height:24px;color:rgb(106,115,125);text-align:center;margin-top:40px;margin-bottom:0;">
+                  <p style="font-size:12px;line-height:24px;color:${EMAIL_COLORS.mutedForeground};text-align:center;margin-top:40px;margin-bottom:0;">
                     Gastly · Finanzas personales
                   </p>
 
@@ -187,9 +203,9 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
     .map(
       (p) => `
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;color:#24292e">${escapeHtml(p.description)}</td>
-        <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;color:#dc2626"><strong>Venció ayer</strong> · ${formatDate(p.next_due_on)}</td>
-        <td style="padding:10px 0;border-bottom:1px solid #dedede;font-size:14px;line-height:24px;font-weight:600;text-align:right;color:#24292e">${formatCurrency(p.amount, p.currency)}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_COLORS.border};font-size:14px;line-height:24px;color:${EMAIL_COLORS.foreground}">${escapeHtml(p.description)}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_COLORS.border};font-size:14px;line-height:24px;color:${EMAIL_COLORS.destructive}"><strong>Venció ayer</strong> · ${formatDate(p.next_due_on)}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_COLORS.border};font-size:14px;line-height:24px;font-weight:600;text-align:right;color:${EMAIL_COLORS.foreground}">${formatCurrency(p.amount, p.currency)}</td>
       </tr>`,
     )
     .join("");
@@ -203,11 +219,11 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
   <meta name="x-apple-disable-message-reformatting" />
 </head>
-<body style="background-color:rgb(255,255,255)">
+<body style="background-color:${EMAIL_COLORS.background}">
   <table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" align="center">
     <tbody>
       <tr>
-        <td style='background-color:rgb(255,255,255);color:rgb(36,41,46);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif'>
+        <td style='background-color:${EMAIL_COLORS.background};color:${EMAIL_COLORS.foreground};font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif'>
           <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width:480px;margin-right:auto;margin-left:auto;">
             <tbody>
               <tr style="width:100%">
@@ -215,11 +231,11 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
                   <table border="0" cellpadding="0" cellspacing="0" role="presentation">
                     <tbody>
                       <tr>
-                        <td style="background-color:#1d42d0;border-radius:8px;width:32px;height:32px;text-align:center;vertical-align:middle;">
-                          <span style="color:#ffffff;font-size:18px;font-weight:700;line-height:32px;display:block;">G</span>
+                        <td style="background-color:${EMAIL_COLORS.primary};border-radius:8px;width:32px;height:32px;text-align:center;vertical-align:middle;">
+                          <span style="color:${EMAIL_COLORS.primaryForeground};font-size:18px;font-weight:700;line-height:32px;display:block;">G</span>
                         </td>
                         <td style="padding-left:10px;vertical-align:middle;">
-                          <span style="font-size:18px;font-weight:700;color:#111827;">Gastly</span>
+                          <span style="font-size:18px;font-weight:700;color:${EMAIL_COLORS.foreground};">Gastly</span>
                         </td>
                       </tr>
                     </tbody>
@@ -228,7 +244,7 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
                     <strong>Pagos vencidos</strong>
                   </p>
                   <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation"
-                    style="padding:24px;border-style:solid;border-width:1px;border-color:rgb(222,222,222);border-radius:8px;">
+                    style="padding:24px;border-style:solid;border-width:1px;background-color:${EMAIL_COLORS.card};border-color:${EMAIL_COLORS.border};border-radius:8px;">
                     <tbody>
                       <tr>
                         <td>
@@ -238,17 +254,17 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
                           <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px;">
                             <tbody>${rows}
                               <tr>
-                                <td colspan="2" style="padding-top:12px;font-size:14px;font-weight:600;color:#24292e">Total</td>
-                                <td style="padding-top:12px;font-size:14px;font-weight:700;color:#24292e;text-align:right">${total}</td>
+                                <td colspan="2" style="padding-top:12px;font-size:14px;font-weight:600;color:${EMAIL_COLORS.foreground}">Total</td>
+                                <td style="padding-top:12px;font-size:14px;font-weight:700;color:${EMAIL_COLORS.foreground};text-align:right">${total}</td>
                               </tr>
                             </tbody>
                           </table>
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation">
                             <tbody>
                               <tr>
-                                <td style="background-color:#dc2626;border-radius:8px;">
-                                  <a href="https://gastly.elmerjacobo.dev/recurring-payments"
-                                     style="text-decoration:none;display:inline-block;font-size:14px;font-weight:600;color:rgb(255,255,255);padding:12px 24px;"
+                                <td style="background-color:${EMAIL_COLORS.destructive};border-radius:8px;">
+                                  <a href="${RECURRING_PAYMENTS_URL}"
+                                     style="text-decoration:none;display:inline-block;font-size:14px;font-weight:600;color:${EMAIL_COLORS.primaryForeground};padding:12px 24px;"
                                      target="_blank">
                                     Registrar pago
                                   </a>
@@ -256,14 +272,14 @@ function buildOverdueEmail(displayName: string, payments: DuePayment[]) {
                               </tr>
                             </tbody>
                           </table>
-                          <p style="font-size:12px;line-height:20px;color:rgb(106,115,125);margin-top:20px;margin-bottom:0;">
+                          <p style="font-size:12px;line-height:20px;color:${EMAIL_COLORS.mutedForeground};margin-top:20px;margin-bottom:0;">
                             Puedes registrar el pago directamente desde la app.
                           </p>
                         </td>
                       </tr>
                     </tbody>
                   </table>
-                  <p style="font-size:12px;line-height:24px;color:rgb(106,115,125);text-align:center;margin-top:40px;margin-bottom:0;">
+                  <p style="font-size:12px;line-height:24px;color:${EMAIL_COLORS.mutedForeground};text-align:center;margin-top:40px;margin-bottom:0;">
                     Gastly · Finanzas personales
                   </p>
                 </td>

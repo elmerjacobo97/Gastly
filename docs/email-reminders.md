@@ -118,6 +118,7 @@ send-payment-reminders   | 0 13 * * * | select net.http_post(...)
 | Variable                    | Dónde se configura     | Descripción                                                                 |
 | --------------------------- | ---------------------- | --------------------------------------------------------------------------- |
 | `RESEND_API_KEY`            | `supabase secrets set` | API key de Resend                                                           |
+| `APP_URL`                   | `supabase secrets set` | Base de los CTA del email (ej. `https://gastly.elmerjacobo.dev`). Opcional, default prod |
 | `REMINDERS_WEBHOOK_SECRET`  | `supabase secrets set` | Secret validado por el handler y también almacenado en Vault para `pg_cron` |
 | `SUPABASE_URL`              | Automático             | URL del proyecto                                                            |
 | `SUPABASE_SERVICE_ROLE_KEY` | Automático             | Permite usar `auth.admin`                                                   |
