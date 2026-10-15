@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/features/dashboard/components/theme-toggle";
+import {
+  UserMenu,
+  type UserMenuProps,
+} from "@/features/dashboard/components/user-menu";
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Resumen",
@@ -28,7 +32,7 @@ function getPageTitle(pathname: string): string {
   return parent ? PAGE_TITLES[parent] : "Gastly";
 }
 
-export function PageHeader() {
+export function PageHeader(props: UserMenuProps) {
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
 
@@ -49,8 +53,9 @@ export function PageHeader() {
           <span className="text-foreground">{pageTitle}</span>
         </span>
       </div>
-      <div className="px-3 md:px-4">
+      <div className="flex items-center gap-2 px-3 md:px-4">
         <ThemeToggle />
+        <UserMenu {...props} />
       </div>
     </header>
   );
