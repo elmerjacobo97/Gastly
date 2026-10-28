@@ -16,10 +16,10 @@ export default function BudgetsLoading() {
       </section>
 
       <div className="rounded-xl border bg-card">
-        <div className="flex items-center justify-between gap-3 border-b p-6">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 border-b p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
             <Skeleton className="size-9 shrink-0 rounded-lg" />
-            <div className="space-y-1.5">
+            <div className="min-w-0 space-y-1.5">
               <Skeleton className="h-5 w-28" />
               <Skeleton className="h-3 w-56 max-w-full" />
             </div>
