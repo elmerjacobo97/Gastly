@@ -200,7 +200,7 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
       </section>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="max-sm:has-data-[slot=card-action]:grid-cols-1">
           <div className="flex items-center gap-3">
             <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
               <WalletCardsIcon className="size-4" />
@@ -212,7 +212,7 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
               </CardDescription>
             </div>
           </div>
-          <CardAction className="flex items-center gap-1 self-center">
+          <CardAction className="flex items-center gap-1 self-center max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-2 max-sm:mt-2 max-sm:justify-self-start">
             <Button
               variant="outline"
               size="sm"
