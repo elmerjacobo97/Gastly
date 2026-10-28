@@ -136,12 +136,10 @@ export function GoalsSection({ goals, onEdit, onDelete }: GoalsSectionProps) {
               <TableRow>
                 <TableHead>Meta</TableHead>
                 <TableHead>Progreso</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Fecha límite
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">Ritmo</TableHead>
+                <TableHead>Fecha límite</TableHead>
+                <TableHead>Ritmo</TableHead>
                 <TableHead className="text-right">Ahorrado</TableHead>
-                <TableHead className="w-24">
+                <TableHead className="sticky right-0 w-24 bg-card">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -187,10 +185,10 @@ export function GoalsSection({ goals, onEdit, onDelete }: GoalsSectionProps) {
                             : `${goal.progress}% · Faltan ${formatCurrency(goal.remaining)}`}
                         </ProgressCell>
                       </TableCell>
-                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                      <TableCell className="text-muted-foreground">
                         {goal.targetDate ? formatDate(goal.targetDate) : "—"}
                       </TableCell>
-                      <TableCell className="hidden text-xs text-muted-foreground lg:table-cell">
+                      <TableCell className="text-xs text-muted-foreground">
                         {needed || estimated ? (
                           <div className="flex flex-col">
                             {needed && (
@@ -212,7 +210,7 @@ export function GoalsSection({ goals, onEdit, onDelete }: GoalsSectionProps) {
                           de {formatCurrency(goal.targetAmount)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted">
                         <div className="flex items-center justify-end gap-1">
                           {!goal.isCompleted && (
                             <AddContributionDialog goal={goal} />

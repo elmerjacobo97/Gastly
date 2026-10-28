@@ -134,12 +134,10 @@ export function WishlistSection({
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Prioridad
-                </TableHead>
+                <TableHead>Prioridad</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Precio estimado</TableHead>
-                <TableHead className="w-12">
+                <TableHead className="sticky right-0 w-12 bg-card">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -191,7 +189,7 @@ export function WishlistSection({
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell>
                         <StatusBadge tone={PRIORITY_TONES[item.priority]}>
                           {PRIORITY_LABELS[item.priority]}
                         </StatusBadge>
@@ -204,7 +202,7 @@ export function WishlistSection({
                       <TableCell className="text-right tabular-nums font-medium">
                         {formatCurrency(item.estimatedPrice, item.currency)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted">
                         <div className="flex items-center justify-end">
                           <RowActionsMenu
                             onEdit={() => onEdit(item)}

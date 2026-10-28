@@ -91,7 +91,7 @@ export function AddContributionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" size="sm" disabled={goal.isCompleted}>
+          <Button size="sm" disabled={goal.isCompleted}>
             <PlusIcon className="size-4" />
             Añadir aporte
           </Button>

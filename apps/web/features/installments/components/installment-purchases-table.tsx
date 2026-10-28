@@ -97,16 +97,12 @@ export function InstallmentPurchasesTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Compra</TableHead>
-                <TableHead className="hidden md:table-cell">Cuenta</TableHead>
+                <TableHead>Cuenta</TableHead>
                 <TableHead>Progreso</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Próxima cuota
-                </TableHead>
-                <TableHead className="hidden text-right md:table-cell">
-                  Cuota
-                </TableHead>
+                <TableHead>Próxima cuota</TableHead>
+                <TableHead className="text-right">Cuota</TableHead>
                 <TableHead className="text-right">Pendiente</TableHead>
-                <TableHead className="w-12">
+                <TableHead className="sticky right-0 w-12 bg-card">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -164,7 +160,7 @@ export function InstallmentPurchasesTable({
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell>
                         {purchase.account && (
                           <div className="flex items-center gap-1.5 text-muted-foreground">
                             <span
@@ -184,18 +180,18 @@ export function InstallmentPurchasesTable({
                             : `${purchase.paidCount}/${purchase.totalInstallments} · ${pctPaid}%`}
                         </ProgressCell>
                       </TableCell>
-                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                      <TableCell className="text-muted-foreground">
                         {nextPayment
                           ? `Cuota ${nextPayment.paymentNumber}/${purchase.totalInstallments} · ${formatDate(nextPayment.dueOn)}`
                           : "—"}
                       </TableCell>
-                      <TableCell className="hidden text-right font-medium tabular-nums md:table-cell">
+                      <TableCell className="text-right font-medium tabular-nums">
                         {formatCurrency(purchase.installmentAmount)}
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatCurrency(purchase.totalPending)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted">
                         <div className="flex justify-end">
                           <RowActionsMenu
                             onEdit={
