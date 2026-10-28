@@ -106,15 +106,11 @@ export function OrdersSection({
               <TableRow>
                 <TableHead>Encargo</TableHead>
                 <TableHead>Progreso</TableHead>
-                <TableHead className="hidden lg:table-cell">Estimado</TableHead>
-                <TableHead className="hidden text-right md:table-cell">
-                  Depositado
-                </TableHead>
-                <TableHead className="hidden text-right md:table-cell">
-                  Devuelto
-                </TableHead>
+                <TableHead>Estimado</TableHead>
+                <TableHead className="text-right">Depositado</TableHead>
+                <TableHead className="text-right">Devuelto</TableHead>
                 <TableHead className="text-right">En custodia</TableHead>
-                <TableHead className="w-12">
+                <TableHead className="sticky right-0 w-12 bg-card">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -177,19 +173,19 @@ export function OrdersSection({
                           </ProgressCell>
                         )}
                       </TableCell>
-                      <TableCell className="hidden text-muted-foreground lg:table-cell">
+                      <TableCell className="text-muted-foreground">
                         {order.expectedOn ? formatDate(order.expectedOn) : "—"}
                       </TableCell>
-                      <TableCell className="hidden text-right text-muted-foreground tabular-nums md:table-cell">
+                      <TableCell className="text-right text-muted-foreground tabular-nums">
                         {formatCurrency(order.totalDeposited)}
                       </TableCell>
-                      <TableCell className="hidden text-right text-muted-foreground tabular-nums md:table-cell">
+                      <TableCell className="text-right text-muted-foreground tabular-nums">
                         {formatCurrency(order.totalDisbursed)}
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatCurrency(order.balanceHeld)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted">
                         <div className="flex justify-end">
                           <RowActionsMenu
                             onEdit={() => onEdit(order)}

@@ -77,12 +77,10 @@ export function CategoryBudgetTable({
             <TableRow>
               <TableHead>Categoría</TableHead>
               <TableHead className="min-w-56">Progreso</TableHead>
-              <TableHead className="hidden lg:table-cell">Estado</TableHead>
-              <TableHead className="hidden text-right md:table-cell">
-                Límite
-              </TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Límite</TableHead>
               <TableHead className="text-right">Disponible</TableHead>
-              <TableHead className="w-12">
+              <TableHead className="sticky right-0 w-12 bg-card">
                 <span className="sr-only">Acciones</span>
               </TableHead>
             </TableRow>
@@ -153,10 +151,10 @@ export function CategoryBudgetTable({
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell>
                       <BudgetStatusBadge progress={progress} />
                     </TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-muted-foreground md:table-cell">
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
                       {formatCurrency(budget.amount, currency)}
                     </TableCell>
                     <TableCell
@@ -168,7 +166,7 @@ export function CategoryBudgetTable({
                       {progress.isOverBudget ? "Excedido por " : "Quedan "}
                       {formatCurrency(Math.abs(progress.remaining), currency)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted">
                       <div className="flex justify-end">
                         <RowActionsMenu
                           onEdit={() => onEdit(budget)}

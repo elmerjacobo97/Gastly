@@ -83,10 +83,10 @@ export function InstallmentMonthPaymentsCard({
             <TableHeader>
               <TableRow>
                 <TableHead>Compra</TableHead>
-                <TableHead className="hidden md:table-cell">Vence</TableHead>
-                <TableHead className="hidden sm:table-cell">Estado</TableHead>
+                <TableHead>Vence</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Monto</TableHead>
-                <TableHead className="w-24">
+                <TableHead className="sticky right-0 w-24 bg-card">
                   <span className="sr-only">Pagar</span>
                 </TableHead>
               </TableRow>
@@ -123,10 +123,10 @@ export function InstallmentMonthPaymentsCard({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden text-muted-foreground md:table-cell">
+                    <TableCell className="text-muted-foreground">
                       {formatDate(payment.dueOn)}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
+                    <TableCell>
                       {isPaid ? (
                         <StatusBadge tone="success">Pagado</StatusBadge>
                       ) : (
@@ -136,7 +136,7 @@ export function InstallmentMonthPaymentsCard({
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatCurrency(payment.amount)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted">
                       <div className="flex justify-end">
                         {!isPaid && (
                           <Button

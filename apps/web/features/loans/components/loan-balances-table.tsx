@@ -221,14 +221,10 @@ export function LoanBalancesTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Persona</TableHead>
-                <TableHead className="hidden text-right md:table-cell">
-                  Me debe
-                </TableHead>
-                <TableHead className="hidden text-right md:table-cell">
-                  Le debo
-                </TableHead>
+                <TableHead className="text-right">Me debe</TableHead>
+                <TableHead className="text-right">Le debo</TableHead>
                 <TableHead className="text-right">Saldo neto</TableHead>
-                <TableHead className="w-12">
+                <TableHead className="sticky right-0 w-12 bg-card">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -253,16 +249,19 @@ export function LoanBalancesTable({
                     <TableCell>
                       <PersonCell group={group} onOpen={() => onOpen(group)} />
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell>
                       <SideCell group={group} side="lent" />
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell>
                       <SideCell group={group} side="borrowed" />
                     </TableCell>
                     <TableCell>
                       <NetCell group={group} />
                     </TableCell>
-                    <TableCell onClick={(event) => event.stopPropagation()}>
+                    <TableCell
+                      onClick={(event) => event.stopPropagation()}
+                      className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted"
+                    >
                       <div className="flex justify-end">
                         <RowActionsMenu
                           additionalActions={[

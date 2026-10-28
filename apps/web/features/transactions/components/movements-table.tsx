@@ -130,12 +130,10 @@ export function MovementsTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Descripción</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Categoría
-                </TableHead>
-                <TableHead className="hidden md:table-cell">Fecha</TableHead>
+                <TableHead>Categoría</TableHead>
+                <TableHead>Fecha</TableHead>
                 <TableHead className="text-right">Monto</TableHead>
-                <TableHead className="w-12">
+                <TableHead className="sticky right-0 w-12 bg-card">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -156,7 +154,7 @@ export function MovementsTable({
                     <TableCell>
                       <TransactionDescriptionCell transaction={transaction} />
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         {transaction.category && (
                           <CategoryIconBadge
@@ -170,13 +168,13 @@ export function MovementsTable({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden text-muted-foreground md:table-cell">
+                    <TableCell className="text-muted-foreground">
                       {formatDate(transaction.occurredOn)}
                     </TableCell>
                     <TableCell>
                       <TransactionAmountCell transaction={transaction} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted">
                       <div className="flex justify-end">
                         <RowActionsMenu
                           onEdit={() => onEdit(transaction)}
