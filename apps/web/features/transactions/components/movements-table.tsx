@@ -40,7 +40,7 @@ function TransactionDescriptionCell({
   const isPendingCC = isCreditCard && !transaction.creditCardPaidOn;
 
   return (
-    <div className="flex max-w-64 flex-col whitespace-normal">
+    <div className="flex min-w-44 max-w-64 flex-col whitespace-normal">
       <span
         className="line-clamp-2 font-medium break-words"
         title={transaction.description}
