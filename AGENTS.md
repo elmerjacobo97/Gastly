@@ -17,6 +17,11 @@
 - Turbo caches `build`, `lint`, `typecheck`, and `test`; `dev` is persistent and uncached.
 - Never claim tests passed without running them.
 
+## Git
+
+- Git workflow: direct
+- Base branch: main
+
 ## Repo Layout
 
 - pnpm workspace + Turborepo monorepo. `pnpm-workspace.yaml` globs `apps/*` and `packages/*`; `turbo.json` defines the task graph.
