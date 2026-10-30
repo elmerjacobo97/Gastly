@@ -45,38 +45,37 @@ export function CategoryCombobox({
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          aria-invalid={ariaInvalid}
-          disabled={disabled}
-          className="min-w-0 flex-1 justify-between font-normal"
-        >
-          {selected ? (
-            <span className="flex min-w-0 items-center gap-2">
-              <CategoryIconBadge
-                icon={selected.icon}
-                color={selected.color}
-                className="size-5 rounded-md"
-              />
-              <span className="truncate">{selected.name}</span>
-            </span>
-          ) : (
-            <span className="text-muted-foreground">
-              Selecciona una categoría
-            </span>
-          )}
-          <ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="w-(--radix-popover-trigger-width) p-0"
+      <PopoverTrigger
+        render={
+          <Button
+            id={id}
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            aria-invalid={ariaInvalid}
+            disabled={disabled}
+            className="min-w-0 flex-1 justify-between font-normal"
+          />
+        }
       >
+        {selected ? (
+          <span className="flex min-w-0 items-center gap-2">
+            <CategoryIconBadge
+              icon={selected.icon}
+              color={selected.color}
+              className="size-5 rounded-md"
+            />
+            <span className="truncate">{selected.name}</span>
+          </span>
+        ) : (
+          <span className="text-muted-foreground">
+            Selecciona una categoría
+          </span>
+        )}
+        <ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-(--anchor-width) p-0">
         <Command>
           <CommandInput placeholder="Buscar categoría..." />
           <CommandList>

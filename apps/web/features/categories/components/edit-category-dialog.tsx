@@ -226,10 +226,8 @@ export function EditCategoryDialog({
           </div>
         </ScrollArea>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancelar
           </DialogClose>
           <Button disabled={isPending} form="edit-category-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}

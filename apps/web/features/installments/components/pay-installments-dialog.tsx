@@ -90,11 +90,9 @@ export function PayInstallmentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <WalletCardsIcon data-icon="inline-start" />
-          Registrar pago del 20 de {format(month, "MMMM", { locale: es })}
-        </Button>
+      <DialogTrigger render={<Button />}>
+        <WalletCardsIcon data-icon="inline-start" />
+        Registrar pago del 20 de {format(month, "MMMM", { locale: es })}
       </DialogTrigger>
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-md">
         <DialogHeader>
@@ -172,10 +170,8 @@ export function PayInstallmentsDialog({
         </ScrollArea>
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancelar
           </DialogClose>
           <Button
             disabled={isPending}

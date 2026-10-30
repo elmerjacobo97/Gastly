@@ -178,10 +178,8 @@ export function RecordPaymentDialog({
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button type="button" variant="outline" />}>
+            Cancelar
           </DialogClose>
           <Button disabled={isPending} form="loan-payment-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}

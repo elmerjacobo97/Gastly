@@ -17,12 +17,10 @@ export function ThemeToggle() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="icon-sm" variant="ghost">
-          <SunIcon className="opacity-100 transition-[opacity,transform] dark:rotate-90 dark:opacity-0" />
-          <MoonIcon className="absolute rotate-90 opacity-0 transition-[opacity,transform] dark:rotate-0 dark:opacity-100" />
-          <span className="sr-only">Cambiar tema</span>
-        </Button>
+      <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
+        <SunIcon className="opacity-100 transition-[opacity,transform] dark:rotate-90 dark:opacity-0" />
+        <MoonIcon className="absolute rotate-90 opacity-0 transition-[opacity,transform] dark:rotate-0 dark:opacity-100" />
+        <span className="sr-only">Cambiar tema</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuGroup>

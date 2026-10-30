@@ -46,8 +46,13 @@ export default function Error({
             <RefreshCwIcon data-icon="inline-start" />
             Intentar de nuevo
           </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link href="/">Volver al inicio</Link>
+          <Button
+            variant="outline"
+            size="lg"
+            render={<Link href="/" />}
+            nativeButton={false}
+          >
+            Volver al inicio
           </Button>
         </div>
       </section>

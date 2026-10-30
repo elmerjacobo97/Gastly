@@ -14,8 +14,12 @@ export default function NotFound() {
       <section className="relative mx-auto flex w-full max-w-5xl flex-col justify-between gap-16">
         <header className="flex items-center justify-between gap-4">
           <Logo />
-          <Button variant="ghost" asChild>
-            <Link href="/login">Iniciar sesion</Link>
+          <Button
+            variant="ghost"
+            render={<Link href="/login" />}
+            nativeButton={false}
+          >
+            Iniciar sesion
           </Button>
         </header>
 
@@ -47,11 +51,9 @@ export default function NotFound() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" asChild>
-                <Link href="/">
-                  <LayoutDashboardIcon data-icon="inline-start" />
-                  Ir al panel
-                </Link>
+              <Button size="lg" render={<Link href="/" />} nativeButton={false}>
+                <LayoutDashboardIcon data-icon="inline-start" />
+                Ir al panel
               </Button>
             </div>
           </div>

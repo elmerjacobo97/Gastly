@@ -430,11 +430,9 @@ export function InstallmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon data-icon="inline-start" />
-          <span className="hidden sm:inline">{triggerLabel}</span>
-        </Button>
+      <DialogTrigger render={<Button />}>
+        <PlusIcon data-icon="inline-start" />
+        <span className="hidden sm:inline">{triggerLabel}</span>
       </DialogTrigger>
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
         <DialogHeader>
@@ -461,10 +459,8 @@ export function InstallmentDialog({
           </div>
         </ScrollArea>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancelar
           </DialogClose>
           <Button disabled={isPending} form="installment-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}

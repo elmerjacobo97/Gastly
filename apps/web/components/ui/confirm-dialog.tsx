@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 type ConfirmDialogProps = {
-  trigger?: React.ReactNode
+  trigger?: React.ReactElement
   title?: string
   description?: string
   confirmLabel?: string
@@ -40,7 +40,7 @@ export function ConfirmDialog({
       onOpenChange={isControlled ? onOpenChange : undefined}
     >
       {!isControlled && trigger && (
-        <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+        <AlertDialogTrigger render={trigger} />
       )}
       <AlertDialogContent>
         <AlertDialogHeader>

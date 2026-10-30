@@ -141,15 +141,21 @@ export function TelegramConnect({ connection }: TelegramConnectProps) {
         </div>
         <div className="flex flex-col gap-3">
           {BOT_USERNAME && (
-            <Button variant="outline" size="sm" className="w-fit gap-2" asChild>
-              <a
-                href={`https://t.me/${BOT_USERNAME}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLinkIcon className="size-3.5" />
-                Abrir @{BOT_USERNAME}
-              </a>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-fit gap-2"
+              render={
+                <a
+                  href={`https://t.me/${BOT_USERNAME}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+              nativeButton={false}
+            >
+              <ExternalLinkIcon className="size-3.5" />
+              Abrir @{BOT_USERNAME}
             </Button>
           )}
           <div className="rounded-lg border bg-muted/40 p-3">

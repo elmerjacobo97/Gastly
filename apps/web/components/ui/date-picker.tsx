@@ -36,22 +36,14 @@ export function DatePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          aria-invalid={ariaInvalid}
-          className={cn(
+      <PopoverTrigger render={<Button id={id} type="button" variant="outline" aria-invalid={ariaInvalid} className={cn(
             "w-full justify-start text-left font-normal",
             !selected && "text-muted-foreground",
             className
-          )}
-        >
+          )} />}>
           <CalendarIcon className="mr-2 size-4 shrink-0" />
           {value ? formatDate(value) : placeholder}
-        </Button>
-      </PopoverTrigger>
+        </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"

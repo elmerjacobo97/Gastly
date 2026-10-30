@@ -1,7 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 const alertVariants = cva(
   "group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
@@ -13,8 +12,7 @@ const alertVariants = cva(
           "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
         warning:
           "bg-card text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800/40 *:data-[slot=alert-description]:text-amber-600/80 dark:*:data-[slot=alert-description]:text-amber-400/80 *:[svg]:text-current",
-        info:
-          "bg-card text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800/40 *:data-[slot=alert-description]:text-blue-600/80 dark:*:data-[slot=alert-description]:text-blue-400/80 *:[svg]:text-current",
+        info: "bg-card text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800/40 *:data-[slot=alert-description]:text-blue-600/80 dark:*:data-[slot=alert-description]:text-blue-400/80 *:[svg]:text-current",
         success:
           "bg-card text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800/40 *:data-[slot=alert-description]:text-emerald-600/80 dark:*:data-[slot=alert-description]:text-emerald-400/80 *:[svg]:text-current",
       },

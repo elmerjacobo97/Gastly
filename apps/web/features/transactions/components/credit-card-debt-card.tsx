@@ -111,7 +111,7 @@ export function CreditCardDebtCard({ transactions }: CreditCardDebtCardProps) {
       </CardHeader>
 
       <CardContent className="pt-0">
-        <Accordion type="multiple">
+        <Accordion multiple>
           {groups.map((group) => {
             const key = JSON.stringify([group.currency, group.cardName]);
             const displayName = group.cardName ?? "Tarjeta de crédito";

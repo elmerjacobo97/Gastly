@@ -44,7 +44,7 @@ const defaultValues: SavingsGoalValues = {
 };
 
 type CreateGoalDialogProps = {
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
   onSuccess?: (id: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -87,14 +87,16 @@ export function CreateGoalDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {!isControlled && (
-        <DialogTrigger asChild>
-          {trigger ?? (
-            <Button>
-              <PlusIcon data-icon="inline-start" />
-              <span className="hidden sm:inline">Nueva meta</span>
-            </Button>
-          )}
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            trigger ?? (
+              <Button>
+                <PlusIcon data-icon="inline-start" />
+                <span className="hidden sm:inline">Nueva meta</span>
+              </Button>
+            )
+          }
+        />
       )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -208,10 +210,8 @@ export function CreateGoalDialog({
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancelar
           </DialogClose>
           <Button disabled={isPending} form="create-goal-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}

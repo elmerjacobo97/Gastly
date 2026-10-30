@@ -61,7 +61,7 @@ These are deliberate decisions, not hidden debt. Match them; do not "fix" them w
 ## UI And Styling
 
 - Tailwind is v4 via `@tailwindcss/postcss`; there is no `tailwind.config.*`. Theme tokens and Tailwind imports live in `apps/web/app/globals.css`.
-- shadcn is configured in `apps/web/components.json` with `style: "radix-nova"`, `rsc: true`, `tsx: true`, aliases to `@/components`, `@/components/ui`, `@/lib`, and `@/lib/utils`.
+- shadcn is configured in `apps/web/components.json` with `style: "base-nova"` (Base UI, not Radix: use the `render` prop instead of `asChild`), `rsc: true`, `tsx: true`, aliases to `@/components`, `@/components/ui`, `@/lib`, and `@/lib/utils`.
 - Shared UI primitives live under `apps/web/components/ui`; do not hand-edit generated primitives (Prettier ignores that directory). Use `cn` from `@/lib/utils` for class merging.
 - Components are Server Components by default. Add `"use client"` only where hooks, event handlers, or browser APIs require it.
 

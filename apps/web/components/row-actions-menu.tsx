@@ -34,15 +34,15 @@ export function RowActionsMenu({
 }: RowActionsMenuProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" className={className}>
-          <MoreHorizontalIcon />
-          <span className="sr-only">Acciones</span>
-        </Button>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon-sm" className={className} />}
+      >
+        <MoreHorizontalIcon />
+        <span className="sr-only">Acciones</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-52">
         {onEdit && (
-          <DropdownMenuItem onSelect={onEdit}>
+          <DropdownMenuItem onClick={onEdit}>
             <PencilIcon />
             {editLabel}
           </DropdownMenuItem>
@@ -50,7 +50,7 @@ export function RowActionsMenu({
         {additionalActions?.map((action) => (
           <Fragment key={action.label}>
             {action.separatorBefore && <DropdownMenuSeparator />}
-            <DropdownMenuItem onSelect={action.onSelect}>
+            <DropdownMenuItem onClick={action.onSelect}>
               {action.icon}
               {action.label}
             </DropdownMenuItem>
@@ -58,7 +58,7 @@ export function RowActionsMenu({
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onSelect={onDelete}
+          onClick={onDelete}
           className="text-destructive focus:text-destructive"
         >
           <Trash2Icon />

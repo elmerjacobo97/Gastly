@@ -107,18 +107,20 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild tooltip="Gastly">
-              <Link href="/" onClick={() => setOpenMobile(false)}>
-                <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-                  <span className="text-sm font-bold leading-none">G</span>
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Gastly</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    Finanzas personales
-                  </span>
-                </div>
-              </Link>
+            <SidebarMenuButton
+              size="lg"
+              tooltip="Gastly"
+              render={<Link href="/" onClick={() => setOpenMobile(false)} />}
+            >
+              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
+                <span className="text-sm font-bold leading-none">G</span>
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">Gastly</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  Finanzas personales
+                </span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -131,14 +133,17 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    asChild
                     isActive={isActive(item.href, item.exact)}
                     tooltip={item.title}
+                    render={
+                      <Link
+                        href={item.href}
+                        onClick={() => setOpenMobile(false)}
+                      />
+                    }
                   >
-                    <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
+                    <item.icon />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

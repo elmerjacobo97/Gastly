@@ -308,21 +308,23 @@ export function LoanHistorySheet({
               </Button>
             ))}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  aria-label="Compartir estado de cuenta"
-                  size="icon-sm"
-                  variant="outline"
-                >
-                  <Share2Icon />
-                </Button>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    aria-label="Compartir estado de cuenta"
+                    size="icon-sm"
+                    variant="outline"
+                  />
+                }
+              >
+                <Share2Icon />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-56">
-                <DropdownMenuItem onSelect={onCopyStatement}>
+                <DropdownMenuItem onClick={onCopyStatement}>
                   <CopyIcon />
                   Copiar estado de cuenta
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={onShareStatement}>
+                <DropdownMenuItem onClick={onShareStatement}>
                   <MessageCircleIcon />
                   Enviar por WhatsApp
                 </DropdownMenuItem>
