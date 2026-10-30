@@ -5,8 +5,14 @@ import {
   daysBetween,
   monthRange,
 } from "../_shared/date.ts";
+import { classifyMessage } from "../_shared/groq.ts";
+import { parseMessage } from "../_shared/message-intent.ts";
 import { hasValidWebhookSecret } from "../_shared/webhook-auth.ts";
 
+const HELP_TEXT =
+  "Comandos disponibles:\n\n/gaste &lt;monto&gt; &lt;descripción&gt;\n/ingreso &lt;monto&gt; &lt;descripción&gt;\n/saldo\n/pagos\n/resumen\n/deshacer\n\nO escribe en lenguaje natural: <i>gasté 45 en almuerzo</i>";
+
+const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 const TELEGRAM_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
 const TELEGRAM_WEBHOOK_SECRET = Deno.env.get("TELEGRAM_WEBHOOK_SECRET");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -156,6 +162,7 @@ async function handleGaste(chatId: number, userId: string, args: string) {
   const { error } = await supabase.from("transactions").insert({
     user_id: userId,
     type: "expense",
+    source: "telegram",
     amount,
     description,
     category_id: categoryId,
@@ -207,6 +214,7 @@ async function handleIngreso(chatId: number, userId: string, args: string) {
   const { error } = await supabase.from("transactions").insert({
     user_id: userId,
     type: "income",
+    source: "telegram",
     amount,
     description,
     category_id: categoryId,
@@ -313,6 +321,137 @@ async function handleResumen(chatId: number, userId: string) {
   await sendMessage(chatId, msg);
 }
 
+const UNDO_WINDOW_MS = 60 * 60 * 1000;
+
+// /deshacer → delete the latest transaction created from Telegram in the last hour
+async function handleDeshacer(chatId: number, userId: string) {
+  const since = new Date(Date.now() - UNDO_WINDOW_MS).toISOString();
+  const { data: last } = await supabase
+    .from("transactions")
+    .select("id, type, amount, description")
+    .eq("user_id", userId)
+    .eq("source", "telegram")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!last) {
+    await sendMessage(
+      chatId,
+      "No hay movimientos del bot en la última hora para deshacer.",
+    );
+    return;
+  }
+
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", last.id)
+    .eq("user_id", userId);
+
+  if (error) {
+    await sendMessage(chatId, `❌ Error al deshacer: ${error.message}`);
+    return;
+  }
+
+  await sendMessage(
+    chatId,
+    `↩️ Eliminado: <b>${formatCurrency(last.amount)}</b> — ${escapeHtml(last.description)}`,
+  );
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+// Any non-command text → Groq classifies it → validated items are saved directly
+async function handleFreeText(chatId: number, userId: string, text: string) {
+  if (!GROQ_API_KEY) {
+    await sendMessage(chatId, HELP_TEXT);
+    return;
+  }
+
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("id, name, type")
+    .eq("user_id", userId);
+
+  const categoryNames = {
+    expense: (categories ?? [])
+      .filter((c) => c.type === "expense")
+      .map((c) => c.name),
+    income: (categories ?? [])
+      .filter((c) => c.type === "income")
+      .map((c) => c.name),
+  };
+
+  let parsed;
+  try {
+    parsed = parseMessage(
+      await classifyMessage(text, categoryNames, GROQ_API_KEY),
+      categoryNames,
+    );
+  } catch (e) {
+    console.error(e);
+    await sendMessage(
+      chatId,
+      "❌ No pude procesar tu mensaje. Intenta de nuevo.",
+    );
+    return;
+  }
+
+  switch (parsed.intent) {
+    case "balance":
+      return handleSaldo(chatId, userId);
+    case "summary":
+      return handleResumen(chatId, userId);
+    case "payments":
+      return handlePagos(chatId, userId);
+    case "missing_amount":
+      return sendMessage(chatId, "¿Cuánto fue el monto?");
+    case "unknown":
+      return sendMessage(
+        chatId,
+        `No entendí tu mensaje. Prueba: <i>gasté 45 en almuerzo</i>\n\n${HELP_TEXT}`,
+      );
+  }
+
+  const today = dateInTimeZone(new Date(), "America/Lima");
+  const rows = parsed.items.map((item) => ({
+    user_id: userId,
+    source: "telegram",
+    type: item.type,
+    amount: item.amount,
+    description: item.description,
+    category_id:
+      categories?.find((c) => c.type === item.type && c.name === item.category)
+        ?.id ?? null,
+    occurred_on: today,
+  }));
+
+  const { error } = await supabase.from("transactions").insert(rows);
+  if (error) {
+    await sendMessage(chatId, `❌ Error al registrar: ${error.message}`);
+    return;
+  }
+
+  const lines = parsed.items.map(
+    (item) =>
+      `<b>${formatCurrency(item.amount)}</b> — ${escapeHtml(item.description)}${item.category ? ` (${escapeHtml(item.category)})` : ""}`,
+  );
+  const title =
+    parsed.items.length > 1
+      ? `✅ ${parsed.items.length} movimientos registrados`
+      : parsed.items[0].type === "expense"
+        ? "✅ Gasto registrado"
+        : "✅ Ingreso registrado";
+  await sendMessage(chatId, `${title}\n${lines.join("\n")}`);
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -376,11 +515,15 @@ Deno.serve(async (req) => {
       case "/resumen":
         await handleResumen(chatId, userId);
         break;
+      case "/deshacer":
+        await handleDeshacer(chatId, userId);
+        break;
       default:
-        await sendMessage(
-          chatId,
-          "Comandos disponibles:\n\n/gaste &lt;monto&gt; &lt;descripción&gt;\n/ingreso &lt;monto&gt; &lt;descripción&gt;\n/saldo\n/pagos\n/resumen",
-        );
+        if (text.startsWith("/")) {
+          await sendMessage(chatId, HELP_TEXT);
+        } else {
+          await handleFreeText(chatId, userId, text);
+        }
     }
   } catch (e) {
     console.error(e);
