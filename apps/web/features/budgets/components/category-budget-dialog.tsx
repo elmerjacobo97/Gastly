@@ -1,9 +1,10 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { CategoryCombobox } from "@/components/category-combobox";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,10 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
 import { saveCategoryBudget } from "@/features/budgets/server/actions";
 import { type CategoryBudget } from "@/features/budgets/types/budget-types";
 import { type Category } from "@/lib/category-types";
@@ -41,6 +38,9 @@ export function CategoryBudgetDialog({
   budget,
 }: CategoryBudgetDialogProps) {
   const [isPending, startTransition] = useTransition();
+  const [categoryId, setCategoryId] = useState(
+    budget?.categoryId ?? categories[0]?.id ?? "",
+  );
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,26 +85,14 @@ export function CategoryBudgetDialog({
               <FieldLabel htmlFor="budget-category">
                 Categoría de gasto
               </FieldLabel>
-              {budget && (
-                <input
-                  type="hidden"
-                  name="categoryId"
-                  value={budget.categoryId}
-                />
-              )}
-              <NativeSelect
+              <input type="hidden" name="categoryId" value={categoryId} />
+              <CategoryCombobox
+                categories={categories}
+                value={categoryId}
+                onChange={setCategoryId}
                 id="budget-category"
-                name="categoryId"
-                defaultValue={budget?.categoryId ?? categories[0]?.id ?? ""}
-                required
                 disabled={Boolean(budget)}
-              >
-                {categories.map((category) => (
-                  <NativeSelectOption key={category.id} value={category.id}>
-                    {category.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+              />
             </Field>
             <Field>
               <FieldLabel htmlFor="category-budget-amount">

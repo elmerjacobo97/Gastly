@@ -4,15 +4,7 @@ import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { CategoryCombobox } from "@/components/category-combobox";
 import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog";
 import { type Category } from "@/lib/category-types";
 import { type TransactionType } from "@/lib/transaction-types";
@@ -51,25 +43,13 @@ export function CategorySelect({
         onCreated={(id) => onChange(id)}
       />
       <div className="flex gap-2">
-        <Select value={value || undefined} onValueChange={onChange}>
-          <SelectTrigger id={id} aria-invalid={ariaInvalid} className="flex-1">
-            <SelectValue placeholder="Selecciona una categoría" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {filtered.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  <CategoryIconBadge
-                    icon={cat.icon}
-                    color={cat.color}
-                    className="size-5 rounded"
-                  />
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <CategoryCombobox
+          categories={filtered}
+          value={value}
+          onChange={onChange}
+          id={id}
+          aria-invalid={ariaInvalid}
+        />
         <Button
           type="button"
           variant="outline"

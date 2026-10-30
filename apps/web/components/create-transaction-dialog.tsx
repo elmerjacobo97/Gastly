@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { Loader2Icon, PlusIcon } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
@@ -37,7 +37,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog";
 import { type Category } from "@/lib/category-types";
+import { MIN_DESCRIPTION_LENGTH } from "@/features/transactions/lib/category-suggestion";
 import { createTransaction } from "@/features/transactions/server/actions";
+import { suggestCategory } from "@/features/transactions/server/suggest-category";
 import { type TransactionType } from "@/lib/transaction-types";
 import {
   type TransactionValues,
@@ -93,6 +95,10 @@ export function CreateTransactionDialog({
   const [internalOpen, setInternalOpen] = useState(false);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const autoSuggestedRef = useRef(false);
+  const suggestionRequestRef = useRef(0);
+  const lastSuggestionKeyRef = useRef("");
   const isControlled = controlledOpen !== undefined;
   const open = controlledOpen ?? internalOpen;
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
@@ -113,6 +119,44 @@ export function CreateTransactionDialog({
   const currentCurrency = useWatch({ control: form.control, name: "currency" });
 
   const existingCategories = categories.filter((c) => c.type === currentType);
+
+  // A category the user picked is never overwritten; one we suggested is replaced on the next description.
+  function canApplySuggestion() {
+    return !form.getValues("categoryName") || autoSuggestedRef.current;
+  }
+
+  async function suggestCategoryFromDescription(description: string) {
+    if (description.trim().length < MIN_DESCRIPTION_LENGTH) return;
+    if (!canApplySuggestion()) return;
+
+    const key = `${form.getValues("type")}:${description.trim().toLowerCase()}`;
+    if (
+      key === lastSuggestionKeyRef.current &&
+      form.getValues("categoryName")
+    ) {
+      return;
+    }
+    lastSuggestionKeyRef.current = key;
+
+    const requestId = ++suggestionRequestRef.current;
+    setIsSuggesting(true);
+    const name = await suggestCategory(
+      description,
+      form.getValues("type"),
+    ).catch(() => null);
+    if (requestId !== suggestionRequestRef.current) return;
+
+    setIsSuggesting(false);
+    if (name && canApplySuggestion()) {
+      autoSuggestedRef.current = true;
+      form.setValue("categoryName", name, { shouldValidate: true });
+    }
+  }
+
+  function setCategoryManually(name: string) {
+    autoSuggestedRef.current = false;
+    form.setValue("categoryName", name, { shouldValidate: true });
+  }
 
   function onSubmit(values: TransactionValues) {
     startTransition(async () => {
@@ -144,9 +188,7 @@ export function CreateTransactionDialog({
         open={quickCreateOpen}
         onOpenChange={setQuickCreateOpen}
         defaultType={currentType}
-        onCreated={(_id, name) =>
-          form.setValue("categoryName", name, { shouldValidate: true })
-        }
+        onCreated={(_id, name) => setCategoryManually(name)}
       />
       <Dialog open={open} onOpenChange={setOpen}>
         {!isControlled && (
@@ -241,6 +283,10 @@ export function CreateTransactionDialog({
                           {...field}
                           aria-invalid={fieldState.invalid}
                           id="ct-description"
+                          onBlur={() => {
+                            field.onBlur();
+                            void suggestCategoryFromDescription(field.value);
+                          }}
                           placeholder="Ej. Almuerzo, sueldo de mayo"
                         />
                         {fieldState.invalid && (
@@ -253,14 +299,22 @@ export function CreateTransactionDialog({
                     control={form.control}
                     name="categoryName"
                     render={({ field, fieldState }) => (
-                      <TransactionCategoryField
-                        categories={existingCategories}
-                        value={field.value}
-                        invalid={fieldState.invalid}
-                        error={fieldState.error}
-                        onChange={field.onChange}
-                        onCreate={() => setQuickCreateOpen(true)}
-                      />
+                      <div className="flex flex-col gap-2">
+                        <TransactionCategoryField
+                          categories={existingCategories}
+                          value={field.value}
+                          invalid={fieldState.invalid}
+                          error={fieldState.error}
+                          onChange={setCategoryManually}
+                          onCreate={() => setQuickCreateOpen(true)}
+                        />
+                        {isSuggesting && (
+                          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                            <Loader2Icon className="size-3 animate-spin" />
+                            Sugiriendo categoría…
+                          </p>
+                        )}
+                      </div>
                     )}
                   />
                   <Controller

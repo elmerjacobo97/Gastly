@@ -2,17 +2,9 @@
 
 import { PlusIcon } from "lucide-react";
 
-import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { CategoryCombobox } from "@/components/category-combobox";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { type Category } from "@/lib/category-types";
 
 type TransactionCategoryFieldProps = {
@@ -36,25 +28,13 @@ export function TransactionCategoryField({
     <Field data-invalid={invalid}>
       <FieldLabel>Categoría</FieldLabel>
       <div className="flex gap-2">
-        <Select value={value || undefined} onValueChange={onChange}>
-          <SelectTrigger aria-invalid={invalid} className="flex-1">
-            <SelectValue placeholder="Selecciona una categoría" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.name}>
-                  <CategoryIconBadge
-                    icon={category.icon}
-                    color={category.color}
-                    className="size-5 rounded-md"
-                  />
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <CategoryCombobox
+          categories={categories}
+          value={value}
+          onChange={onChange}
+          valueKey="name"
+          aria-invalid={invalid}
+        />
         <Button
           type="button"
           variant="outline"

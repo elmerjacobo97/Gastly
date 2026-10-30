@@ -85,7 +85,7 @@ These are deliberate decisions, not hidden debt. Match them; do not "fix" them w
 
 - Production runs on Vercel + Supabase cloud. The Vercel project's Root Directory must be `apps/web` (manual dashboard action, still pending). GitHub Actions runs `pnpm check` on pushes and pull requests; configure branch protection separately if checks should be required to merge.
 - Apply production migrations from the repo root with `supabase db push` (link first with `supabase link --project-ref yadpullgqqehyusoonxs` if needed).
-- Production env vars are the same two `NEXT_PUBLIC_*` Supabase values.
+- Production env vars are the same two `NEXT_PUBLIC_*` Supabase values, plus optional `GROQ_API_KEY` (category suggestions in the new transaction dialog; without it no suggestion is made).
 
 ## gastly-cli
 
