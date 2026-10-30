@@ -14,6 +14,34 @@ Return JSON matching the schema.
 - description: short and clean, without the amount.
 - category: pick one name exactly from the allowed list for that type, or null if none fits.`;
 
+const TRANSCRIPTION_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
+const TRANSCRIPTION_MODEL = "whisper-large-v3-turbo";
+const TRANSCRIPTION_TIMEOUT_MS = 15000;
+
+export async function transcribeAudio(
+  audio: Blob,
+  apiKey: string,
+): Promise<string> {
+  const form = new FormData();
+  form.append("file", audio, "voice.ogg");
+  form.append("model", TRANSCRIPTION_MODEL);
+  form.append("language", "es");
+
+  const response = await fetch(TRANSCRIPTION_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(TRANSCRIPTION_TIMEOUT_MS),
+    body: form,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq transcription failed with status ${response.status}`);
+  }
+
+  const body: { text?: string } = await response.json();
+  return body.text?.trim() ?? "";
+}
+
 type CategoryNames = { expense: string[]; income: string[] };
 
 export async function classifyMessage(

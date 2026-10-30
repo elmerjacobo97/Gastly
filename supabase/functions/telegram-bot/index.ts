@@ -5,12 +5,12 @@ import {
   daysBetween,
   monthRange,
 } from "../_shared/date.ts";
-import { classifyMessage } from "../_shared/groq.ts";
+import { classifyMessage, transcribeAudio } from "../_shared/groq.ts";
 import { parseMessage } from "../_shared/message-intent.ts";
 import { hasValidWebhookSecret } from "../_shared/webhook-auth.ts";
 
 const HELP_TEXT =
-  "Comandos disponibles:\n\n/gaste &lt;monto&gt; &lt;descripción&gt;\n/ingreso &lt;monto&gt; &lt;descripción&gt;\n/saldo\n/pagos\n/resumen\n/deshacer\n\nO escribe en lenguaje natural: <i>gasté 45 en almuerzo</i>";
+  "Comandos disponibles:\n\n/gaste &lt;monto&gt; &lt;descripción&gt;\n/ingreso &lt;monto&gt; &lt;descripción&gt;\n/saldo\n/pagos\n/resumen\n/deshacer\n\nO escribe (o envía una nota de voz) en lenguaje natural: <i>gasté 45 en almuerzo</i>";
 
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 const TELEGRAM_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
@@ -452,6 +452,67 @@ async function handleFreeText(chatId: number, userId: string, text: string) {
   await sendMessage(chatId, `${title}\n${lines.join("\n")}`);
 }
 
+const MAX_VOICE_SECONDS = 60;
+
+async function downloadTelegramFile(fileId: string): Promise<Blob> {
+  const infoResponse = await fetch(
+    `https://api.telegram.org/bot${TELEGRAM_TOKEN}/getFile?file_id=${encodeURIComponent(fileId)}`,
+  );
+  const info: { result?: { file_path?: string } } = await infoResponse.json();
+  const filePath = info.result?.file_path;
+  if (!filePath) throw new Error("Telegram getFile returned no file_path");
+
+  const fileResponse = await fetch(
+    `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${filePath}`,
+  );
+  if (!fileResponse.ok) {
+    throw new Error(`Telegram file download failed: ${fileResponse.status}`);
+  }
+  return fileResponse.blob();
+}
+
+// Voice note → Whisper transcript → same flow as free text
+async function handleVoice(
+  chatId: number,
+  userId: string,
+  voice: { file_id: string; duration: number },
+) {
+  if (!GROQ_API_KEY) {
+    await sendMessage(chatId, HELP_TEXT);
+    return;
+  }
+  if (voice.duration > MAX_VOICE_SECONDS) {
+    await sendMessage(
+      chatId,
+      `El audio es muy largo (máximo ${MAX_VOICE_SECONDS} segundos).`,
+    );
+    return;
+  }
+
+  let text: string;
+  try {
+    text = await transcribeAudio(
+      await downloadTelegramFile(voice.file_id),
+      GROQ_API_KEY,
+    );
+  } catch (e) {
+    console.error(e);
+    await sendMessage(
+      chatId,
+      "❌ No pude procesar el audio. Intenta de nuevo.",
+    );
+    return;
+  }
+
+  if (!text) {
+    await sendMessage(chatId, "No escuché nada en el audio.");
+    return;
+  }
+
+  await sendMessage(chatId, `🎤 <i>${escapeHtml(text)}</i>`);
+  await handleFreeText(chatId, userId, text);
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -473,14 +534,18 @@ Deno.serve(async (req) => {
   try {
     const update = await req.json();
     const message = update.message;
-    if (!message?.text || !message?.chat?.id || !message?.from?.id) {
+    if (
+      (!message?.text && !message?.voice) ||
+      !message?.chat?.id ||
+      !message?.from?.id
+    ) {
       return new Response("OK");
     }
 
     const chatId: number = message.chat.id;
     const telegramUserId: number = message.from.id;
     const telegramUsername: string | undefined = message.from.username;
-    const text: string = message.text.trim();
+    const text: string = message.text?.trim() ?? "";
 
     const [command, ...argParts] = text.split(" ");
     const args = argParts.join(" ");
@@ -496,6 +561,11 @@ Deno.serve(async (req) => {
         chatId,
         "❌ Cuenta no vinculada. Ve a <b>Gastly → Configuración → Telegram</b> y genera un código de vinculación.",
       );
+      return new Response("OK");
+    }
+
+    if (message.voice) {
+      await handleVoice(chatId, userId, message.voice);
       return new Response("OK");
     }
 
