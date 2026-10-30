@@ -14,7 +14,6 @@ export function SummaryCards({ orders }: { orders: CustodyOrder[] }) {
           title: "En custodia",
           value: formatCurrency(summary.totalHeld),
           description: `${summary.activeCount} ${summary.activeCount === 1 ? "encargo activo" : "encargos activos"}`,
-          emphasis: true,
         },
         {
           title: "Activos",

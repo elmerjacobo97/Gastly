@@ -365,7 +365,6 @@ function SummaryCards({
             savingsRate > 0
               ? `Tasa de ahorro: ${savingsRate}%`
               : "Ingresos menos gastos",
-          emphasis: true,
           negative: balance < 0,
         },
       ]}

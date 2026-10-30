@@ -86,7 +86,6 @@ export function LoansSummaryCards({ loans }: LoansSummaryCardsProps) {
           description: isNetPositive
             ? "A tu favor"
             : "+ a tu favor · − en tu contra",
-          emphasis: true,
           negative: !isNetPositive,
         },
       ]}

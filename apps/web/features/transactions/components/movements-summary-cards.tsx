@@ -40,7 +40,6 @@ export function MovementsSummaryCards({
           title: "Diferencia",
           value: formatCurrencyTotals(diff),
           description: "Ingresos menos gastos",
-          emphasis: true,
           negative: Object.values(diff).some((amount) => amount < 0),
         },
       ]}

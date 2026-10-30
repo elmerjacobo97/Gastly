@@ -29,7 +29,6 @@ export function DashboardSummaryCards({
       title: "Balance neto",
       value: formatCurrencyTotals(monthlyBalance),
       description: "Ingresos menos gastos del mes",
-      emphasis: true,
       negative: Object.values(monthlyBalance).some((amount) => amount < 0),
     },
     {

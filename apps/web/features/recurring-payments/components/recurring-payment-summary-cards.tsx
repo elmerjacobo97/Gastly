@@ -59,7 +59,6 @@ export function RecurringPaymentSummaryCards({
               : allPaid
                 ? "Todo pagado"
                 : "Saldo pendiente de pagos recurrentes",
-          emphasis: true,
         },
       ]}
       columns={3}

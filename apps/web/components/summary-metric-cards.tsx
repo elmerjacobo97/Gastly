@@ -13,7 +13,6 @@ export type SummaryMetricCard = {
   title: string;
   value: string;
   description?: ReactNode;
-  emphasis?: boolean;
   negative?: boolean;
   footer?: ReactNode;
 };
@@ -50,8 +49,7 @@ export function SummaryMetricCards({
           <CardContent className="space-y-2">
             <p
               className={cn(
-                "font-mono font-semibold tracking-tight tabular-nums",
-                card.emphasis ? "text-2xl" : "text-xl",
+                "font-mono text-xl font-semibold tracking-tight tabular-nums",
                 card.negative ? "text-destructive" : "text-foreground",
               )}
             >

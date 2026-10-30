@@ -25,7 +25,6 @@ export function SummaryCards({ goals }: { goals: SavingsGoal[] }) {
           title: "Total ahorrado",
           value: formatCurrency(totalSaved),
           description: `de ${formatCurrency(totalTarget)}`,
-          emphasis: true,
         },
         {
           title: "Progreso global",

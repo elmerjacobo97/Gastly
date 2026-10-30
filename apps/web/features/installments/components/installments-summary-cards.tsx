@@ -37,7 +37,6 @@ export function InstallmentsSummaryCards({
           title: "Pendiente total",
           value: formatCurrency(totalPending),
           description: `${activePurchases.length} ${activePurchases.length === 1 ? "compra activa" : "compras activas"}`,
-          emphasis: true,
         },
         {
           title: "Cuotas de este mes",

@@ -31,7 +31,6 @@ export function SummaryCards({ items }: { items: WishlistItem[] }) {
           title: "Costo estimado",
           value: pendingTotalLabels(pending) || formatCurrency(0),
           description: "Suma de lo pendiente",
-          emphasis: true,
         },
         {
           title: "Prioridad alta",
