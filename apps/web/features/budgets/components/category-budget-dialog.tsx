@@ -28,7 +28,6 @@ import { CURRENCY_LABELS, type CurrencyCode } from "@/lib/format";
 type CategoryBudgetDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  month: string;
   currency: CurrencyCode;
   categories: Category[];
   budget?: CategoryBudget;
@@ -37,7 +36,6 @@ type CategoryBudgetDialogProps = {
 export function CategoryBudgetDialog({
   open,
   onOpenChange,
-  month,
   currency,
   categories,
   budget,
@@ -52,7 +50,6 @@ export function CategoryBudgetDialog({
       try {
         await saveCategoryBudget({
           categoryId: String(formData.get("categoryId") ?? ""),
-          month,
           currency,
           amount: Number(formData.get("amount")),
         });
@@ -79,7 +76,7 @@ export function CategoryBudgetDialog({
               : "Nuevo presupuesto por categoría"}
           </DialogTitle>
           <DialogDescription>
-            Límite para {month} en {CURRENCY_LABELS[currency]}.
+            Límite mensual en {CURRENCY_LABELS[currency]}.
           </DialogDescription>
         </DialogHeader>
         <form id="category-budget-form" onSubmit={handleSubmit}>

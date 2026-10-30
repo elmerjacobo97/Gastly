@@ -1,3 +1,4 @@
+import { type GlobalBudgetAlert } from "@/features/budgets/types/budget-types";
 import { type CurrencyCode, type CurrencyTotals } from "@/lib/format";
 
 export type BudgetExpense = {
@@ -86,4 +87,34 @@ export function calculateBudgetProgress(
     isOverBudget: used > limit,
     isNearLimit: rawPercentage >= 80 && used <= limit,
   };
+}
+
+export function pickGlobalBudgetAlert(
+  limits: { currency: CurrencyCode; amount: number }[],
+  spent: CurrencyTotals,
+  committed: CurrencyTotals,
+): GlobalBudgetAlert | null {
+  const alerts = limits.flatMap(({ currency, amount }): GlobalBudgetAlert[] => {
+    const spentAmount = spent[currency] ?? 0;
+    const committedAmount = committed[currency] ?? 0;
+    const progress = calculateBudgetProgress(
+      amount,
+      spentAmount,
+      committedAmount,
+    );
+    if (!progress.isOverBudget && !progress.isNearLimit) return [];
+
+    return [
+      {
+        currency,
+        limit: amount,
+        used: spentAmount + committedAmount,
+        percentage: progress.percentage,
+        remaining: progress.remaining,
+        isOverBudget: progress.isOverBudget,
+      },
+    ];
+  });
+
+  return alerts.sort((a, b) => b.percentage - a.percentage)[0] ?? null;
 }

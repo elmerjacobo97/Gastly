@@ -47,12 +47,11 @@ export async function saveCategoryBudget(rawValues: CategoryBudgetValues) {
     {
       user_id: userId,
       category_id: values.categoryId,
-      month: `${values.month}-01`,
       currency: values.currency,
       amount: values.amount,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "user_id,category_id,month,currency" },
+    { onConflict: "user_id,category_id,currency" },
   );
 
   if (error) throw new Error(error.message);
@@ -67,12 +66,11 @@ export async function saveMonthlyBudgetTotal(
   const { error } = await supabase.from("monthly_budget_totals").upsert(
     {
       user_id: userId,
-      month: `${values.month}-01`,
       currency: values.currency,
       amount: values.amount,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "user_id,month,currency" },
+    { onConflict: "user_id,currency" },
   );
 
   if (error) throw new Error(error.message);

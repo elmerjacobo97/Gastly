@@ -23,7 +23,6 @@ import { CURRENCY_LABELS, type CurrencyCode } from "@/lib/format";
 type MonthlyBudgetTotalDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  month: string;
   currency: CurrencyCode;
   budget?: MonthlyBudgetTotal;
 };
@@ -31,7 +30,6 @@ type MonthlyBudgetTotalDialogProps = {
 export function MonthlyBudgetTotalDialog({
   open,
   onOpenChange,
-  month,
   currency,
   budget,
 }: MonthlyBudgetTotalDialogProps) {
@@ -44,7 +42,6 @@ export function MonthlyBudgetTotalDialog({
     startTransition(async () => {
       try {
         await saveMonthlyBudgetTotal({
-          month,
           currency,
           amount: Number(formData.get("amount")),
         });
@@ -69,7 +66,7 @@ export function MonthlyBudgetTotalDialog({
             {budget ? "Editar límite global" : "Definir límite global"}
           </DialogTitle>
           <DialogDescription>
-            Límite total de gastos para {month} en {CURRENCY_LABELS[currency]}.
+            Límite total de gastos de cada mes en {CURRENCY_LABELS[currency]}.
           </DialogDescription>
         </DialogHeader>
         <form id="monthly-budget-total-form" onSubmit={handleSubmit}>

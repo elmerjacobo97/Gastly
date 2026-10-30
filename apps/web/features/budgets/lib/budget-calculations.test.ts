@@ -4,6 +4,7 @@ import {
   aggregateBudgetExpenses,
   aggregatePendingPayments,
   calculateBudgetProgress,
+  pickGlobalBudgetAlert,
 } from "@/features/budgets/lib/budget-calculations";
 
 describe("aggregateBudgetExpenses", () => {
@@ -123,5 +124,41 @@ describe("aggregatePendingPayments", () => {
       totalByCurrency: { PEN: 490 },
       categoryByCurrency: { "food:PEN": 450 },
     });
+  });
+});
+
+describe("pickGlobalBudgetAlert", () => {
+  const limits = [{ currency: "PEN" as const, amount: 1000 }];
+
+  it("stays quiet below 80% of the limit", () => {
+    expect(pickGlobalBudgetAlert(limits, { PEN: 790 }, {})).toBeNull();
+  });
+
+  it("warns from 80% and counts committed payments", () => {
+    expect(pickGlobalBudgetAlert(limits, { PEN: 700 }, { PEN: 100 })).toEqual({
+      currency: "PEN",
+      limit: 1000,
+      used: 800,
+      percentage: 80,
+      remaining: 200,
+      isOverBudget: false,
+    });
+  });
+
+  it("flags an exceeded limit with a negative remainder", () => {
+    expect(pickGlobalBudgetAlert(limits, { PEN: 1050 }, {})).toMatchObject({
+      isOverBudget: true,
+      remaining: -50,
+    });
+  });
+
+  it("reports the currency closest to its limit and ignores unlimited ones", () => {
+    expect(
+      pickGlobalBudgetAlert(
+        [...limits, { currency: "USD", amount: 100 }],
+        { PEN: 850, USD: 120, MXN: 9999 },
+        {},
+      ),
+    ).toMatchObject({ currency: "USD", isOverBudget: true });
   });
 });

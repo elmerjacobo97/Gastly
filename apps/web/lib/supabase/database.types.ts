@@ -102,7 +102,6 @@ export type Database = {
           created_at: string;
           currency: string;
           id: string;
-          month: string;
           updated_at: string;
           user_id: string;
         };
@@ -112,7 +111,6 @@ export type Database = {
           created_at?: string;
           currency?: string;
           id?: string;
-          month: string;
           updated_at?: string;
           user_id: string;
         };
@@ -122,7 +120,6 @@ export type Database = {
           created_at?: string;
           currency?: string;
           id?: string;
-          month?: string;
           updated_at?: string;
           user_id?: string;
         };
@@ -491,7 +488,6 @@ export type Database = {
           created_at: string;
           currency: string;
           id: string;
-          month: string;
           updated_at: string;
           user_id: string;
         };
@@ -500,7 +496,6 @@ export type Database = {
           created_at?: string;
           currency: string;
           id?: string;
-          month: string;
           updated_at?: string;
           user_id: string;
         };
@@ -509,7 +504,6 @@ export type Database = {
           created_at?: string;
           currency?: string;
           id?: string;
-          month?: string;
           updated_at?: string;
           user_id?: string;
         };

@@ -6,12 +6,15 @@ import {
   aggregateBudgetExpenses,
   aggregatePendingPayments,
   categoryCurrencyKey,
+  pickGlobalBudgetAlert,
   type BudgetExpense,
+  type ExpenseSpending,
   type PendingPayment,
 } from "@/features/budgets/lib/budget-calculations";
 import {
   type BudgetOverview,
   type CategoryBudget,
+  type GlobalBudgetAlert,
   type MonthlyBudgetTotal,
 } from "@/features/budgets/types/budget-types";
 import { createClient } from "@/lib/supabase/server";
@@ -64,39 +67,16 @@ type PendingInstallmentRow = {
   installment_purchases: { category_id: string | null };
 };
 
-export async function getBudgetOverview(month: Date): Promise<BudgetOverview> {
-  const supabase = await createClient();
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
+type MonthUsage = { spending: ExpenseSpending; committed: ExpenseSpending };
+
+async function getMonthUsage(
+  supabase: SupabaseClient,
+  month: Date,
+): Promise<MonthUsage> {
   const monthStart = format(startOfMonth(month), "yyyy-MM-dd");
   const monthEnd = format(endOfMonth(month), "yyyy-MM-dd");
-
-  const [categoryBudgetResult, monthlyBudgetResult, categoryResult] =
-    await Promise.all([
-      supabase
-        .from("budgets")
-        .select("id, category_id, amount, currency")
-        .eq("month", monthStart)
-        .order("created_at", { ascending: true })
-        .overrideTypes<CategoryBudgetRow[], { merge: false }>(),
-      supabase
-        .from("monthly_budget_totals")
-        .select("id, amount, currency")
-        .eq("month", monthStart)
-        .overrideTypes<MonthlyBudgetRow[], { merge: false }>(),
-      supabase
-        .from("categories")
-        .select("id, name, type, color, icon, description, created_at")
-        .eq("type", "expense")
-        .order("name", { ascending: true })
-        .overrideTypes<CategoryRow[], { merge: false }>(),
-    ]);
-
-  if (categoryBudgetResult.error) {
-    throw new Error(categoryBudgetResult.error.message);
-  }
-  if (monthlyBudgetResult.error) {
-    throw new Error(monthlyBudgetResult.error.message);
-  }
-  if (categoryResult.error) throw new Error(categoryResult.error.message);
 
   const expenseRows: BudgetExpenseRow[] = [];
   for (let offset = 0; ; offset += PAGE_SIZE) {
@@ -172,6 +152,49 @@ export async function getBudgetOverview(month: Date): Promise<BudgetOverview> {
     pendingInstallments,
   );
 
+  const spending = aggregateBudgetExpenses(
+    expenseRows.map((row): BudgetExpense => ({
+      categoryId: row.category_id,
+      amount: Number(row.amount),
+      currency: row.currency,
+    })),
+  );
+
+  return { spending, committed };
+}
+
+export async function getBudgetOverview(month: Date): Promise<BudgetOverview> {
+  const supabase = await createClient();
+
+  const [categoryBudgetResult, monthlyBudgetResult, categoryResult, usage] =
+    await Promise.all([
+      supabase
+        .from("budgets")
+        .select("id, category_id, amount, currency")
+        .order("created_at", { ascending: true })
+        .overrideTypes<CategoryBudgetRow[], { merge: false }>(),
+      supabase
+        .from("monthly_budget_totals")
+        .select("id, amount, currency")
+        .overrideTypes<MonthlyBudgetRow[], { merge: false }>(),
+      supabase
+        .from("categories")
+        .select("id, name, type, color, icon, description, created_at")
+        .eq("type", "expense")
+        .order("name", { ascending: true })
+        .overrideTypes<CategoryRow[], { merge: false }>(),
+      getMonthUsage(supabase, month),
+    ]);
+  const { spending, committed } = usage;
+
+  if (categoryBudgetResult.error) {
+    throw new Error(categoryBudgetResult.error.message);
+  }
+  if (monthlyBudgetResult.error) {
+    throw new Error(monthlyBudgetResult.error.message);
+  }
+  if (categoryResult.error) throw new Error(categoryResult.error.message);
+
   const categories = categoryResult.data.map((row) => ({
     id: row.id,
     name: row.name,
@@ -181,13 +204,6 @@ export async function getBudgetOverview(month: Date): Promise<BudgetOverview> {
     description: row.description ?? "",
     createdAt: row.created_at,
   }));
-  const spending = aggregateBudgetExpenses(
-    expenseRows.map((row): BudgetExpense => ({
-      categoryId: row.category_id,
-      amount: Number(row.amount),
-      currency: row.currency,
-    })),
-  );
   const categoryById = new Map(
     categories.map((category) => [category.id, category]),
   );
@@ -234,4 +250,25 @@ export async function getBudgetOverview(month: Date): Promise<BudgetOverview> {
     spentByCurrency: spending.totalByCurrency,
     committedByCurrency: committed.totalByCurrency,
   };
+}
+
+export async function getGlobalBudgetAlert(): Promise<GlobalBudgetAlert | null> {
+  const supabase = await createClient();
+  const { data: limits, error } = await supabase
+    .from("monthly_budget_totals")
+    .select("id, amount, currency")
+    .overrideTypes<MonthlyBudgetRow[], { merge: false }>();
+  if (error) throw new Error(error.message);
+  if (limits.length === 0) return null;
+
+  const { spending, committed } = await getMonthUsage(supabase, new Date());
+
+  return pickGlobalBudgetAlert(
+    limits.map((row) => ({
+      currency: row.currency,
+      amount: Number(row.amount),
+    })),
+    spending.totalByCurrency,
+    committed.totalByCurrency,
+  );
 }

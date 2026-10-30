@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { signOut } from "@/features/auth/server/actions";
+import { GlobalBudgetAlert } from "@/features/budgets/components/global-budget-alert";
+import { getGlobalBudgetAlert } from "@/features/budgets/server/queries";
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
 import { PageHeader } from "@/features/dashboard/components/page-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -27,6 +29,7 @@ export default async function DashboardLayout({
   }
 
   const userName = user.user_metadata?.full_name as string | undefined;
+  const budgetAlert = await getGlobalBudgetAlert();
 
   return (
     <SidebarProvider>
@@ -37,6 +40,7 @@ export default async function DashboardLayout({
           userName={userName}
           signOutAction={signOut}
         />
+        {budgetAlert && <GlobalBudgetAlert alert={budgetAlert} />}
         {children}
       </SidebarInset>
     </SidebarProvider>

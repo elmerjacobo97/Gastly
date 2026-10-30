@@ -271,7 +271,7 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
             </CardTitle>
             <CardDescription>
               {categoryBudgets.length === 0
-                ? `Sin límites para ${currency} en ${overview.month}.`
+                ? `Sin límites para ${currency}.`
                 : `${categoryBudgets.length} categoría${categoryBudgets.length === 1 ? "" : "s"} con límite · ${currency}`}
             </CardDescription>
           </div>
@@ -318,10 +318,9 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
 
       {categoryDialogOpen && (
         <CategoryBudgetDialog
-          key={`${selectedCategoryBudget?.id ?? "new"}:${overview.month}:${currency}`}
+          key={`${selectedCategoryBudget?.id ?? "new"}:${currency}`}
           open={categoryDialogOpen}
           onOpenChange={setCategoryDialogOpen}
-          month={overview.month}
           currency={currency}
           categories={overview.categories}
           budget={selectedCategoryBudget ?? undefined}
@@ -329,10 +328,9 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
       )}
       {totalDialogOpen && (
         <MonthlyBudgetTotalDialog
-          key={`${totalBudget?.id ?? "new"}:${overview.month}:${currency}`}
+          key={`${totalBudget?.id ?? "new"}:${currency}`}
           open={totalDialogOpen}
           onOpenChange={setTotalDialogOpen}
-          month={overview.month}
           currency={currency}
           budget={totalBudget}
         />
@@ -341,7 +339,7 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
         open={deleteTarget !== null}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Eliminar presupuesto"
-        description={`Se eliminará el límite de ${deleteTarget?.label ?? "presupuesto"} para ${overview.month} (${currency}).`}
+        description={`Se eliminará el límite de ${deleteTarget?.label ?? "presupuesto"} (${currency}) de todos los meses.`}
         pending={isPending}
         onConfirm={handleDelete}
       />

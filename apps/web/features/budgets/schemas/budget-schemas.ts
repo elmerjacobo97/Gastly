@@ -3,10 +3,6 @@ import { z } from "zod";
 import { CURRENCY_CODES } from "@/lib/format";
 import { numberInput } from "@/lib/validation";
 
-const monthSchema = z
-  .string()
-  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Selecciona un mes válido.");
-
 const amountSchema = numberInput(
   z
     .number({ error: "Ingresa un monto válido." })
@@ -15,7 +11,6 @@ const amountSchema = numberInput(
 
 export const categoryBudgetSchema = z.object({
   categoryId: z.string().uuid("Selecciona una categoría válida."),
-  month: monthSchema,
   currency: z.enum(CURRENCY_CODES),
   amount: amountSchema,
 });
@@ -23,7 +18,6 @@ export const categoryBudgetSchema = z.object({
 export type CategoryBudgetValues = z.infer<typeof categoryBudgetSchema>;
 
 export const monthlyBudgetTotalSchema = z.object({
-  month: monthSchema,
   currency: z.enum(CURRENCY_CODES),
   amount: amountSchema,
 });

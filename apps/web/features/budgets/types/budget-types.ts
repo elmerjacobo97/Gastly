@@ -20,6 +20,15 @@ export type MonthlyBudgetTotal = {
   currency: CurrencyCode;
 };
 
+export type GlobalBudgetAlert = {
+  currency: CurrencyCode;
+  limit: number;
+  used: number;
+  percentage: number;
+  remaining: number;
+  isOverBudget: boolean;
+};
+
 export type BudgetOverview = {
   month: string;
   categories: Category[];

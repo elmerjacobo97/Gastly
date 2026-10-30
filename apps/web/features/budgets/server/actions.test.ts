@@ -57,7 +57,7 @@ beforeEach(() => {
 });
 
 describe("budget actions", () => {
-  it("saves expense-category budgets by month and currency", async () => {
+  it("saves expense-category budgets by category and currency", async () => {
     const categories = createQueryBuilder({
       data: { id: "category-1" },
       error: null,
@@ -67,7 +67,6 @@ describe("budget actions", () => {
 
     await saveCategoryBudget({
       categoryId: "123e4567-e89b-12d3-a456-426614174000",
-      month: "2026-10",
       currency: "USD",
       amount: 300,
     });
@@ -77,21 +76,19 @@ describe("budget actions", () => {
       expect.objectContaining({
         user_id: "user-1",
         category_id: "123e4567-e89b-12d3-a456-426614174000",
-        month: "2026-10-01",
         currency: "USD",
         amount: 300,
       }),
-      { onConflict: "user_id,category_id,month,currency" },
+      { onConflict: "user_id,category_id,currency" },
     );
     expect(revalidatePath).toHaveBeenCalledWith("/budgets");
   });
 
-  it("saves independent global limits per month and currency", async () => {
+  it("saves independent global limits per currency", async () => {
     const totals = createQueryBuilder({ error: null });
     useSupabase({ monthly_budget_totals: totals });
 
     await saveMonthlyBudgetTotal({
-      month: "2026-10",
       currency: "PEN",
       amount: 2500,
     });
@@ -99,11 +96,10 @@ describe("budget actions", () => {
     expect(totals.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         user_id: "user-1",
-        month: "2026-10-01",
         currency: "PEN",
         amount: 2500,
       }),
-      { onConflict: "user_id,month,currency" },
+      { onConflict: "user_id,currency" },
     );
   });
 
@@ -115,7 +111,6 @@ describe("budget actions", () => {
     await expect(
       saveCategoryBudget({
         categoryId: "123e4567-e89b-12d3-a456-426614174000",
-        month: "2026-10",
         currency: "PEN",
         amount: 300,
       }),

@@ -7,7 +7,7 @@ const PAGE_SIZE = 1000
 
 export async function runBudget(args: string[]): Promise<void> {
   if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
-    process.stdout.write(`Usage:\n  gastly-cli budget [--month YYYY-MM] [--json]\n\nShow budget vs actual spending for the month.\n`)
+    process.stdout.write(`Usage:\n  gastly-cli budget [--month YYYY-MM] [--json]\n\nShow standing budget limits vs actual spending for the month.\n`)
     return
   }
 
@@ -25,8 +25,7 @@ export async function runBudget(args: string[]): Promise<void> {
 
   const { data: budgets, error: budgetError } = await supabase
     .from("budgets")
-    .select("id, amount, month, currency, categories!inner(id, name, color, icon)")
-    .eq("month", monthStart)
+    .select("id, amount, currency, categories!inner(id, name, color, icon)")
 
   if (budgetError) throw new Error(budgetError.message)
 

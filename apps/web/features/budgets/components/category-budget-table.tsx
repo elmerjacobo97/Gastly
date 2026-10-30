@@ -163,8 +163,8 @@ export function CategoryBudgetTable({
                         tone.text,
                       )}
                     >
-                      {progress.isOverBudget ? "Excedido por " : "Quedan "}
-                      {formatCurrency(Math.abs(progress.remaining), currency)}
+                      {progress.isOverBudget ? "" : "+"}
+                      {formatCurrency(progress.remaining, currency)}
                     </TableCell>
                     <TableCell className="sticky right-0 bg-card shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] [tr:hover>&]:bg-muted">
                       <div className="flex justify-end">
