@@ -48,7 +48,7 @@ import {
 
 type WishlistItemDialogProps = {
   item?: WishlistItem;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
@@ -116,9 +116,7 @@ export function WishlistItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {!isControlled && (
-        <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
-      )}
+      {!isControlled && <DialogTrigger render={trigger ?? defaultTrigger} />}
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -259,10 +257,8 @@ export function WishlistItemDialog({
           </div>
         </ScrollArea>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancelar
           </DialogClose>
           <Button disabled={isPending} form="wishlist-item-form" type="submit">
             {isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}

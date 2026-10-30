@@ -90,10 +90,8 @@ export function MonthlyBudgetTotalDialog({
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancelar
           </DialogClose>
           <Button
             form="monthly-budget-total-form"

@@ -159,18 +159,20 @@ export function RecurringPaymentPayDialog({
                     {isIncome ? "Fecha real de cobro" : "Fecha real de pago"}
                   </FieldLabel>
                   <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        aria-invalid={fieldState.invalid}
-                        type="button"
-                        variant="outline"
-                        className="justify-start text-left font-normal"
-                      >
-                        <CalendarIcon />
-                        {field.value
-                          ? formatDate(field.value)
-                          : "Selecciona una fecha"}
-                      </Button>
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          aria-invalid={fieldState.invalid}
+                          type="button"
+                          variant="outline"
+                          className="justify-start text-left font-normal"
+                        />
+                      }
+                    >
+                      <CalendarIcon />
+                      {field.value
+                        ? formatDate(field.value)
+                        : "Selecciona una fecha"}
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
@@ -213,10 +215,8 @@ export function RecurringPaymentPayDialog({
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancelar
           </DialogClose>
           <Button
             disabled={pending}

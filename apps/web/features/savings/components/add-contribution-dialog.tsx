@@ -36,7 +36,7 @@ import { type SavingsGoal } from "@/features/savings/types/savings-types";
 
 type AddContributionDialogProps = {
   goal: SavingsGoal;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
   defaultAmount?: number;
 };
 
@@ -89,14 +89,16 @@ export function AddContributionDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button size="sm" disabled={goal.isCompleted}>
-            <PlusIcon className="size-4" />
-            Añadir aporte
-          </Button>
-        )}
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          trigger ?? (
+            <Button size="sm" disabled={goal.isCompleted}>
+              <PlusIcon className="size-4" />
+              Añadir aporte
+            </Button>
+          )
+        }
+      />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Añadir aporte</DialogTitle>
@@ -172,10 +174,8 @@ export function AddContributionDialog({
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancelar
-            </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancelar
           </DialogClose>
           <Button disabled={isPending} form="contribution-form" type="submit">
             {isPending && <Loader2Icon className="size-4 animate-spin" />}

@@ -40,7 +40,11 @@ export function AccountSelect({
         onCreated={(id) => onChange(id)}
       />
       <div className="flex gap-2">
-        <Select value={value || undefined} onValueChange={onChange}>
+        <Select
+          items={accounts.map((a) => ({ value: a.id, label: a.name }))}
+          value={value || null}
+          onValueChange={(next) => onChange(next ?? "")}
+        >
           <SelectTrigger id={id} aria-invalid={ariaInvalid} className="flex-1">
             <SelectValue placeholder="Sin cuenta vinculada" />
           </SelectTrigger>

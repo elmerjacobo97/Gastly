@@ -38,13 +38,12 @@ export function UpcomingPaymentsCard({ payments }: UpcomingPaymentsCardProps) {
         <Button
           variant="ghost"
           size="sm"
-          asChild
           className="text-xs text-muted-foreground"
+          render={<Link href="/recurring-payments" />}
+          nativeButton={false}
         >
-          <Link href="/recurring-payments">
-            Ver todos
-            <ArrowRightIcon />
-          </Link>
+          Ver todos
+          <ArrowRightIcon />
         </Button>
       </CardHeader>
       <CardContent>
