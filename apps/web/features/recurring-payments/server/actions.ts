@@ -1,7 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { addMonths, addYears, format } from "date-fns";
+import {
+  addMonths,
+  addYears,
+  endOfMonth,
+  format,
+  isLastDayOfMonth,
+} from "date-fns";
 
 import { createClient } from "@/lib/supabase/server";
 import { parseOrThrow } from "@/lib/validation";
@@ -46,10 +52,9 @@ function getNextDueDate(
 ) {
   const date = new Date(`${currentDate}T12:00:00`);
   if (frequency === "yearly") return format(addYears(date, 1), "yyyy-MM-dd");
-  return format(
-    addMonths(date, frequency === "monthly" ? 1 : intervalMonths),
-    "yyyy-MM-dd",
-  );
+  const next = addMonths(date, frequency === "monthly" ? 1 : intervalMonths);
+  // Month-end dues stay at month end (30 Sep -> 31 Oct, not 30 Oct).
+  return format(isLastDayOfMonth(date) ? endOfMonth(next) : next, "yyyy-MM-dd");
 }
 
 function getIntervalMonths(values: {

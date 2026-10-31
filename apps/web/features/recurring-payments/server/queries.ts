@@ -125,7 +125,10 @@ export async function getRecurringPayments(
     throw new Error(error.message);
   }
 
-  const ids = data.map((expense) => expense.id);
+  // A payment made this month for a past cycle (e.g. 1 Oct for September) leaves this month's due date open.
+  const ids = data
+    .filter((expense) => expense.next_due_on > monthEnd)
+    .map((expense) => expense.id);
   const paidByExpense = new Map<string, string>();
   const paidAmountByExpense = new Map<string, number>();
   const paidCurrencyByExpense = new Map<string, CurrencyCode>();
