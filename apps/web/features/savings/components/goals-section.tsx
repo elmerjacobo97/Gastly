@@ -6,6 +6,7 @@ import { TargetIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ProgressCell } from "@/components/progress-cell";
+import { DateCell } from "@/components/date-cell";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { TableSearchInput } from "@/components/table-search-input";
 import {
@@ -35,7 +36,8 @@ import {
 import { AddContributionDialog } from "@/features/savings/components/add-contribution-dialog";
 import { CreateGoalDialog } from "@/features/savings/components/create-goal-dialog";
 import { type SavingsGoal } from "@/features/savings/types/savings-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { dueTone } from "@/lib/due-tone";
+import { formatCurrency } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 
 type GoalFilter = "active" | "completed" | "all";
@@ -185,8 +187,15 @@ export function GoalsSection({ goals, onEdit, onDelete }: GoalsSectionProps) {
                             : `${goal.progress}% · Faltan ${formatCurrency(goal.remaining)}`}
                         </ProgressCell>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {goal.targetDate ? formatDate(goal.targetDate) : "—"}
+                      <TableCell>
+                        <DateCell
+                          value={goal.targetDate}
+                          tone={
+                            goal.targetDate && !goal.isCompleted
+                              ? dueTone(goal.targetDate)
+                              : "muted"
+                          }
+                        />
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {needed || estimated ? (

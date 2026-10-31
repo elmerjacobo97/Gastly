@@ -3,7 +3,9 @@
 import { HistoryIcon, PauseCircleIcon, PlayCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { AccountLabel } from "@/components/account-label";
 import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { DateCell } from "@/components/date-cell";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { StatusBadge } from "@/components/status-badge";
 import { TableSearchInput } from "@/components/table-search-input";
@@ -30,7 +32,8 @@ import {
   getPaymentBadge,
 } from "@/features/recurring-payments/lib/recurring-payment-helpers";
 import { type RecurringPayment } from "@/lib/recurring-payment-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { dueTone } from "@/lib/due-tone";
+import { formatCurrency } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 import { cn } from "@/lib/utils";
 
@@ -42,12 +45,9 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "income", label: "Ingresos" },
 ];
 
-function dateLabel(payment: RecurringPayment) {
-  const isIncome = payment.type === "income";
-  if (payment.paidOn) {
-    return `${isIncome ? "Cobrado" : "Pagado"} ${formatDate(payment.paidOn)}`;
-  }
-  return `${isIncome ? "Cobro" : "Vence"} ${formatDate(payment.nextDueOn)}`;
+function dueDateTone(payment: RecurringPayment) {
+  if (!payment.isActive || payment.paidOn) return "muted";
+  return dueTone(payment.nextDueOn);
 }
 
 function amountLabel(payment: RecurringPayment) {
@@ -126,7 +126,9 @@ export function RecurringPaymentList({
               <TableRow>
                 <TableHead>Concepto</TableHead>
                 <TableHead>Frecuencia</TableHead>
-                <TableHead>Fecha</TableHead>
+                <TableHead>Cuenta</TableHead>
+                <TableHead>Vence</TableHead>
+                <TableHead>Último pago</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Monto</TableHead>
                 <TableHead className="sticky right-0 w-28 bg-card">
@@ -138,7 +140,7 @@ export function RecurringPaymentList({
               {visiblePayments.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={8}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
                     Sin resultados.
@@ -189,18 +191,24 @@ export function RecurringPaymentList({
                       <TableCell>
                         <div className="flex flex-col text-muted-foreground">
                           <span>{formatFrequency(payment)}</span>
-                          {payment.account && (
-                            <span
-                              className="flex items-center gap-1.5 text-xs"
-                              style={{ color: payment.account.color }}
-                            >
-                              {payment.account.name}
-                            </span>
-                          )}
+                          <span className="text-xs">
+                            {payment.paymentKind === "fixed"
+                              ? "Monto fijo"
+                              : "Monto variable"}
+                          </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {dateLabel(payment)}
+                      <TableCell>
+                        <AccountLabel account={payment.account} />
+                      </TableCell>
+                      <TableCell>
+                        <DateCell
+                          value={payment.nextDueOn}
+                          tone={dueDateTone(payment)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <DateCell value={payment.paidOn} tone="done" />
                       </TableCell>
                       <TableCell>
                         <Badge

@@ -11,8 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { DateCell } from "@/components/date-cell";
+import { dueTone } from "@/lib/due-tone";
 import { type RecurringPayment } from "@/lib/recurring-payment-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 
 type UpcomingPayment = {
   expense: RecurringPayment;
@@ -69,11 +71,11 @@ export function UpcomingPaymentsCard({ payments }: UpcomingPaymentsCardProps) {
                   <p className="truncate text-sm font-medium">
                     {expense.description}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {isPaid
-                      ? `Pagado el ${formatDate(expense.paidOn!)}`
-                      : formatDate(expense.nextDueOn)}
-                  </p>
+                  <DateCell
+                    value={isPaid ? expense.paidOn : expense.nextDueOn}
+                    tone={isPaid ? "done" : dueTone(expense.nextDueOn)}
+                    className="text-xs"
+                  />
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-sm font-medium tabular-nums">

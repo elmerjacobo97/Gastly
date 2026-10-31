@@ -8,6 +8,7 @@ import {
 import { useMemo, useState } from "react";
 
 import { ProgressCell } from "@/components/progress-cell";
+import { DateCell } from "@/components/date-cell";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { StatusBadge } from "@/components/status-badge";
 import { TableSearchInput } from "@/components/table-search-input";
@@ -32,7 +33,8 @@ import {
   type CustodyMovementType,
   type CustodyOrder,
 } from "@/features/custody/types/custody-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { dueTone } from "@/lib/due-tone";
+import { formatCurrency } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 
 type OrderFilter = "active" | "closed" | "all";
@@ -173,8 +175,15 @@ export function OrdersSection({
                           </ProgressCell>
                         )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {order.expectedOn ? formatDate(order.expectedOn) : "—"}
+                      <TableCell>
+                        <DateCell
+                          value={order.expectedOn}
+                          tone={
+                            order.expectedOn && isActive
+                              ? dueTone(order.expectedOn)
+                              : "muted"
+                          }
+                        />
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground tabular-nums">
                         {formatCurrency(order.totalDeposited)}

@@ -15,8 +15,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MovementsEmptyState } from "@/features/transactions/components/movements-empty-state";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { AccountLabel } from "@/components/account-label";
+import { DateCell } from "@/components/date-cell";
+import { StatusBadge } from "@/components/status-badge";
 import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
 import { matchesQuery } from "@/lib/search";
@@ -40,12 +42,17 @@ function TransactionDescriptionCell({
 }) {
   return (
     <div className="flex min-w-44 max-w-64 flex-col whitespace-normal">
-      <span
-        className="line-clamp-2 font-medium break-words"
-        title={transaction.description}
-      >
-        {transaction.description}
-      </span>
+      <div className="flex items-center gap-1.5">
+        <span
+          className="line-clamp-2 font-medium break-words"
+          title={transaction.description}
+        >
+          {transaction.description}
+        </span>
+        {transaction.recurringExpenseId && (
+          <StatusBadge tone="muted">Recurrente</StatusBadge>
+        )}
+      </div>
       {transaction.notes && (
         <span
           className="line-clamp-1 text-xs break-words text-muted-foreground"
@@ -68,6 +75,11 @@ function TransactionAmountCell({ transaction }: { transaction: Transaction }) {
     >
       {isIncome ? "+" : "-"}
       {formatCurrency(transaction.amount, transaction.currency)}
+      {transaction.accountAmount !== null && (
+        <div className="text-xs font-normal text-muted-foreground">
+          {formatCurrency(transaction.accountAmount)} en cuenta
+        </div>
+      )}
     </div>
   );
 }
@@ -171,8 +183,8 @@ export function MovementsTable({
                         account={accountsById.get(transaction.accountId ?? "")}
                       />
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(transaction.occurredOn)}
+                    <TableCell>
+                      <DateCell value={transaction.occurredOn} />
                     </TableCell>
                     <TableCell>
                       <TransactionAmountCell transaction={transaction} />

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { DateCell } from "@/components/date-cell";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Table,
@@ -26,7 +27,8 @@ import {
   type InstallmentPayment,
   type InstallmentPurchase,
 } from "@/lib/installment-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { dueTone } from "@/lib/due-tone";
+import { formatCurrency } from "@/lib/format";
 
 const TEXT_COLUMNS = ["Compra", "Cuenta", "Vence", "Estado"];
 
@@ -129,8 +131,11 @@ export function InstallmentMonthPaymentsCard({
                     <TableCell>
                       <AccountLabel account={purchase.account} />
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(payment.dueOn)}
+                    <TableCell>
+                      <DateCell
+                        value={payment.dueOn}
+                        tone={isPaid ? "done" : dueTone(payment.dueOn)}
+                      />
                     </TableCell>
                     <TableCell>
                       {isPaid ? (

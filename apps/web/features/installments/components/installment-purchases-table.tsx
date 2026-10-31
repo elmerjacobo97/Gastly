@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { AccountLabel } from "@/components/account-label";
 import { CategoryIconBadge } from "@/components/category-icon-badge";
+import { DateCell } from "@/components/date-cell";
 import { ProgressCell } from "@/components/progress-cell";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -25,7 +26,8 @@ import {
 } from "@/components/ui/table";
 import { getDisplayInstallment } from "@/lib/installments-calcs";
 import { type InstallmentPurchase } from "@/lib/installment-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { dueTone } from "@/lib/due-tone";
+import { formatCurrency } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 
 type PurchaseFilter = "active" | "completed" | "all";
@@ -100,8 +102,9 @@ export function InstallmentPurchasesTable({
                 <TableHead>Compra</TableHead>
                 <TableHead>Cuenta</TableHead>
                 <TableHead>Progreso</TableHead>
-                <TableHead>Próxima cuota</TableHead>
-                <TableHead className="text-right">Cuota</TableHead>
+                <TableHead>Cuota</TableHead>
+                <TableHead>Vence</TableHead>
+                <TableHead className="text-right">Monto cuota</TableHead>
                 <TableHead className="text-right">Pendiente</TableHead>
                 <TableHead className="sticky right-0 w-12 bg-card">
                   <span className="sr-only">Acciones</span>
@@ -112,7 +115,7 @@ export function InstallmentPurchasesTable({
               {visiblePurchases.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
                     Sin resultados.
@@ -171,10 +174,18 @@ export function InstallmentPurchasesTable({
                             : `${purchase.paidCount}/${purchase.totalInstallments} · ${pctPaid}%`}
                         </ProgressCell>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-muted-foreground tabular-nums">
                         {nextPayment
-                          ? `Cuota ${nextPayment.paymentNumber}/${purchase.totalInstallments} · ${formatDate(nextPayment.dueOn)}`
+                          ? `${nextPayment.paymentNumber}/${purchase.totalInstallments}`
                           : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <DateCell
+                          value={nextPayment?.dueOn ?? null}
+                          tone={
+                            nextPayment ? dueTone(nextPayment.dueOn) : "muted"
+                          }
+                        />
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatCurrency(purchase.installmentAmount)}

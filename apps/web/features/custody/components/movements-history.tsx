@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { StatusBadge } from "@/components/status-badge";
+import { DateCell } from "@/components/date-cell";
 import { TableSearchInput } from "@/components/table-search-input";
 import {
   Card,
@@ -34,7 +35,7 @@ import {
   type CustodyMovementRow,
   type CustodyOrder,
 } from "@/features/custody/types/custody-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 
 type MovementsHistoryProps = {
@@ -184,8 +185,8 @@ export function MovementsHistory({
                       const isDeposit = movement.type === "deposit";
                       return (
                         <TableRow key={movement.id}>
-                          <TableCell className="text-muted-foreground">
-                            {formatDate(movement.occurredOn)}
+                          <TableCell>
+                            <DateCell value={movement.occurredOn} />
                           </TableCell>
                           <TableCell>
                             <StatusBadge
