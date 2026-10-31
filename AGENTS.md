@@ -64,6 +64,7 @@ These are deliberate decisions, not hidden debt. Match them; do not "fix" them w
 - Tailwind is v4 via `@tailwindcss/postcss`; there is no `tailwind.config.*`. Theme tokens and Tailwind imports live in `apps/web/app/globals.css`.
 - shadcn is configured in `apps/web/components.json` with `style: "base-nova"` (Base UI, not Radix: use the `render` prop instead of `asChild`), `rsc: true`, `tsx: true`, aliases to `@/components`, `@/components/ui`, `@/lib`, and `@/lib/utils`.
 - Shared UI primitives live under `apps/web/components/ui`; do not hand-edit generated primitives (Prettier ignores that directory). Use `cn` from `@/lib/utils` for class merging.
+- Never edit files in `apps/web/components/ui/` (shadcn). To change their look, override from outside: `className` at the call site, a wrapper component in `apps/web/components/` (e.g. `status-badge.tsx`), or a `[data-slot="..."]` rule in `app/globals.css` (e.g. badge radius).
 - Components are Server Components by default. Add `"use client"` only where hooks, event handlers, or browser APIs require it.
 
 ## Tooling Notes
