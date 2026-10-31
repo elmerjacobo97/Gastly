@@ -8,7 +8,7 @@ allowBuilds:
   msw: true
   sharp: true
   unrs-resolver: true
-minimumReleaseAge: 10080
+minimumReleaseAge: 2880 # TODO 2026-11-04: restore 10080 (Expo SDK 58 lockfile)
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
 ignoredBuiltDependencies:
@@ -44,4 +44,6 @@ minimumReleaseAgeExclude:
 trustPolicyExclude:
   - "eslint-import-resolver-typescript@3.10.1"
   - "semver@6.3.1"
+  - "ua-parser-js@0.7.41"
+  - "ua-parser-js@1.0.41"
   - "undici-types@6.21.0"
