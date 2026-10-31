@@ -12,7 +12,8 @@
   - `pnpm edge:check` — type-checks the `send-reminders` and `telegram-bot` Edge Functions with the `supabase/functions/deno.json` import map.
   - `pnpm format` / `pnpm format:check` — Prettier over the repo; `.prettierignore` excludes `packages/cli`, `apps/web/components/ui`, and generated dirs.
   - `pnpm check` — format check, Turbo lint/typecheck/build, all Vitest + Deno tests, and Edge Function type-check.
-  - `pnpm publish:cli` — builds and publishes `@codigoconelmer/gastly-cli` from the repo root.
+  - `pnpm --filter web run doctor` — React Doctor (`npx react-doctor@latest`). Run it after changing React/Next code in `apps/web`; keep the score at 100 and fix new warnings instead of ignoring them. Use `run doctor`: bare `pnpm doctor` is pnpm's built-in command.
+- `pnpm publish:cli` — builds and publishes `@codigoconelmer/gastly-cli` from the repo root.
 - Target one package with `pnpm --filter web <script>` or `pnpm --filter @codigoconelmer/gastly-cli <script>`.
 - Turbo caches `build`, `lint`, `typecheck`, and `test`; `dev` is persistent and uncached.
 - Never claim tests passed without running them.
