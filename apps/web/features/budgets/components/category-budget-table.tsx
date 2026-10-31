@@ -14,10 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  BudgetBar,
-  BudgetLegend,
-} from "@/features/budgets/components/budget-bar";
+import { BudgetBar } from "@/features/budgets/components/budget-bar";
 import { budgetTone } from "@/features/budgets/lib/budget-tone";
 import { calculateBudgetProgress } from "@/features/budgets/lib/budget-calculations";
 import { type CategoryBudget } from "@/features/budgets/types/budget-types";
@@ -78,6 +75,8 @@ export function CategoryBudgetTable({
               <TableHead>Categoría</TableHead>
               <TableHead className="min-w-56">Progreso</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Gastado</TableHead>
+              <TableHead className="text-right">Comprometido</TableHead>
               <TableHead className="text-right">Límite</TableHead>
               <TableHead className="text-right">Disponible</TableHead>
               <TableHead className="sticky right-0 w-12 bg-card">
@@ -89,7 +88,7 @@ export function CategoryBudgetTable({
             {visibleBudgets.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={8}
                   className="h-24 text-center text-sm text-muted-foreground"
                 >
                   Sin resultados.
@@ -142,17 +141,16 @@ export function CategoryBudgetTable({
                           isNearLimit={progress.isNearLimit}
                           className="h-2"
                         />
-                        <BudgetLegend
-                          spent={budget.spent}
-                          committed={budget.committed}
-                          currency={currency}
-                          isOverBudget={progress.isOverBudget}
-                          isNearLimit={progress.isNearLimit}
-                        />
                       </div>
                     </TableCell>
                     <TableCell>
                       <BudgetStatusBadge progress={progress} />
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatCurrency(budget.spent, currency)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {formatCurrency(budget.committed, currency)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {formatCurrency(budget.amount, currency)}

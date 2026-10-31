@@ -83,10 +83,6 @@ function PersonCell({
       >
         {group.personName}
       </button>
-      <LoanDueDate
-        expectedOn={nextExpectedOn(group)}
-        isSettled={group.isSettled}
-      />
     </div>
   );
 }
@@ -221,6 +217,7 @@ export function LoanBalancesTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Persona</TableHead>
+                <TableHead>Vence</TableHead>
                 <TableHead className="text-right">Me debe</TableHead>
                 <TableHead className="text-right">Le debo</TableHead>
                 <TableHead className="text-right">Saldo neto</TableHead>
@@ -233,7 +230,7 @@ export function LoanBalancesTable({
               {visibleGroups.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
                     Sin resultados.
@@ -248,6 +245,12 @@ export function LoanBalancesTable({
                   >
                     <TableCell>
                       <PersonCell group={group} onOpen={() => onOpen(group)} />
+                    </TableCell>
+                    <TableCell>
+                      <LoanDueDate
+                        expectedOn={nextExpectedOn(group)}
+                        isSettled={group.isSettled}
+                      />
                     </TableCell>
                     <TableCell>
                       <SideCell group={group} side="lent" />

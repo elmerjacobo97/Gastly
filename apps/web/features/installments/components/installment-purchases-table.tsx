@@ -105,6 +105,7 @@ export function InstallmentPurchasesTable({
                 <TableHead>Cuota</TableHead>
                 <TableHead>Vence</TableHead>
                 <TableHead className="text-right">Monto cuota</TableHead>
+                <TableHead className="text-right">Pagado</TableHead>
                 <TableHead className="text-right">Pendiente</TableHead>
                 <TableHead className="sticky right-0 w-12 bg-card">
                   <span className="sr-only">Acciones</span>
@@ -115,7 +116,7 @@ export function InstallmentPurchasesTable({
               {visiblePurchases.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={9}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
                     Sin resultados.
@@ -189,6 +190,9 @@ export function InstallmentPurchasesTable({
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatCurrency(purchase.installmentAmount)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {formatCurrency(purchase.totalPaid)}
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatCurrency(purchase.totalPending)}

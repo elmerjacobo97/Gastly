@@ -7,13 +7,7 @@ type LoanDueDateProps = {
 };
 
 export function LoanDueDate({ expectedOn, isSettled }: LoanDueDateProps) {
-  if (!expectedOn || isSettled) return null;
+  if (!expectedOn || isSettled) return <DateCell value={null} />;
 
-  return (
-    <DateCell
-      value={expectedOn}
-      tone={dueTone(expectedOn)}
-      className="text-xs"
-    />
-  );
+  return <DateCell value={expectedOn} tone={dueTone(expectedOn)} />;
 }

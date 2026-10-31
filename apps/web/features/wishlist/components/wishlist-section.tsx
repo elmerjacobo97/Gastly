@@ -6,6 +6,7 @@ import {
   GiftIcon,
   Undo2Icon,
 } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { useMemo, useState } from "react";
 
 import { RowActionsMenu } from "@/components/row-actions-menu";
@@ -44,6 +45,7 @@ import {
   type WishlistItem,
   type WishlistPriority,
 } from "@/features/wishlist/types/wishlist-types";
+import { DateCell } from "@/components/date-cell";
 import { formatCurrency } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 
@@ -136,6 +138,7 @@ export function WishlistSection({
                 <TableHead>Producto</TableHead>
                 <TableHead>Prioridad</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead className="w-32">Agregado</TableHead>
                 <TableHead className="text-right">Precio estimado</TableHead>
                 <TableHead className="sticky right-0 w-12 bg-card">
                   <span className="sr-only">Acciones</span>
@@ -146,7 +149,7 @@ export function WishlistSection({
               {visibleItems.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
                     Sin resultados.
@@ -198,6 +201,11 @@ export function WishlistSection({
                         <StatusBadge tone={isPending ? "muted" : "success"}>
                           {STATUS_LABELS[item.status]}
                         </StatusBadge>
+                      </TableCell>
+                      <TableCell>
+                        <DateCell
+                          value={format(parseISO(item.createdAt), "yyyy-MM-dd")}
+                        />
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
                         {formatCurrency(item.estimatedPrice, item.currency)}
