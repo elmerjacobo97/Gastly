@@ -446,7 +446,6 @@ describe("recordLoanPayment", () => {
       description: "Venta a María López: Repisa",
       occurred_on: "2026-01-20",
       notes: null,
-      payment_method: "cash",
       loan_payment_id: PAYMENT_ID,
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/transactions");

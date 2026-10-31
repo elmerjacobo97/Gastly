@@ -5,13 +5,12 @@ import { format, startOfMonth, endOfMonth } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { type Category } from "@/lib/category-types";
 import {
-  type PaymentMethod,
   type Transaction,
   type TransactionType,
 } from "@/lib/transaction-types";
 
 const TRANSACTION_SELECT =
-  "id, type, amount, currency, description, occurred_on, notes, recurring_expense_id, payment_method, credit_card_name, credit_card_due_on, credit_card_paid_on, categories(id, name, type, color, icon, description)";
+  "id, type, amount, currency, description, occurred_on, notes, recurring_expense_id, account_id, account_amount, categories(id, name, type, color, icon, description)";
 
 type TransactionRow = {
   id: string;
@@ -22,11 +21,9 @@ type TransactionRow = {
   occurred_on: string;
   notes: string | null;
   recurring_expense_id: string | null;
+  account_id: string | null;
+  account_amount: number | string | null;
   categories: CategoryRow | null;
-  payment_method: PaymentMethod;
-  credit_card_name: string | null;
-  credit_card_due_on: string | null;
-  credit_card_paid_on: string | null;
 };
 
 type CategoryRow = {
@@ -59,11 +56,10 @@ function mapTransaction(row: TransactionRow): Transaction {
     occurredOn: row.occurred_on,
     notes: row.notes,
     recurringExpenseId: row.recurring_expense_id,
+    accountId: row.account_id,
+    accountAmount:
+      row.account_amount === null ? null : Number(row.account_amount),
     category: row.categories ? mapCategory(row.categories) : null,
-    paymentMethod: row.payment_method,
-    creditCardName: row.credit_card_name,
-    creditCardDueOn: row.credit_card_due_on,
-    creditCardPaidOn: row.credit_card_paid_on,
   };
 }
 
@@ -97,21 +93,6 @@ export async function getTransactions(opts?: {
     TransactionRow[],
     { merge: false }
   >();
-  if (error) throw new Error(error.message);
-  return data.map(mapTransaction);
-}
-
-export async function getUnpaidCreditCardTransactions(): Promise<
-  Transaction[]
-> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("transactions")
-    .select(TRANSACTION_SELECT)
-    .eq("payment_method", "credit_card")
-    .is("credit_card_paid_on", null)
-    .order("occurred_on", { ascending: false })
-    .overrideTypes<TransactionRow[], { merge: false }>();
   if (error) throw new Error(error.message);
   return data.map(mapTransaction);
 }

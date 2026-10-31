@@ -32,17 +32,20 @@ import {
 } from "@/features/transactions/lib/movements-labels";
 import { deleteTransaction } from "@/features/transactions/server/actions";
 import { type Transaction } from "@/lib/transaction-types";
+import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
 
 type MovementsPanelProps = {
   transactions: Transaction[];
   categories: Category[];
+  accounts: Account[];
   month: string;
 };
 
 export function MovementsPanel({
   transactions,
   categories,
+  accounts,
   month: monthStr,
 }: MovementsPanelProps) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -121,6 +124,7 @@ export function MovementsPanel({
           </Button>
           <CreateTransactionDialog
             categories={categories}
+            accounts={accounts}
             defaultType={typeFilter === "income" ? "income" : "expense"}
             lockType={typeFilter !== "all"}
             triggerLabel={addLabel}
@@ -150,6 +154,7 @@ export function MovementsPanel({
           <MovementsTable
             rows={rows}
             categories={categories}
+            accounts={accounts}
             typeFilter={typeFilter}
             onTypeFilterChange={setTypeFilter}
             onEdit={setEditTransaction}
@@ -162,6 +167,7 @@ export function MovementsPanel({
         <EditTransactionDialog
           transaction={editTransaction}
           categories={categories}
+          accounts={accounts}
           open={Boolean(editTransaction)}
           onOpenChange={(o) => !o && setEditTransaction(null)}
         />

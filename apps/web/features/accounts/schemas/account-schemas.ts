@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { CURRENCY_CODES } from "@/lib/format";
 import { numberInput } from "@/lib/validation";
 
 export const ACCOUNT_COLORS = [
@@ -17,6 +18,7 @@ export const ACCOUNT_COLORS = [
 
 export const accountSchema = z.object({
   name: z.string().trim().min(2, "Ingresa el nombre de la cuenta."),
+  currency: z.enum(CURRENCY_CODES),
   balance: numberInput(
     z
       .number({ error: "Ingresa un saldo válido." })
@@ -27,3 +29,13 @@ export const accountSchema = z.object({
 });
 
 export type AccountValues = z.infer<typeof accountSchema>;
+
+export const accountUpdateSchema = accountSchema
+  .pick({ name: true, color: true, notes: true })
+  .extend({
+    balance: numberInput(z.number({ error: "Ingresa un saldo válido." })),
+  });
+
+export type AccountUpdateValues = z.infer<typeof accountUpdateSchema>;
+
+export const accountIdSchema = z.string().uuid("Selecciona una cuenta válida.");

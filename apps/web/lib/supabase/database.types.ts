@@ -67,6 +67,7 @@ export type Database = {
           balance: number;
           color: string;
           created_at: string;
+          currency: string;
           id: string;
           name: string;
           notes: string | null;
@@ -77,6 +78,7 @@ export type Database = {
           balance?: number;
           color?: string;
           created_at?: string;
+          currency?: string;
           id?: string;
           name: string;
           notes?: string | null;
@@ -87,6 +89,7 @@ export type Database = {
           balance?: number;
           color?: string;
           created_at?: string;
+          currency?: string;
           id?: string;
           name?: string;
           notes?: string | null;
@@ -803,6 +806,8 @@ export type Database = {
       };
       transactions: {
         Row: {
+          account_amount: number | null;
+          account_id: string | null;
           amount: number;
           category_id: string | null;
           created_at: string;
@@ -818,11 +823,14 @@ export type Database = {
           occurred_on: string;
           payment_method: string;
           recurring_expense_id: string | null;
+          source: string;
           type: string;
           updated_at: string;
           user_id: string;
         };
         Insert: {
+          account_amount?: number | null;
+          account_id?: string | null;
           amount: number;
           category_id?: string | null;
           created_at?: string;
@@ -838,11 +846,14 @@ export type Database = {
           occurred_on?: string;
           payment_method?: string;
           recurring_expense_id?: string | null;
+          source?: string;
           type: string;
           updated_at?: string;
           user_id: string;
         };
         Update: {
+          account_amount?: number | null;
+          account_id?: string | null;
           amount?: number;
           category_id?: string | null;
           created_at?: string;
@@ -858,11 +869,19 @@ export type Database = {
           occurred_on?: string;
           payment_method?: string;
           recurring_expense_id?: string | null;
+          source?: string;
           type?: string;
           updated_at?: string;
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "accounts";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "transactions_category_id_fkey";
             columns: ["category_id"];

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { CURRENCY_CODES } from "@/lib/format";
-import { paymentMethods, transactionTypes } from "@/lib/transaction-types";
-import { numberInput } from "@/lib/validation";
+import { transactionTypes } from "@/lib/transaction-types";
+import { numberInput, optionalNumberInput } from "@/lib/validation";
 
 export const transactionSchema = z.object({
   type: z.enum(transactionTypes),
@@ -16,9 +16,12 @@ export const transactionSchema = z.object({
   categoryName: z.string().trim().min(2, "Ingresa una categoria."),
   occurredOn: z.string().min(1, "Selecciona una fecha."),
   notes: z.string().trim().optional(),
-  paymentMethod: z.enum(paymentMethods),
-  creditCardName: z.string().trim().optional(),
-  creditCardDueOn: z.string().optional(),
+  accountId: z
+    .union([z.string().uuid("Selecciona una cuenta válida."), z.literal("")])
+    .optional(),
+  accountAmount: optionalNumberInput(
+    z.number().positive("El monto en la cuenta debe ser mayor a 0."),
+  ),
 });
 
 export type TransactionValues = z.infer<typeof transactionSchema>;
@@ -26,9 +29,3 @@ export type TransactionValues = z.infer<typeof transactionSchema>;
 export const transactionIdSchema = z
   .string()
   .uuid("Selecciona una transacción válida.");
-
-export const creditCardNameSchema = z
-  .string()
-  .trim()
-  .min(1, "Selecciona una tarjeta válida.")
-  .nullable();

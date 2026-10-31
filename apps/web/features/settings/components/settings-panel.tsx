@@ -1,6 +1,12 @@
 "use client";
 
-import { KeyRoundIcon, TagIcon, UserIcon, ZapIcon } from "lucide-react";
+import {
+  KeyRoundIcon,
+  TagIcon,
+  UserIcon,
+  WalletIcon,
+  ZapIcon,
+} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +19,7 @@ const NAV_ITEMS = [
   { id: "account", label: "Cuenta", icon: UserIcon },
   { id: "security", label: "Seguridad", icon: KeyRoundIcon },
   { id: "categories", label: "Categorías", icon: TagIcon },
+  { id: "accounts", label: "Cuentas", icon: WalletIcon },
   { id: "integrations", label: "Integraciones", icon: ZapIcon },
 ] as const;
 
@@ -27,6 +34,7 @@ type SettingsPanelProps = {
   telegramConnection: TelegramConnection | null;
   securitySection?: React.ReactNode;
   categoriesSection?: React.ReactNode;
+  accountsSection?: React.ReactNode;
 };
 
 export function SettingsPanel({
@@ -36,6 +44,7 @@ export function SettingsPanel({
   telegramConnection,
   securitySection,
   categoriesSection,
+  accountsSection,
 }: SettingsPanelProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -84,6 +93,7 @@ export function SettingsPanel({
         )}
         {activeSection === "security" && securitySection}
         {activeSection === "categories" && categoriesSection}
+        {activeSection === "accounts" && accountsSection}
         {activeSection === "integrations" && (
           <IntegrationsSection
             calendarUrl={calendarUrl}

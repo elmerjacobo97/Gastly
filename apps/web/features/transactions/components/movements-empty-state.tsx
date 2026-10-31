@@ -13,16 +13,19 @@ import {
 } from "@/components/ui/empty";
 import { transactionAddLabel } from "@/features/transactions/lib/movements-labels";
 import { type TransactionType } from "@/lib/transaction-types";
+import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
 
 type MovementsEmptyStateProps = {
   typeFilter: "all" | TransactionType;
   categories: Category[];
+  accounts: Account[];
 };
 
 export function MovementsEmptyState({
   typeFilter,
   categories,
+  accounts,
 }: MovementsEmptyStateProps) {
   const isIncome = typeFilter === "income";
   const isExpense = typeFilter === "expense";
@@ -51,6 +54,7 @@ export function MovementsEmptyState({
       <EmptyContent>
         <CreateTransactionDialog
           categories={categories}
+          accounts={accounts}
           defaultType={isIncome ? "income" : "expense"}
           lockType={typeFilter !== "all"}
           triggerLabel={transactionAddLabel(typeFilter)}

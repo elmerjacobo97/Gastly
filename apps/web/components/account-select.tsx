@@ -4,14 +4,7 @@ import { PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AccountCombobox } from "@/components/account-combobox";
 import { type Account } from "@/lib/account-types";
 import { QuickCreateAccountDialog } from "@/components/quick-create-account-dialog";
 
@@ -40,28 +33,13 @@ export function AccountSelect({
         onCreated={(id) => onChange(id)}
       />
       <div className="flex gap-2">
-        <Select
-          items={accounts.map((a) => ({ value: a.id, label: a.name }))}
-          value={value || null}
-          onValueChange={(next) => onChange(next ?? "")}
-        >
-          <SelectTrigger id={id} aria-invalid={ariaInvalid} className="flex-1">
-            <SelectValue placeholder="Sin cuenta vinculada" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {accounts.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  <span
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: a.color }}
-                  />
-                  {a.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <AccountCombobox
+          accounts={accounts}
+          value={value}
+          onChange={onChange}
+          aria-invalid={ariaInvalid}
+          id={id}
+        />
         {value && (
           <Button
             type="button"

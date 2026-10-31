@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  creditCardNameSchema,
   transactionIdSchema,
   transactionSchema,
 } from "@/features/transactions/schemas/transaction-schemas";
@@ -12,8 +11,47 @@ const validTransaction = {
   description: "Almuerzo",
   categoryName: "Comida",
   occurredOn: "2026-05-10",
-  paymentMethod: "cash",
 };
+
+describe("transactionSchema account fields", () => {
+  const accountId = "123e4567-e89b-12d3-a456-426614174000";
+
+  it("accepts an account with its amount", () => {
+    const parsed = transactionSchema.parse({
+      ...validTransaction,
+      accountId,
+      accountAmount: "27.5",
+    });
+
+    expect(parsed.accountId).toBe(accountId);
+    expect(parsed.accountAmount).toBe(27.5);
+  });
+
+  it("accepts an empty account, meaning none", () => {
+    expect(
+      transactionSchema.parse({ ...validTransaction, accountId: "" }).accountId,
+    ).toBe("");
+  });
+
+  it("rejects an invalid account id", () => {
+    const result = transactionSchema.safeParse({
+      ...validTransaction,
+      accountId: "acc-1",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a zero account amount", () => {
+    const result = transactionSchema.safeParse({
+      ...validTransaction,
+      accountId,
+      accountAmount: "0",
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
 
 describe("transactionSchema", () => {
   it("parses a valid expense and coerces the amount", () => {
@@ -24,24 +62,18 @@ describe("transactionSchema", () => {
       description: "Almuerzo",
       categoryName: "Comida",
       occurredOn: "2026-05-10",
-      paymentMethod: "cash",
     });
   });
 
-  it("parses a credit card payment with optional fields", () => {
+  it("parses an income with trimmed notes", () => {
     const parsed = transactionSchema.parse({
       ...validTransaction,
       type: "income",
       amount: 100,
-      paymentMethod: "credit_card",
-      creditCardName: "Visa",
-      creditCardDueOn: "2026-06-01",
       notes: "  reembolso  ",
     });
 
-    expect(parsed.paymentMethod).toBe("credit_card");
-    expect(parsed.creditCardName).toBe("Visa");
-    expect(parsed.creditCardDueOn).toBe("2026-06-01");
+    expect(parsed.type).toBe("income");
     expect(parsed.notes).toBe("reembolso");
   });
 
@@ -145,15 +177,6 @@ describe("transactionSchema", () => {
     }
   });
 
-  it("rejects an unknown payment method", () => {
-    const result = transactionSchema.safeParse({
-      ...validTransaction,
-      paymentMethod: "yape",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
   it("accepts supported currencies and rejects unsupported ones", () => {
     expect(
       transactionSchema.parse({ ...validTransaction, currency: "USD" })
@@ -182,30 +205,5 @@ describe("transactionIdSchema", () => {
         "Selecciona una transacción válida.",
       );
     }
-  });
-});
-
-describe("creditCardNameSchema", () => {
-  it("accepts a non empty name and trims it", () => {
-    expect(creditCardNameSchema.parse("  Visa  ")).toBe("Visa");
-  });
-
-  it("accepts null", () => {
-    expect(creditCardNameSchema.parse(null)).toBeNull();
-  });
-
-  it("rejects an empty name", () => {
-    const result = creditCardNameSchema.safeParse("   ");
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(
-        "Selecciona una tarjeta válida.",
-      );
-    }
-  });
-
-  it("rejects undefined", () => {
-    expect(creditCardNameSchema.safeParse(undefined).success).toBe(false);
   });
 });

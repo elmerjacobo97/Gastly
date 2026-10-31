@@ -36,7 +36,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog";
+import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
+import {
+  TransactionAccountFields,
+  getAccountForAmount,
+} from "@/features/transactions/components/transaction-account-fields";
 import { MIN_DESCRIPTION_LENGTH } from "@/features/transactions/lib/category-suggestion";
 import { createTransaction } from "@/features/transactions/server/actions";
 import { suggestCategory } from "@/features/transactions/server/suggest-category";
@@ -48,6 +53,7 @@ import {
 
 type CreateTransactionDialogProps = {
   categories: Category[];
+  accounts: Account[];
   defaultType?: TransactionType;
   lockType?: boolean;
   triggerLabel?: string;
@@ -74,15 +80,14 @@ function buildDefaultValues(
     categoryName: "",
     occurredOn: getToday(),
     notes: "",
-    paymentMethod: "cash",
-    creditCardName: "",
-    creditCardDueOn: "",
+    accountId: "",
     ...initialValues,
   };
 }
 
 export function CreateTransactionDialog({
   categories,
+  accounts,
   defaultType = "expense",
   lockType = false,
   triggerLabel = "Nueva transacción",
@@ -112,10 +117,6 @@ export function CreateTransactionDialog({
     control: form.control,
     name: "type",
   }) as TransactionType;
-  const currentPaymentMethod = useWatch({
-    control: form.control,
-    name: "paymentMethod",
-  });
   const currentCurrency = useWatch({ control: form.control, name: "currency" });
 
   const existingCategories = categories.filter((c) => c.type === currentType);
@@ -159,9 +160,20 @@ export function CreateTransactionDialog({
   }
 
   function onSubmit(values: TransactionValues) {
+    const foreignAccount = getAccountForAmount(accounts, values);
+    if (foreignAccount && !values.accountAmount) {
+      form.setError("accountAmount", {
+        message: `Ingresa el monto en ${foreignAccount.currency}.`,
+      });
+      return;
+    }
+
     startTransition(async () => {
       try {
-        await createTransaction(values);
+        await createTransaction({
+          ...values,
+          accountAmount: foreignAccount ? values.accountAmount : undefined,
+        });
         toast.success("Transacción registrada");
         form.reset(buildDefaultValues(defaultType));
         setOpen(false);
@@ -333,75 +345,11 @@ export function CreateTransactionDialog({
                       </Field>
                     )}
                   />
-                  {currentType === "expense" && (
-                    <>
-                      <Controller
-                        control={form.control}
-                        name="paymentMethod"
-                        render={({ field }) => (
-                          <Field>
-                            <FieldLabel htmlFor="ct-payment-method">
-                              Método de pago
-                            </FieldLabel>
-                            <NativeSelect
-                              {...field}
-                              className="w-full"
-                              id="ct-payment-method"
-                            >
-                              <NativeSelectOption value="cash">
-                                Efectivo / Débito
-                              </NativeSelectOption>
-                              <NativeSelectOption value="credit_card">
-                                Tarjeta de crédito
-                              </NativeSelectOption>
-                            </NativeSelect>
-                          </Field>
-                        )}
-                      />
-                      {currentPaymentMethod === "credit_card" && (
-                        <>
-                          <Controller
-                            control={form.control}
-                            name="creditCardName"
-                            render={({ field }) => (
-                              <Field>
-                                <FieldLabel htmlFor="ct-card-name">
-                                  Nombre de tarjeta{" "}
-                                  <span className="text-muted-foreground">
-                                    (opcional)
-                                  </span>
-                                </FieldLabel>
-                                <Input
-                                  {...field}
-                                  id="ct-card-name"
-                                  placeholder="Ej. Visa BCP, Mastercard BBVA"
-                                />
-                              </Field>
-                            )}
-                          />
-                          <Controller
-                            control={form.control}
-                            name="creditCardDueOn"
-                            render={({ field }) => (
-                              <Field>
-                                <FieldLabel htmlFor="ct-due-on">
-                                  Fecha de vencimiento{" "}
-                                  <span className="text-muted-foreground">
-                                    (opcional)
-                                  </span>
-                                </FieldLabel>
-                                <DatePicker
-                                  id="ct-due-on"
-                                  value={field.value ?? ""}
-                                  onChange={field.onChange}
-                                />
-                              </Field>
-                            )}
-                          />
-                        </>
-                      )}
-                    </>
-                  )}
+                  <TransactionAccountFields
+                    control={form.control}
+                    accounts={accounts}
+                    idPrefix="ct"
+                  />
                   <Controller
                     control={form.control}
                     name="notes"

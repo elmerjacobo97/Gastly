@@ -22,7 +22,12 @@ export type RecurringPayment = {
   type: "expense" | "income";
   category: RecurringPaymentCategory | null;
   accountId: string | null;
-  account: { id: string; name: string; color: string } | null;
+  account: {
+    id: string;
+    name: string;
+    color: string;
+    currency: CurrencyCode;
+  } | null;
   paidOn: string | null;
   paidAmount: number | null;
 };

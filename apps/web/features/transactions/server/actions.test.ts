@@ -10,7 +10,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   createTransaction,
   deleteTransaction,
-  payAllCreditCardTransactions,
   updateTransaction,
 } from "@/features/transactions/server/actions";
 import { type TransactionValues } from "@/features/transactions/schemas/transaction-schemas";
@@ -33,7 +32,12 @@ type QueryBuilder = {
   ) => Promise<unknown>;
 };
 
-function createQueryBuilder(result: SupabaseResult): QueryBuilder {
+// Each await consumes the next result; the last one repeats.
+function createQueryBuilder(
+  result: SupabaseResult,
+  ...next: SupabaseResult[]
+): QueryBuilder {
+  const queue = [result, ...next];
   const builder = {} as QueryBuilder;
   const chain = () => builder;
 
@@ -46,7 +50,10 @@ function createQueryBuilder(result: SupabaseResult): QueryBuilder {
   builder.is = vi.fn(chain);
   builder.single = vi.fn(chain);
   builder.then = (onFulfilled, onRejected) =>
-    Promise.resolve(result).then(onFulfilled, onRejected);
+    Promise.resolve(queue.length > 1 ? queue.shift()! : queue[0]).then(
+      onFulfilled,
+      onRejected,
+    );
 
   return builder;
 }
@@ -54,6 +61,7 @@ function createQueryBuilder(result: SupabaseResult): QueryBuilder {
 type SupabaseMock = {
   auth: { getUser: ReturnType<typeof vi.fn> };
   from: ReturnType<typeof vi.fn>;
+  rpc: ReturnType<typeof vi.fn>;
 };
 
 function createSupabaseMock(options: {
@@ -77,6 +85,7 @@ function createSupabaseMock(options: {
       if (!builder) throw new Error(`Tabla no mockeada: ${table}`);
       return builder;
     }),
+    rpc: vi.fn().mockResolvedValue({ error: null }),
   };
 }
 
@@ -100,9 +109,18 @@ const validValues: TransactionValues = {
   categoryName: "Comida",
   occurredOn: "2026-09-01",
   notes: "",
-  paymentMethod: "cash",
-  creditCardName: "",
-  creditCardDueOn: "",
+};
+
+const accountId = "223e4567-e89b-12d3-a456-426614174000";
+
+const noAccountEffect: SupabaseResult = {
+  data: {
+    account_id: null,
+    type: "expense",
+    amount: 100,
+    account_amount: null,
+  },
+  error: null,
 };
 
 beforeEach(() => {
@@ -132,7 +150,7 @@ describe("createTransaction", () => {
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  it("crea la categoría y la transacción en efectivo", async () => {
+  it("crea la categoría y la transacción", async () => {
     const categories = createQueryBuilder({
       data: { id: "cat-1" },
       error: null,
@@ -163,42 +181,16 @@ describe("createTransaction", () => {
       description: "Supermercado",
       occurred_on: "2026-09-01",
       notes: null,
-      payment_method: "cash",
-      credit_card_name: null,
-      credit_card_due_on: null,
+      account_id: null,
+      account_amount: null,
     });
+    expect(supabase.rpc).not.toHaveBeenCalled();
     expect(revalidatedRoutes()).toEqual([
       "/transactions",
       "/",
       "/reports",
       "/budgets",
     ]);
-  });
-
-  it("guarda los datos de tarjeta de crédito cuando corresponde", async () => {
-    const categories = createQueryBuilder({
-      data: { id: "cat-2" },
-      error: null,
-    });
-    const transactions = createQueryBuilder({ error: null });
-    useSupabase(createSupabaseMock({ tables: { categories, transactions } }));
-
-    await createTransaction({
-      ...validValues,
-      paymentMethod: "credit_card",
-      creditCardName: "Visa",
-      creditCardDueOn: "2026-09-20",
-      notes: "nota",
-    });
-
-    expect(transactions.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        payment_method: "credit_card",
-        credit_card_name: "Visa",
-        credit_card_due_on: "2026-09-20",
-        notes: "nota",
-      }),
-    );
   });
 
   it("rechaza cuando falla el upsert de la categoría", async () => {
@@ -251,12 +243,12 @@ describe("updateTransaction", () => {
     expect(createClient).not.toHaveBeenCalled();
   });
 
-  it("actualiza la transacción en efectivo y limpia el pago de tarjeta", async () => {
+  it("actualiza la transacción", async () => {
     const categories = createQueryBuilder({
       data: { id: "cat-1" },
       error: null,
     });
-    const transactions = createQueryBuilder({ error: null });
+    const transactions = createQueryBuilder(noAccountEffect, { error: null });
     useSupabase(createSupabaseMock({ tables: { categories, transactions } }));
 
     await updateTransaction(validId, validValues);
@@ -269,10 +261,8 @@ describe("updateTransaction", () => {
       description: "Supermercado",
       occurred_on: "2026-09-01",
       notes: null,
-      payment_method: "cash",
-      credit_card_name: null,
-      credit_card_due_on: null,
-      credit_card_paid_on: null,
+      account_id: null,
+      account_amount: null,
     });
     expect(transactions.eq).toHaveBeenCalledWith("id", validId);
     expect(revalidatedRoutes()).toEqual([
@@ -283,35 +273,12 @@ describe("updateTransaction", () => {
     ]);
   });
 
-  it("no toca credit_card_paid_on al mantener tarjeta de crédito", async () => {
-    const categories = createQueryBuilder({
-      data: { id: "cat-1" },
-      error: null,
-    });
-    const transactions = createQueryBuilder({ error: null });
-    useSupabase(createSupabaseMock({ tables: { categories, transactions } }));
-
-    await updateTransaction(validId, {
-      ...validValues,
-      paymentMethod: "credit_card",
-      creditCardName: "Visa",
-      creditCardDueOn: "2026-09-20",
-    });
-
-    const updateArg = transactions.update.mock.calls[0]?.[0] as Record<
-      string,
-      unknown
-    >;
-    expect(updateArg).not.toHaveProperty("credit_card_paid_on");
-    expect(updateArg.credit_card_name).toBe("Visa");
-  });
-
   it("rechaza cuando falla el update", async () => {
     const categories = createQueryBuilder({
       data: { id: "cat-1" },
       error: null,
     });
-    const transactions = createQueryBuilder({
+    const transactions = createQueryBuilder(noAccountEffect, {
       error: { message: "update falló" },
     });
     useSupabase(createSupabaseMock({ tables: { categories, transactions } }));
@@ -342,7 +309,7 @@ describe("deleteTransaction", () => {
   });
 
   it("borra la transacción y revalida", async () => {
-    const transactions = createQueryBuilder({ error: null });
+    const transactions = createQueryBuilder(noAccountEffect, { error: null });
     const supabase = createSupabaseMock({ tables: { transactions } });
     useSupabase(supabase);
 
@@ -360,7 +327,7 @@ describe("deleteTransaction", () => {
   });
 
   it("rechaza cuando falla el delete", async () => {
-    const transactions = createQueryBuilder({
+    const transactions = createQueryBuilder(noAccountEffect, {
       error: { message: "delete falló" },
     });
     useSupabase(createSupabaseMock({ tables: { transactions } }));
@@ -370,73 +337,204 @@ describe("deleteTransaction", () => {
   });
 });
 
-describe("payAllCreditCardTransactions", () => {
-  it("rechaza cuando no hay sesión", async () => {
-    useSupabase(createSupabaseMock({ user: null, tables: {} }));
+describe("movimientos de cuenta", () => {
+  const categories = () =>
+    createQueryBuilder({ data: { id: "cat-1" }, error: null });
+  const accountsTable = (currency: string) =>
+    createQueryBuilder({ data: { currency }, error: null });
 
-    await expect(payAllCreditCardTransactions("Visa")).rejects.toThrow(
-      "Debes iniciar sesión para gestionar transacciones.",
-    );
-  });
-
-  it("rechaza un nombre de tarjeta vacío", async () => {
-    useSupabase(createSupabaseMock({ tables: {} }));
-
-    await expect(payAllCreditCardTransactions("")).rejects.toThrow(
-      "Selecciona una tarjeta válida.",
-    );
-    expect(createClient).not.toHaveBeenCalled();
-  });
-
-  it("paga las tarjetas sin nombre con la fecha de hoy", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 8, 15, 12, 0, 0));
+  it("un gasto en la misma moneda descuenta el monto de la cuenta", async () => {
     const transactions = createQueryBuilder({ error: null });
-    const supabase = createSupabaseMock({ tables: { transactions } });
+    const supabase = createSupabaseMock({
+      tables: {
+        categories: categories(),
+        accounts: accountsTable("PEN"),
+        transactions,
+      },
+    });
     useSupabase(supabase);
 
-    try {
-      await payAllCreditCardTransactions(null);
-    } finally {
-      vi.useRealTimers();
-    }
+    await createTransaction({ ...validValues, accountId });
 
-    expect(transactions.update).toHaveBeenCalledWith({
-      credit_card_paid_on: "2026-09-15",
-    });
-    expect(transactions.eq).toHaveBeenCalledWith(
-      "payment_method",
-      "credit_card",
+    expect(transactions.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ account_id: accountId, account_amount: null }),
     );
-    expect(transactions.is).toHaveBeenCalledWith("credit_card_paid_on", null);
-    expect(transactions.is).toHaveBeenCalledWith("credit_card_name", null);
-    expect(revalidatedRoutes()).toEqual([
-      "/transactions",
-      "/",
-      "/reports",
-      "/budgets",
+    expect(supabase.rpc).toHaveBeenCalledWith("decrement_account_balance", {
+      p_account_id: accountId,
+      p_amount: 100,
+    });
+  });
+
+  it("un ingreso suma a la cuenta", async () => {
+    const supabase = createSupabaseMock({
+      tables: {
+        categories: categories(),
+        accounts: accountsTable("PEN"),
+        transactions: createQueryBuilder({ error: null }),
+      },
+    });
+    useSupabase(supabase);
+
+    await createTransaction({ ...validValues, type: "income", accountId });
+
+    expect(supabase.rpc).toHaveBeenCalledWith("increment_account_balance", {
+      p_account_id: accountId,
+      p_amount: 100,
+    });
+  });
+
+  it("exige el monto en la moneda de la cuenta cuando difiere", async () => {
+    const supabase = createSupabaseMock({
+      tables: {
+        categories: categories(),
+        accounts: accountsTable("USD"),
+        transactions: createQueryBuilder({ error: null }),
+      },
+    });
+    useSupabase(supabase);
+
+    await expect(
+      createTransaction({ ...validValues, accountId }),
+    ).rejects.toThrow("Ingresa el monto en USD que se movió en la cuenta.");
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it("usa el monto de la cuenta cuando la moneda difiere", async () => {
+    const transactions = createQueryBuilder({ error: null });
+    const supabase = createSupabaseMock({
+      tables: {
+        categories: categories(),
+        accounts: accountsTable("USD"),
+        transactions,
+      },
+    });
+    useSupabase(supabase);
+
+    await createTransaction({ ...validValues, accountId, accountAmount: 27 });
+
+    expect(transactions.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ account_amount: 27 }),
+    );
+    expect(supabase.rpc).toHaveBeenCalledWith("decrement_account_balance", {
+      p_account_id: accountId,
+      p_amount: 27,
+    });
+  });
+
+  it("rechaza una cuenta que no existe", async () => {
+    useSupabase(
+      createSupabaseMock({
+        tables: {
+          categories: categories(),
+          accounts: createQueryBuilder({ data: null, error: null }),
+          transactions: createQueryBuilder({ error: null }),
+        },
+      }),
+    );
+
+    await expect(
+      createTransaction({ ...validValues, accountId }),
+    ).rejects.toThrow("La cuenta seleccionada no existe.");
+  });
+
+  it("al editar revierte el efecto anterior y aplica el nuevo", async () => {
+    const otherAccount = "323e4567-e89b-12d3-a456-426614174000";
+    const transactions = createQueryBuilder(
+      {
+        data: {
+          account_id: accountId,
+          type: "expense",
+          amount: 100,
+          account_amount: 30,
+        },
+        error: null,
+      },
+      { error: null },
+    );
+    const supabase = createSupabaseMock({
+      tables: {
+        categories: categories(),
+        accounts: accountsTable("PEN"),
+        transactions,
+      },
+    });
+    useSupabase(supabase);
+
+    await updateTransaction(validId, {
+      ...validValues,
+      amount: 80,
+      accountId: otherAccount,
+    });
+
+    expect(supabase.rpc.mock.calls).toEqual([
+      ["increment_account_balance", { p_account_id: accountId, p_amount: 30 }],
+      [
+        "decrement_account_balance",
+        { p_account_id: otherAccount, p_amount: 80 },
+      ],
     ]);
   });
 
-  it("paga solo la tarjeta indicada", async () => {
-    const transactions = createQueryBuilder({ error: null });
-    useSupabase(createSupabaseMock({ tables: { transactions } }));
+  it("asignar cuenta a una transacción sin cuenta solo la etiqueta", async () => {
+    const transactions = createQueryBuilder(noAccountEffect, { error: null });
+    const supabase = createSupabaseMock({
+      tables: {
+        categories: categories(),
+        accounts: accountsTable("PEN"),
+        transactions,
+      },
+    });
+    useSupabase(supabase);
 
-    await payAllCreditCardTransactions("Visa");
+    await updateTransaction(validId, { ...validValues, accountId });
 
-    expect(transactions.eq).toHaveBeenCalledWith("credit_card_name", "Visa");
-    expect(transactions.is).not.toHaveBeenCalledWith("credit_card_name", null);
+    expect(transactions.update).toHaveBeenCalledWith(
+      expect.objectContaining({ account_id: accountId }),
+    );
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
-  it("rechaza cuando falla el update masivo", async () => {
-    const transactions = createQueryBuilder({
-      error: { message: "pago falló" },
-    });
-    useSupabase(createSupabaseMock({ tables: { transactions } }));
-
-    await expect(payAllCreditCardTransactions("Visa")).rejects.toThrow(
-      "pago falló",
+  it("al borrar devuelve el saldo de la cuenta", async () => {
+    const transactions = createQueryBuilder(
+      {
+        data: {
+          account_id: accountId,
+          type: "income",
+          amount: 15,
+          account_amount: null,
+        },
+        error: null,
+      },
+      { error: null },
     );
-    expect(revalidatePath).not.toHaveBeenCalled();
+    const supabase = createSupabaseMock({ tables: { transactions } });
+    useSupabase(supabase);
+
+    await deleteTransaction(validId);
+
+    expect(supabase.rpc).toHaveBeenCalledWith("decrement_account_balance", {
+      p_account_id: accountId,
+      p_amount: 15,
+    });
+  });
+
+  it("no ajusta saldos si falla el delete", async () => {
+    const transactions = createQueryBuilder(
+      {
+        data: {
+          account_id: accountId,
+          type: "expense",
+          amount: 50,
+          account_amount: null,
+        },
+        error: null,
+      },
+      { error: { message: "delete falló" } },
+    );
+    const supabase = createSupabaseMock({ tables: { transactions } });
+    useSupabase(supabase);
+
+    await expect(deleteTransaction(validId)).rejects.toThrow("delete falló");
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 });

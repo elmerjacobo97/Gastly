@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
 import { ColorPicker } from "@/components/color-picker";
+import { CurrencyField } from "@/components/currency-field";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,7 +45,13 @@ export function QuickCreateAccountDialog({
   onCreated,
 }: QuickCreateAccountDialogProps) {
   const defaults = useMemo(
-    () => ({ name: "", balance: 0, color: ACCOUNT_COLORS[0], notes: "" }),
+    () => ({
+      name: "",
+      currency: "PEN" as const,
+      balance: 0,
+      color: ACCOUNT_COLORS[0],
+      notes: "",
+    }),
     [],
   );
 
@@ -58,6 +65,10 @@ export function QuickCreateAccountDialog({
   }, [open, defaults, form]);
 
   const selectedColor = useWatch({ control: form.control, name: "color" });
+  const selectedCurrency = useWatch({
+    control: form.control,
+    name: "currency",
+  });
 
   const [isPending, startTransition] = useTransition();
 
@@ -117,11 +128,22 @@ export function QuickCreateAccountDialog({
             />
             <Controller
               control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <CurrencyField
+                  id="qca-currency"
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <Controller
+              control={form.control}
               name="balance"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="qca-balance">
-                    Saldo inicial (PEN)
+                    Saldo inicial ({selectedCurrency})
                   </FieldLabel>
                   <NumberInput
                     {...field}

@@ -34,7 +34,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog";
+import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
+import {
+  TransactionAccountFields,
+  getAccountForAmount,
+} from "@/features/transactions/components/transaction-account-fields";
 import { updateTransaction } from "@/features/transactions/server/actions";
 import {
   type TransactionValues,
@@ -48,6 +53,7 @@ import {
 type EditTransactionDialogProps = {
   transaction: Transaction;
   categories: Category[];
+  accounts: Account[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -55,6 +61,7 @@ type EditTransactionDialogProps = {
 export function EditTransactionDialog({
   transaction,
   categories,
+  accounts,
   open,
   onOpenChange,
 }: EditTransactionDialogProps) {
@@ -68,9 +75,8 @@ export function EditTransactionDialog({
     category,
     occurredOn,
     notes,
-    paymentMethod,
-    creditCardName,
-    creditCardDueOn,
+    accountId,
+    accountAmount,
   } = transaction;
   const categoryName = category?.name ?? "";
 
@@ -83,9 +89,8 @@ export function EditTransactionDialog({
       categoryName,
       occurredOn,
       notes: notes ?? "",
-      paymentMethod,
-      creditCardName: creditCardName ?? "",
-      creditCardDueOn: creditCardDueOn ?? "",
+      accountId: accountId ?? "",
+      accountAmount: accountAmount ?? undefined,
     }),
     [
       type,
@@ -95,9 +100,8 @@ export function EditTransactionDialog({
       categoryName,
       occurredOn,
       notes,
-      paymentMethod,
-      creditCardName,
-      creditCardDueOn,
+      accountId,
+      accountAmount,
     ],
   );
 
@@ -111,10 +115,6 @@ export function EditTransactionDialog({
     control: form.control,
     name: "type",
   }) as TransactionType;
-  const currentPaymentMethod = useWatch({
-    control: form.control,
-    name: "paymentMethod",
-  });
   const currentCurrency = useWatch({ control: form.control, name: "currency" });
 
   const [isPending, startTransition] = useTransition();
@@ -122,9 +122,20 @@ export function EditTransactionDialog({
   const existingCategories = categories.filter((c) => c.type === currentType);
 
   function onSubmit(values: TransactionValues) {
+    const foreignAccount = getAccountForAmount(accounts, values);
+    if (foreignAccount && !values.accountAmount) {
+      form.setError("accountAmount", {
+        message: `Ingresa el monto en ${foreignAccount.currency}.`,
+      });
+      return;
+    }
+
     startTransition(async () => {
       try {
-        await updateTransaction(transaction.id, values);
+        await updateTransaction(transaction.id, {
+          ...values,
+          accountAmount: foreignAccount ? values.accountAmount : undefined,
+        });
         toast.success("Transacción actualizada");
         onOpenChange(false);
       } catch (error) {
@@ -276,75 +287,11 @@ export function EditTransactionDialog({
                       </Field>
                     )}
                   />
-                  {transaction.type === "expense" && (
-                    <>
-                      <Controller
-                        control={form.control}
-                        name="paymentMethod"
-                        render={({ field }) => (
-                          <Field>
-                            <FieldLabel htmlFor="et-payment-method">
-                              Método de pago
-                            </FieldLabel>
-                            <NativeSelect
-                              {...field}
-                              className="w-full"
-                              id="et-payment-method"
-                            >
-                              <NativeSelectOption value="cash">
-                                Efectivo / Débito
-                              </NativeSelectOption>
-                              <NativeSelectOption value="credit_card">
-                                Tarjeta de crédito
-                              </NativeSelectOption>
-                            </NativeSelect>
-                          </Field>
-                        )}
-                      />
-                      {currentPaymentMethod === "credit_card" && (
-                        <>
-                          <Controller
-                            control={form.control}
-                            name="creditCardName"
-                            render={({ field }) => (
-                              <Field>
-                                <FieldLabel htmlFor="et-card-name">
-                                  Nombre de tarjeta{" "}
-                                  <span className="text-muted-foreground">
-                                    (opcional)
-                                  </span>
-                                </FieldLabel>
-                                <Input
-                                  {...field}
-                                  id="et-card-name"
-                                  placeholder="Ej. Visa BCP, Mastercard BBVA"
-                                />
-                              </Field>
-                            )}
-                          />
-                          <Controller
-                            control={form.control}
-                            name="creditCardDueOn"
-                            render={({ field }) => (
-                              <Field>
-                                <FieldLabel htmlFor="et-due-on">
-                                  Fecha de vencimiento{" "}
-                                  <span className="text-muted-foreground">
-                                    (opcional)
-                                  </span>
-                                </FieldLabel>
-                                <DatePicker
-                                  id="et-due-on"
-                                  value={field.value ?? ""}
-                                  onChange={field.onChange}
-                                />
-                              </Field>
-                            )}
-                          />
-                        </>
-                      )}
-                    </>
-                  )}
+                  <TransactionAccountFields
+                    control={form.control}
+                    accounts={accounts}
+                    idPrefix="et"
+                  />
                   <Controller
                     control={form.control}
                     name="notes"

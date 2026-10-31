@@ -7,7 +7,11 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
-import { createAccount } from "@/features/accounts/server/actions";
+import {
+  createAccount,
+  deleteAccount,
+  updateAccount,
+} from "@/features/accounts/server/actions";
 import { type AccountValues } from "@/features/accounts/schemas/account-schemas";
 
 type SupabaseError = { message: string };
@@ -83,10 +87,20 @@ function useSupabase(mock: SupabaseMock) {
 
 const validValues: AccountValues = {
   name: "Ahorros",
+  currency: "PEN",
   balance: 250,
   color: "#3b82f6",
   notes: "",
 };
+
+const revalidatedPaths = [
+  ["/settings"],
+  ["/recurring-payments"],
+  ["/installments"],
+  ["/"],
+];
+
+const accountId = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -130,13 +144,14 @@ describe("createAccount", () => {
     expect(accounts.insert).toHaveBeenCalledWith({
       user_id: "user-1",
       name: "Ahorros",
+      currency: "PEN",
       balance: 250,
       color: "#3b82f6",
       notes: null,
     });
     expect(accounts.select).toHaveBeenCalledWith("id");
     expect(accounts.single).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(revalidatePath).mock.calls).toEqual([["/"]]);
+    expect(vi.mocked(revalidatePath).mock.calls).toEqual(revalidatedPaths);
   });
 
   it("guarda las notas cuando vienen", async () => {
@@ -161,6 +176,76 @@ describe("createAccount", () => {
     useSupabase(createSupabaseMock({ tables: { accounts } }));
 
     await expect(createAccount(validValues)).rejects.toThrow("insert falló");
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateAccount", () => {
+  const updateValues = {
+    name: "BCP",
+    balance: -120.5,
+    color: "#10b981",
+    notes: "",
+  };
+
+  it("rechaza un id inválido", async () => {
+    await expect(updateAccount("acc-1", updateValues)).rejects.toThrow(
+      "Selecciona una cuenta válida.",
+    );
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it("actualiza la cuenta sin tocar la moneda y acepta saldo negativo", async () => {
+    const accounts = createQueryBuilder({ error: null });
+    useSupabase(createSupabaseMock({ tables: { accounts } }));
+
+    await updateAccount(accountId, updateValues);
+
+    expect(accounts.update).toHaveBeenCalledWith({
+      name: "BCP",
+      balance: -120.5,
+      color: "#10b981",
+      notes: null,
+    });
+    expect(accounts.eq).toHaveBeenCalledWith("id", accountId);
+    expect(vi.mocked(revalidatePath).mock.calls).toEqual(revalidatedPaths);
+  });
+
+  it("rechaza cuando falla el update", async () => {
+    const accounts = createQueryBuilder({ error: { message: "update falló" } });
+    useSupabase(createSupabaseMock({ tables: { accounts } }));
+
+    await expect(updateAccount(accountId, updateValues)).rejects.toThrow(
+      "update falló",
+    );
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteAccount", () => {
+  it("rechaza un id inválido", async () => {
+    await expect(deleteAccount("acc-1")).rejects.toThrow(
+      "Selecciona una cuenta válida.",
+    );
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it("elimina la cuenta por id", async () => {
+    const accounts = createQueryBuilder({ error: null });
+    useSupabase(createSupabaseMock({ tables: { accounts } }));
+
+    await deleteAccount(accountId);
+
+    expect(accounts.delete).toHaveBeenCalledTimes(1);
+    expect(accounts.eq).toHaveBeenCalledWith("id", accountId);
+    expect(vi.mocked(revalidatePath).mock.calls).toEqual(revalidatedPaths);
+  });
+
+  it("rechaza cuando falla el delete", async () => {
+    const accounts = createQueryBuilder({ error: { message: "delete falló" } });
+    useSupabase(createSupabaseMock({ tables: { accounts } }));
+
+    await expect(deleteAccount(accountId)).rejects.toThrow("delete falló");
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

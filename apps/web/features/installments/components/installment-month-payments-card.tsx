@@ -2,6 +2,7 @@
 
 import { CheckCircle2Icon } from "lucide-react";
 
+import { AccountLabel } from "@/components/account-label";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -83,6 +84,7 @@ export function InstallmentMonthPaymentsCard({
             <TableHeader>
               <TableRow>
                 <TableHead>Compra</TableHead>
+                <TableHead>Cuenta</TableHead>
                 <TableHead>Vence</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Monto</TableHead>
@@ -122,6 +124,9 @@ export function InstallmentMonthPaymentsCard({
                           </span>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <AccountLabel account={purchase.account} />
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDate(payment.dueOn)}

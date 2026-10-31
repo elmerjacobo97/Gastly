@@ -1,6 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { AccountsPanel } from "@/features/accounts/components/accounts-panel";
+import { getAccounts } from "@/features/accounts/server/queries";
 import { CategoriesPanel } from "@/features/categories/components/categories-panel";
 import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog";
 import { SecuritySection } from "@/features/auth/components/security-section";
@@ -28,8 +30,9 @@ export default async function SettingsPage() {
   const calendarUrl = host
     ? `webcal://${host}/api/calendar/${calendarToken}.ics`
     : "";
-  const [categories, telegramConnection] = await Promise.all([
+  const [categories, accounts, telegramConnection] = await Promise.all([
     getCategories(),
+    getAccounts(),
     getTelegramConnection(),
   ]);
 
@@ -40,6 +43,7 @@ export default async function SettingsPage() {
       calendarUrl={calendarUrl}
       telegramConnection={telegramConnection}
       securitySection={<SecuritySection />}
+      accountsSection={<AccountsPanel accounts={accounts} />}
       categoriesSection={
         <CategoriesSection
           categoriesPanel={<CategoriesPanel categories={categories} embedded />}

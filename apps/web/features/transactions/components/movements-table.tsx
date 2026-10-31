@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/table";
 import { MovementsEmptyState } from "@/features/transactions/components/movements-empty-state";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { AccountLabel } from "@/components/account-label";
+import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
 import { matchesQuery } from "@/lib/search";
 import {
@@ -36,9 +38,6 @@ function TransactionDescriptionCell({
 }: {
   transaction: Transaction;
 }) {
-  const isCreditCard = transaction.paymentMethod === "credit_card";
-  const isPendingCC = isCreditCard && !transaction.creditCardPaidOn;
-
   return (
     <div className="flex min-w-44 max-w-64 flex-col whitespace-normal">
       <span
@@ -47,15 +46,6 @@ function TransactionDescriptionCell({
       >
         {transaction.description}
       </span>
-      {isCreditCard && (
-        <span
-          className={`text-xs ${isPendingCC ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}
-        >
-          TC
-          {transaction.creditCardName ? ` · ${transaction.creditCardName}` : ""}
-          {isPendingCC ? " · Por pagar" : " · Pagado"}
-        </span>
-      )}
       {transaction.notes && (
         <span
           className="line-clamp-1 text-xs break-words text-muted-foreground"
@@ -85,6 +75,7 @@ function TransactionAmountCell({ transaction }: { transaction: Transaction }) {
 type MovementsTableProps = {
   rows: Transaction[];
   categories: Category[];
+  accounts: Account[];
   typeFilter: TypeFilter;
   onTypeFilterChange: (value: TypeFilter) => void;
   onEdit: (transaction: Transaction) => void;
@@ -94,12 +85,14 @@ type MovementsTableProps = {
 export function MovementsTable({
   rows,
   categories,
+  accounts,
   typeFilter,
   onTypeFilterChange,
   onEdit,
   onDelete,
 }: MovementsTableProps) {
   const [query, setQuery] = useState("");
+  const accountsById = new Map(accounts.map((a) => [a.id, a]));
 
   const visibleRows = rows.filter((transaction) =>
     matchesQuery(
@@ -107,7 +100,7 @@ export function MovementsTable({
       transaction.description,
       transaction.notes,
       transaction.category?.name,
-      transaction.creditCardName,
+      accountsById.get(transaction.accountId ?? "")?.name,
     ),
   );
 
@@ -123,7 +116,11 @@ export function MovementsTable({
       </div>
 
       {rows.length === 0 ? (
-        <MovementsEmptyState typeFilter={typeFilter} categories={categories} />
+        <MovementsEmptyState
+          typeFilter={typeFilter}
+          categories={categories}
+          accounts={accounts}
+        />
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -131,6 +128,7 @@ export function MovementsTable({
               <TableRow>
                 <TableHead>Descripción</TableHead>
                 <TableHead>Categoría</TableHead>
+                <TableHead>Cuenta</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead className="text-right">Monto</TableHead>
                 <TableHead className="sticky right-0 w-12 bg-card">
@@ -142,7 +140,7 @@ export function MovementsTable({
               {visibleRows.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
                     Sin resultados.
@@ -167,6 +165,11 @@ export function MovementsTable({
                           {transaction.category?.name ?? "Sin categoría"}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <AccountLabel
+                        account={accountsById.get(transaction.accountId ?? "")}
+                      />
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDate(transaction.occurredOn)}

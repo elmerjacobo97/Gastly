@@ -23,7 +23,12 @@ type RecurringPaymentRow = {
   is_active: boolean;
   type: "expense" | "income";
   account_id: string | null;
-  accounts: { id: string; name: string; color: string } | null;
+  accounts: {
+    id: string;
+    name: string;
+    color: string;
+    currency: CurrencyCode;
+  } | null;
   categories: {
     id: string;
     name: string;
@@ -100,7 +105,7 @@ export async function getRecurringPayments(
       is_active,
       type,
       account_id,
-      accounts!account_id(id, name, color),
+      accounts!account_id(id, name, color, currency),
       categories(id, name, color, icon)
     `,
     )

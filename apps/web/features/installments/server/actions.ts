@@ -214,6 +214,7 @@ export async function payMonthInstallments(
           category_id: purchase.category!.id,
           type: "expense",
           amount: payment.amount,
+          account_id: purchase.accountId ?? null,
           description: purchase.description,
           occurred_on: occurredOn,
           notes: `Cuota ${payment.paymentNumber}/${purchase.totalInstallments}`,

@@ -156,7 +156,6 @@ async function createSaleIncome(
       : `Venta a ${loan.person_name}`,
     occurred_on: values.occurredOn,
     notes: values.notes || null,
-    payment_method: "cash",
     loan_payment_id: paymentId,
   });
   if (error) throw new Error(error.message);

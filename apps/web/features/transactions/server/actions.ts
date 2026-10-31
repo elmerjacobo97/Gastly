@@ -1,13 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { format } from "date-fns";
 
 import { createClient } from "@/lib/supabase/server";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
+import { type TransactionType } from "@/lib/transaction-types";
 import { parseOrThrow } from "@/lib/validation";
 import {
-  creditCardNameSchema,
   transactionIdSchema,
   transactionSchema,
   type TransactionValues,
@@ -34,6 +33,72 @@ function revalidateTransactions() {
   revalidatePath("/budgets");
 }
 
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+type AccountEffect = {
+  accountId: string | null;
+  type: TransactionType;
+  amount: number;
+};
+
+// Expense lowers the balance and income raises it; direction -1 undoes a past effect.
+async function applyAccountEffect(
+  supabase: Supabase,
+  { accountId, type, amount }: AccountEffect,
+  direction: 1 | -1,
+) {
+  if (!accountId) return;
+
+  const raises = (type === "income") === (direction === 1);
+  const { error } = await supabase.rpc(
+    raises ? "increment_account_balance" : "decrement_account_balance",
+    { p_account_id: accountId, p_amount: amount },
+  );
+  if (error) throw new Error(error.message);
+}
+
+// What a stored transaction did to its account, so it can be undone.
+async function getAccountEffect(
+  supabase: Supabase,
+  transactionId: string,
+): Promise<AccountEffect> {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("account_id, type, amount, account_amount")
+    .eq("id", transactionId)
+    .single();
+  if (error || !data) throw new Error("No se encontró la transacción.");
+
+  return {
+    accountId: data.account_id,
+    type: data.type as TransactionType,
+    amount: data.account_amount ?? data.amount,
+  };
+}
+
+// Amount that moves the account, in the account's currency.
+async function resolveAccountAmount(
+  supabase: Supabase,
+  values: TransactionValues,
+): Promise<number | null> {
+  if (!values.accountId) return null;
+
+  const { data: account, error } = await supabase
+    .from("accounts")
+    .select("currency")
+    .eq("id", values.accountId)
+    .single();
+  if (error || !account) throw new Error("La cuenta seleccionada no existe.");
+
+  if (account.currency === values.currency) return null;
+  if (!values.accountAmount) {
+    throw new Error(
+      `Ingresa el monto en ${account.currency} que se movió en la cuenta.`,
+    );
+  }
+  return values.accountAmount;
+}
+
 export async function createTransaction(rawValues: TransactionValues) {
   const values = parseOrThrow(transactionSchema, rawValues);
   const { supabase, userId } = await requireUser();
@@ -49,7 +114,7 @@ export async function createTransaction(rawValues: TransactionValues) {
 
   if (categoryError) throw new Error(categoryError.message);
 
-  const isCreditCard = values.paymentMethod === "credit_card";
+  const accountAmount = await resolveAccountAmount(supabase, values);
 
   const { error } = await supabase.from("transactions").insert({
     user_id: userId,
@@ -60,12 +125,21 @@ export async function createTransaction(rawValues: TransactionValues) {
     description: values.description,
     occurred_on: values.occurredOn,
     notes: values.notes || null,
-    payment_method: values.paymentMethod ?? "cash",
-    credit_card_name: isCreditCard ? values.creditCardName || null : null,
-    credit_card_due_on: isCreditCard ? values.creditCardDueOn || null : null,
+    account_id: values.accountId || null,
+    account_amount: accountAmount,
   });
 
   if (error) throw new Error(error.message);
+
+  await applyAccountEffect(
+    supabase,
+    {
+      accountId: values.accountId || null,
+      type: values.type,
+      amount: accountAmount ?? values.amount,
+    },
+    1,
+  );
   revalidateTransactions();
 }
 
@@ -88,7 +162,8 @@ export async function updateTransaction(
 
   if (categoryError) throw new Error(categoryError.message);
 
-  const isCreditCard = values.paymentMethod === "credit_card";
+  const accountAmount = await resolveAccountAmount(supabase, values);
+  const previous = await getAccountEffect(supabase, id);
 
   const updateData: TablesUpdate<"transactions"> = {
     category_id: category.id,
@@ -98,52 +173,40 @@ export async function updateTransaction(
     description: values.description,
     occurred_on: values.occurredOn,
     notes: values.notes || null,
-    payment_method: values.paymentMethod ?? "cash",
-    credit_card_name: isCreditCard ? values.creditCardName || null : null,
-    credit_card_due_on: isCreditCard ? values.creditCardDueOn || null : null,
+    account_id: values.accountId || null,
+    account_amount: accountAmount,
   };
-
-  if (!isCreditCard) {
-    updateData.credit_card_paid_on = null;
-  }
 
   const { error } = await supabase
     .from("transactions")
     .update(updateData)
     .eq("id", id);
   if (error) throw new Error(error.message);
+
+  await applyAccountEffect(supabase, previous, -1);
+  // A transaction that had no account was never counted in a balance, so linking one only labels it.
+  if (previous.accountId) {
+    await applyAccountEffect(
+      supabase,
+      {
+        accountId: values.accountId || null,
+        type: values.type,
+        amount: accountAmount ?? values.amount,
+      },
+      1,
+    );
+  }
   revalidateTransactions();
 }
 
 export async function deleteTransaction(rawId: string) {
   const id = parseOrThrow(transactionIdSchema, rawId);
   const { supabase } = await requireUser();
+  const previous = await getAccountEffect(supabase, id);
 
   const { error } = await supabase.from("transactions").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  revalidateTransactions();
-}
 
-export async function payAllCreditCardTransactions(
-  rawCardName: string | null,
-): Promise<void> {
-  const cardName = parseOrThrow(creditCardNameSchema, rawCardName);
-  const { supabase } = await requireUser();
-
-  const today = format(new Date(), "yyyy-MM-dd");
-  let query = supabase
-    .from("transactions")
-    .update({ credit_card_paid_on: today })
-    .eq("payment_method", "credit_card")
-    .is("credit_card_paid_on", null);
-
-  if (cardName !== null) {
-    query = query.eq("credit_card_name", cardName);
-  } else {
-    query = query.is("credit_card_name", null);
-  }
-
-  const { error } = await query;
-  if (error) throw new Error(error.message);
+  await applyAccountEffect(supabase, previous, -1);
   revalidateTransactions();
 }

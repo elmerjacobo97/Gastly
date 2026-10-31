@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { getAccounts } from "@/features/accounts/server/queries";
 import { getCategories } from "@/features/categories/server/queries";
 import { WishlistPanel } from "@/features/wishlist/components/wishlist-panel";
 import { getWishlistItems } from "@/features/wishlist/server/queries";
@@ -20,10 +21,13 @@ export default async function WishlistPage() {
     redirect("/login");
   }
 
-  const [items, categories] = await Promise.all([
+  const [items, categories, accounts] = await Promise.all([
     getWishlistItems(),
     getCategories(),
+    getAccounts(),
   ]);
 
-  return <WishlistPanel items={items} categories={categories} />;
+  return (
+    <WishlistPanel items={items} categories={categories} accounts={accounts} />
+  );
 }

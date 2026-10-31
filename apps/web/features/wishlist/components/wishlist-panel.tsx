@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
 import { SummaryCards } from "@/features/wishlist/components/summary-cards";
 import { WishlistItemDialog } from "@/features/wishlist/components/wishlist-item-dialog";
@@ -21,9 +22,14 @@ import {
 type WishlistPanelProps = {
   items: WishlistItem[];
   categories: Category[];
+  accounts: Account[];
 };
 
-export function WishlistPanel({ items, categories }: WishlistPanelProps) {
+export function WishlistPanel({
+  items,
+  categories,
+  accounts,
+}: WishlistPanelProps) {
   const [isPending, startTransition] = useTransition();
   const [editItem, setEditItem] = useState<WishlistItem | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -98,6 +104,7 @@ export function WishlistPanel({ items, categories }: WishlistPanelProps) {
       {purchaseItem && (
         <CreateTransactionDialog
           categories={categories}
+          accounts={accounts}
           open
           onOpenChange={(open) => !open && setPurchaseItem(null)}
           initialValues={{

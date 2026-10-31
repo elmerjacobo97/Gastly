@@ -11,7 +11,6 @@ export function exportTransactionsToCSV(
     "Categoría",
     "Monto",
     "Moneda",
-    "Método de pago",
     "Notas",
   ];
   const rows = transactions.map((t) => [
@@ -21,9 +20,6 @@ export function exportTransactionsToCSV(
     t.category?.name ?? "Sin categoría",
     t.amount.toString(),
     t.currency,
-    t.paymentMethod === "credit_card"
-      ? `TC${t.creditCardName ? ` (${t.creditCardName})` : ""}`
-      : "Efectivo",
     t.notes ?? "",
   ]);
   const csvContent = [headers, ...rows]

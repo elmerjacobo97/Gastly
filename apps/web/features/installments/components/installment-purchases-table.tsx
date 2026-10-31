@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { AccountLabel } from "@/components/account-label";
 import { CategoryIconBadge } from "@/components/category-icon-badge";
 import { ProgressCell } from "@/components/progress-cell";
 import { RowActionsMenu } from "@/components/row-actions-menu";
@@ -161,17 +162,7 @@ export function InstallmentPurchasesTable({
                         </div>
                       </TableCell>
                       <TableCell>
-                        {purchase.account && (
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <span
-                              className="size-2 shrink-0 rounded-full"
-                              style={{
-                                backgroundColor: purchase.account.color,
-                              }}
-                            />
-                            {purchase.account.name}
-                          </div>
-                        )}
+                        <AccountLabel account={purchase.account} />
                       </TableCell>
                       <TableCell>
                         <ProgressCell percent={pctPaid}>

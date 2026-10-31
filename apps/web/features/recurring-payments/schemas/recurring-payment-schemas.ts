@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { CURRENCY_CODES } from "@/lib/format";
-import { numberInput } from "@/lib/validation";
+import { numberInput, optionalNumberInput } from "@/lib/validation";
 
 export const recurringPaymentSchema = z.object({
   description: z.string().trim().min(2, "Ingresa un nombre."),
@@ -40,6 +40,10 @@ export const recurringPaymentPaymentSchema = z.object({
     z
       .number({ error: "Ingresa un monto real válido." })
       .positive("El monto real debe ser mayor a 0."),
+  ),
+  currency: z.enum(CURRENCY_CODES),
+  accountAmount: optionalNumberInput(
+    z.number().positive("El monto en soles debe ser mayor a 0."),
   ),
   occurredOn: z.string().min(1, "Selecciona la fecha de pago."),
   notes: z.string().trim().optional(),

@@ -2,7 +2,6 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 import { Badge } from "@/components/ui/badge";
-import { CreditCardDebtCard } from "@/features/transactions/components/credit-card-debt-card";
 import { DashboardCharts } from "@/features/transactions/components/dashboard-charts";
 import { DashboardSummaryCards } from "@/features/transactions/components/dashboard-summary-cards";
 import { UpcomingPaymentsCard } from "@/features/transactions/components/upcoming-payments-card";
@@ -21,7 +20,6 @@ type TransactionsPanelProps = {
   userEmail?: string;
   userName?: string;
   transactions: Transaction[];
-  unpaidCreditCard: Transaction[];
   recurringPayments: RecurringPayment[];
   installments: InstallmentPurchase[];
   monthlyData?: MonthlyTotal[];
@@ -49,7 +47,6 @@ export function TransactionsPanel({
   userEmail,
   userName,
   transactions,
-  unpaidCreditCard,
   recurringPayments: allRecurring,
   installments,
   monthlyData,
@@ -127,8 +124,6 @@ export function TransactionsPanel({
       />
 
       <UpcomingPaymentsCard payments={upcomingPayments} />
-
-      <CreditCardDebtCard transactions={unpaidCreditCard} />
 
       <DashboardCharts monthlyData={monthlyData} categoryData={categoryData} />
     </main>

@@ -45,7 +45,7 @@ export default async function InstallmentsPage({
   return (
     <InstallmentsPanel
       purchases={purchases}
-      accounts={accounts}
+      accounts={accounts.filter((account) => account.currency === "PEN")}
       categories={categories}
       month={format(monthDate, "yyyy-MM")}
     />

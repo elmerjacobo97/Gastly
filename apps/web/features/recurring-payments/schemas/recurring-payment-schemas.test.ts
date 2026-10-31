@@ -229,19 +229,54 @@ describe("recurringPaymentPaymentSchema", () => {
     expect(
       recurringPaymentPaymentSchema.parse({
         amount: "35.9",
+        currency: "PEN",
         occurredOn: "2026-02-03",
         notes: "  pagado  ",
       }),
     ).toEqual({
       amount: 35.9,
+      currency: "PEN",
       occurredOn: "2026-02-03",
       notes: "pagado",
     });
   });
 
+  it("parses a foreign payment with the PEN amount charged", () => {
+    expect(
+      recurringPaymentPaymentSchema.parse({
+        amount: "10",
+        currency: "USD",
+        accountAmount: "37.5",
+        occurredOn: "2026-02-03",
+      }),
+    ).toEqual({
+      amount: 10,
+      currency: "USD",
+      accountAmount: 37.5,
+      occurredOn: "2026-02-03",
+    });
+  });
+
+  it("rejects a zero account amount", () => {
+    const result = recurringPaymentPaymentSchema.safeParse({
+      amount: "10",
+      currency: "USD",
+      accountAmount: "0",
+      occurredOn: "2026-02-03",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        "El monto en soles debe ser mayor a 0.",
+      );
+    }
+  });
+
   it("rejects a zero amount", () => {
     const result = recurringPaymentPaymentSchema.safeParse({
       amount: "0",
+      currency: "PEN",
       occurredOn: "2026-02-03",
     });
 
@@ -256,6 +291,7 @@ describe("recurringPaymentPaymentSchema", () => {
   it("rejects a non numeric amount", () => {
     const result = recurringPaymentPaymentSchema.safeParse({
       amount: "abc",
+      currency: "PEN",
       occurredOn: "2026-02-03",
     });
 
@@ -265,6 +301,7 @@ describe("recurringPaymentPaymentSchema", () => {
   it("rejects an empty date", () => {
     const result = recurringPaymentPaymentSchema.safeParse({
       amount: "10",
+      currency: "PEN",
       occurredOn: "",
     });
 

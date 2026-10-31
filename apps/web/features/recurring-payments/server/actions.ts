@@ -207,13 +207,32 @@ export async function registerRecurringPaymentPayment(
 
   const { supabase, userId } = await requireUser();
 
+  const { data: account } = payment.accountId
+    ? await supabase
+        .from("accounts")
+        .select("currency")
+        .eq("id", payment.accountId)
+        .single()
+    : { data: null };
+
+  const needsAccountAmount = !!account && account.currency !== values.currency;
+  if (needsAccountAmount && !values.accountAmount) {
+    throw new Error(
+      `Ingresa el monto cobrado en ${account.currency} para actualizar el saldo.`,
+    );
+  }
+  const accountAmount = needsAccountAmount ? values.accountAmount : undefined;
+  const balanceAmount = accountAmount ?? values.amount;
+
   const { error } = await supabase.from("transactions").insert({
     user_id: userId,
     category_id: payment.category.id,
     recurring_expense_id: payment.id,
     type: payment.type === "income" ? "income" : "expense",
     amount: values.amount,
-    currency: payment.currency,
+    currency: values.currency,
+    account_id: payment.accountId,
+    account_amount: accountAmount ?? null,
     description: payment.description,
     occurred_on: values.occurredOn,
     notes: values.notes || payment.notes,
@@ -241,6 +260,7 @@ export async function registerRecurringPaymentPayment(
     throw new Error(updateError.message);
   }
 
+  // Balance moves in the account's currency: the amount charged when currencies differ, else the payment amount.
   if (payment.accountId) {
     const rpcFn =
       payment.type === "income"
@@ -248,7 +268,7 @@ export async function registerRecurringPaymentPayment(
         : "decrement_account_balance";
     const { error: balanceError } = await supabase.rpc(rpcFn, {
       p_account_id: payment.accountId,
-      p_amount: values.amount,
+      p_amount: balanceAmount,
     });
     if (balanceError) throw new Error(balanceError.message);
   }

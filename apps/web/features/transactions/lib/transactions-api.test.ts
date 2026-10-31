@@ -14,10 +14,8 @@ function makeTransaction(overrides: Partial<Transaction>): Transaction {
     notes: null,
     category: null,
     recurringExpenseId: null,
-    paymentMethod: "cash",
-    creditCardName: null,
-    creditCardDueOn: null,
-    creditCardPaidOn: null,
+    accountId: null,
+    accountAmount: null,
     ...overrides,
   };
 }

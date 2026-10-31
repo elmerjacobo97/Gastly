@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { accountSchema } from "@/features/accounts/schemas/account-schemas";
+import {
+  accountSchema,
+  accountUpdateSchema,
+} from "@/features/accounts/schemas/account-schemas";
 
 const validAccount = {
   name: "Ahorros",
+  currency: "PEN",
   balance: "1500.50",
   color: "#3b82f6",
 };
@@ -14,6 +18,7 @@ describe("accountSchema", () => {
 
     expect(parsed).toEqual({
       name: "Ahorros",
+      currency: "PEN",
       balance: 1500.5,
       color: "#3b82f6",
     });
@@ -88,5 +93,42 @@ describe("accountSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("accepts a foreign currency", () => {
+    expect(
+      accountSchema.parse({ ...validAccount, currency: "USD" }).currency,
+    ).toBe("USD");
+  });
+
+  it("rejects an unknown currency", () => {
+    expect(
+      accountSchema.safeParse({ ...validAccount, currency: "EUR" }).success,
+    ).toBe(false);
+  });
+});
+
+describe("accountUpdateSchema", () => {
+  it("accepts a negative balance, as credit cards have", () => {
+    expect(
+      accountUpdateSchema.parse({ ...validAccount, balance: "-5573.98" })
+        .balance,
+    ).toBe(-5573.98);
+  });
+
+  it("ignores the currency, which is fixed after creation", () => {
+    const parsed = accountUpdateSchema.parse({
+      ...validAccount,
+      currency: "USD",
+    });
+
+    expect("currency" in parsed).toBe(false);
+  });
+
+  it("rejects a non numeric balance", () => {
+    expect(
+      accountUpdateSchema.safeParse({ ...validAccount, balance: "abc" })
+        .success,
+    ).toBe(false);
   });
 });

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { MovementsPanel } from "@/features/transactions/components/movements-panel";
+import { getAccounts } from "@/features/accounts/server/queries";
 import { getCategories } from "@/features/categories/server/queries";
 import { getTransactions } from "@/features/transactions/server/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -35,15 +36,17 @@ export default async function TransactionsPage({
   const { month } = await searchParams;
   const monthDate = parseMonth(month);
 
-  const [transactions, categories] = await Promise.all([
+  const [transactions, categories, accounts] = await Promise.all([
     getTransactions({ month: monthDate }),
     getCategories(),
+    getAccounts(),
   ]);
 
   return (
     <MovementsPanel
       transactions={transactions}
       categories={categories}
+      accounts={accounts}
       month={format(monthDate, "yyyy-MM")}
     />
   );

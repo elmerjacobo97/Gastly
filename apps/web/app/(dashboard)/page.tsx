@@ -7,10 +7,7 @@ import {
   getCategoryTotals,
   getMonthlyTotals,
 } from "@/features/transactions/server/charts-queries";
-import {
-  getTransactions,
-  getUnpaidCreditCardTransactions,
-} from "@/features/transactions/server/queries";
+import { getTransactions } from "@/features/transactions/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -25,28 +22,20 @@ export default async function DashboardPage() {
 
   const today = new Date();
 
-  const [
-    transactions,
-    unpaidCreditCard,
-    allRecurring,
-    installments,
-    monthlyData,
-    categoryData,
-  ] = await Promise.all([
-    getTransactions({ month: today }),
-    getUnpaidCreditCardTransactions(),
-    getRecurringPayments(today, "expense"),
-    getInstallmentPurchases(),
-    getMonthlyTotals(6),
-    getCategoryTotals(today),
-  ]);
+  const [transactions, allRecurring, installments, monthlyData, categoryData] =
+    await Promise.all([
+      getTransactions({ month: today }),
+      getRecurringPayments(today, "expense"),
+      getInstallmentPurchases(),
+      getMonthlyTotals(6),
+      getCategoryTotals(today),
+    ]);
 
   return (
     <TransactionsPanel
       userEmail={user.email}
       userName={user.user_metadata?.full_name as string | undefined}
       transactions={transactions}
-      unpaidCreditCard={unpaidCreditCard}
       recurringPayments={allRecurring}
       installments={installments}
       monthlyData={monthlyData}
