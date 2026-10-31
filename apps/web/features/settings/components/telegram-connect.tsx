@@ -199,7 +199,7 @@ export function TelegramConnect({ connection }: TelegramConnectProps) {
             </Button>
           ) : (
             <div className="flex flex-col gap-2">
-              <Badge variant="secondary" className="w-fit text-xs">
+              <Badge variant="outline" className="w-fit text-xs">
                 Expira en 10 min
               </Badge>
               <div className="flex items-center gap-2">

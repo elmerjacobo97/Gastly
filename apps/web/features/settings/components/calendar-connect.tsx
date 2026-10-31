@@ -30,7 +30,7 @@ export function CalendarConnect({ url }: CalendarConnectProps) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <Badge variant="secondary" className="w-fit gap-1.5">
+        <Badge variant="outline" className="w-fit gap-1.5">
           <CalendarIcon className="size-3" />
           Se configura una sola vez · se actualiza automáticamente
         </Badge>

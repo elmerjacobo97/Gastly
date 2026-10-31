@@ -101,7 +101,7 @@ export function TransactionsPanel({
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-1.5">
-          <Badge className="w-fit capitalize" variant="secondary">
+          <Badge className="w-fit capitalize" variant="outline">
             {monthLabel}
           </Badge>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">

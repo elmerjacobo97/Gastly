@@ -80,7 +80,7 @@ export function getPaymentBadge(payment: RecurringPayment, monthKey: string) {
   }
   return {
     label: "Pendiente",
-    variant: "secondary" as const,
-    className: undefined,
+    variant: "outline" as const,
+    className: "text-muted-foreground",
   };
 }

@@ -6,7 +6,7 @@ const TONE_CLASSES = {
   success: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   warning: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   danger: "bg-destructive/10 text-destructive",
-  muted: "",
+  muted: "text-muted-foreground",
 } as const;
 
 type StatusBadgeProps = {
@@ -16,7 +16,10 @@ type StatusBadgeProps = {
 
 export function StatusBadge({ tone, children }: StatusBadgeProps) {
   return (
-    <Badge variant="secondary" className={TONE_CLASSES[tone]}>
+    <Badge
+      variant={tone === "muted" ? "outline" : "secondary"}
+      className={TONE_CLASSES[tone]}
+    >
       {children}
     </Badge>
   );

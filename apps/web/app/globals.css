@@ -126,6 +126,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -145,4 +146,9 @@
   main {
     padding: 0 !important;
   }
+}
+
+/* Unlayered on purpose: beats the badge's `rounded-4xl` utility without editing components/ui. */
+[data-slot="badge"] {
+  border-radius: var(--radius-sm);
 }
