@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import {
   Card,
@@ -22,11 +21,62 @@ import {
   formatCurrency,
   type CurrencyCode,
 } from "@/lib/format";
+import { useRecharts } from "@/lib/use-recharts";
 
 type DashboardChartsProps = {
   monthlyData?: MonthlyTotal[];
   categoryData?: CategoryTotal[];
 };
+
+function CategoryPieChart({
+  data,
+  currency,
+}: {
+  data: CategoryTotal[];
+  currency: CurrencyCode;
+}) {
+  const recharts = useRecharts();
+
+  if (!recharts) return <Skeleton className="h-40 w-full rounded-lg" />;
+
+  const { Pie, PieChart, ResponsiveContainer, Tooltip } = recharts;
+
+  return (
+  <div className="h-40 w-full min-w-0">
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          innerRadius={45}
+          outerRadius={75}
+          paddingAngle={3}
+        />
+        <Tooltip
+          formatter={(
+            value: unknown,
+            _name: unknown,
+            props: { payload?: { name?: string } },
+          ) => [
+            formatCurrency(Number(value), currency),
+            props.payload?.name ?? "",
+          ]}
+          contentStyle={{
+            background: "var(--popover)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            color: "var(--popover-foreground)",
+            fontSize: 13,
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+  );
+}
 
 export function DashboardChartsView({
   monthlyData,
@@ -91,39 +141,10 @@ export function DashboardChartsView({
           <CardContent>
             {filteredCategoryData && filteredCategoryData.length > 0 ? (
               <div className="flex flex-col gap-4">
-                <div className="h-40 w-full min-w-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={filteredCategoryData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={3}
-                      />
-                      <Tooltip
-                        formatter={(
-                          value: unknown,
-                          _name: unknown,
-                          props: { payload?: { name?: string } },
-                        ) => [
-                          formatCurrency(Number(value), currency),
-                          props.payload?.name ?? "",
-                        ]}
-                        contentStyle={{
-                          background: "var(--popover)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "var(--radius-md)",
-                          color: "var(--popover-foreground)",
-                          fontSize: 13,
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <CategoryPieChart
+                  data={filteredCategoryData}
+                  currency={currency}
+                />
                 <div className="flex flex-col gap-2">
                   {filteredCategoryData.map((cat) => (
                     <div

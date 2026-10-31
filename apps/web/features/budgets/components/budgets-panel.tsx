@@ -25,8 +25,8 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
   BudgetBar,
   BudgetLegend,
-  budgetTone,
 } from "@/features/budgets/components/budget-bar";
+import { budgetTone } from "@/features/budgets/lib/budget-tone";
 import { CategoryBudgetTable } from "@/features/budgets/components/category-budget-table";
 import { CategoryBudgetDialog } from "@/features/budgets/components/category-budget-dialog";
 import { MonthlyBudgetTotalDialog } from "@/features/budgets/components/monthly-budget-total-dialog";
@@ -38,6 +38,7 @@ import {
 import {
   type BudgetOverview,
   type CategoryBudget,
+  type MonthlyBudgetTotal,
 } from "@/features/budgets/types/budget-types";
 import {
   CURRENCY_CODES,
@@ -111,6 +112,159 @@ function BudgetMeter({
         className="text-sm"
       />
     </div>
+  );
+}
+
+type GlobalBudgetCardProps = {
+  currency: CurrencyCode;
+  totalBudget: MonthlyBudgetTotal | undefined;
+  spent: number;
+  committed: number;
+  onEdit: () => void;
+  onDelete: (target: DeleteTarget) => void;
+};
+
+function GlobalBudgetCard({
+  currency,
+  totalBudget,
+  spent,
+  committed,
+  onEdit,
+  onDelete,
+}: GlobalBudgetCardProps) {
+  return (
+    <Card>
+      <CardHeader className="max-sm:has-data-[slot=card-action]:grid-cols-1">
+        <div className="flex items-center gap-3">
+          <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <WalletCardsIcon className="size-4" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Límite global</CardTitle>
+            <CardDescription>
+              Incluye todos los gastos {currency}, también sin categoría.
+            </CardDescription>
+          </div>
+        </div>
+        <CardAction className="flex items-center gap-1 self-center max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-2 max-sm:mt-2 max-sm:justify-self-start">
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            {totalBudget ? <PencilIcon /> : <PlusIcon />}
+            {totalBudget ? "Editar" : "Definir límite"}
+          </Button>
+          {totalBudget && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Eliminar límite global"
+              onClick={() =>
+                onDelete({
+                  id: totalBudget.id,
+                  type: "total",
+                  label: "límite global",
+                })
+              }
+            >
+              <Trash2Icon />
+            </Button>
+          )}
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        {totalBudget ? (
+          <BudgetMeter
+            limit={totalBudget.amount}
+            spent={spent}
+            committed={committed}
+            currency={currency}
+          />
+        ) : (
+          <div>
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Gasto registrado
+            </p>
+            <p className="mt-1 font-mono text-3xl font-semibold tracking-tight tabular-nums">
+              {formatCurrency(spent, currency)}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Define un límite para ver cuánto te queda.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+type CategoryBudgetsCardProps = {
+  currency: CurrencyCode;
+  categoryBudgets: CategoryBudget[];
+  hasCategories: boolean;
+  addCategoryButton: React.ReactNode;
+  onEdit: (budget?: CategoryBudget) => void;
+  onDelete: (target: DeleteTarget) => void;
+};
+
+function CategoryBudgetsCard({
+  currency,
+  categoryBudgets,
+  hasCategories,
+  addCategoryButton,
+  onEdit,
+  onDelete,
+}: CategoryBudgetsCardProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle className="text-base">
+            Presupuestos por categoría
+          </CardTitle>
+          <CardDescription>
+            {categoryBudgets.length === 0
+              ? `Sin límites para ${currency}.`
+              : `${categoryBudgets.length} categoría${categoryBudgets.length === 1 ? "" : "s"} con límite · ${currency}`}
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {categoryBudgets.length === 0 ? (
+          <>
+            <div className="flex justify-end">{addCategoryButton}</div>
+            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center">
+              <p className="font-medium">
+                Todavía no hay límites por categoría
+              </p>
+              <p className="max-w-md text-sm text-muted-foreground">
+                Elige categoría de gasto y monto mensual. Los gastos aparecerán
+                aquí a medida que los registres.
+              </p>
+              {!hasCategories && (
+                <Link
+                  href="/settings"
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Crear categoría de gasto
+                </Link>
+              )}
+            </div>
+          </>
+        ) : (
+          <CategoryBudgetTable
+            budgets={categoryBudgets}
+            currency={currency}
+            toolbarAction={addCategoryButton}
+            onEdit={onEdit}
+            onDelete={(item) =>
+              onDelete({
+                id: item.id,
+                type: "category",
+                label: item.categoryName,
+              })
+            }
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -199,122 +353,23 @@ export function BudgetsPanel({ overview }: BudgetsPanelProps) {
         </div>
       </section>
 
-      <Card>
-        <CardHeader className="max-sm:has-data-[slot=card-action]:grid-cols-1">
-          <div className="flex items-center gap-3">
-            <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-              <WalletCardsIcon className="size-4" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Límite global</CardTitle>
-              <CardDescription>
-                Incluye todos los gastos {currency}, también sin categoría.
-              </CardDescription>
-            </div>
-          </div>
-          <CardAction className="flex items-center gap-1 self-center max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-2 max-sm:mt-2 max-sm:justify-self-start">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTotalDialogOpen(true)}
-            >
-              {totalBudget ? <PencilIcon /> : <PlusIcon />}
-              {totalBudget ? "Editar" : "Definir límite"}
-            </Button>
-            {totalBudget && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Eliminar límite global"
-                onClick={() =>
-                  setDeleteTarget({
-                    id: totalBudget.id,
-                    type: "total",
-                    label: "límite global",
-                  })
-                }
-              >
-                <Trash2Icon />
-              </Button>
-            )}
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {totalBudget ? (
-            <BudgetMeter
-              limit={totalBudget.amount}
-              spent={spent}
-              committed={committed}
-              currency={currency}
-            />
-          ) : (
-            <div>
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Gasto registrado
-              </p>
-              <p className="mt-1 font-mono text-3xl font-semibold tracking-tight tabular-nums">
-                {formatCurrency(spent, currency)}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Define un límite para ver cuánto te queda.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <GlobalBudgetCard
+        currency={currency}
+        totalBudget={totalBudget}
+        spent={spent}
+        committed={committed}
+        onEdit={() => setTotalDialogOpen(true)}
+        onDelete={setDeleteTarget}
+      />
 
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle className="text-base">
-              Presupuestos por categoría
-            </CardTitle>
-            <CardDescription>
-              {categoryBudgets.length === 0
-                ? `Sin límites para ${currency}.`
-                : `${categoryBudgets.length} categoría${categoryBudgets.length === 1 ? "" : "s"} con límite · ${currency}`}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {categoryBudgets.length === 0 ? (
-            <>
-              <div className="flex justify-end">{addCategoryButton}</div>
-              <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center">
-                <p className="font-medium">
-                  Todavía no hay límites por categoría
-                </p>
-                <p className="max-w-md text-sm text-muted-foreground">
-                  Elige categoría de gasto y monto mensual. Los gastos
-                  aparecerán aquí a medida que los registres.
-                </p>
-                {overview.categories.length === 0 && (
-                  <Link
-                    href="/settings"
-                    className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Crear categoría de gasto
-                  </Link>
-                )}
-              </div>
-            </>
-          ) : (
-            <CategoryBudgetTable
-              budgets={categoryBudgets}
-              currency={currency}
-              toolbarAction={addCategoryButton}
-              onEdit={openCategoryBudget}
-              onDelete={(item) =>
-                setDeleteTarget({
-                  id: item.id,
-                  type: "category",
-                  label: item.categoryName,
-                })
-              }
-            />
-          )}
-        </CardContent>
-      </Card>
+      <CategoryBudgetsCard
+        currency={currency}
+        categoryBudgets={categoryBudgets}
+        hasCategories={overview.categories.length > 0}
+        addCategoryButton={addCategoryButton}
+        onEdit={openCategoryBudget}
+        onDelete={setDeleteTarget}
+      />
 
       {categoryDialogOpen && (
         <CategoryBudgetDialog

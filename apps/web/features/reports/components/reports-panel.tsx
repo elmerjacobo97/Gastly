@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { DownloadIcon, PrinterIcon } from "lucide-react";
 import {
@@ -15,12 +16,22 @@ import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { CsvExportConfirmDialog } from "@/components/csv-export-confirm-dialog";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Skeleton } from "@/components/ui/skeleton";
 import { type Transaction } from "@/lib/transaction-types";
 import { CURRENCY_CODES, type CurrencyCode } from "@/lib/format";
-import {
-  ReportsVisuals,
-  type ReportTypeFilter,
-} from "@/features/reports/components/reports-visuals";
+import { type ReportTypeFilter } from "@/features/reports/components/reports-visuals";
+
+// recharts is heavy, so the charts load after the rest of the page.
+const ReportsVisuals = dynamic(
+  () =>
+    import("@/features/reports/components/reports-visuals").then(
+      (module) => module.ReportsVisuals,
+    ),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-96 w-full rounded-lg" />,
+  },
+);
 
 type Period = "1m" | "3m" | "6m" | "year" | "last-year";
 

@@ -21,16 +21,16 @@ export async function suggestCategory(
   description: string,
   type: TransactionType,
 ): Promise<string | null> {
-  const apiKey = process.env.GROQ_API_KEY;
-  const text = description.trim().slice(0, MAX_DESCRIPTION_LENGTH);
-  if (!apiKey || text.length < MIN_DESCRIPTION_LENGTH) return null;
-  if (type !== "expense" && type !== "income") return null;
-
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
+
+  const apiKey = process.env.GROQ_API_KEY;
+  const text = description.trim().slice(0, MAX_DESCRIPTION_LENGTH);
+  if (!apiKey || text.length < MIN_DESCRIPTION_LENGTH) return null;
+  if (type !== "expense" && type !== "income") return null;
 
   const { data: categories } = await supabase
     .from("categories")

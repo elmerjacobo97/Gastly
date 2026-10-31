@@ -10,6 +10,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { NumberInput } from "@/components/ui/number-input";
+import { getAccountForAmount } from "@/features/transactions/lib/account-amount";
 import { type TransactionValues } from "@/features/transactions/schemas/transaction-schemas";
 import { type Account } from "@/lib/account-types";
 
@@ -18,14 +19,6 @@ type TransactionAccountFieldsProps = {
   accounts: Account[];
   idPrefix: string;
 };
-
-export function getAccountForAmount(
-  accounts: Account[],
-  values: Pick<TransactionValues, "accountId" | "currency">,
-) {
-  const account = accounts.find((a) => a.id === values.accountId);
-  return account && account.currency !== values.currency ? account : null;
-}
 
 export function TransactionAccountFields({
   control,

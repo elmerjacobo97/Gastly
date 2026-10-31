@@ -8,7 +8,7 @@ import {
   changePasswordSchema,
   loginSchema,
 } from "@/features/auth/schemas/auth-schemas";
-import { isPrivatePath } from "@/lib/private-routes";
+import { resolveSafePath } from "@/lib/private-routes";
 import { createClient } from "@/lib/supabase/server";
 
 type AuthActionResult = {
@@ -16,11 +16,7 @@ type AuthActionResult = {
 };
 
 function redirectToSafePath(next: string | undefined): never {
-  if (next && isPrivatePath(next)) {
-    redirect(next);
-  }
-
-  redirect("/");
+  redirect(resolveSafePath(next));
 }
 
 export async function signIn(

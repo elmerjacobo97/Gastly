@@ -4,7 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, InfoIcon, Loader2Icon } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
+import {
+  type Control,
+  type Resolver,
+  Controller,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 
 import { CurrencyField } from "@/components/currency-field";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -38,7 +44,7 @@ import {
   type RecurringPaymentPaymentValues,
 } from "@/features/recurring-payments/schemas/recurring-payment-schemas";
 import { type RecurringPayment } from "@/lib/recurring-payment-types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { type CurrencyCode, formatCurrency, formatDate } from "@/lib/format";
 
 type RecurringPaymentPayDialogProps = {
   payment: RecurringPayment | null;
@@ -48,6 +54,37 @@ type RecurringPaymentPayDialogProps = {
   onSubmit: (values: RecurringPaymentPaymentValues) => void;
 };
 
+const COPY = {
+  income: {
+    title: "Registrar cobro",
+    description:
+      "Ingresa el monto real cobrado. Quedará registrado como ingreso.",
+    amountLabel: "cobrado",
+  },
+  expense: {
+    title: "Registrar pago",
+    description:
+      "Ingresa el monto real pagado. El pago quedará registrado como transacción.",
+    amountLabel: "pagado",
+  },
+} as const;
+
+function buildPayDefaults(payment: RecurringPayment | null) {
+  const today = format(new Date(), "yyyy-MM-dd");
+  const dueOn = payment?.nextDueOn ?? "";
+
+  return {
+    amount: payment?.amount ?? 0,
+    currency: payment?.currency ?? "PEN",
+    occurredOn: dueOn > today ? today : dueOn || today,
+    notes: payment?.notes ?? "",
+  };
+}
+
+function accountAmountMessage(isIncome: boolean, currency: CurrencyCode) {
+  return `Ingresa cuánto ${isIncome ? "se abonó" : "salió"} de la cuenta en ${currency}.`;
+}
+
 export function RecurringPaymentPayDialog({
   payment,
   open,
@@ -55,25 +92,7 @@ export function RecurringPaymentPayDialog({
   onOpenChange,
   onSubmit,
 }: RecurringPaymentPayDialogProps) {
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const isPayingEarly = !!payment && payment.nextDueOn > todayStr;
-
-  const paymentId = payment?.id ?? null;
-  const isForeign = !!payment && payment.currency !== "PEN";
-  const paymentAmount = payment?.amount ?? 0;
-  const paymentCurrency = payment?.currency ?? "PEN";
-  const paymentDueOn = payment?.nextDueOn ?? "";
-  const paymentNotes = payment?.notes ?? "";
-
-  const defaults = useMemo(() => {
-    const today = format(new Date(), "yyyy-MM-dd");
-    return {
-      amount: paymentAmount,
-      currency: paymentCurrency,
-      occurredOn: paymentDueOn > today ? today : paymentDueOn || today,
-      notes: paymentNotes,
-    };
-  }, [paymentAmount, paymentCurrency, paymentDueOn, paymentNotes]);
+  const defaults = useMemo(() => buildPayDefaults(payment), [payment]);
 
   const form = useForm<RecurringPaymentPaymentValues>({
     resolver: zodResolver(
@@ -82,6 +101,7 @@ export function RecurringPaymentPayDialog({
     defaultValues: defaults,
   });
 
+  const paymentId = payment?.id;
   useEffect(() => {
     if (open && paymentId) form.reset(defaults);
   }, [open, paymentId, defaults, form]);
@@ -94,11 +114,12 @@ export function RecurringPaymentPayDialog({
   const showAccountAmount =
     !!accountCurrency && accountCurrency !== selectedCurrency;
   const isIncome = payment?.type === "income";
+  const copy = COPY[isIncome ? "income" : "expense"];
 
   function handleValid(values: RecurringPaymentPaymentValues) {
     if (showAccountAmount && !values.accountAmount) {
       form.setError("accountAmount", {
-        message: `Ingresa cuánto ${isIncome ? "se abonó" : "salió"} de la cuenta en ${accountCurrency}.`,
+        message: accountAmountMessage(isIncome, accountCurrency),
       });
       return;
     }
@@ -107,178 +128,29 @@ export function RecurringPaymentPayDialog({
       accountAmount: showAccountAmount ? values.accountAmount : undefined,
     });
   }
-  const amountLabel = isIncome ? "cobrado" : "pagado";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {isIncome ? "Registrar cobro" : "Registrar pago"}
-          </DialogTitle>
-          <DialogDescription>
-            {isIncome
-              ? "Ingresa el monto real cobrado. Quedará registrado como ingreso."
-              : "Ingresa el monto real pagado. El pago quedará registrado como transacción."}
-          </DialogDescription>
+          <DialogTitle>{copy.title}</DialogTitle>
+          <DialogDescription>{copy.description}</DialogDescription>
         </DialogHeader>
-        {isPayingEarly && (
-          <Alert variant="info">
-            <InfoIcon />
-            <AlertTitle>Pago anticipado</AlertTitle>
-            <AlertDescription>
-              Vencimiento: {formatDate(payment.nextDueOn)}. La fecha de pago se
-              pre-llenó con hoy, pero puedes cambiarla.
-            </AlertDescription>
-          </Alert>
-        )}
-        {isForeign && (
-          <Alert variant="info">
-            <InfoIcon />
-            <AlertTitle>
-              {isIncome ? "Cobro" : "Cargo"} de{" "}
-              {formatCurrency(payment.amount, payment.currency)}
-            </AlertTitle>
-            <AlertDescription>
-              Registra el monto en {payment.currency}, o cambia la moneda si el
-              banco {isIncome ? "te abonó" : "te cobró"} en otra.
-            </AlertDescription>
-          </Alert>
-        )}
+        {payment && <PayDialogAlerts payment={payment} isIncome={isIncome} />}
         <form
           className="flex flex-col gap-5"
           id="recurring-payment-payment-form"
           noValidate
           onSubmit={form.handleSubmit(handleValid)}
         >
-          <FieldGroup>
-            {isForeign && (
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <CurrencyField
-                    id="rpp-currency"
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            )}
-            <Controller
-              control={form.control}
-              name="amount"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="rpp-amount">
-                    Monto real {amountLabel} ({selectedCurrency})
-                  </FieldLabel>
-                  <NumberInput
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    id="rpp-amount"
-                    inputMode="decimal"
-                    min="0"
-                    step="0.01"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-            {showAccountAmount && (
-              <Controller
-                control={form.control}
-                name="accountAmount"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="rpp-account-amount">
-                      Monto {isIncome ? "abonado" : "cobrado"} en{" "}
-                      {accountCurrency}
-                    </FieldLabel>
-                    <NumberInput
-                      {...field}
-                      aria-invalid={fieldState.invalid}
-                      id="rpp-account-amount"
-                      inputMode="decimal"
-                      min="0"
-                      step="0.01"
-                    />
-                    <FieldDescription>
-                      {payment?.account?.name} está en {accountCurrency}, y este
-                      pago es en {selectedCurrency}.
-                    </FieldDescription>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            )}
-            <Controller
-              control={form.control}
-              name="occurredOn"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>
-                    {isIncome ? "Fecha real de cobro" : "Fecha real de pago"}
-                  </FieldLabel>
-                  <Popover>
-                    <PopoverTrigger
-                      render={
-                        <Button
-                          aria-invalid={fieldState.invalid}
-                          type="button"
-                          variant="outline"
-                          className="justify-start text-left font-normal"
-                        />
-                      }
-                    >
-                      <CalendarIcon />
-                      {field.value
-                        ? formatDate(field.value)
-                        : "Selecciona una fecha"}
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={
-                          field.value
-                            ? new Date(`${field.value}T12:00:00`)
-                            : undefined
-                        }
-                        onSelect={(date) => {
-                          if (date) field.onChange(format(date, "yyyy-MM-dd"));
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="notes"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="rpp-notes">Notas</FieldLabel>
-                  <Textarea
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    id="rpp-notes"
-                    placeholder="Opcional"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-          </FieldGroup>
+          <PayFormFields
+            control={form.control}
+            payment={payment}
+            isIncome={isIncome}
+            amountLabel={copy.amountLabel}
+            selectedCurrency={selectedCurrency}
+            showAccountAmount={showAccountAmount}
+          />
         </form>
         <DialogFooter>
           <DialogClose render={<Button variant="outline" type="button" />}>
@@ -290,10 +162,223 @@ export function RecurringPaymentPayDialog({
             type="submit"
           >
             {pending && <Loader2Icon className="size-4 animate-spin" />}
-            {isIncome ? "Registrar cobro" : "Registrar pago"}
+            {copy.title}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+type PayFormFieldsProps = {
+  control: Control<RecurringPaymentPaymentValues>;
+  payment: RecurringPayment | null;
+  isIncome: boolean;
+  amountLabel: string;
+  selectedCurrency: CurrencyCode;
+  showAccountAmount: boolean;
+};
+
+function PayFormFields({
+  control,
+  payment,
+  isIncome,
+  amountLabel,
+  selectedCurrency,
+  showAccountAmount,
+}: PayFormFieldsProps) {
+  const isForeign = !!payment && payment.currency !== "PEN";
+
+  return (
+    <FieldGroup>
+      {isForeign && (
+        <Controller
+          control={control}
+          name="currency"
+          render={({ field }) => (
+            <CurrencyField
+              id="rpp-currency"
+              value={field.value}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      )}
+      <Controller
+        control={control}
+        name="amount"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="rpp-amount">
+              Monto real {amountLabel} ({selectedCurrency})
+            </FieldLabel>
+            <NumberInput
+              {...field}
+              aria-invalid={fieldState.invalid}
+              id="rpp-amount"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+      {showAccountAmount && payment?.account && (
+        <AccountAmountField
+          control={control}
+          accountName={payment.account.name}
+          accountCurrency={payment.account.currency}
+          paymentCurrency={selectedCurrency}
+          isIncome={isIncome}
+        />
+      )}
+      <PaymentDateField control={control} isIncome={isIncome} />
+      <Controller
+        control={control}
+        name="notes"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="rpp-notes">Notas</FieldLabel>
+            <Textarea
+              {...field}
+              aria-invalid={fieldState.invalid}
+              id="rpp-notes"
+              placeholder="Opcional"
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+    </FieldGroup>
+  );
+}
+
+type PayDialogAlertsProps = {
+  payment: RecurringPayment;
+  isIncome: boolean;
+};
+
+function PayDialogAlerts({ payment, isIncome }: PayDialogAlertsProps) {
+  const isForeign = payment.currency !== "PEN";
+  const isPayingEarly = payment.nextDueOn > format(new Date(), "yyyy-MM-dd");
+
+  return (
+    <>
+      {isPayingEarly && (
+        <Alert variant="info">
+          <InfoIcon />
+          <AlertTitle>Pago anticipado</AlertTitle>
+          <AlertDescription>
+            Vencimiento: {formatDate(payment.nextDueOn)}. La fecha de pago se
+            pre-llenó con hoy, pero puedes cambiarla.
+          </AlertDescription>
+        </Alert>
+      )}
+      {isForeign && (
+        <Alert variant="info">
+          <InfoIcon />
+          <AlertTitle>
+            {isIncome ? "Cobro" : "Cargo"} de{" "}
+            {formatCurrency(payment.amount, payment.currency)}
+          </AlertTitle>
+          <AlertDescription>
+            Registra el monto en {payment.currency}, o cambia la moneda si el
+            banco {isIncome ? "te abonó" : "te cobró"} en otra.
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
+  );
+}
+
+type AccountAmountFieldProps = {
+  control: Control<RecurringPaymentPaymentValues>;
+  accountName: string;
+  accountCurrency: CurrencyCode;
+  paymentCurrency: CurrencyCode;
+  isIncome: boolean;
+};
+
+function AccountAmountField({
+  control,
+  accountName,
+  accountCurrency,
+  paymentCurrency,
+  isIncome,
+}: AccountAmountFieldProps) {
+  return (
+    <Controller
+      control={control}
+      name="accountAmount"
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor="rpp-account-amount">
+            Monto {isIncome ? "abonado" : "cobrado"} en {accountCurrency}
+          </FieldLabel>
+          <NumberInput
+            {...field}
+            aria-invalid={fieldState.invalid}
+            id="rpp-account-amount"
+            inputMode="decimal"
+            min="0"
+            step="0.01"
+          />
+          <FieldDescription>
+            {accountName} está en {accountCurrency}, y este pago es en{" "}
+            {paymentCurrency}.
+          </FieldDescription>
+          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+        </Field>
+      )}
+    />
+  );
+}
+
+type PaymentDateFieldProps = {
+  control: Control<RecurringPaymentPaymentValues>;
+  isIncome: boolean;
+};
+
+function PaymentDateField({ control, isIncome }: PaymentDateFieldProps) {
+  return (
+    <Controller
+      control={control}
+      name="occurredOn"
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel>
+            {isIncome ? "Fecha real de cobro" : "Fecha real de pago"}
+          </FieldLabel>
+          <Popover>
+            <PopoverTrigger
+              render={
+                <Button
+                  aria-invalid={fieldState.invalid}
+                  type="button"
+                  variant="outline"
+                  className="justify-start text-left font-normal"
+                />
+              }
+            >
+              <CalendarIcon />
+              {field.value ? formatDate(field.value) : "Selecciona una fecha"}
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={
+                  field.value ? new Date(`${field.value}T12:00:00`) : undefined
+                }
+                onSelect={(date) => {
+                  if (date) field.onChange(format(date, "yyyy-MM-dd"));
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+        </Field>
+      )}
+    />
   );
 }

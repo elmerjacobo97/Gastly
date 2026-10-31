@@ -269,8 +269,8 @@ export async function updateLoanPerson(
 ): Promise<void> {
   const ids = parseOrThrow(loanIdsSchema, rawIds);
   const values = parseOrThrow(editLoanPersonSchema, rawValues);
-  const { supabase } = await requireUser();
   if (ids.length === 0) throw new Error("No hay préstamos para actualizar.");
+  const { supabase } = await requireUser();
 
   const { error } = await supabase
     .from("loans")
@@ -286,11 +286,12 @@ export async function updateLoanPerson(
 export async function deleteLoanBalances(rawIds: string[]): Promise<void> {
   const ids = parseOrThrow(loanIdsSchema, rawIds);
   const { supabase } = await requireUser();
-  if (ids.length === 0) return;
 
-  const { error } = await supabase.from("loans").delete().in("id", ids);
-  if (error) throw new Error(error.message);
-  revalidateLoans();
+  if (ids.length > 0) {
+    const { error } = await supabase.from("loans").delete().in("id", ids);
+    if (error) throw new Error(error.message);
+    revalidateLoans();
+  }
 }
 
 export async function recordLoanPayment(

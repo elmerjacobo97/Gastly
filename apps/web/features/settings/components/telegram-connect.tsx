@@ -148,6 +148,7 @@ export function TelegramConnect({ connection }: TelegramConnectProps) {
               render={
                 <a
                   href={`https://t.me/${BOT_USERNAME}`}
+                  aria-label={`Abrir @${BOT_USERNAME} en Telegram`}
                   target="_blank"
                   rel="noopener noreferrer"
                 />

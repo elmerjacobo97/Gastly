@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -18,14 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -34,19 +26,17 @@ import {
   custodyMovementSchema,
   type CustodyMovementValues,
 } from "@/features/custody/schemas/custody-schemas";
+import {
+  MovementAmountDateFields,
+  MovementMethodField,
+  MovementNotesField,
+} from "@/features/custody/components/movement-form-fields";
 import { recordCustodyMovement } from "@/features/custody/server/actions";
 import {
   type CustodyMovementType,
   type CustodyOrder,
 } from "@/features/custody/types/custody-types";
 import { formatCurrency } from "@/lib/format";
-
-const METHOD_LABELS: Record<string, string> = {
-  yape: "YAPE",
-  plin: "PLIN",
-  transfer: "Transferencia",
-  cash: "Efectivo",
-};
 
 function getTodayStr() {
   return format(new Date(), "yyyy-MM-dd");
@@ -172,99 +162,13 @@ export function CreateMovementDialog({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-3">
-              <Controller
-                control={form.control}
-                name="amount"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="cm-amount">Monto</FieldLabel>
-                    <NumberInput
-                      {...field}
-                      id="cm-amount"
-                      aria-invalid={fieldState.invalid}
-                      inputMode="decimal"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                control={form.control}
-                name="occurredOn"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="cm-date">Fecha</FieldLabel>
-                    <DatePicker
-                      id="cm-date"
-                      value={field.value}
-                      onChange={field.onChange}
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </div>
+            <MovementAmountDateFields control={form.control} />
 
             {selectedType === "deposit" && (
-              <Controller
-                control={form.control}
-                name="method"
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="cm-method">Método</FieldLabel>
-                    <NativeSelect
-                      {...field}
-                      id="cm-method"
-                      value={field.value ?? "yape"}
-                    >
-                      {Object.entries(METHOD_LABELS).map(([value, label]) => (
-                        <NativeSelectOption key={value} value={value}>
-                          {label}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                  </Field>
-                )}
-              />
+              <MovementMethodField control={form.control} />
             )}
 
-            <Controller
-              control={form.control}
-              name="notes"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="cm-notes">
-                    Notas{" "}
-                    <span className="font-normal text-muted-foreground">
-                      (opcional)
-                    </span>
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id="cm-notes"
-                    aria-invalid={fieldState.invalid}
-                    placeholder={
-                      selectedType === "deposit"
-                        ? "Ej: Operación YAPE #123"
-                        : "Ej: Compra en tienda X"
-                    }
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+            <MovementNotesField control={form.control} type={selectedType} />
           </FieldGroup>
         </form>
         <DialogFooter>
@@ -284,5 +188,3 @@ export function CreateMovementDialog({
     </Dialog>
   );
 }
-
-export { METHOD_LABELS };

@@ -28,6 +28,8 @@ import {
 } from "@/lib/installment-types";
 import { formatCurrency, formatDate } from "@/lib/format";
 
+const TEXT_COLUMNS = ["Compra", "Cuenta", "Vence", "Estado"];
+
 type MonthInstallment = {
   payment: InstallmentPayment;
   purchase: InstallmentPurchase;
@@ -83,10 +85,9 @@ export function InstallmentMonthPaymentsCard({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Compra</TableHead>
-                <TableHead>Cuenta</TableHead>
-                <TableHead>Vence</TableHead>
-                <TableHead>Estado</TableHead>
+                {TEXT_COLUMNS.map((column) => (
+                  <TableHead key={column}>{column}</TableHead>
+                ))}
                 <TableHead className="text-right">Monto</TableHead>
                 <TableHead className="sticky right-0 w-24 bg-card">
                   <span className="sr-only">Pagar</span>

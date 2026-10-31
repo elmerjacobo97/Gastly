@@ -17,8 +17,8 @@ import {
 import {
   BudgetBar,
   BudgetLegend,
-  budgetTone,
 } from "@/features/budgets/components/budget-bar";
+import { budgetTone } from "@/features/budgets/lib/budget-tone";
 import { calculateBudgetProgress } from "@/features/budgets/lib/budget-calculations";
 import { type CategoryBudget } from "@/features/budgets/types/budget-types";
 import { formatCurrency, type CurrencyCode } from "@/lib/format";

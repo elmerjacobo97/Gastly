@@ -61,9 +61,9 @@ export const recurringPaymentIdSchema = z
   .string()
   .uuid("Selecciona un pago recurrente válido.");
 
-export const recurringPaymentActiveSchema = z.boolean(
-  "Selecciona un estado válido.",
-);
+export const recurringPaymentActiveSchema = z.boolean({
+  error: "Selecciona un estado válido.",
+});
 
 export const recurringPaymentRefSchema = z.object({
   id: z.string().uuid(),

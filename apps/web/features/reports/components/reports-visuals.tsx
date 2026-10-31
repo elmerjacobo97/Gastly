@@ -1,15 +1,6 @@
 "use client";
 
 import { CalendarClockIcon, ShuffleIcon } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { CategoryIconBadge } from "@/components/category-icon-badge";
 import { SummaryMetricCards } from "@/components/summary-metric-cards";
@@ -24,6 +15,8 @@ import {
 } from "@/components/ui/card";
 import { formatCurrency, type CurrencyCode } from "@/lib/format";
 import { CHART_COLORS, formatCompact } from "@/lib/chart-utils";
+import { useRecharts } from "@/lib/use-recharts";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type ReportTypeFilter = "all" | "expense" | "income";
 
@@ -142,6 +135,83 @@ function CategoryBreakdownCard({
   );
 }
 
+function RecurringBarChart({
+  data,
+  currency,
+}: {
+  data: RecurringDatum[];
+  currency: CurrencyCode;
+}) {
+  const recharts = useRecharts();
+
+  if (!recharts) return <Skeleton className="h-52.5 w-full rounded-lg" />;
+
+  const {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+  } = recharts;
+
+  return (
+    <div className="h-52.5 w-full min-w-0">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          margin={{ top: 0, right: 0, left: -10, bottom: 0 }}
+          barCategoryGap="30%"
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="var(--border)"
+          />
+          <XAxis
+            dataKey="month"
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tickFormatter={formatCompact}
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            formatter={(value: unknown, name: unknown) => [
+              formatCurrency(Number(value), currency),
+              name === "recurring" ? "Recurrentes" : "Variables",
+            ]}
+            contentStyle={{
+              background: "var(--popover)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-md)",
+              color: "var(--popover-foreground)",
+              fontSize: 13,
+            }}
+            cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+          />
+          <Bar
+            dataKey="recurring"
+            stackId="a"
+            fill="var(--color-chart-3)"
+          />
+          <Bar
+            dataKey="variable"
+            stackId="a"
+            fill="var(--color-chart-4)"
+            radius={[4, 4, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 function RecurringChartCard({
   data,
   currency,
@@ -161,58 +231,7 @@ function RecurringChartCard({
             Sin gastos en el período
           </div>
         ) : (
-          <div className="h-52.5 w-full min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={data}
-                margin={{ top: 0, right: 0, left: -10, bottom: 0 }}
-                barCategoryGap="30%"
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="var(--border)"
-                />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tickFormatter={formatCompact}
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(value: unknown, name: unknown) => [
-                    formatCurrency(Number(value), currency),
-                    name === "recurring" ? "Recurrentes" : "Variables",
-                  ]}
-                  contentStyle={{
-                    background: "var(--popover)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    color: "var(--popover-foreground)",
-                    fontSize: 13,
-                  }}
-                  cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-                />
-                <Bar
-                  dataKey="recurring"
-                  stackId="a"
-                  fill="var(--color-chart-3)"
-                />
-                <Bar
-                  dataKey="variable"
-                  stackId="a"
-                  fill="var(--color-chart-4)"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <RecurringBarChart data={data} currency={currency} />
         )}
         <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">

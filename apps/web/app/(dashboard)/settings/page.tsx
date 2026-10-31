@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { AccountsPanel } from "@/features/accounts/components/accounts-panel";
 import { getAccounts } from "@/features/accounts/server/queries";
@@ -37,19 +38,23 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <SettingsPanel
-      userEmail={user.email ?? ""}
-      userName={user.user_metadata?.full_name ?? ""}
-      calendarUrl={calendarUrl}
-      telegramConnection={telegramConnection}
-      securitySection={<SecuritySection />}
-      accountsSection={<AccountsPanel accounts={accounts} />}
-      categoriesSection={
-        <CategoriesSection
-          categoriesPanel={<CategoriesPanel categories={categories} embedded />}
-          createCategoryDialog={<CreateCategoryDialog />}
-        />
-      }
-    />
+    <Suspense>
+      <SettingsPanel
+        userEmail={user.email ?? ""}
+        userName={user.user_metadata?.full_name ?? ""}
+        calendarUrl={calendarUrl}
+        telegramConnection={telegramConnection}
+        securitySection={<SecuritySection />}
+        accountsSection={<AccountsPanel accounts={accounts} />}
+        categoriesSection={
+          <CategoriesSection
+            categoriesPanel={
+              <CategoriesPanel categories={categories} embedded />
+            }
+            createCategoryDialog={<CreateCategoryDialog />}
+          />
+        }
+      />
+    </Suspense>
   );
 }

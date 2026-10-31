@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { type Resolver, Controller, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { CurrencyField } from "@/components/currency-field";
 import { TransactionCategoryField } from "@/components/transaction-category-field";
 import {
   Dialog,
@@ -26,22 +25,18 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
 import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog";
 import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
 import {
-  TransactionAccountFields,
-  getAccountForAmount,
-} from "@/features/transactions/components/transaction-account-fields";
+  TransactionAmountFields,
+  TransactionDateField,
+  TransactionNotesField,
+} from "@/features/transactions/components/transaction-form-fields";
+import { TransactionAccountFields } from "@/features/transactions/components/transaction-account-fields";
+import { getAccountForAmount } from "@/features/transactions/lib/account-amount";
 import { MIN_DESCRIPTION_LENGTH } from "@/features/transactions/lib/category-suggestion";
 import { createTransaction } from "@/features/transactions/server/actions";
 import { suggestCategory } from "@/features/transactions/server/suggest-category";
@@ -117,7 +112,6 @@ export function CreateTransactionDialog({
     control: form.control,
     name: "type",
   }) as TransactionType;
-  const currentCurrency = useWatch({ control: form.control, name: "currency" });
 
   const existingCategories = categories.filter((c) => c.type === currentType);
 
@@ -220,66 +214,10 @@ export function CreateTransactionDialog({
                 onSubmit={form.handleSubmit(onSubmit)}
               >
                 <FieldGroup>
-                  <Controller
+                  <TransactionAmountFields
                     control={form.control}
-                    name="type"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="ct-type">Tipo</FieldLabel>
-                        <NativeSelect
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          className="w-full"
-                          disabled={lockType}
-                          id="ct-type"
-                        >
-                          <NativeSelectOption value="expense">
-                            Gasto
-                          </NativeSelectOption>
-                          <NativeSelectOption value="income">
-                            Ingreso
-                          </NativeSelectOption>
-                        </NativeSelect>
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="currency"
-                    render={({ field, fieldState }) => (
-                      <CurrencyField
-                        id="ct-currency"
-                        value={field.value}
-                        onChange={field.onChange}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name="amount"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="ct-amount">
-                          Monto ({currentCurrency})
-                        </FieldLabel>
-                        <NumberInput
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          id="ct-amount"
-                          inputMode="decimal"
-                          min="0"
-                          placeholder="0.00"
-                          step="0.01"
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
+                    idPrefix="ct"
+                    lockType={lockType}
                   />
                   <Controller
                     control={form.control}
@@ -327,49 +265,13 @@ export function CreateTransactionDialog({
                       </div>
                     )}
                   />
-                  <Controller
-                    control={form.control}
-                    name="occurredOn"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="ct-date">Fecha</FieldLabel>
-                        <DatePicker
-                          id="ct-date"
-                          value={field.value}
-                          onChange={field.onChange}
-                          aria-invalid={fieldState.invalid}
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
+                  <TransactionDateField control={form.control} idPrefix="ct" />
                   <TransactionAccountFields
                     control={form.control}
                     accounts={accounts}
                     idPrefix="ct"
                   />
-                  <Controller
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <Field>
-                        <FieldLabel htmlFor="ct-notes">
-                          Notas{" "}
-                          <span className="text-muted-foreground">
-                            (opcional)
-                          </span>
-                        </FieldLabel>
-                        <Textarea
-                          {...field}
-                          id="ct-notes"
-                          placeholder="Detalle adicional"
-                          rows={2}
-                        />
-                      </Field>
-                    )}
-                  />
+                  <TransactionNotesField control={form.control} idPrefix="ct" />
                 </FieldGroup>
               </form>
             </div>

@@ -162,8 +162,10 @@ export async function updateTransaction(
 
   if (categoryError) throw new Error(categoryError.message);
 
-  const accountAmount = await resolveAccountAmount(supabase, values);
-  const previous = await getAccountEffect(supabase, id);
+  const [accountAmount, previous] = await Promise.all([
+    resolveAccountAmount(supabase, values),
+    getAccountEffect(supabase, id),
+  ]);
 
   const updateData: TablesUpdate<"transactions"> = {
     category_id: category.id,

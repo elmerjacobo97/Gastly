@@ -36,10 +36,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { QuickCreateCategoryDialog } from "@/components/quick-create-category-dialog";
 import { type Account } from "@/lib/account-types";
 import { type Category } from "@/lib/category-types";
-import {
-  TransactionAccountFields,
-  getAccountForAmount,
-} from "@/features/transactions/components/transaction-account-fields";
+import { TransactionAccountFields } from "@/features/transactions/components/transaction-account-fields";
+import { getAccountForAmount } from "@/features/transactions/lib/account-amount";
 import { updateTransaction } from "@/features/transactions/server/actions";
 import {
   type TransactionValues,

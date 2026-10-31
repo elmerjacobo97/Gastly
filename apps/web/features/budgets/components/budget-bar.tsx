@@ -1,20 +1,10 @@
 import { formatCurrency, type CurrencyCode } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type BudgetState = { isOverBudget: boolean; isNearLimit: boolean };
-
-export function budgetTone({ isOverBudget, isNearLimit }: BudgetState) {
-  if (isOverBudget) {
-    return { fill: "bg-destructive", text: "text-destructive" };
-  }
-  if (isNearLimit) {
-    return {
-      fill: "bg-amber-500",
-      text: "text-amber-600 dark:text-amber-400",
-    };
-  }
-  return { fill: "bg-primary", text: "text-foreground" };
-}
+import {
+  type BudgetState,
+  budgetTone,
+} from "@/features/budgets/lib/budget-tone";
 
 type BudgetBarProps = BudgetState & {
   spentPercentage: number;

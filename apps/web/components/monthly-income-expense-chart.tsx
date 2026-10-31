@@ -1,17 +1,9 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompact } from "@/lib/chart-utils";
 import { formatCurrency, type CurrencyCode } from "@/lib/format";
+import { useRecharts } from "@/lib/use-recharts";
 
 type MonthlyIncomeExpenseDatum = {
   month: string;
@@ -26,6 +18,20 @@ export function MonthlyIncomeExpenseChart({
   data: MonthlyIncomeExpenseDatum[];
   currency: CurrencyCode;
 }) {
+  const recharts = useRecharts();
+
+  if (!recharts) return <Skeleton className="h-52.5 w-full rounded-lg" />;
+
+  const {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+  } = recharts;
+
   return (
     <>
       <div className="h-52.5 w-full min-w-0">

@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { METHOD_LABELS } from "@/features/custody/components/create-movement-dialog";
+import { METHOD_LABELS } from "@/features/custody/lib/method-labels";
 import { flattenCustodyMovements } from "@/features/custody/lib/custody-api";
 import {
   type CustodyMovementRow,
